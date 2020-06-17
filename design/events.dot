@@ -1,0 +1,200 @@
+digraph Cribbage {
+	graph [fontname="comic sans ms"];
+	node [style="filled, rounded", fontname="comic sans ms", shape=rectangle];
+	edge [fontname="comic sans ms"]
+
+	subgraph Events {
+		node [color=orange];
+
+		subgraph cluster_GameStartedEvents {
+			label="Game Starting"
+			style=filled;
+			fillcolor=ghostwhite;
+
+			GameCreated
+			PlayerJoined
+			OpponentJoined
+			DealerSelected
+		}
+
+		subgraph cluster_GamePlayingEvents {
+			label="Game Playing";
+			style=filled;
+			fillcolor=ghostwhite;
+		
+			subgraph cluster_DealingPhase {
+				label="The Deal"
+				fillcolor=aliceblue;
+				HandsDealt
+				DealerCribCardsDiscarded
+				PoneCribCardsDiscarded
+				CutMade
+			}
+
+			subgraph cluster_PlayingPhase {
+				label="The Play"
+				fillcolor=aliceblue;
+				PonePlayed
+				PonePassed
+				DealerPlayed
+				DealerPassed
+				PlayCompleted
+				PlaysCompleted
+			}
+
+			subgraph cluster_ScoringPhase {
+				label="The Score"
+				fillcolor=aliceblue;
+				PoneHandScored
+				DealerHandScored
+				DealerCribScored
+				DealerSwapped
+			}
+		}
+
+		subgraph cluster_GameCompletionEvents {
+			label="Game Completion";
+			style=filled;
+			fillcolor=ghostwhite;
+
+			PointsScored
+			GameCompleted
+		}
+
+		GameCreated -> PlayerJoined
+		GameCreated -> OpponentJoined
+
+		PlayerJoined -> DealerSelected
+		OpponentJoined -> DealerSelected
+
+		DealerSelected -> HandsDealt
+
+		HandsDealt -> DealerCribCardsDiscarded
+		HandsDealt -> PoneCribCardsDiscarded
+
+		DealerCribCardsDiscarded -> CutMade
+		PoneCribCardsDiscarded -> CutMade
+
+		CutMade -> PointsScored
+		CutMade -> PonePlayed
+
+		PonePlayed -> PointsScored
+		PonePassed -> PointsScored
+		DealerPlayed -> PointsScored
+		DealerPassed -> PointsScored
+
+		PonePlayed -> DealerPlayed
+		PonePlayed -> DealerPassed
+		DealerPlayed -> PonePlayed
+		DealerPlayed -> PonePassed
+		PonePassed -> DealerPlayed
+		PonePassed -> DealerPassed -> PlayCompleted
+		DealerPassed -> PonePlayed
+		DealerPassed -> PonePassed -> PlayCompleted
+
+		PlayCompleted -> PonePlayed
+		PlayCompleted -> DealerPlayed
+
+		PlayCompleted -> PlaysCompleted -> PoneHandScored
+
+		PoneHandScored -> PointsScored
+		DealerHandScored -> PointsScored
+		DealerCribScored -> PointsScored
+
+		PoneHandScored -> DealerHandScored
+		DealerHandScored -> DealerCribScored
+		DealerCribScored -> DealerSwapped
+		DealerSwapped -> HandsDealt
+
+		PointsScored -> GameCompleted
+	}
+
+	subgraph Issues {
+		node [color=red, fontcolor=white];
+	}
+
+	subgraph BusinessProcesses {
+		node [color=purple, fontcolor=white];
+		CribbageRules
+	}
+
+	subgraph Commands {
+		node [color=blue, fontcolor=white];
+		CreateGame
+		JoinGame
+		SelectDealer
+		DealHands
+		DiscardCribCards
+		MakeCut
+		PlayCard
+		Pass
+		CompletePlay
+		CompletePlays
+		ScorePoneHand
+		ScoreDealerHand
+		ScoreDealerCrib
+		SwapDealer
+	}
+
+	subgraph Actors {
+		node [fillcolor=lightyellow, color=black]
+		Player
+		Opponent
+		Dealer
+		Pone
+	}
+
+	subgraph Aggregates {
+		node [color=yellow];
+		Game
+		User
+	}
+
+	subgraph ExternalSystems {
+		node [color=magenta];
+	}
+
+	subgraph Views {
+		node [color=green];
+	}
+
+	CreateGame -> GameCreated
+	JoinGame -> PlayerJoined
+	JoinGame -> OpponentJoined
+	SelectDealer -> DealerSelected
+	DealHands -> HandsDealt
+	DiscardCribCards -> DealerCribCardsDiscarded
+	DiscardCribCards -> PoneCribCardsDiscarded
+	MakeCut -> CutMade
+	PlayCard -> PonePlayed
+	PlayCard -> DealerPlayed
+	Pass -> PonePassed
+	Pass -> DealerPassed
+	CompletePlay -> PlayCompleted
+	CompletePlays -> PlaysCompleted
+	ScorePoneHand -> PoneHandScored
+	ScoreDealerHand -> DealerHandScored
+	ScoreDealerCrib -> DealerCribScored
+	SwapDealer -> DealerSwapped
+
+
+	User -> CreateGame
+	Player -> JoinGame
+	Opponent -> JoinGame
+	CribbageRules -> SelectDealer
+	Dealer -> DealHands
+	Pone -> DiscardCribCards
+	Dealer -> DiscardCribCards
+	CribbageRules -> MakeCut
+	Pone -> PlayCard
+	Dealer -> PlayCard
+	Pone -> Pass
+	Dealer -> Pass
+	CribbageRules -> CompletePlay
+	CribbageRules -> CompletePlays
+	CribbageRules -> ScorePoneHand
+	CribbageRules -> ScoreDealerHand
+	CribbageRules -> ScoreDealerCrib
+	CribbageRules -> SwapDealer
+
+}

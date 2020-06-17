@@ -34,6 +34,22 @@ class GameSupervisorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike 
         probe.expectMessage(Games(Seq(gameId)))
       }
 
+      "a Game is added more than once" in {
+        val probe = testKit.createTestProbe[Response]()
+        val supervisor = testKit.spawn(GameSupervisor())
+
+        val gameId = UUID.randomUUID()
+        supervisor ! CreateGame(gameId, probe.ref)
+        probe.expectMessage(GameCreated(gameId))
+
+        supervisor ! CreateGame(gameId, probe.ref)
+        probe.expectNoMessage()
+
+        supervisor ! GetGames(probe.ref)
+        probe.expectMessage(Games(Seq(gameId)))
+
+      }
+
     }
 
   }

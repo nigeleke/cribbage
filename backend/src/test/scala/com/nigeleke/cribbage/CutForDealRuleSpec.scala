@@ -2,30 +2,26 @@ package com.nigeleke.cribbage
 
 import java.util.UUID
 
-import akka.actor.testkit.typed.scaladsl.{ActorTestKit, ScalaTestWithActorTestKit}
+import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import akka.actor.typed.eventstream.EventStream.{Publish, Subscribe}
 import com.nigeleke.cribbage.actors.Game.{DealerCutRevealed, DealerSelected, PlayerJoined, Event => GameEvent}
 import com.nigeleke.cribbage.actors.rules.CutForDealRule
+import com.nigeleke.cribbage.model.Card
 import com.nigeleke.cribbage.model.Game.{Id => GameId}
-import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
+import com.nigeleke.cribbage.suit.{Face, Suit}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-
-import scala.concurrent.duration._
 
 class CutForDealRuleSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with Matchers {
 
   val eventsProbe = testKit.createTestProbe[GameEvent]()
   testKit.system.eventStream ! Subscribe(eventsProbe.ref)
 
-  def joinPlayer(gameId: GameId) : PlayerId = {
-    val playerId = UUID.randomUUID()
-    val player1JoinedEvent = PlayerJoined(gameId, playerId)
+  private def addPlayer(gameId: GameId) = {
+    val player1JoinedEvent = PlayerJoined(gameId, UUID.randomUUID())
     system.eventStream ! Publish(player1JoinedEvent)
     eventsProbe.expectMessage(player1JoinedEvent)
-    playerId
   }
-
 
   "The CutForDealRule" should {
     "do nothing" when {
@@ -38,7 +34,7 @@ class CutForDealRuleSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike 
       "first player joins" in {
         val gameId = UUID.randomUUID()
         spawn(CutForDealRule(gameId))
-        joinPlayer(gameId)
+        addPlayer(gameId)
         eventsProbe.expectNoMessage()
       }
     }
@@ -49,14 +45,8 @@ class CutForDealRuleSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike 
         spawn(CutForDealRule(gameId))
         eventsProbe.expectNoMessage()
 
-        val player1Id = joinPlayer(gameId)
-        val player2Id = joinPlayer(gameId)
-
-        def expectedCuts() = {
-          val cut1 = eventsProbe.expectMessageType[DealerCutRevealed]
-          val cut2 = eventsProbe.expectMessageType[DealerCutRevealed]
-          (cut1, cut2)
-        }
+        addPlayer(gameId)
+        addPlayer(gameId)
 
         def cardRanksTheSame(cuts: (DealerCutRevealed, DealerCutRevealed)) = {
           val cutRank1 = cuts._1.card.rank
@@ -64,16 +54,24 @@ class CutForDealRuleSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike 
           cutRank1 == cutRank2
         }
 
-        val cuts = Iterator(expectedCuts()).dropWhile(cardRanksTheSame).next()
-
         def expectedDealer(cuts: (DealerCutRevealed, DealerCutRevealed)) = {
           val (player1, cutRank1) = (cuts._1.playerId, cuts._1.card.rank)
           val (player2, cutRank2) = (cuts._2.playerId, cuts._2.card.rank)
           if (cutRank1 < cutRank2) player1 else player2
         }
 
-        val dealerSelected = eventsProbe.expectMessageType[DealerSelected]
-        dealerSelected should be(DealerSelected(gameId, expectedDealer(cuts)))
+        def expectReveals() = (
+          eventsProbe.expectMessageType[DealerCutRevealed],
+          eventsProbe.expectMessageType[DealerCutRevealed])
+
+        Iterator
+          .continually(expectReveals)
+          .dropWhile(cardRanksTheSame)
+          .take(1)
+          .foreach { reveals =>
+            val dealerSelected = eventsProbe.expectMessageType[DealerSelected]
+            dealerSelected should be(DealerSelected(gameId, expectedDealer(reveals)))
+          }
       }
     }
   }

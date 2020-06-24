@@ -39,24 +39,26 @@ object Game {
   final case class DealerSelected(gameId: GameId, playerId: PlayerId) extends Event
 
   def apply(id: GameId) : Behavior[Command] = Behaviors.setup { context =>
-    context.spawn(RuleBook(id), s"rule-book-$id")
-    context.system.eventStream ! Publish(GameCreated(id))
-    state(id, context.spawn(StartingGame(id), s"starting-game-$id"))
-  }
-
-  def state(id: GameId, currentState: ActorRef[Command])  : Behavior[Command] = Behaviors.setup { context =>
-    val eventsAdaptor = context.messageAdapter[Event] { WrappedEvent(_) }
+    val eventsAdaptor = context.messageAdapter[Event](WrappedEvent(_))
     context.system.eventStream ! Subscribe(eventsAdaptor)
 
+    context.spawn(RuleBook(id), s"rule-book-$id")
+    context.system.eventStream ! Publish(GameCreated(id))
+
     Behaviors.receiveMessage {
-      case WrappedEvent(event) =>
-        println(s"Event: event")
-        Behaviors.same
+      case WrappedEvent(event) => event match {
+        case GameCreated(id) =>
+          context.spawn(StartingGame(id), s"starting-$id")
+          Behaviors.same
+
+        case other =>
+          println(s"Unhandled event: $other")
+          Behaviors.stopped
+      }
 
       case other =>
-        currentState ! other
+        println(s"Unhandled command: $other")
         Behaviors.same
     }
   }
-
 }

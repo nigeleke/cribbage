@@ -34,13 +34,14 @@ object CutForDealRule {
 
   def cutCards(gameId: GameId, players: Set[PlayerId]) : Behavior[Command] =
     Behaviors.setup { context =>
-      val (cut1 :: cut2 :: _) = players.zip(Deck.shuffled()).map(cut => Cut(cut._1, cut._2)).toList
-
-      context.system.eventStream ! Publish(DealerCutRevealed(gameId, cut1.player, cut1.card))
-      context.system.eventStream ! Publish(DealerCutRevealed(gameId, cut2.player, cut2.card))
-
-      if (cut1.rank == cut2.rank) cutCards(gameId, players)
-      else notifyDealerSelected(gameId, cut1, cut2)
+      val cuts = players.zip(Deck.shuffled()).toMap
+      val reveals = cuts.map(cut => DealerCutRevealed(gameId, cut._1, cut._2))
+      reveals.foreach(reveal => context.system.eventStream ! Publish(reveal))
+      val sameRank = cuts.groupBy(_._2.rank).size
+      println(s"${cuts.values}\n$sameRank")
+//      if (cut1.rank == cut2.rank) cutCards(gameId, players)
+//      else notifyDealerSelected(gameId, cut1, cut2)
+      Behaviors.same // TODO: Above
     }
 
   def notifyDealerSelected(gameId: GameId, cut1: Cut, cut2: Cut) : Behavior[Command] =

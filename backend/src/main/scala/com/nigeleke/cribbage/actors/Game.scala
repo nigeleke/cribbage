@@ -1,11 +1,8 @@
 package com.nigeleke.cribbage.actors
 
-import java.util.UUID
-
-import akka.actor.typed.eventstream.EventStream.{Publish, Subscribe}
+import akka.actor.typed.eventstream.EventStream.Subscribe
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import com.nigeleke.cribbage.actors.states.game.StartingGame
 import com.nigeleke.cribbage.model.Card
 import com.nigeleke.cribbage.model.Card.{Id => CardId}
 import com.nigeleke.cribbage.model.Game.{Id => GameId}
@@ -33,7 +30,7 @@ object Game {
   final case class Players(replyTo: ActorRef[Set[PlayerId]]) extends Query
 
   sealed trait Event
-  final case class GameCreated(gameId: GameId) extends Event
+//  final case class GameCreated(gameId: GameId) extends Event
   final case class PlayerJoined(gameId: GameId, playerId: PlayerId) extends Event
   final case class DealerCutRevealed(gameId: GameId, playerId: PlayerId, card: Card) extends Event
   final case class DealerSelected(gameId: GameId, playerId: PlayerId) extends Event
@@ -43,13 +40,13 @@ object Game {
     context.system.eventStream ! Subscribe(eventsAdaptor)
 
     context.spawn(RuleBook(id), s"rule-book-$id")
-    context.system.eventStream ! Publish(GameCreated(id))
+// TODO: published by supervisor    context.system.eventStream ! Publish(GameCreated(id))
 
     Behaviors.receiveMessage {
       case WrappedEvent(event) => event match {
-        case GameCreated(id) =>
-          context.spawn(StartingGame(id), s"starting-$id")
-          Behaviors.same
+//        case GameCreated(id) =>
+//          context.spawn(StartingGame(id), s"starting-$id")
+//          Behaviors.same
 
         case other =>
           println(s"Unhandled event: $other")

@@ -6,9 +6,7 @@ import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import akka.actor.typed.eventstream.EventStream.{Publish, Subscribe}
 import com.nigeleke.cribbage.actors.Game.{DealerCutRevealed, DealerSelected, PlayerJoined, Event => GameEvent}
 import com.nigeleke.cribbage.actors.rules.CutForDealRule
-import com.nigeleke.cribbage.model.Card
 import com.nigeleke.cribbage.model.Game.{Id => GameId}
-import com.nigeleke.cribbage.suit.{Face, Suit}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 

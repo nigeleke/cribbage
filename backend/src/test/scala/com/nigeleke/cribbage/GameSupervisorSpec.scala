@@ -8,7 +8,6 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.Serializati
 import com.nigeleke.cribbage.actors.GameSupervisor
 import com.nigeleke.cribbage.actors.GameSupervisor._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.matchers.should
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 

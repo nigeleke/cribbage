@@ -2,87 +2,87 @@ package com.nigeleke.cribbage
 
 import java.util.UUID
 
-import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
-import akka.actor.typed.eventstream.EventStream.Subscribe
+import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestProbe}
+import akka.actor.typed.ActorRef
+import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
+import com.nigeleke.cribbage.actors.Game
 import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.actors.states.game.StartingGame
-import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
+import com.nigeleke.cribbage.actors.handlers.StartingGame
+import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class StartingGameSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with Matchers {
-
-  val gameId = UUID.randomUUID()
-
-  val eventsProbe = testKit.createTestProbe[Event]()
-  testKit.system.eventStream ! Subscribe(eventsProbe.ref)
+class StartingGameSpec
+  extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config)
+    with AnyWordSpecLike
+    with Matchers {
 
   "A StartingGame" should {
-    "be initialised with no players" in {
-      val probe = testKit.createTestProbe[Set[PlayerId]]()
-      val game = testKit.spawn(StartingGame(gameId))
-      game ! Players(probe.ref)
-      probe.expectMessage(Set.empty[PlayerId])
+
+    "be initialised with no players" in withStartingGameAndProbes { (game, eventProbe, responseProbe) =>
+      game ! Players(responseProbe.ref)
+      responseProbe.expectMessage(Set.empty[PlayerId])
+      eventProbe.expectNoMessage
     }
 
-    "allow a new player to join" in {
-      val game = testKit.spawn(StartingGame(gameId))
+    "allow a new player to join" in withStartingGameAndProbes { (game, eventProbe, responseProbe) =>
       val playerId = UUID.randomUUID
+
       game ! Join(playerId)
+      eventProbe.expectMessage(PlayerJoined(playerId))
 
-      eventsProbe.expectMessage(PlayerJoined(gameId, playerId))
-
-      val probe = testKit.createTestProbe[Set[PlayerId]]()
-      game ! Players(probe.ref)
-      probe.expectMessage(Set(playerId))
+      game ! Players(responseProbe.ref)
+      responseProbe.expectMessage(Set(playerId))
     }
 
-    "allow two new players to join" in {
-      val game = testKit.spawn(StartingGame(gameId))
-      val player1Id = UUID.randomUUID
-      val player2Id = UUID.randomUUID
+    "allow two new players to join" in withStartingGameAndProbes { (game, eventProbe, responseProbe) =>
+      val (player1Id, player2Id) = (UUID.randomUUID, UUID.randomUUID)
+
       game ! Join(player1Id)
+      eventProbe.expectMessage(PlayerJoined(player1Id))
+
       game ! Join(player2Id)
+      eventProbe.expectMessage(PlayerJoined(player2Id))
 
-      eventsProbe.expectMessage(PlayerJoined(gameId, player1Id))
-      eventsProbe.expectMessage(PlayerJoined(gameId, player2Id))
-
-      val probe = testKit.createTestProbe[Set[PlayerId]]()
-      game ! Players(probe.ref)
-      probe.expectMessage(Set(player1Id, player2Id))
+      game ! Players(responseProbe.ref)
+      responseProbe.expectMessage(Set(player1Id, player2Id))
     }
 
-    "not allow three players to join" in {
-      val game = testKit.spawn(StartingGame(gameId))
-      val player1Id = UUID.randomUUID
-      val player2Id = UUID.randomUUID
-      val player3Id = UUID.randomUUID
-      game ! Join(player1Id)
-      game ! Join(player2Id)
+    "not allow three players to join" in withStartingGameAndProbes { (game, eventProbe, responseProbe) =>
+      val (player1Id, player2Id, player3Id) = (UUID.randomUUID, UUID.randomUUID, UUID.randomUUID)
 
-      eventsProbe.receiveMessages(2)
+      game ! Join(player1Id)
+      eventProbe.expectMessage(PlayerJoined(player1Id))
+
+      game ! Join(player2Id)
+      eventProbe.expectMessage(PlayerJoined(player2Id))
 
       game ! Join(player3Id)
-      eventsProbe.expectNoMessage()
+      eventProbe.expectNoMessage()
 
-      val probe = testKit.createTestProbe[Set[PlayerId]]()
-      game ! Players(probe.ref)
-      probe.expectMessage(Set(player1Id, player2Id))
+      game ! Players(responseProbe.ref)
+      responseProbe.expectMessage(Set(player1Id, player2Id))
     }
 
-    "not allow the same player to join twice" in {
-      val game = testKit.spawn(StartingGame(gameId))
+    "not allow the same player to join twice" in withStartingGameAndProbes { (game, eventProbe, responseProbe) =>
       val playerId = UUID.randomUUID
-      game ! Join(playerId)
-      eventsProbe.receiveMessages(1)
 
       game ! Join(playerId)
-      eventsProbe.expectNoMessage()
+      eventProbe.expectMessage(PlayerJoined(playerId))
 
-      val probe = testKit.createTestProbe[Set[PlayerId]]()
-      game ! Players(probe.ref)
-      probe.expectMessage(Set(playerId))
+      game ! Join(playerId)
+      eventProbe.expectNoMessage()
+
+      game ! Players(responseProbe.ref)
+      responseProbe.expectMessage(Set(playerId))
     }
+  }
+
+  def withStartingGameAndProbes(f: (ActorRef[Game.Command], TestProbe[Game.Event], TestProbe[Set[PlayerId]]) => Unit) = {
+    val responseProbe = testKit.createTestProbe[Set[PlayerId]]()
+    val eventProbe = testKit.createTestProbe[Game.Event]()
+    val game = testKit.spawn(StartingGame(eventProbe.ref))
+    f(game, eventProbe, responseProbe)
   }
 
 }

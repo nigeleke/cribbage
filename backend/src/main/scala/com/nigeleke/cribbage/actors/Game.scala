@@ -1,8 +1,10 @@
 package com.nigeleke.cribbage.actors
 
-import akka.actor.typed.eventstream.EventStream.Subscribe
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
+import akka.persistence.typed.PersistenceId
+import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
+import com.nigeleke.cribbage.actors.handlers.StartingGame
 import com.nigeleke.cribbage.model.Card
 import com.nigeleke.cribbage.model.Card.{Id => CardId}
 import com.nigeleke.cribbage.model.Game.{Id => GameId}
@@ -30,32 +32,27 @@ object Game {
   final case class Players(replyTo: ActorRef[Set[PlayerId]]) extends Query
 
   sealed trait Event
-//  final case class GameCreated(gameId: GameId) extends Event
-  final case class PlayerJoined(gameId: GameId, playerId: PlayerId) extends Event
-  final case class DealerCutRevealed(gameId: GameId, playerId: PlayerId, card: Card) extends Event
-  final case class DealerSelected(gameId: GameId, playerId: PlayerId) extends Event
+  final case class PlayerJoined(playerId: PlayerId) extends Event
+  final case class DealerCutRevealed(playerId: PlayerId, card: Card) extends Event
+  final case class DealerSelected(playerId: PlayerId) extends Event
+
+  final case class State(ruleBook: ActorRef[RuleBook.Command], commandHandler: ActorRef[Game.Command])
 
   def apply(id: GameId) : Behavior[Command] = Behaviors.setup { context =>
-    val eventsAdaptor = context.messageAdapter[Event](WrappedEvent(_))
-    context.system.eventStream ! Subscribe(eventsAdaptor)
+    val eventsAdaptor = context.messageAdapter[Event](WrappedEvent)
 
-    context.spawn(RuleBook(id), s"rule-book-$id")
-// TODO: published by supervisor    context.system.eventStream ! Publish(GameCreated(id))
-
-    Behaviors.receiveMessage {
-      case WrappedEvent(event) => event match {
-//        case GameCreated(id) =>
-//          context.spawn(StartingGame(id), s"starting-$id")
-//          Behaviors.same
-
-        case other =>
-          println(s"Unhandled event: $other")
-          Behaviors.stopped
-      }
-
-      case other =>
-        println(s"Unhandled command: $other")
-        Behaviors.same
-    }
+    EventSourcedBehavior[Command, Event, State](
+      persistenceId = PersistenceId("game", id.toString),
+      emptyState = State(
+        context.spawn(RuleBook(eventsAdaptor), s"rule-book-$id"),
+        context.spawn(StartingGame(eventsAdaptor), s"starting-$id")),
+      commandHandler = onCommand,
+      eventHandler = onEvent
+    )
   }
+
+  def onCommand(state: State, command: Command) : Effect[Event, State] =
+    Effect.none.thenRun { newState => newState.commandHandler ! command}
+
+  def onEvent(state: State, event: Event) : State = ???
 }

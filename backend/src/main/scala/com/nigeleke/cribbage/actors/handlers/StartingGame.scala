@@ -24,7 +24,8 @@ object StartingGame {
         replyTo ! players
         Behaviors.same
 
-      case _ =>
+      case other =>
+        println(s"Starting $other")
         Behaviors.unhandled
     }
 

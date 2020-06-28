@@ -11,15 +11,6 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 class CutForDealRuleSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with Matchers {
 
-  type Rule = ActorRef[CutForDealRule.Command]
-  type Probe = TestProbe[CutForDealRule.Event]
-
-  private def withRuleAndProbe(f: (Rule, Probe) => Unit) = {
-    val probe = createTestProbe[CutForDealRule.Event]()
-    val rule = spawn(CutForDealRule(probe.ref))
-    f(rule, probe)
-  }
-
   "The CutForDealRule" should {
     "do nothing" when {
 
@@ -64,6 +55,15 @@ class CutForDealRuleSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike 
           }
       }
     }
+  }
+
+  type Rule = ActorRef[CutForDealRule.Command]
+  type Probe = TestProbe[CutForDealRule.Event]
+
+  private def withRuleAndProbe(f: (Rule, Probe) => Unit) = {
+    val probe = createTestProbe[CutForDealRule.Event]()
+    val rule = spawn(CutForDealRule(probe.ref))
+    f(rule, probe)
   }
 
 }

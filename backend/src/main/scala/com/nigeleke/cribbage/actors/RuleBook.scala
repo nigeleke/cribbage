@@ -2,7 +2,7 @@ package com.nigeleke.cribbage.actors
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
-import com.nigeleke.cribbage.actors.rules.CutForDealRule
+import com.nigeleke.cribbage.actors.rules.{CutForDealRule, DealerRule}
 
 // SRR: Arbitrate the rules during the course of the Game
 object RuleBook {
@@ -21,7 +21,8 @@ object RuleBook {
       }
 
     rules(
-      context.spawn(CutForDealRule(notify), s"cut-for-deal-rule")
+      context.spawn(CutForDealRule(notify), "cut-for-deal-rule"),
+      context.spawn(DealerRule(notify), "dealer-rule")
     )
   }
 

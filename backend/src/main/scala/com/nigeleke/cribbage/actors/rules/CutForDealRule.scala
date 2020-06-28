@@ -3,17 +3,12 @@ package com.nigeleke.cribbage.actors.rules
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.actors.RuleBook
 import com.nigeleke.cribbage.model.{Card, Deck}
 import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
 
-object CutForDealRule {
+object CutForDealRule extends Rule {
 
-  type Command = RuleBook.Command
-
-  type Event = RuleBook.Event
-
-  def apply(notify: ActorRef[Event]) : Behavior[Command] = Behaviors.setup { context =>
+  def apply(notify: ActorRef[Event]) : Behavior[Command] = {
 
     def waitForPlayers(players: Set[PlayerId]) : Behavior[Command] =
       Behaviors.receiveMessage {
@@ -37,28 +32,21 @@ object CutForDealRule {
 
     def cutCards(players: Set[PlayerId])  = {
       val cuts = players.zip(Deck.shuffled()).toMap
-      println(s"cutCards: $cuts")
       val reveals = cuts.map(cut => DealerCutRevealed(cut._1, cut._2))
       reveals.foreach(reveal => notify ! reveal)
       cuts
     }
 
-    def sameRank(cuts: Map[PlayerId, Card]) = {
-      val same = cuts.view.groupBy(_._2.rank).size == 1
-      println(s"sameRank: $same")
-      same
-    }
+    def sameRank(cuts: Map[PlayerId, Card]) = cuts.view.groupBy(_._2.rank).size == 1
 
     def notifyDealerSelected(cuts: Map[PlayerId, Card]): Unit = {
       val cutsList = cuts.toList
       val (cut1, cut2) = (cutsList.head, cutsList.last)
       val dealer = if (cut1._2.rank < cut2._2.rank) cut1._1 else cut2._1
-      println(s"notifyDealerSelected $dealer")
       notify ! DealerSelected(dealer)
     }
 
     waitForPlayers(Set.empty)
   }
-
 
 }

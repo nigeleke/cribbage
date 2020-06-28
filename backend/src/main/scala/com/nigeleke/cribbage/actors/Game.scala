@@ -35,24 +35,45 @@ object Game {
   final case class PlayerJoined(playerId: PlayerId) extends Event
   final case class DealerCutRevealed(playerId: PlayerId, card: Card) extends Event
   final case class DealerSelected(playerId: PlayerId) extends Event
+  final case class HandDealt(playerId: PlayerId, hand: Seq[CardId]) extends Event
 
   final case class State(ruleBook: ActorRef[RuleBook.Command], commandHandler: ActorRef[Game.Command])
 
   def apply(id: GameId) : Behavior[Command] = Behaviors.setup { context =>
-    val eventsAdaptor = context.messageAdapter[Event](WrappedEvent)
+    val eventAdaptor = context.messageAdapter[Event](WrappedEvent)
 
     EventSourcedBehavior[Command, Event, State](
       persistenceId = PersistenceId("game", id.toString),
       emptyState = State(
-        context.spawn(RuleBook(eventsAdaptor), s"rule-book-$id"),
-        context.spawn(StartingGame(eventsAdaptor), s"starting-$id")),
+        context.spawn(RuleBook(eventAdaptor), s"rule-book-$id"),
+        context.spawn(StartingGame(eventAdaptor), s"starting-$id")),
       commandHandler = onCommand,
-      eventHandler = onEvent
+      eventHandler = onEvent(eventAdaptor)
     )
   }
 
-  def onCommand(state: State, command: Command) : Effect[Event, State] =
-    Effect.none.thenRun { newState => newState.commandHandler ! command}
+  def onCommand(state: State, command: Command) : Effect[Event, State] = command match {
+    case WrappedEvent(event) => Effect.persist(event).thenRun(forwardToRuleBook(event))
+    case _ => Effect.none.thenRun(forwardToCommandHandler(command))
+  }
 
-  def onEvent(state: State, event: Event) : State = ???
+  private def forwardToRuleBook(event: Event)(state: State) : Unit = state.ruleBook ! event
+
+  private def forwardToCommandHandler(command: Command)(state: State): Unit = state.commandHandler ! command
+
+  def onEvent(notify: ActorRef[Event])(state: State, event: Event) : State = {
+    println(s"Event: $event")
+
+    event match {
+      case PlayerJoined(_) => state
+      case DealerCutRevealed(_, _) => state
+      case DealerSelected(playerId) =>
+        state
+
+      case other =>
+        println(s"Other event: $other")
+        state
+    }
+  }
+
 }

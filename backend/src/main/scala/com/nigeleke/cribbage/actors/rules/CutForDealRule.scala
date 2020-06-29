@@ -10,7 +10,7 @@ object CutForDealRule extends Rule {
 
   def apply(notify: ActorRef[Event]) : Behavior[Command] = {
 
-    def waitForPlayers(players: Set[PlayerId]) : Behavior[Command] =
+    def waitForPlayers(players: Set[PlayerId]): Behavior[Command] =
       Behaviors.receiveMessage {
         case PlayerJoined(playerId) =>
           if (players.isEmpty) waitForPlayers(players + playerId)
@@ -20,18 +20,18 @@ object CutForDealRule extends Rule {
           Behaviors.ignore
       }
 
-    def cutCardsUntilDealerSelected(players: Set[PlayerId]) : Behavior[Command] = {
+    def cutCardsUntilDealerSelected(players: Set[PlayerId]): Behavior[Command] = {
       Iterator
         .continually(cutCards(players))
         .dropWhile(sameRank)
         .take(1)
         .foreach(notifyDealerSelected)
 
-      Behaviors.stopped
-    }
+    Behaviors.ignore
+  }
 
     def cutCards(players: Set[PlayerId])  = {
-      val cuts = players.zip(Deck.shuffled()).toMap
+      val cuts = players.toList.zip(Deck.shuffled()).toMap
       val reveals = cuts.map(cut => DealerCutRevealed(cut._1, cut._2))
       reveals.foreach(reveal => notify ! reveal)
       cuts

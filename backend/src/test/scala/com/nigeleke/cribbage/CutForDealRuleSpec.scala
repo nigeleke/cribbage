@@ -42,17 +42,17 @@ class CutForDealRuleSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike 
           probe.expectMessageType[DealerCutRevealed],
           probe.expectMessageType[DealerCutRevealed])
 
-        rule ! PlayerJoined(UUID.randomUUID())
-        rule ! PlayerJoined(UUID.randomUUID())
+          rule ! PlayerJoined(UUID.randomUUID())
+          rule ! PlayerJoined(UUID.randomUUID())
 
-        Iterator
-          .continually(expectReveals)
-          .dropWhile(sameCardRanks)
-          .take(1)
-          .foreach { reveals =>
-            val dealerSelected = probe.expectMessageType[DealerSelected]
-            dealerSelected should be(DealerSelected(expectedDealer(reveals)))
-          }
+          Iterator
+            .continually(expectReveals)
+            .dropWhile(sameCardRanks)
+            .take(1)
+            .foreach { reveals =>
+              val dealerSelected = probe.expectMessageType[DealerSelected]
+              dealerSelected should be(DealerSelected(expectedDealer(reveals)))
+            }
       }
     }
   }

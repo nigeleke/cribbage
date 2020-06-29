@@ -34,12 +34,22 @@ class GameSpec
     "invoke the CutForDealRule" when {
 
       "two players have joined" in {
+        val probe = testKit.createTestProbe()
+
         val (player1Id, player2Id) = (UUID.randomUUID(), UUID.randomUUID())
 
-        println(s"$player1Id $player2Id")
+        val result = Seq(Join(player1Id), Join(player2Id)).map { command =>
+          val r = eventSourcedTestKit.runCommand(command)
+          probe.expectNoMessage()
+          r
+        }.head
 
-        val result = Seq(Join(player1Id), Join(player2Id)).map(eventSourcedTestKit.runCommand(_)).last
-        result.state.commandHandler.toString should contain("/discarding-")
+        println(s"result: $result")
+        result.state.players.size should be(2)
+        result.state.optDealer should not be(empty)
+        result.state.hands.size should be(2)
+
+        fail()
       }
 
     }

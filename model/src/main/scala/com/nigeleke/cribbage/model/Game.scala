@@ -18,4 +18,11 @@ object Game {
   type Id = UUID
 
   def apply(id: Id) : Game = Game(id, Set.empty, None, Map.empty, Seq.empty, Seq.empty, Seq.empty, Map.empty)
+
+  implicit class GameOps(game: Game) {
+    def withPlayer(id: PlayerId) = game.copy(players = game.players + id)
+    def withDealer(id: PlayerId) = game.copy(optDealer = Some(id))
+    def withHand(id: PlayerId, hand: Hand) = game.copy(hands = game.hands.updated(id, hand))
+  }
+
 }

@@ -1,69 +1,42 @@
 package com.nigeleke.cribbage
 
-import java.util.UUID
-
-import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestProbe}
-import akka.actor.typed.ActorRef
-import com.nigeleke.cribbage.actors.Game.{DealerCutRevealed, DealerSelected, PlayerJoined}
+import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
+import com.nigeleke.cribbage.actors.Game.{CutForDeal, Starting}
 import com.nigeleke.cribbage.actors.rules.CutForDealRule
+import com.nigeleke.cribbage.model.Game
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class CutForDealRuleSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with Matchers {
 
   "The CutForDealRule" should {
-    "do nothing" when {
 
-      "created on behalf of a game" in withRuleAndProbe { (_, probe) =>
-        probe.expectNoMessage()
+    val game = Game(randomId)
+
+    "do nothing" when {
+      "created on behalf of a game" in {
+        CutForDealRule.commands(Starting(game)) should be(empty)
       }
 
-      "first player joins" in withRuleAndProbe { (rule, probe) =>
-        rule ! PlayerJoined(UUID.randomUUID())
-        probe.expectNoMessage()
+      "first player joins" in {
+        val gameUnderTest = game.withPlayer(randomId)
+        CutForDealRule.commands(Starting(gameUnderTest)) should be(empty)
       }
     }
 
     "select dealer" when {
-      "second player joins game" in withRuleAndProbe { (rule, probe) =>
-        def sameCardRanks(cuts: (DealerCutRevealed, DealerCutRevealed)) = {
-          val cutRank1 = cuts._1.card.rank
-          val cutRank2 = cuts._2.card.rank
-          cutRank1 == cutRank2
-        }
-
-        def expectedDealer(cuts: (DealerCutRevealed, DealerCutRevealed)) = {
-          val (player1, cutRank1) = (cuts._1.playerId, cuts._1.card.rank)
-          val (player2, cutRank2) = (cuts._2.playerId, cuts._2.card.rank)
-          if (cutRank1 < cutRank2) player1 else player2
-        }
-
-        def expectReveals() = (
-          probe.expectMessageType[DealerCutRevealed],
-          probe.expectMessageType[DealerCutRevealed])
-
-          rule ! PlayerJoined(UUID.randomUUID())
-          rule ! PlayerJoined(UUID.randomUUID())
-
-          Iterator
-            .continually(expectReveals)
-            .dropWhile(sameCardRanks)
-            .take(1)
-            .foreach { reveals =>
-              val dealerSelected = probe.expectMessageType[DealerSelected]
-              dealerSelected should be(DealerSelected(expectedDealer(reveals)))
-            }
+      "second player joins game and no dealer" in {
+        val gameUnderTest = game.withPlayer(randomId).withPlayer(randomId)
+        CutForDealRule.commands(Starting(gameUnderTest)) should contain inOrderElementsOf(Seq(CutForDeal))
       }
     }
+
+    "not select dealer" when {
+      "second player joins game and dealer already present" in {
+        val gameUnderTest = game.withPlayer(randomId).withPlayer(randomId).withDealer(randomId)
+        CutForDealRule.commands(Starting(gameUnderTest)) should be(empty)
+      }
+    }
+
   }
-
-  type Rule = ActorRef[CutForDealRule.Command]
-  type Probe = TestProbe[CutForDealRule.Event]
-
-  private def withRuleAndProbe(f: (Rule, Probe) => Unit) = {
-    val probe = createTestProbe[CutForDealRule.Event]()
-    val rule = spawn(CutForDealRule(probe.ref))
-    f(rule, probe)
-  }
-
 }

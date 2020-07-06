@@ -122,7 +122,7 @@ digraph Cribbage {
 		node [color=blue, fontcolor=white];
 		CreateGame
 		JoinGame
-		SelectDealer
+		CutForDeal
 		DealHands
 		DiscardCribCards
 		MakeCut
@@ -161,7 +161,7 @@ digraph Cribbage {
 	CreateGame -> GameCreated
 	JoinGame -> PlayerJoined
 	JoinGame -> OpponentJoined
-	SelectDealer -> DealerSelected
+	CutForDeal -> DealerSelected
 	DealHands -> HandsDealt
 	DiscardCribCards -> DealerCribCardsDiscarded
 	DiscardCribCards -> PoneCribCardsDiscarded
@@ -181,7 +181,7 @@ digraph Cribbage {
 	User -> CreateGame
 	Player -> JoinGame
 	Opponent -> JoinGame
-	CribbageRules -> SelectDealer
+	CribbageRules -> CutForDeal
 	Dealer -> DealHands
 	Pone -> DiscardCribCards
 	Dealer -> DiscardCribCards

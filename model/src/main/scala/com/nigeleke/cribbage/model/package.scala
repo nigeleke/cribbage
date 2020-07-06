@@ -1,7 +1,5 @@
 package com.nigeleke.cribbage
 
-import java.util.UUID
-
 import model.Card.{Id => CardId}
 import model.Player.{Id => PlayerId}
 

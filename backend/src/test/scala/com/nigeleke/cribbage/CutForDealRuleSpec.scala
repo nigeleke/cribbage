@@ -1,13 +1,12 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import com.nigeleke.cribbage.actors.Game.{CutForDeal, Starting}
 import com.nigeleke.cribbage.actors.rules.CutForDealRule
 import com.nigeleke.cribbage.model.Game
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.wordspec.AnyWordSpec
 
-class CutForDealRuleSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with Matchers {
+class CutForDealRuleSpec extends AnyWordSpec with Matchers {
 
   "The CutForDealRule" should {
 
@@ -33,7 +32,8 @@ class CutForDealRuleSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike 
 
     "not select dealer" when {
       "second player joins game and dealer already present" in {
-        val gameUnderTest = game.withPlayer(randomId).withPlayer(randomId).withDealer(randomId)
+        val (player1Id, player2Id) = (randomId, randomId)
+        val gameUnderTest = game.withPlayer(player1Id).withPlayer(player2Id).withDealer(player1Id)
         CutForDealRule.commands(Starting(gameUnderTest)) should be(empty)
       }
     }

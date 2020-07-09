@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
+import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKit}
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.Game
@@ -13,22 +13,30 @@ class StartingGameSpec
   extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config)
     with AnyWordSpecLike
     with BeforeAndAfterEach
+    with LogCapturing
     with Matchers {
 
   private val gameId = randomId
+  private val persistenceId = s"game|$gameId"
 
-  private val eventSourcedTestKit =
+  val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
       Game(gameId),
       SerializationSettings.disabled)
 
   private val persistenceTestKit = eventSourcedTestKit.persistenceTestKit
-  private def persisted = persistenceTestKit.persistedInStorage(s"game|$gameId")
+  private def persisted = persistenceTestKit.persistedInStorage(persistenceId)
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     eventSourcedTestKit.clear()
+    persistenceTestKit.clearAll()
+  }
+
+  override protected def afterEach(): Unit = {
+    super.afterEach()
+    testKit.createTestProbe().expectNoMessage() // drain Commands...
   }
 
   "A Starting Game" should {
@@ -41,7 +49,8 @@ class StartingGameSpec
       result.event should be(PlayerJoined(playerId))
       result.state should be(Starting(model.Game(gameId).withPlayer(playerId)))
 
-      persisted should contain theSameElementsInOrderAs(Seq(PlayerJoined(playerId)))}
+      persisted should contain theSameElementsInOrderAs(Seq(PlayerJoined(playerId)))
+    }
 
     "allow two new players to join" in {
       val (player1Id, player2Id) = (randomId, randomId)
@@ -78,6 +87,17 @@ class StartingGameSpec
       result.state should be(Starting(model.Game(gameId).withPlayer(playerId)))
 
       persisted.count(_ == PlayerJoined(playerId)) should be(1)
+    }
+
+    "deal hands" when {
+      "two players have joined" in {
+        val (player1Id, player2Id) = (randomId, randomId)
+        eventSourcedTestKit.runCommand(Join(player1Id))
+        eventSourcedTestKit.runCommand(Join(player2Id))
+
+        testKit.createTestProbe().expectNoMessage() // Allow knock-on events to be processed
+        persisted.count(_.isInstanceOf[HandsDealt.type]) should be(1)
+      }
     }
   }
 

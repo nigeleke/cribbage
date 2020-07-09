@@ -6,6 +6,7 @@ import model.Player.{Id => PlayerId}
 package object model {
 
   type Players = Set[PlayerId]
+  type Cards = Seq[CardId]
   type Hand = Seq[CardId]
   type Hands = Map[PlayerId, Hand]
   type Crib = Seq[CardId]

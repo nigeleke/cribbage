@@ -1,13 +1,12 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import com.nigeleke.cribbage.actors.Game._
 import com.nigeleke.cribbage.actors.rules.DealRule
 import com.nigeleke.cribbage.model.Game
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.wordspec.AnyWordSpec
 
-class DealRuleSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with Matchers {
+class DealRuleSpec extends AnyWordSpec with Matchers {
 
   "The DealRule" should {
 

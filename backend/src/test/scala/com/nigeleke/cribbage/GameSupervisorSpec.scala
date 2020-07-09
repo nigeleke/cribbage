@@ -2,7 +2,7 @@ package com.nigeleke.cribbage
 
 import java.util.UUID
 
-import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
+import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKit}
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.GameSupervisor
@@ -15,6 +15,7 @@ class GameSupervisorSpec
   extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config)
     with AnyWordSpecLike
     with BeforeAndAfterEach
+    with LogCapturing
     with Matchers {
 
   private val eventSourcedTestKit =

@@ -13,13 +13,15 @@ object Deck {
 
   def apply() : Deck = Deck(cards)
 
-  def shuffled() : Deck = Deck(Random.shuffle(cards))
-
-  private lazy val cards = (for {
+  private def cards = (for {
     face <- Face.values()
     suit <- Suit.values()
   } yield Card(UUID.randomUUID, face, suit)).toSeq
 
   implicit def deckToSeqCard(deck: Deck) : Seq[Card] = deck.cards
+
+  implicit class DeckOps(deck: Deck) {
+    val shuffled = Deck(Random.shuffle(deck.cards))
+  }
 
 }

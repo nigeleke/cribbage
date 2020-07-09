@@ -28,22 +28,19 @@ object Game {
     }
 
     def withDealer(id: PlayerId): Game = {
-      if (!game.players.contains(id)) {
-        println(s"require error $id")
-      }
       require(game.players.contains(id))
       game.copy(optDealer = Some(id))
     }
 
     def withHand(id: PlayerId, hand: Hand) = {
-//      require(game.players.contains(id))
+      require(game.players.contains(id))
       game.copy(hands = game.hands.updated(id, hand))
     }
 
     def withCribDiscard(id: PlayerId, cards: Cards): Game = {
-//      require(game.players.contains(id))
-//      require(cards.size == 2)
-//      require((game.hands(id).toSet -- cards).size == 4)
+      require(game.players.contains(id))
+      require(cards.size == 2)
+      require((game.hands(id).toSet -- cards).size == 4)
       val updatedHand = game.hands(id).filterNot(cards.contains(_))
       val updatedCrib = game.crib ++ cards
       game.copy(hands = game.hands.updated(id, updatedHand), crib = updatedCrib)

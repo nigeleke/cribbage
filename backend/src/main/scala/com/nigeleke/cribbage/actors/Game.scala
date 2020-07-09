@@ -40,10 +40,12 @@ object Game {
   final case class HandDealt(playerId: PlayerId, hand: Hand) extends Event
   final case object HandsDealt extends Event
   final case class CribCardsDiscarded(playerId: PlayerId, cards: Cards) extends Event
+  final case class CutMade(card: Card) extends Event
 
   sealed trait State { def game: model.Game }
   final case class Starting(game: model.Game) extends State
   final case class Discarding(game: model.Game) extends State
+  final case class Playing(game: model.Game) extends State
 
   def apply(id: GameId) : Behavior[Command] = Behaviors.setup { context =>
     implicit val notify = context.self
@@ -71,6 +73,8 @@ object Game {
             println(s"Unhandled Command $command\n  $state")
             Effect.unhandled
         }
+      case Playing(_) =>
+        Effect.unhandled
     }
   }
 
@@ -93,6 +97,10 @@ object Game {
             println(s"Unhandled Event $event\n  $state")
             illegalState(state, event)
         }
+      case Playing(_) =>
+        println(s"Unhandled Event $event\n  $state")
+        illegalState(state, event)
+
 
     }
   }

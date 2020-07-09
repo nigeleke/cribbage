@@ -4,7 +4,7 @@ import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKi
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.Game
-import com.nigeleke.cribbage.actors.Game.{Command, CribCardsDiscarded, DealerSelected, DiscardCribCards, Discarding, Event, HandDealt, HandsDealt, PlayerJoined, State}
+import com.nigeleke.cribbage.actors.Game.{Command, CribCardsDiscarded, CutMade, DealerSelected, DiscardCribCards, Discarding, Event, HandDealt, HandsDealt, MakeCut, PlayerJoined, Playing, State}
 import com.nigeleke.cribbage.model.Deck
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -44,7 +44,7 @@ class DiscardingGameSpec
         HandsDealt))
   }
 
-  def restartedGame(f: model.Game => Unit) = {
+  def discardingGame(f: model.Game => Unit) = {
     val restart = eventSourcedTestKit.restart()
     val state = restart.state
     state should be(a[Discarding])
@@ -53,7 +53,7 @@ class DiscardingGameSpec
 
   "A DiscardingGame" should {
 
-    "allow a player to discard cards into the crib" in restartedGame { game =>
+    "allow a player to discard cards into the crib" in discardingGame { game =>
       val playerId = game.players.head
       val discards = game.hands(playerId).take(2)
 
@@ -62,11 +62,13 @@ class DiscardingGameSpec
       result.event should be(CribCardsDiscarded(playerId, discards))
       result.state.game.hands(playerId) should not contain allElementsOf(discards)
       result.state.game.crib should contain allElementsOf(discards)
+
+      persisted should be(empty)
     }
 
     "not allow a discard" when {
 
-      "the discard contains cards not owned by the player" in restartedGame { game =>
+      "the discard contains cards not owned by the player" in discardingGame { game =>
         val player1Id = game.players.head
         val discards = game.hands(player1Id).take(2)
 
@@ -77,9 +79,11 @@ class DiscardingGameSpec
         result.state.game.hands(player1Id) should contain allElementsOf(discards)
         result.state.game.hands(player2Id) should not contain allElementsOf(discards)
         result.state.game.crib should be(empty)
+
+        persisted should be(empty)
       }
 
-      "the discard contains too few cards" in restartedGame { game =>
+      "the discard contains too few cards" in discardingGame { game =>
         val playerId = game.players.head
         val discards = game.hands(playerId).take(1)
 
@@ -88,9 +92,11 @@ class DiscardingGameSpec
         result.events should be(empty)
         result.state.game.hands(playerId) should contain allElementsOf(discards)
         result.state.game.crib should not contain allElementsOf(discards)
+
+        persisted should be(empty)
       }
 
-      "the discard contains too many cards" in restartedGame { game =>
+      "the discard contains too many cards" in discardingGame { game =>
         val playerId = game.players.head
         val discards = game.hands(playerId).take(3)
 
@@ -99,13 +105,15 @@ class DiscardingGameSpec
         result.events should be(empty)
         result.state.game.hands(playerId) should contain allElementsOf(discards)
         result.state.game.crib should not contain allElementsOf(discards)
+
+        persisted should be(empty)
       }
 
     }
 
     "start the Play" when {
 
-      "both Players have discarded" in restartedGame { game =>
+      "both Players have discarded" in discardingGame { game =>
         val player1Id = game.players.head
         val discards1 = game.hands(player1Id).take(2)
 
@@ -113,12 +121,17 @@ class DiscardingGameSpec
         val discards2 = game.hands(player2Id).take(2)
 
         eventSourcedTestKit.runCommand(DiscardCribCards(player1Id, discards1))
-        val result = eventSourcedTestKit.runCommand(DiscardCribCards(player2Id, discards2))
-        result.command should be(DiscardCribCards(player2Id, discards2))
-        result.events should be(empty)
+        eventSourcedTestKit.runCommand(DiscardCribCards(player2Id, discards2))
+
+        val result = eventSourcedTestKit.runCommand(MakeCut)
+        result.command should be(MakeCut)
+        result.events should be(a[CutMade])
+        result.state should be(a[Playing])
         result.state.game.hands(player1Id) should not contain allElementsOf(discards1)
         result.state.game.hands(player2Id) should not contain allElementsOf(discards2)
         result.state.game.crib should contain(allElementsOf(discards1 ++ discards2))
+
+        persisted should be(Seq(CutMade(_)))
       }
 
     }

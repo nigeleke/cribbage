@@ -1,7 +1,7 @@
 package com.nigeleke.cribbage
 
 import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.actors.rules.MakeCutRule
+import com.nigeleke.cribbage.actors.rules.CutAtStartOfPlayRule
 import com.nigeleke.cribbage.model.{Deck, Game}
 import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
 import org.scalatest.matchers.should.Matchers
@@ -9,7 +9,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class CutAtStartOfPlayRuleSpec extends AnyWordSpec with Matchers {
 
-  "The MakeCutRule" should {
+  "The CutAtStartOfPlayRule" should {
 
     val game = Game(randomId)
     val deck = Deck()
@@ -36,7 +36,7 @@ class CutAtStartOfPlayRuleSpec extends AnyWordSpec with Matchers {
           .withCribDiscard(player1Id, deck.ids.take(2))
           .withCribDiscard(player2Id, deck.ids.drop(6).take(2))
 
-        MakeCutRule.commands(Discarding(gameUnderTest)) should be(Seq(CutAtStartOfPlay))
+        CutAtStartOfPlayRule.commands(Discarding(gameUnderTest)) should be(Seq(CutAtStartOfPlay))
       }
 
     }
@@ -48,7 +48,7 @@ class CutAtStartOfPlayRuleSpec extends AnyWordSpec with Matchers {
 
         val gameUnderTest = gameWithHandsDealt(player1Id, player2Id)
 
-        MakeCutRule.commands(Discarding(gameUnderTest)) should be(empty)
+        CutAtStartOfPlayRule.commands(Discarding(gameUnderTest)) should be(empty)
       }
 
     }

@@ -5,7 +5,7 @@ import com.nigeleke.cribbage.actors.Game.PlayCutRevealed
 import com.nigeleke.cribbage.actors.handlers.Handler.{Event, State}
 import com.nigeleke.cribbage.model.Deck._
 
-object MakeCutHandler extends Handler {
+object CutAtStartOfPlayHandler extends Handler {
 
   def apply(state: State) : EffectBuilder[Event, State] = {
     val game = state.game

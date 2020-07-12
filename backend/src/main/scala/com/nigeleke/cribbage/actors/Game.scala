@@ -78,8 +78,8 @@ object Game {
 
   private def discardingStateCommandHandler(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
     command match {
-      case discard: DiscardCribCards => DiscardCribCardsHandler(state, discard).thenRun(MakeCutRule(_))
-      case CutAtStartOfPlay          => MakeCutHandler(state).thenRun(ScoreHisHeelsRule(_))
+      case discard: DiscardCribCards => DiscardCribCardsHandler(state, discard).thenRun(CutAtStartOfPlayRule(_))
+      case CutAtStartOfPlay          => CutAtStartOfPlayHandler(state).thenRun(ScoreHisHeelsRule(_))
       case _                         => unexpectedCommand(state, command)
     }
   }

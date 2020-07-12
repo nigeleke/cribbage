@@ -9,7 +9,7 @@ object MakeCutRule extends Rule {
 
     val needToCut = game.crib.size == 4
 
-    if (needToCut) Seq(MakeCut)
+    if (needToCut) Seq(CutAtStartOfPlay)
     else Seq.empty
   }
 

@@ -7,7 +7,7 @@ import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class MakeCutRuleSpec extends AnyWordSpec with Matchers {
+class CutAtStartOfPlayRuleSpec extends AnyWordSpec with Matchers {
 
   "The MakeCutRule" should {
 
@@ -25,7 +25,7 @@ class MakeCutRuleSpec extends AnyWordSpec with Matchers {
         .withHand(player2Id,deck.ids.drop(6).take(6))
     }
 
-    "issue the MakeCut command" when {
+    "issue the CutAtStartOfPlay command" when {
 
       "players have discarded all cards to the crib" in {
         import Deck._
@@ -36,12 +36,12 @@ class MakeCutRuleSpec extends AnyWordSpec with Matchers {
           .withCribDiscard(player1Id, deck.ids.take(2))
           .withCribDiscard(player2Id, deck.ids.drop(6).take(2))
 
-        MakeCutRule.commands(Discarding(gameUnderTest)) should be(Seq(MakeCut))
+        MakeCutRule.commands(Discarding(gameUnderTest)) should be(Seq(CutAtStartOfPlay))
       }
 
     }
 
-    "not issue the MakeCut command" when {
+    "not issue the CutAtStartOfPlay command" when {
 
       "player discards still required" in {
         val (player1Id, player2Id) = (randomId, randomId)

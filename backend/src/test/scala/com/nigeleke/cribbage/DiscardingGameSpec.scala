@@ -134,7 +134,7 @@ class DiscardingGameSpec
         persisted should contain allElementsOf(
           Seq(CribCardsDiscarded(player1Id, discards1),
             CribCardsDiscarded(player2Id, discards2)))
-        persisted.last should be(a[CutMade])
+        persisted.last should be(a[PlayCutRevealed])
       }
 
     }

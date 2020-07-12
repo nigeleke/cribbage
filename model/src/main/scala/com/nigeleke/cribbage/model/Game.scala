@@ -50,7 +50,9 @@ object Game {
       import Deck._
       require(game.players.contains(id))
       require(hand.forall(id => game.deck.ids.contains(id)))
-      game.copy(hands = game.hands.updated(id, hand))
+      val updatedHands = game.hands.updated(id, hand)
+      val updatedDeck = game.deck.filterNot(card => hand.contains(card.id))
+       game.copy(deck = updatedDeck, hands = updatedHands)
     }
 
     def withCribDiscard(id: PlayerId, cards: Cards): Game = {

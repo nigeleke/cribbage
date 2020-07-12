@@ -122,6 +122,25 @@ class StartingGameSpec
         persisted.count(_.isInstanceOf[HandsDealt.type]) should be(1)
       }
     }
+
+    "remove cards from deck" when {
+      "players cards have in dealt" in {
+        val (player1Id, player2Id) = (randomId, randomId)
+
+        eventSourcedTestKit.runCommand(Join(player1Id))
+        eventSourcedTestKit.runCommand(Join(player2Id))
+        drain()
+
+        val result = eventSourcedTestKit.restart()
+        val state = result.state
+        val game = state.game
+        game.players.foreach { id =>
+          game.hands(id).size should be(6)
+          game.deck should not contain allElementsOf(game.hands(id))
+        }
+        game.deck.size should be(40)
+      }
+    }
   }
 
 }

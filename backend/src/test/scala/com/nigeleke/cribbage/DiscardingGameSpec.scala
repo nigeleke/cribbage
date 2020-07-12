@@ -4,8 +4,9 @@ import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKi
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.Game
-import com.nigeleke.cribbage.actors.Game.{Command, CribCardsDiscarded, CutMade, DealerSelected, DiscardCribCards, Discarding, Event, HandDealt, HandsDealt, MakeCut, PlayerJoined, Playing, State}
+import com.nigeleke.cribbage.actors.Game._
 import com.nigeleke.cribbage.model.Deck
+import com.nigeleke.cribbage.model.Deck._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -20,6 +21,8 @@ class DiscardingGameSpec
   val gameId = randomId
   val persistenceId = s"game|$gameId"
 
+  implicit val implicitTestKit = testKit
+
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
@@ -29,26 +32,30 @@ class DiscardingGameSpec
   private val persistenceTestKit = eventSourcedTestKit.persistenceTestKit
   private def persisted = persistenceTestKit.persistedInStorage(persistenceId)
 
+  private val deck = Deck()
+  private val deckIds = deck.ids
+  private val (player1Id, player2Id) = (randomId, randomId)
+  private val initialEvents: Seq[Event] =
+    Seq(
+      DeckAllocated(deck),
+      PlayerJoined(player1Id),
+      PlayerJoined(player2Id),
+      DealerSelected(player1Id),
+      HandDealt(player1Id, deckIds.take(6)),
+      HandDealt(player2Id, deckIds.drop(6).take(6)),
+      HandsDealt)
+
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     eventSourcedTestKit.clear()
-    val (player1Id, player2Id) = (randomId, randomId)
-    val deck = Deck().shuffled.map(_.id)
-    persistenceTestKit.persistForRecovery(
-      persistenceId,
-      Seq(PlayerJoined(player1Id),
-        PlayerJoined(player2Id),
-        DealerSelected(player1Id),
-        HandDealt(player1Id, deck.take(6)),
-        HandDealt(player2Id, deck.drop(6).take(6)),
-        HandsDealt))
+    persistenceTestKit.persistForRecovery(persistenceId, initialEvents)
   }
 
   def discardingGame(f: model.Game => Unit) = {
     val restart = eventSourcedTestKit.restart()
     val state = restart.state
     state should be(a[Discarding])
-    state.game
+    f(state.game)
   }
 
   "A DiscardingGame" should {
@@ -63,7 +70,7 @@ class DiscardingGameSpec
       result.state.game.hands(playerId) should not contain allElementsOf(discards)
       result.state.game.crib should contain allElementsOf(discards)
 
-      persisted should be(empty)
+      persisted should contain theSameElementsInOrderAs(initialEvents :+ CribCardsDiscarded(playerId, discards))
     }
 
     "not allow a discard" when {
@@ -80,7 +87,7 @@ class DiscardingGameSpec
         result.state.game.hands(player2Id) should not contain allElementsOf(discards)
         result.state.game.crib should be(empty)
 
-        persisted should be(empty)
+        persisted should contain theSameElementsInOrderAs(initialEvents)
       }
 
       "the discard contains too few cards" in discardingGame { game =>
@@ -93,7 +100,7 @@ class DiscardingGameSpec
         result.state.game.hands(playerId) should contain allElementsOf(discards)
         result.state.game.crib should not contain allElementsOf(discards)
 
-        persisted should be(empty)
+        persisted should contain theSameElementsInOrderAs(initialEvents)
       }
 
       "the discard contains too many cards" in discardingGame { game =>
@@ -106,7 +113,7 @@ class DiscardingGameSpec
         result.state.game.hands(playerId) should contain allElementsOf(discards)
         result.state.game.crib should not contain allElementsOf(discards)
 
-        persisted should be(empty)
+        persisted should contain theSameElementsInOrderAs(initialEvents)
       }
 
     }
@@ -122,16 +129,12 @@ class DiscardingGameSpec
 
         eventSourcedTestKit.runCommand(DiscardCribCards(player1Id, discards1))
         eventSourcedTestKit.runCommand(DiscardCribCards(player2Id, discards2))
+        drain()
 
-        val result = eventSourcedTestKit.runCommand(MakeCut)
-        result.command should be(MakeCut)
-        result.events should be(a[CutMade])
-        result.state should be(a[Playing])
-        result.state.game.hands(player1Id) should not contain allElementsOf(discards1)
-        result.state.game.hands(player2Id) should not contain allElementsOf(discards2)
-        result.state.game.crib should contain(allElementsOf(discards1 ++ discards2))
-
-        persisted should be(Seq(CutMade(_)))
+        persisted should contain allElementsOf(
+          Seq(CribCardsDiscarded(player1Id, discards1),
+            CribCardsDiscarded(player2Id, discards2)))
+        persisted.last should be(a[CutMade])
       }
 
     }

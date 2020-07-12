@@ -7,21 +7,18 @@ import com.nigeleke.cribbage.suit.{Face, Suit}
 import scala.util.Random
 import scala.language.implicitConversions
 
-case class Deck(cards: Seq[Card])
-
 object Deck {
 
-  def apply() : Deck = Deck(cards)
+  def apply() : Deck = fullSetOfCards
 
-  private def cards = (for {
+  private def fullSetOfCards = (for {
     face <- Face.values()
     suit <- Suit.values()
-  } yield Card(UUID.randomUUID, face, suit)).toSeq
-
-  implicit def deckToSeqCard(deck: Deck) : Seq[Card] = deck.cards
+  } yield Card(UUID.randomUUID(), face, suit)).toSeq
 
   implicit class DeckOps(deck: Deck) {
-    val shuffled = Deck(Random.shuffle(deck.cards))
+    val shuffled = Random.shuffle(deck)
+    val ids = deck.map(_.id)
   }
 
 }

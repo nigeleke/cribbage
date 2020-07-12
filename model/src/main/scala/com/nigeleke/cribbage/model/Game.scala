@@ -7,10 +7,12 @@ import Game.{Id => GameId}
 import Player.{Id => PlayerId}
 
 final case class Game(id: GameId,
+                      deck: Deck,
                       players: Players,
                       optDealer: Option[PlayerId],
                       hands: Hands,
                       crib: Crib,
+                      optCut: Option[Card],
                       plays: Plays,
                       previousPlays: Seq[Plays],
                       scores: Scores)
@@ -18,9 +20,21 @@ final case class Game(id: GameId,
 object Game {
   type Id = UUID
 
-  def apply(id: Id) : Game = Game(id, Set.empty, None, Map.empty, Seq.empty, Seq.empty, Seq.empty, Map.empty)
+  def apply(id: Id) : Game =
+    Game(id,
+      deck = Seq.empty,
+      players = Set.empty,
+      optDealer = None,
+      hands = Map.empty,
+      crib = Seq.empty,
+      optCut = None,
+      plays = Seq.empty,
+      previousPlays = Seq.empty,
+      scores = Map.empty)
 
   implicit class GameOps(game: Game) {
+
+    def withDeck(deck: Deck): Game = game.copy(deck = deck)
 
     def withPlayer(id: PlayerId): Game = {
       require(game.players.size < 2)
@@ -33,7 +47,9 @@ object Game {
     }
 
     def withHand(id: PlayerId, hand: Hand) = {
+      import Deck._
       require(game.players.contains(id))
+      require(hand.forall(id => game.deck.ids.contains(id)))
       game.copy(hands = game.hands.updated(id, hand))
     }
 
@@ -44,6 +60,10 @@ object Game {
       val updatedHand = game.hands(id).filterNot(cards.contains(_))
       val updatedCrib = game.crib ++ cards
       game.copy(hands = game.hands.updated(id, updatedHand), crib = updatedCrib)
+    }
+
+    def withCut(cut: Card): Game = {
+      game.copy(optCut = Some(cut))
     }
   }
 

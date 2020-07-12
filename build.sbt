@@ -2,7 +2,7 @@ ThisBuild / organization := "com.nigeleke"
 ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / version      := "0.1-SNAPSHOT"
 
-val akkaVersion = "2.6.6"
+val akkaVersion = "2.6.7"
 val logbackVersion = "1.2.3"
 val scalaTestVersion = "3.1.2"
 
@@ -15,6 +15,7 @@ lazy val root = (project in file("."))
 lazy val backend = project
   .settings(
     scalacOptions in Compile ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlog-reflective-calls", "-Xlint"),
+    scalacOptions in Test ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlog-reflective-calls", "-Xlint"),
     javacOptions in Compile ++= Seq("-Xlint:unchecked", "-Xlint:deprecation"),
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,

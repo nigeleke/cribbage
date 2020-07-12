@@ -12,31 +12,36 @@ class MakeCutRuleSpec extends AnyWordSpec with Matchers {
   "The MakeCutRule" should {
 
     val game = Game(randomId)
-    val cardIds = Deck().map(_.id)
+    val deck = Deck()
 
     def gameWithHandsDealt(player1Id: PlayerId, player2Id: PlayerId) = {
-      game.withPlayer(player1Id)
+      import Deck._
+      game
+        .withDeck(deck)
+        .withPlayer(player1Id)
         .withPlayer(player2Id)
         .withDealer(player1Id)
-        .withHand(player1Id, cardIds.take(6))
-        .withHand(player2Id, cardIds.drop(6).take(6))
+        .withHand(player1Id,deck.ids.take(6))
+        .withHand(player2Id,deck.ids.drop(6).take(6))
     }
 
-    "make a cut" when {
+    "issue the MakeCut command" when {
 
       "players have discarded all cards to the crib" in {
+        import Deck._
+
         val (player1Id, player2Id) = (randomId, randomId)
 
         val gameUnderTest = gameWithHandsDealt(player1Id, player2Id)
-          .withCribDiscard(player1Id, cardIds.take(2))
-          .withCribDiscard(player2Id, cardIds.drop(6).take(2))
+          .withCribDiscard(player1Id, deck.ids.take(2))
+          .withCribDiscard(player2Id, deck.ids.drop(6).take(2))
 
         MakeCutRule.commands(Discarding(gameUnderTest)) should be(Seq(MakeCut))
       }
 
     }
 
-    "not make a cut" when {
+    "not issue the MakeCut command" when {
 
       "player discards still required" in {
         val (player1Id, player2Id) = (randomId, randomId)

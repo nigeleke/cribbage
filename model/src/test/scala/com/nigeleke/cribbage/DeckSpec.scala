@@ -6,6 +6,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class DeckSpec extends AnyWordSpec with Matchers {
+  import Deck._
 
   val allCards = (for {
     face <- Face.values()
@@ -15,18 +16,18 @@ class DeckSpec extends AnyWordSpec with Matchers {
   "A Deck" should {
 
     "contain 52 cards" in {
-      Deck().cards.size should be(52)
+      Deck().size should be(52)
     }
 
     "contain all cards for all Suits and Faces" when {
 
       "pristine" in {
-        Deck().cards.map(card => (card.face, card.suit)) should contain theSameElementsInOrderAs(allCards)
+        Deck().map(card => (card.face, card.suit)) should contain theSameElementsInOrderAs(allCards)
       }
 
       "shuffled" in {
         val deck = Deck()
-        deck.shuffled.cards should contain theSameElementsAs(deck.cards)
+        deck.shuffled should contain theSameElementsAs(deck)
       }
 
     }

@@ -1,5 +1,6 @@
 package com.nigeleke.cribbage.actors
 
+import akka.actor.InvalidMessageException
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
@@ -7,7 +8,7 @@ import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
 import com.nigeleke.cribbage.actors.handlers._
 import com.nigeleke.cribbage.actors.rules._
 import com.nigeleke.cribbage.model
-import com.nigeleke.cribbage.model.{Card, Cards, Hand}
+import com.nigeleke.cribbage.model.{Card, Cards, Deck, Hand}
 import com.nigeleke.cribbage.model.Game.{Id => GameId}
 import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
 
@@ -34,6 +35,7 @@ object Game {
 //  final case class Players(replyTo: ActorRef[Set[PlayerId]]) extends Query
 
   sealed trait Event
+  final case class DeckAllocated(deck: Deck) extends Event
   final case class PlayerJoined(playerId: PlayerId) extends Event
   final case class DealerCutRevealed(playerId: PlayerId, card: Card) extends Event
   final case class DealerSelected(playerId: PlayerId) extends Event
@@ -43,6 +45,7 @@ object Game {
   final case class CutMade(card: Card) extends Event
 
   sealed trait State { def game: model.Game }
+  final case class Uninitialised(game: model.Game) extends State
   final case class Starting(game: model.Game) extends State
   final case class Discarding(game: model.Game) extends State
   final case class Playing(game: model.Game) extends State
@@ -51,36 +54,39 @@ object Game {
     implicit val notify = context.self
     EventSourcedBehavior[Command, Event, State](
       persistenceId = PersistenceId("game", id.toString),
-      emptyState = Starting(model.Game(id)),
+      emptyState = Uninitialised(model.Game(id)),
       commandHandler = onCommand,
       eventHandler = onEvent)
   }
 
-  def onCommand(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
-    println(s"Command $command $state")
+  def onCommand(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] =
     state match {
+      case Uninitialised(_) =>
+        InitialisationHandler(state).thenRun(_ => notify ! command)
       case Starting(_) =>
         command match {
           case join: Join => JoinHandler(state, join).thenRun(CutForDealRule(_))
           case CutForDeal => CutForDealHandler(state).thenRun(DealRule(_))
           case DealHands  => DealHandsHandler(state)
-          case _ => Effect.unhandled
+          case _ => unexpectedCommand(state, command)
         }
       case Discarding(_) =>
         command match {
           case discard: DiscardCribCards => DiscardCribCardsHandler(state, discard).thenRun(MakeCutRule(_))
-          case _ =>
-            println(s"Unhandled Command $command\n  $state")
-            Effect.unhandled
+          case MakeCut => MakeCutHandler(state).thenRun(ScoreHisHeelsRule(_))
+          case _ => unexpectedCommand(state, command)
         }
       case Playing(_) =>
-        Effect.unhandled
+        unexpectedCommand(state, command)
     }
-  }
 
-  def onEvent(state: State, event: Event) : State = {
-    println(s"Event: $event $state")
+  def onEvent(state: State, event: Event) : State =
     state match {
+      case Uninitialised(game) =>
+        event match {
+          case DeckAllocated(deck) => Starting(game.withDeck(deck))
+          case _ => illegalState(state, event)
+        }
       case Starting(game) =>
         event match {
           case PlayerJoined(id) => Starting(game.withPlayer(id))
@@ -93,18 +99,19 @@ object Game {
       case Discarding(game) =>
         event match {
           case CribCardsDiscarded(playerId, cards) => Discarding(game.withCribDiscard(playerId, cards))
-          case _ =>
-            println(s"Unhandled Event $event\n  $state")
-            illegalState(state, event)
+          case CutMade(cut) => Playing(game.withCut(cut))
+          case _ => illegalState(state, event)
         }
       case Playing(_) =>
-        println(s"Unhandled Event $event\n  $state")
-        illegalState(state, event)
-
-
+        event match {
+          case _ => illegalState(state, event)
+        }
     }
-  }
+
+  private def unexpectedCommand(state: State, command: Command) =
+    throw InvalidMessageException(s"Unexpected command [$command] in state [$state]")
 
   private def illegalState(state: State, event: Event) =
     throw new IllegalStateException(s"Unexpected event [$event] in state [$state]")
+
 }

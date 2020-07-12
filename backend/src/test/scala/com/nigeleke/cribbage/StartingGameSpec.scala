@@ -5,6 +5,7 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.Game
 import com.nigeleke.cribbage.actors.Game._
+import com.nigeleke.cribbage.model.Deck
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -18,6 +19,8 @@ class StartingGameSpec
 
   private val gameId = randomId
   private val persistenceId = s"game|$gameId"
+
+  implicit val implicitTestKit = testKit
 
   val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
@@ -41,50 +44,69 @@ class StartingGameSpec
 
   "A Starting Game" should {
 
+    "start with a new Deck of Cards" in {
+      val playerId = randomId
+
+      eventSourcedTestKit.runCommand(Join(playerId))
+      drain()
+
+      persisted.head should be(a[DeckAllocated])
+      persisted.tail should contain theSameElementsInOrderAs(Seq(PlayerJoined(playerId)))
+
+      val result = eventSourcedTestKit.restart()
+      result.state.game.deck.map(card => (card.face, card.suit)) should contain
+        theSameElementsInOrderAs(Deck().map(card => (card.face, card.suit)))
+    }
+
     "allow a new player to join" in {
       val playerId = randomId
 
-      val result = eventSourcedTestKit.runCommand(Join(playerId))
-      result.command should be(Join(playerId))
-      result.event should be(PlayerJoined(playerId))
-      result.state should be(Starting(model.Game(gameId).withPlayer(playerId)))
+      eventSourcedTestKit.runCommand(Join(playerId))
+      drain()
 
-      persisted should contain theSameElementsInOrderAs(Seq(PlayerJoined(playerId)))
+      persisted.head should be(a[DeckAllocated])
+      persisted.tail should contain theSameElementsInOrderAs(Seq(PlayerJoined(playerId)))
+
+      val result = eventSourcedTestKit.restart()
+      result.state.game.players should contain(playerId)
     }
 
     "allow two new players to join" in {
       val (player1Id, player2Id) = (randomId, randomId)
+
       eventSourcedTestKit.runCommand(Join(player1Id))
+      eventSourcedTestKit.runCommand(Join(player2Id))
+      drain()
 
-      val result = eventSourcedTestKit.runCommand(Join(player2Id))
-      result.command should be(Join(player2Id))
-      result.event should be(PlayerJoined(player2Id))
-      result.state should be(Starting(model.Game(gameId).withPlayer(player1Id).withPlayer(player2Id)))
+      persisted.tail should contain
+        theSameElementsInOrderAs(Seq(PlayerJoined(player1Id), PlayerJoined(player2Id)))
 
-      persisted should contain theSameElementsInOrderAs(Seq(PlayerJoined(player1Id), PlayerJoined(player2Id)))
+      val result = eventSourcedTestKit.restart()
+      result.state.game.players should contain allElementsOf(Seq(player1Id, player2Id))
     }
 
     "not allow three players to join" in {
       val (player1Id, player2Id, player3Id) = (randomId, randomId, randomId)
+
       eventSourcedTestKit.runCommand(Join(player1Id))
       eventSourcedTestKit.runCommand(Join(player2Id))
 
       val result = eventSourcedTestKit.runCommand(Join(player3Id))
       result.command should be(Join(player3Id))
-      result.events should not contain(PlayerJoined(player3Id))
       result.state.game.players should contain theSameElementsAs(Seq(player1Id, player2Id))
 
-      persisted should not contain(PlayerJoined(player3Id))
+      persisted.tail should not contain(PlayerJoined(player3Id))
     }
 
     "not allow the same player to join twice" in {
       val playerId = randomId
       eventSourcedTestKit.runCommand(Join(playerId))
+      drain()
 
       val result = eventSourcedTestKit.runCommand(Join(playerId))
       result.command should be(Join(playerId))
       result.events should not contain(PlayerJoined(playerId))
-      result.state should be(Starting(model.Game(gameId).withPlayer(playerId)))
+      result.state.game.players should contain theSameElementsAs(Seq(playerId))
 
       persisted.count(_ == PlayerJoined(playerId)) should be(1)
     }
@@ -92,10 +114,11 @@ class StartingGameSpec
     "deal hands" when {
       "two players have joined" in {
         val (player1Id, player2Id) = (randomId, randomId)
+
         eventSourcedTestKit.runCommand(Join(player1Id))
         eventSourcedTestKit.runCommand(Join(player2Id))
+        drain()
 
-        testKit.createTestProbe().expectNoMessage() // Allow knock-on events to be processed
         persisted.count(_.isInstanceOf[HandsDealt.type]) should be(1)
       }
     }

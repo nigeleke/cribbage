@@ -22,6 +22,7 @@ object Game {
   final case class DiscardCribCards(playerId: PlayerId, cards: Cards) extends Command
   final case object CutAtStartOfPlay extends Command
   final case class PegScore(playerId: PlayerId, points: Int) extends Command
+  final case class DeclareWinner(playerId: PlayerId) extends Command
 //  final case class PlayCard(playerId: PlayerId, cardId: CardId) extends Command
 //  final case class Pass(playerId: PlayerId) extends Command
 //  final case object CompletePlay extends Command
@@ -44,12 +45,15 @@ object Game {
   final case object HandsDealt extends Event
   final case class CribCardsDiscarded(playerId: PlayerId, cards: Cards) extends Event
   final case class PlayCutRevealed(card: Card) extends Event
+  final case class PointsScored(playerId: PlayerId, points: Int) extends Event
+  final case class WinnerDeclared(playerId: PlayerId) extends Event
 
   sealed trait State { def game: model.Game }
   final case class Uninitialised(game: model.Game) extends State
   final case class Starting(game: model.Game) extends State
   final case class Discarding(game: model.Game) extends State
   final case class Playing(game: model.Game) extends State
+  final case class Finished(game: model.Game) extends State
 
   def apply(id: GameId) : Behavior[Command] = Behaviors.setup { context =>
     implicit val notify = context.self
@@ -65,7 +69,7 @@ object Game {
       case Uninitialised(_) => InitialisationHandler(state).thenRun(_ => notify ! command)
       case Starting(_)      => startingStateCommandHandler(state, command)
       case Discarding(_)    => discardingStateCommandHandler(state, command)
-      case Playing(_)       => unexpectedCommand(state, command)
+      case Playing(_)       => playingStateCommandHandler(state, command)
     }
 
   private def startingStateCommandHandler(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
@@ -85,6 +89,14 @@ object Game {
     }
   }
 
+  private def playingStateCommandHandler(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
+    command match {
+      case peg: PegScore         => PegScoreHandler(state, peg).thenRun(DeclareWinnerRule(_))
+      case winner: DeclareWinner => DeclareWinnerHandler(state, winner)
+      case _                     => unexpectedCommand(state, command)
+    }
+  }
+
   private def unexpectedCommand(state: State, command: Command) =
     throw InvalidMessageException(s"Unexpected command [$command] in state [$state]")
 
@@ -93,7 +105,7 @@ object Game {
       case Uninitialised(game) => uninitialisedStateEventHandler(state, event, game)
       case Starting(game)      => startingStateEventHandler(state, event, game)
       case Discarding(game)    => discardingStateEventHandler(state, event, game)
-      case Playing(_)          => playingStateEventHandler(state, event)
+      case Playing(game)       => playingStateEventHandler(state, event, game)
     }
 
   private def uninitialisedStateEventHandler(state: State, event: Event, game: model.Game) : State = {
@@ -122,9 +134,11 @@ object Game {
     }
   }
 
-  private def playingStateEventHandler(state: State, event: Event) : State = {
+  private def playingStateEventHandler(state: State, event: Event, game: model.Game) : State = {
     event match {
-      case _ => illegalState(state, event)
+      case PointsScored(playerId, points) => Playing(game.withScore(playerId, points))
+      case WinnerDeclared(_)              => Finished(game)
+      case _                              => illegalState(state, event)
     }
   }
 

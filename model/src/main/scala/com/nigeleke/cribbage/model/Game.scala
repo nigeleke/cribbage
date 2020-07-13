@@ -67,6 +67,12 @@ object Game {
     def withCut(cut: Card): Game = {
       game.copy(optCut = Some(cut))
     }
+
+    def withScore(id: PlayerId, points: Int): Game = {
+      val currentScore = game.scores.getOrElse(id, Score(0,0))
+      val updatedScore = Score(currentScore.front, currentScore.front + points)
+      game.copy(scores = game.scores.updated(id, updatedScore))
+    }
   }
 
 }

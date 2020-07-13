@@ -67,12 +67,12 @@ object Game {
   def onCommand(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] =
     state match {
       case Uninitialised(_) => InitialisationHandler(state).thenRun(_ => notify ! command)
-      case Starting(_)      => startingStateCommandHandler(state, command)
-      case Discarding(_)    => discardingStateCommandHandler(state, command)
-      case Playing(_)       => playingStateCommandHandler(state, command)
+      case Starting(_)      => handleStartingCommands(state, command)
+      case Discarding(_)    => handleDiscardingCommands(state, command)
+      case Playing(_)       => handlePlayingCommands(state, command)
     }
 
-  private def startingStateCommandHandler(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
+  private def handleStartingCommands(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
     command match {
       case join: Join => JoinHandler(state, join).thenRun(CutForDealRule(_))
       case CutForDeal => CutForDealHandler(state).thenRun(DealRule(_))
@@ -81,7 +81,7 @@ object Game {
     }
   }
 
-  private def discardingStateCommandHandler(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
+  private def handleDiscardingCommands(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
     command match {
       case discard: DiscardCribCards => DiscardCribCardsHandler(state, discard).thenRun(CutAtStartOfPlayRule(_))
       case CutAtStartOfPlay          => CutAtStartOfPlayHandler(state).thenRun(ScoreCutAtStartOfPlayRule(_))
@@ -89,7 +89,7 @@ object Game {
     }
   }
 
-  private def playingStateCommandHandler(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
+  private def handlePlayingCommands(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
     command match {
       case peg: PegScore         => PegScoreHandler(state, peg).thenRun(DeclareWinnerRule(_))
       case winner: DeclareWinner => DeclareWinnerHandler(state, winner)
@@ -102,20 +102,20 @@ object Game {
 
   def onEvent(state: State, event: Event) : State =
     state match {
-      case Uninitialised(game) => uninitialisedStateEventHandler(state, event, game)
-      case Starting(game)      => startingStateEventHandler(state, event, game)
-      case Discarding(game)    => discardingStateEventHandler(state, event, game)
-      case Playing(game)       => playingStateEventHandler(state, event, game)
+      case Uninitialised(game) => handleUninitialisedEvents(state, event, game)
+      case Starting(game)      => handleStartingEvents(state, event, game)
+      case Discarding(game)    => handleDiscardEvents(state, event, game)
+      case Playing(game)       => handlePlayingEvents(state, event, game)
     }
 
-  private def uninitialisedStateEventHandler(state: State, event: Event, game: model.Game) : State = {
+  private def handleUninitialisedEvents(state: State, event: Event, game: model.Game) : State = {
     event match {
       case DeckAllocated(deck) => Starting(game.withDeck(deck))
       case _                   => illegalState(state, event)
     }
   }
 
-  private def startingStateEventHandler(state: State, event: Event, game: model.Game) : State = {
+  private def handleStartingEvents(state: State, event: Event, game: model.Game) : State = {
     event match {
       case PlayerJoined(id)        => Starting(game.withPlayer(id))
       case DealerCutRevealed(_, _) => state
@@ -126,7 +126,7 @@ object Game {
     }
   }
 
-  private def discardingStateEventHandler(state: State, event: Event, game: model.Game) : State = {
+  private def handleDiscardEvents(state: State, event: Event, game: model.Game) : State = {
     event match {
       case CribCardsDiscarded(playerId, cards) => Discarding(game.withCribDiscard(playerId, cards))
       case PlayCutRevealed(cut)                => Playing(game.withCut(cut))
@@ -134,7 +134,7 @@ object Game {
     }
   }
 
-  private def playingStateEventHandler(state: State, event: Event, game: model.Game) : State = {
+  private def handlePlayingEvents(state: State, event: Event, game: model.Game) : State = {
     event match {
       case PointsScored(playerId, points) => Playing(game.withScore(playerId, points))
       case WinnerDeclared(_)              => Finished(game)

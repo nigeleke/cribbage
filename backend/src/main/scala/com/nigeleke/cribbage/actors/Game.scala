@@ -8,7 +8,7 @@ import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
 import com.nigeleke.cribbage.actors.handlers._
 import com.nigeleke.cribbage.actors.rules._
 import com.nigeleke.cribbage.model
-import com.nigeleke.cribbage.model.{Card, Cards, Deck, Game, Hand}
+import com.nigeleke.cribbage.model.{Card, Cards, Deck, Hand}
 import com.nigeleke.cribbage.model.Game.{Id => GameId}
 import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
 
@@ -21,6 +21,7 @@ object Game {
   final case object DealHands extends Command
   final case class DiscardCribCards(playerId: PlayerId, cards: Cards) extends Command
   final case object CutAtStartOfPlay extends Command
+  final case class PegScore(playerId: PlayerId, points: Int) extends Command
 //  final case class PlayCard(playerId: PlayerId, cardId: CardId) extends Command
 //  final case class Pass(playerId: PlayerId) extends Command
 //  final case object CompletePlay extends Command
@@ -79,7 +80,7 @@ object Game {
   private def discardingStateCommandHandler(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
     command match {
       case discard: DiscardCribCards => DiscardCribCardsHandler(state, discard).thenRun(CutAtStartOfPlayRule(_))
-      case CutAtStartOfPlay          => CutAtStartOfPlayHandler(state).thenRun(ScoreHisHeelsRule(_))
+      case CutAtStartOfPlay          => CutAtStartOfPlayHandler(state).thenRun(ScoreCutAtStartOfPlayRule(_))
       case _                         => unexpectedCommand(state, command)
     }
   }
@@ -95,14 +96,14 @@ object Game {
       case Playing(_)          => playingStateEventHandler(state, event)
     }
 
-  private def uninitialisedStateEventHandler(state: State, event: Event, game: Game) : State = {
+  private def uninitialisedStateEventHandler(state: State, event: Event, game: model.Game) : State = {
     event match {
       case DeckAllocated(deck) => Starting(game.withDeck(deck))
       case _                   => illegalState(state, event)
     }
   }
 
-  private def startingStateEventHandler(state: State, event: Event, game: Game) : State = {
+  private def startingStateEventHandler(state: State, event: Event, game: model.Game) : State = {
     event match {
       case PlayerJoined(id)        => Starting(game.withPlayer(id))
       case DealerCutRevealed(_, _) => state
@@ -113,7 +114,7 @@ object Game {
     }
   }
 
-  private def discardingStateEventHandler(state: State, event: Event, game: Game) : State = {
+  private def discardingStateEventHandler(state: State, event: Event, game: model.Game) : State = {
     event match {
       case CribCardsDiscarded(playerId, cards) => Discarding(game.withCribDiscard(playerId, cards))
       case PlayCutRevealed(cut)                => Playing(game.withCut(cut))

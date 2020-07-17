@@ -34,6 +34,11 @@ object Game {
 
   implicit class GameOps(game: Game) {
 
+    lazy val optPone : Option[PlayerId] = (for {
+      dealer <- game.optDealer
+      otherPlayers = game.players - dealer
+    } yield otherPlayers.headOption).flatten
+
     def withDeck(deck: Deck): Game = game.copy(deck = deck)
 
     def withPlayer(id: PlayerId): Game = {
@@ -47,12 +52,11 @@ object Game {
     }
 
     def withHand(id: PlayerId, hand: Hand) = {
-      import Deck._
       require(game.players.contains(id))
-      require(hand.forall(id => game.deck.ids.contains(id)))
+      require(hand.forall(card => game.deck.contains(card)))
       val updatedHands = game.hands.updated(id, hand)
-      val updatedDeck = game.deck.filterNot(card => hand.contains(card.id))
-       game.copy(deck = updatedDeck, hands = updatedHands)
+      val updatedDeck = game.deck.filterNot(card => hand.contains(card))
+      game.copy(deck = updatedDeck, hands = updatedHands)
     }
 
     def withCribDiscard(id: PlayerId, cards: Cards): Game = {
@@ -65,7 +69,16 @@ object Game {
     }
 
     def withCut(cut: Card): Game = {
+      require(game.deck.contains(cut))
       game.copy(optCut = Some(cut))
+    }
+
+    def withPlay(playerId: PlayerId, card: Card) = {
+      require(game.players.contains(playerId))
+      require(game.hands(playerId).contains(card))
+      val updatedHand = game.hands(playerId).filterNot(_ == card)
+      val updatedPlays = game.plays :+ Play(playerId, card)
+      game.copy(hands = game.hands.updated(playerId, updatedHand), plays = updatedPlays)
     }
 
     def withScore(id: PlayerId, points: Int): Game = {

@@ -5,12 +5,12 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.Game
 import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.model.{Deck, Score}
+import com.nigeleke.cribbage.model.Deck
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class PegScoreSpec
+class PlayingGameSpec
   extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config)
     with AnyWordSpecLike
     with BeforeAndAfterEach
@@ -60,55 +60,48 @@ class PegScoreSpec
     f(state.game)
   }
 
-  "The PegScore command" should {
+  "A PlayingGame" should {
 
-    "hop the back peg over the front peg to score" in playingGame { game =>
-      val command = PegScore(player1Id, 10)
-
-      val result1 = eventSourcedTestKit.runCommand(command)
-      result1.command should be(command)
-      result1.event should be(PointsScored(player1Id, 10))
-      val expectedGame1 = game.withScore(player1Id, 10)
-      result1.state should be(Playing(expectedGame1))
-      expectedGame1.scores(player1Id) should be(Score(0, 10))
-
-      val result2 = eventSourcedTestKit.runCommand(command)
-      result2.command should be(command)
-      result2.event should be(PointsScored(player1Id, 10))
-      val expectedGame2 = expectedGame1.withScore(player1Id, 10)
-      result2.state should be(Playing(expectedGame2))
-      expectedGame2.scores(player1Id) should be(Score(10, 20))
-
-      persisted should contain allElementsOf(Seq(PointsScored(player1Id, 10), PointsScored(player1Id, 10)))
-    }
-
-    "declare winner" when {
-
-      "player's score exceeds 121" in playingGame { game =>
-        val command = PegScore(player1Id, 122)
-
-        val result = eventSourcedTestKit.runCommand(command)
-        result.command should be(command)
-        result.event should be(PointsScored(player1Id, 122))
-        drain()
-
-        persisted should contain allElementsOf(Seq(PointsScored(player1Id, 122), WinnerDeclared(player1Id)))
-      }
-
-      "player's score is exactly 121" in playingGame { game =>
-        val command = PegScore(player1Id, 121)
-
-        val result = eventSourcedTestKit.runCommand(command)
-        result.command should be(command)
-        result.event should be(PointsScored(player1Id, 121))
-        drain()
-
-        persisted should contain allElementsOf(Seq(PointsScored(player1Id, 121), WinnerDeclared(player1Id)))
-      }
+    "initially have the next Player to Play as the Pone" in {
 
     }
 
-    // TODO: Maybe - same for ScoringState ???
+    "allow the next Player to Play" when {
+      "they have at least one valid card for the CurrentPlay" in playingGame { game =>
+        val pone = game.optPone.head
+        val card = game.hands(pone).head
+        val command = PlayCard(pone, card)
+        val result = eventSourcedTestKit.runCommand(command)
+        result.command should be(command)
+        result.event should be(CardPlayed(pone, card))
+        result.state should be(Playing(game.withPlay(pone, card)))
+      }
+    }
+
+    "not allow the next Player to Play" when {
+      "they have no valid cards for the CurrentPlay" ignore {}
+    }
+
+    "allow the next Player to Pass" when {
+      "they have no valid cards for the CurrentPlay" ignore {}
+    }
+
+    "not allow the next Player to Pass" when {
+      "they have at least one valid card for the CurrentPlay" ignore {}
+    }
+
+    "score the Play" when { // Full play scoring in PlayScoreSpec
+      "a Card is Played" ignore {}
+    }
+
+    "start next Play" when {
+      "current Play completed" ignore {}
+    }
+
+    "start Scoring" when {
+      "all Plays completed" ignore {}
+    }
+
   }
 
 }

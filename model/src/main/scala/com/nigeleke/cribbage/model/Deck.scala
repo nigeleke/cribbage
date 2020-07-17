@@ -2,6 +2,7 @@ package com.nigeleke.cribbage.model
 
 import java.util.UUID
 
+import com.nigeleke.cribbage.model.Card.{Id => CardId}
 import com.nigeleke.cribbage.suit.{Face, Suit}
 
 import scala.util.Random
@@ -18,7 +19,6 @@ object Deck {
 
   implicit class DeckOps(deck: Deck) {
     val shuffled = Random.shuffle(deck)
-    val ids = deck.map(_.id)
   }
 
 }

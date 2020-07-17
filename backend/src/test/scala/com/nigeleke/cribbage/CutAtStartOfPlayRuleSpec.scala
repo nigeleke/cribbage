@@ -15,26 +15,23 @@ class CutAtStartOfPlayRuleSpec extends AnyWordSpec with Matchers {
     val deck = Deck()
 
     def gameWithHandsDealt(player1Id: PlayerId, player2Id: PlayerId) = {
-      import Deck._
       game
         .withDeck(deck)
         .withPlayer(player1Id)
         .withPlayer(player2Id)
         .withDealer(player1Id)
-        .withHand(player1Id,deck.ids.take(6))
-        .withHand(player2Id,deck.ids.drop(6).take(6))
+        .withHand(player1Id,deck.take(6))
+        .withHand(player2Id,deck.drop(6).take(6))
     }
 
     "issue the CutAtStartOfPlay command" when {
 
       "players have discarded all cards to the crib" in {
-        import Deck._
-
         val (player1Id, player2Id) = (randomId, randomId)
 
         val gameUnderTest = gameWithHandsDealt(player1Id, player2Id)
-          .withCribDiscard(player1Id, deck.ids.take(2))
-          .withCribDiscard(player2Id, deck.ids.drop(6).take(2))
+          .withCribDiscard(player1Id, deck.take(2))
+          .withCribDiscard(player2Id, deck.drop(6).take(2))
 
         CutAtStartOfPlayRule.commands(Discarding(gameUnderTest)) should be(Seq(CutAtStartOfPlay))
       }

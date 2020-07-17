@@ -6,7 +6,6 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.Serializati
 import com.nigeleke.cribbage.actors.Game
 import com.nigeleke.cribbage.actors.Game._
 import com.nigeleke.cribbage.model.Deck
-import com.nigeleke.cribbage.model.Deck._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -33,7 +32,6 @@ class DiscardingGameSpec
   private def persisted = persistenceTestKit.persistedInStorage(persistenceId)
 
   private val deck = Deck()
-  private val deckIds = deck.ids
   private val (player1Id, player2Id) = (randomId, randomId)
   private val initialEvents: Seq[Event] =
     Seq(
@@ -41,8 +39,8 @@ class DiscardingGameSpec
       PlayerJoined(player1Id),
       PlayerJoined(player2Id),
       DealerSelected(player1Id),
-      HandDealt(player1Id, deckIds.take(6)),
-      HandDealt(player2Id, deckIds.drop(6).take(6)),
+      HandDealt(player1Id, deck.take(6)),
+      HandDealt(player2Id, deck.drop(6).take(6)),
       HandsDealt)
 
   override protected def beforeEach(): Unit = {
@@ -134,7 +132,10 @@ class DiscardingGameSpec
         persisted should contain allElementsOf(
           Seq(CribCardsDiscarded(player1Id, discards1),
             CribCardsDiscarded(player2Id, discards2)))
-        persisted.last should be(a[PlayCutRevealed])
+
+        val isPlayCutRevealed = persisted.last.isInstanceOf[PlayCutRevealed]
+        val isPointsScored = persisted.last.isInstanceOf[PointsScored] // Allow for his heels...
+        (isPlayCutRevealed || isPointsScored) should be(true)
       }
 
     }

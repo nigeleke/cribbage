@@ -1,16 +1,15 @@
 package com.nigeleke.cribbage
 
-import model.Card.{Id => CardId}
 import model.Player.{Id => PlayerId}
 
 package object model {
 
   type Players = Set[PlayerId]
   type Deck = Seq[Card]
-  type Cards = Seq[CardId]
-  type Hand = Seq[CardId]
+  type Cards = Seq[Card]
+  type Hand = Seq[Card]
   type Hands = Map[PlayerId, Hand]
-  type Crib = Seq[CardId]
+  type Crib = Seq[Card]
   type Plays = Seq[Play]
   type Scores = Map[PlayerId, Score]
 

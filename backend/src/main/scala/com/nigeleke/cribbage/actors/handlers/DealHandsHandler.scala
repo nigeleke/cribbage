@@ -10,7 +10,7 @@ object DealHandsHandler extends Handler {
     val game = state.game
     val deck = game.deck.shuffled
     val players = game.players
-    val hands = (0 to players.size).map(n => deck.ids.drop(n*6).take(6))
+    val hands = (0 to players.size).map(n => deck.drop(n*6).take(6))
     val deals = players.zip(hands)
     val events = deals.map(deal => HandDealt(deal._1, deal._2)).toSeq
 

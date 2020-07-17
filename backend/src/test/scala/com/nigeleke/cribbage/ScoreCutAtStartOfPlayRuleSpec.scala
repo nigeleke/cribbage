@@ -2,8 +2,8 @@ package com.nigeleke.cribbage
 
 import com.nigeleke.cribbage.actors.Game.{Discarding, PegScore}
 import com.nigeleke.cribbage.actors.rules.ScoreCutAtStartOfPlayRule
-import com.nigeleke.cribbage.model.{Card, Game}
-import com.nigeleke.cribbage.suit.{Face, Suit}
+import com.nigeleke.cribbage.model._
+import com.nigeleke.cribbage.suit._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -19,12 +19,16 @@ class ScoreCutAtStartOfPlayRuleSpec extends AnyWordSpec with Matchers {
   "The ScoreCutAtStartOfPlayRule" should {
 
     "score for dealer two for his heels if Jack is cut" in {
-      val gameUnderTest = game.withCut(Card(randomId, Face.Jack, Suit.Hearts))
+      val deck = Deck()
+      val jack = deck.find(_.face == Face.Jack).head
+      val gameUnderTest = game.withDeck(deck).withCut(jack)
       ScoreCutAtStartOfPlayRule.commands(Discarding(gameUnderTest)) should be(Seq(PegScore(player1Id, 2)))
     }
 
     "no score dealer if Jack is not cut" in {
-      val gameUnderTest = game.withCut(Card(randomId, Face.Queen, Suit.Hearts))
+      val deck = Deck()
+      val notJack = deck.find(_.face == Face.Queen).head
+      val gameUnderTest = game.withDeck(deck).withCut(notJack)
       ScoreCutAtStartOfPlayRule.commands(Discarding(gameUnderTest)) should be(empty)
     }
 

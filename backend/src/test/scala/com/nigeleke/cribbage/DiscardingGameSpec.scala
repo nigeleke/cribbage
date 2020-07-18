@@ -116,7 +116,7 @@ class DiscardingGameSpec
 
     }
 
-    "start the Play" when {
+    "start the Lay" when {
 
       "both Players have discarded" in discardingGame { game =>
         val player1Id = game.players.head

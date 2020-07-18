@@ -62,11 +62,11 @@ class PlayingGameSpec
 
   "A PlayingGame" should {
 
-    "initially have the next Player to Play as the Pone" in {
+    "initially have the next Player to Lay as the Pone" in {
 
     }
 
-    "allow the next Player to Play" when {
+    "allow the next Player to Lay" when {
       "they have at least one valid card for the CurrentPlay" in playingGame { game =>
         val pone = game.optPone.head
         val card = game.hands(pone).head
@@ -78,7 +78,7 @@ class PlayingGameSpec
       }
     }
 
-    "not allow the next Player to Play" when {
+    "not allow the next Player to Lay" when {
       "they have no valid cards for the CurrentPlay" ignore {}
     }
 
@@ -90,16 +90,16 @@ class PlayingGameSpec
       "they have at least one valid card for the CurrentPlay" ignore {}
     }
 
-    "score the Play" when { // Full play scoring in PlayScoreSpec
+    "score the Lay" when { // Full play scoring in PlayScoreSpec
       "a Card is Played" ignore {}
     }
 
-    "start next Play" when {
-      "current Play completed" ignore {}
+    "start next Lay" when {
+      "current Lay completed" ignore {}
     }
 
     "start Scoring" when {
-      "all Plays completed" ignore {}
+      "all Lays completed" ignore {}
     }
 
   }

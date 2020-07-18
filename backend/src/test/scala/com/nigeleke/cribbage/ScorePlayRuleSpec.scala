@@ -2,7 +2,7 @@ package com.nigeleke.cribbage
 
 import com.nigeleke.cribbage.actors.Game.{PegScore, Playing}
 import com.nigeleke.cribbage.actors.rules.ScorePlayRule
-import com.nigeleke.cribbage.model.{Card, Game}
+import com.nigeleke.cribbage.model.{Card, Cards, Game}
 import com.nigeleke.cribbage.suit.Face
 import com.nigeleke.cribbage.suit.Face._
 import com.nigeleke.cribbage.suit.Suit
@@ -21,13 +21,25 @@ class ScorePlayRuleSpec extends AnyWordSpec with Matchers {
     }
 
     def scorePlay(cards: Seq[(Face, Suit)], expectedScore: Int) = {
-      val playerId = randomId
+
+      def takeAlternate(cards: Cards) : Cards = cards match {
+        case Nil => Nil
+        case card1 :: Nil => Seq(card1)
+        case card1 :: _ :: rest => card1 +: takeAlternate(rest)
+      }
+
+      val playerIds = Seq(randomId, randomId)
       val initialCards = cards.map(card => Card(randomId, card._1, card._2))
-      val initialGame = Game(randomId).withDeck(initialCards).withPlayer(playerId).withHand(playerId, initialCards)
-      val game = initialCards.foldLeft(initialGame)((g, card) => g.withPlay(playerId, card))
+      val initialGame = Game(randomId)
+        .withDeck(initialCards)
+        .withPlayer(playerIds.head).withHand(playerIds.head, takeAlternate(initialCards))
+        .withPlayer(playerIds.last).withHand(playerIds.last, takeAlternate(initialCards.drop(1)))
+      val lays = initialCards.zip(Iterator.continually(playerIds).flatten)
+
+      val game = lays.foldLeft(initialGame)((g, lay) => g.withPlay(lay._2, lay._1))
 
       ScorePlayRule.commands(Playing(game)) should be(
-        if (expectedScore != 0) Seq(PegScore(playerId, expectedScore))
+        if (expectedScore != 0) Seq(PegScore(lays.last._2, expectedScore))
         else Seq.empty)
     }
 

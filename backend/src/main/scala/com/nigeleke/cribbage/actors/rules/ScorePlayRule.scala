@@ -7,8 +7,9 @@ object ScorePlayRule extends Rule {
 
   override def commands(state: State): Seq[Command] = {
 
-    def scorePlay(plays: Plays) = {
-      val cards = plays.map(_.card)
+    def scorePlay(play: Play) = {
+      val lays = play.current
+      val cards = lays.map(_.card)
       fifteensInPlay(cards) + pairsInPlay(cards) + runsInPlay(cards) + thirtyOnePoints(cards)
     }
 
@@ -53,8 +54,8 @@ object ScorePlayRule extends Rule {
     }
 
     val game = state.game
-    val scorerId = game.plays.last.playerId
-    val score = scorePlay(game.plays)
+    val scorerId = game.play.current.last.playerId
+    val score = scorePlay(game.play)
 
     if (score != 0) Seq(PegScore(scorerId, score))
     else Seq.empty

@@ -2,7 +2,6 @@ package com.nigeleke.cribbage.model
 
 import java.util.UUID
 
-import Card.{Id => CardId}
 import Game.{Id => GameId}
 import Player.{Id => PlayerId}
 
@@ -13,8 +12,7 @@ final case class Game(id: GameId,
                       hands: Hands,
                       crib: Crib,
                       optCut: Option[Card],
-                      plays: Plays,
-                      previousPlays: Seq[Plays],
+                      play: Play,
                       scores: Scores)
 
 object Game {
@@ -28,8 +26,7 @@ object Game {
       hands = Map.empty,
       crib = Seq.empty,
       optCut = None,
-      plays = Seq.empty,
-      previousPlays = Seq.empty,
+      play = Play(),
       scores = Map.empty)
 
   implicit class GameOps(game: Game) {
@@ -77,8 +74,12 @@ object Game {
       require(game.players.contains(playerId))
       require(game.hands(playerId).contains(card))
       val updatedHand = game.hands(playerId).filterNot(_ == card)
-      val updatedPlays = game.plays :+ Play(playerId, card)
-      game.copy(hands = game.hands.updated(playerId, updatedHand), plays = updatedPlays)
+      val updatedPlay = game.play.withLay(Lay(playerId, card)).withNextToLay(opponent(playerId))
+      game.copy(hands = game.hands.updated(playerId, updatedHand), play = updatedPlay)
+    }
+
+    private def opponent(playerId: PlayerId) : PlayerId = {
+      game.players.filterNot(_ == playerId).head
     }
 
     def withScore(id: PlayerId, points: Int): Game = {

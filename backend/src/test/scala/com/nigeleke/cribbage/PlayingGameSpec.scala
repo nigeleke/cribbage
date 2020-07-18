@@ -70,10 +70,10 @@ class PlayingGameSpec
       "they have at least one valid card for the CurrentPlay" in playingGame { game =>
         val pone = game.optPone.head
         val card = game.hands(pone).head
-        val command = PlayCard(pone, card)
+        val command = LayCard(pone, card)
         val result = eventSourcedTestKit.runCommand(command)
         result.command should be(command)
-        result.event should be(CardPlayed(pone, card))
+        result.event should be(CardLaid(pone, card))
         result.state should be(Playing(game.withPlay(pone, card)))
       }
     }

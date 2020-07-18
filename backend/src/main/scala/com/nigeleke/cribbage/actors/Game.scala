@@ -21,7 +21,7 @@ object Game {
   final case object DealHands extends Command
   final case class DiscardCribCards(playerId: PlayerId, cards: Cards) extends Command
   final case object CutAtStartOfPlay extends Command
-  final case class PlayCard(playerId: PlayerId, card: Card) extends Command
+  final case class LayCard(playerId: PlayerId, card: Card) extends Command
   final case class PegScore(playerId: PlayerId, points: Int) extends Command
   final case class DeclareWinner(playerId: PlayerId) extends Command
 //  final case class Pass(playerId: PlayerId) extends Command
@@ -45,7 +45,7 @@ object Game {
   final case object HandsDealt extends Event
   final case class CribCardsDiscarded(playerId: PlayerId, cards: Cards) extends Event
   final case class PlayCutRevealed(card: Card) extends Event
-  final case class CardPlayed(playerId: PlayerId, card: Card) extends Event
+  final case class CardLaid(playerId: PlayerId, card: Card) extends Event
   final case class PointsScored(playerId: PlayerId, points: Int) extends Event
   final case class WinnerDeclared(playerId: PlayerId) extends Event
 
@@ -95,7 +95,7 @@ object Game {
     command match {
       case peg: PegScore         => PegScoreHandler(state, peg).thenRun(DeclareWinnerRule(_))
       case winner: DeclareWinner => DeclareWinnerHandler(state, winner)
-      case play: PlayCard        => PlayCardHandler(state, play).thenRun(ScorePlayRule(_)).thenRun(NextToPlayRule(_))
+      case play: LayCard        => PlayCardHandler(state, play).thenRun(ScorePlayRule(_)).thenRun(NextToPlayRule(_))
       case _                     => unexpectedCommand(state, command)
     }
   }
@@ -142,7 +142,7 @@ object Game {
     event match {
       case PointsScored(playerId, points) => Playing(game.withScore(playerId, points))
       case WinnerDeclared(_)              => Finished(game)
-      case CardPlayed(playerId, card)     => Playing(game.withPlay(playerId, card))
+      case CardLaid(playerId, card)     => Playing(game.withPlay(playerId, card))
       case _                              => illegalState(state, event)
     }
   }

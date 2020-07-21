@@ -70,15 +70,29 @@ object Game {
       game.copy(optCut = Some(cut))
     }
 
-    def withPlay(playerId: PlayerId, card: Card) = {
+    def withNextToLay(playerId: PlayerId) = {
       require(game.players.contains(playerId))
-      require(game.hands(playerId).contains(card))
+      val updatedPlay = game.play.withNextToLay(playerId)
+      game.copy(play = updatedPlay)
+    }
+
+    def withLay(playerId: PlayerId, card: Card) = {
+      require(game.players.contains(playerId))
+      require(game.hands(playerId).contains(card), s"Player $playerId ${game.hands(playerId)} does not contain $card")
+      require(game.play.runningTotal + card.value <= 31)
       val updatedHand = game.hands(playerId).filterNot(_ == card)
       val updatedPlay = game.play.withLay(Lay(playerId, card)).withNextToLay(opponent(playerId))
       game.copy(hands = game.hands.updated(playerId, updatedHand), play = updatedPlay)
     }
 
-    private def opponent(playerId: PlayerId) : PlayerId = {
+    def withPass(playerId: PlayerId) = {
+      require(game.players.contains(playerId))
+      require(game.hands(playerId).forall(card => game.play.runningTotal + card.value > 31))
+      val updatedPlay = game.play.withPass().withNextToLay(opponent(playerId))
+      game.copy(play = updatedPlay)
+    }
+
+    def opponent(playerId: PlayerId) : PlayerId = {
       game.players.filterNot(_ == playerId).head
     }
 

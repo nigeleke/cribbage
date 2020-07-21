@@ -2,7 +2,7 @@ ThisBuild / organization := "com.nigeleke"
 ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / version      := "0.1-SNAPSHOT"
 
-val akkaVersion = "2.6.7"
+val akkaVersion = "2.6.8"
 val logbackVersion = "1.2.3"
 val scalaTestVersion = "3.1.2"
 

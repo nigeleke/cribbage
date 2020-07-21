@@ -34,9 +34,9 @@ digraph Cribbage {
 			subgraph cluster_PlayingPhase {
 				label="The Play"
 				fillcolor=aliceblue;
-				PonePlayed
+				PoneLaid
 				PonePassed
-				DealerPlayed
+				DealerLaid
 				DealerPassed
 				PlayCompleted
 				PlaysCompleted
@@ -76,24 +76,24 @@ digraph Cribbage {
 		PoneCribCardsDiscarded -> CutMade
 
 		CutMade -> PointsScored
-		CutMade -> PonePlayed
+		CutMade -> PoneLaid
 
-		PonePlayed -> PointsScored
+		PoneLaid -> PointsScored
 		PonePassed -> PointsScored
-		DealerPlayed -> PointsScored
+		DealerLaid -> PointsScored
 		DealerPassed -> PointsScored
 
-		PonePlayed -> DealerPlayed
-		PonePlayed -> DealerPassed
-		DealerPlayed -> PonePlayed
-		DealerPlayed -> PonePassed
-		PonePassed -> DealerPlayed
+		PoneLaid -> DealerLaid
+		PoneLaid -> DealerPassed
+		DealerLaid -> PoneLaid
+		DealerLaid -> PonePassed
+		PonePassed -> DealerLaid
 		PonePassed -> DealerPassed -> PlayCompleted
-		DealerPassed -> PonePlayed
+		DealerPassed -> PoneLaid
 		DealerPassed -> PonePassed -> PlayCompleted
 
-		PlayCompleted -> PonePlayed
-		PlayCompleted -> DealerPlayed
+		PlayCompleted -> PoneLaid
+		PlayCompleted -> DealerLaid
 
 		PlayCompleted -> PlaysCompleted -> PoneHandScored
 
@@ -126,7 +126,7 @@ digraph Cribbage {
 		DealHands
 		DiscardCribCards
 		MakeCut
-		PlayCard
+		LayCard
 		Pass
 		CompletePlay
 		CompletePlays
@@ -166,8 +166,8 @@ digraph Cribbage {
 	DiscardCribCards -> DealerCribCardsDiscarded
 	DiscardCribCards -> PoneCribCardsDiscarded
 	MakeCut -> CutMade
-	PlayCard -> PonePlayed
-	PlayCard -> DealerPlayed
+	LayCard -> PoneLaid
+	LayCard -> DealerLaid
 	Pass -> PonePassed
 	Pass -> DealerPassed
 	CompletePlay -> PlayCompleted
@@ -177,7 +177,6 @@ digraph Cribbage {
 	ScoreDealerCrib -> DealerCribScored
 	SwapDealer -> DealerSwapped
 
-
 	User -> CreateGame
 	Player -> JoinGame
 	Opponent -> JoinGame
@@ -186,8 +185,8 @@ digraph Cribbage {
 	Pone -> DiscardCribCards
 	Dealer -> DiscardCribCards
 	CribbageRules -> MakeCut
-	Pone -> PlayCard
-	Dealer -> PlayCard
+	Pone -> LayCard
+	Dealer -> LayCard
 	Pone -> Pass
 	Dealer -> Pass
 	CribbageRules -> CompletePlay

@@ -5,7 +5,7 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.Game
 import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.model.{Deck, Score}
+import com.nigeleke.cribbage.model.Score
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -32,20 +32,9 @@ class PegScoreSpec
 
   private def persisted = persistenceTestKit.persistedInStorage(persistenceId)
 
-  private val deck = Deck()
-  private val (player1Id, player2Id) = (randomId, randomId)
+  import TestEvents._
   private val initialEvents: Seq[Event] =
-    Seq(
-      DeckAllocated(deck),
-      PlayerJoined(player1Id),
-      PlayerJoined(player2Id),
-      DealerSelected(player1Id),
-      HandDealt(player1Id, deck.take(6)),
-      HandDealt(player2Id, deck.drop(6).take(6)),
-      HandsDealt,
-      CribCardsDiscarded(player1Id, deck.take(2)),
-      CribCardsDiscarded(player2Id, deck.drop(6).take(2)),
-      PlayCutRevealed(deck.drop(12).take(1).head))
+    deckAllocatedEvent ++ playersJoinedEvents ++ dealerSelectedEvent ++ dealEvents ++ discardEvents ++ playCutEvent
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()

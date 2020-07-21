@@ -3,25 +3,24 @@ package com.nigeleke.cribbage.actors
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
-import com.nigeleke.cribbage.cbor.CborSerializable
 import com.nigeleke.cribbage.model.Game.{Id => GameId}
 
 // SRR: Supervise the Game creation...
 object GameSupervisor {
 
-  sealed trait Command extends CborSerializable
+  sealed trait Command
   final case class CreateGame(id: GameId) extends Command
 
   sealed trait Query extends Command
   final case class GetGames(replyTo: ActorRef[Games]) extends Query
 
-  sealed trait CommandReply extends CborSerializable
+  sealed trait CommandReply
   final case class Games(games: Set[GameId]) extends CommandReply
 
-  sealed trait Event extends CborSerializable
+  sealed trait Event
   final case class GameCreated(id: GameId) extends Event
 
-  final case class State(games: Set[GameId]) extends CborSerializable
+  final case class State(games: Set[GameId])
 
   def apply() : Behavior[Command] =
     EventSourcedBehavior[Command, Event, State](

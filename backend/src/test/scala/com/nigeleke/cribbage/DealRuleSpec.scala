@@ -1,7 +1,7 @@
 package com.nigeleke.cribbage
 
 import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.actors.rules.DealRule
+import com.nigeleke.cribbage.actors.rules.Rules._
 import com.nigeleke.cribbage.model.Game
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -18,7 +18,7 @@ class DealRuleSpec extends AnyWordSpec with Matchers {
         val (player1Id, player2Id) = (randomId, randomId)
 
         val gameUnderTest = game.withPlayer(player1Id).withPlayer(player2Id).withDealer(player1Id)
-        DealRule.commands(Starting(gameUnderTest)) should be(Seq(DealHands))
+        deal(gameUnderTest) should be(Seq(DealHands))
       }
 
       "the scoring completes and the dealer is swapped" ignore { }
@@ -37,7 +37,7 @@ class DealRuleSpec extends AnyWordSpec with Matchers {
           .withHand(player1Id, Seq.empty)
           .withHand(player2Id, Seq.empty)
 
-        DealRule.commands(Starting(gameUnderTest)) should be(empty)
+        deal(gameUnderTest) should be(empty)
       }
 
     }

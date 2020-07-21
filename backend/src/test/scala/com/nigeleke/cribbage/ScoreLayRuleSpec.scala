@@ -1,7 +1,7 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.actors.Game.{PegScore, Playing}
-import com.nigeleke.cribbage.actors.rules.ScorePlayRule
+import com.nigeleke.cribbage.actors.Game.PegScore
+import com.nigeleke.cribbage.actors.rules.Rules._
 import com.nigeleke.cribbage.model.{Card, Cards, Game}
 import com.nigeleke.cribbage.suit.Face
 import com.nigeleke.cribbage.suit.Face._
@@ -17,10 +17,10 @@ class ScorePlayRuleSpec extends AnyWordSpec with Matchers {
     def checkPlays(plays: Seq[(Seq[(Face, Suit)], Int)]) = plays.foreach { play =>
       val faceSuits = play._1
       val expectedScore = play._2
-      scorePlay(faceSuits, expectedScore)
+      assertScore(faceSuits, expectedScore)
     }
 
-    def scorePlay(cards: Seq[(Face, Suit)], expectedScore: Int) = {
+    def assertScore(cards: Seq[(Face, Suit)], expectedScore: Int) = {
 
       def takeAlternate(cards: Cards) : Cards = cards match {
         case Nil => Nil
@@ -36,9 +36,9 @@ class ScorePlayRuleSpec extends AnyWordSpec with Matchers {
         .withPlayer(playerIds.last).withHand(playerIds.last, takeAlternate(initialCards.drop(1)))
       val lays = initialCards.zip(Iterator.continually(playerIds).flatten)
 
-      val game = lays.foldLeft(initialGame)((g, lay) => g.withPlay(lay._2, lay._1))
+      val game = lays.foldLeft(initialGame)((g, lay) => g.withLay(lay._2, lay._1))
 
-      ScorePlayRule.commands(Playing(game)) should be(
+      scoreLay(game) should be(
         if (expectedScore != 0) Seq(PegScore(lays.last._2, expectedScore))
         else Seq.empty)
     }
@@ -92,14 +92,6 @@ class ScorePlayRuleSpec extends AnyWordSpec with Matchers {
         Seq((Four, Spades), (Ace, Clubs), (Three, Diamonds), (Two, Hearts)) -> 4,
         Seq((Four, Spades), (Ace, Clubs), (Three, Diamonds), (Five, Hearts)) -> 0,
         Seq((Five, Spades), (Two, Clubs), (Four, Diamonds), (Six, Hearts), (Three, Clubs)) -> 5
-      )
-      checkPlays(plays)
-    }
-
-    "pegs running total of 31" in {
-      val plays = Seq(
-        Seq((Ten, Hearts), (King, Clubs), (Ten, Diamonds), (Ace, Spades)) -> 2,
-        Seq((Ten, Hearts), (King, Clubs), (Ten, Diamonds)) -> 0
       )
       checkPlays(plays)
     }

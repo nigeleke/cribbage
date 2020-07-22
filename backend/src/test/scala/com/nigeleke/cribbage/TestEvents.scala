@@ -55,7 +55,8 @@ object TestEvents {
 
   def layEvents(lays: Seq[PlayerFaceSuit]): Seq[Event] = lays.map(lay => CardLaid(lay._1, cardOf(lay._2)))
 
-  def cardOf(faceSuit: FaceSuit): Card = deck.filter(card => card.face == faceSuit._1 && card.suit == faceSuit._2).head
+  def cardOf(face: Face, suit: Suit): Card = deck.filter(card => card.face == face && card.suit == suit).head
+  def cardOf(faceSuit: FaceSuit): Card = cardOf(faceSuit._1, faceSuit._2)
   def cardsOf(faceSuits: Seq[FaceSuit]): Seq[Card] = faceSuits.map(cardOf(_))
 
   implicit def cardToFaceSuit(card: Card) : FaceSuit = (card.face, card.suit)

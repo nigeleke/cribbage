@@ -24,8 +24,8 @@ object Game {
   final case class  PegScore(playerId: PlayerId, points: Int) extends Command
   final case class  DeclareWinner(playerId: PlayerId) extends Command
   final case class  Pass(playerId: PlayerId) extends Command
-//  final case object CompletePlay extends Command
-//  final case object CompletePlays extends Command
+  final case object CompletePlay extends Command
+  final case object CompletePlays extends Command
 //  final case object ScorePoneHand extends Command
 //  final case object ScoreDealerHand extends Command
 //  final case object ScoreCrib extends Command
@@ -46,6 +46,7 @@ object Game {
   final case class PlayCutRevealed(card: Card) extends Event
   final case class CardLaid(playerId: PlayerId, card: Card) extends Event
   final case class Passed(playerId: PlayerId) extends Event
+  final case object PlayCompleted extends Event
   final case class PointsScored(playerId: PlayerId, points: Int) extends Event
   final case class WinnerDeclared(playerId: PlayerId) extends Event
 
@@ -98,6 +99,7 @@ object Game {
     command match {
       case LayCard(playerId, card)    => layCard(game, playerId, card)
       case Pass(playerId)             => pass(game, playerId)
+      case CompletePlay               => completePlay(game)
       case PegScore(playerId, points) => pegScore(playerId, points)
       case DeclareWinner(playerId)    => declareWinner(playerId)
       case _                          => unexpectedCommand(game, command)
@@ -145,6 +147,7 @@ object Game {
     event match {
       case CardLaid(playerId, card)       => Playing(game.withLay(playerId, card))
       case Passed(playerId)               => Playing(game.withPass(playerId))
+      case PlayCompleted                  => Playing(game.withNextPlay())
       case PointsScored(playerId, points) => Playing(game.withScore(playerId, points))
       case WinnerDeclared(_)              => Finished(game)
       case _                              => unexpectedEvent(game, event)

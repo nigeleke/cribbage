@@ -100,6 +100,9 @@ object CommandHandlers {
     else Effect.unhandled
   }
 
+  def completePlay(game: Game)(implicit notify: ActorRef[Command]) : EffectBuilder[Event, State] =
+    Effect.persist(PlayCompleted).thenRun(applyRules(resetPlay))
+
   def pegScore(playerId: PlayerId, points: Int)(implicit notify: ActorRef[Command]) : EffectBuilder[Event, State] =
     Effect.persist(PointsScored(playerId, points)).thenRun(applyRules(Rules.declareWinner))
 

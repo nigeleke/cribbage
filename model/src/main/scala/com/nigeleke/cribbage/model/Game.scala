@@ -92,6 +92,12 @@ object Game {
       game.copy(play = updatedPlay)
     }
 
+    def withNextPlay() = {
+      require(game.players.forall(game.hands(_).forall(card => game.play.runningTotal + card.value > 31)))
+      val updatedPlay = game.play.withNextPlay()
+      game.copy(play = updatedPlay)
+    }
+
     def opponent(playerId: PlayerId) : PlayerId = {
       game.players.filterNot(_ == playerId).head
     }

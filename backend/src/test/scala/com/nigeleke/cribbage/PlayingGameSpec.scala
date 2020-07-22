@@ -59,7 +59,7 @@ class PlayingGameSpec
 
   "A PlayingGame" should {
 
-    "initially have the next Player to Lay as the Pone" in playingGame { game =>
+    "initially make Pone the NextToLay" in playingGame { game =>
       game.play.optNextToLay should be(game.optPone)
     }
 
@@ -88,21 +88,21 @@ class PlayingGameSpec
       }
 
       "they have no valid cards for the CurrentPlay" in playingGame { game =>
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf((King,Diamonds))))
-        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf((Ten,Diamonds))))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Diamonds)))
 
-        val result0 = eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf((King,Spades))))
-        result0.command should be(LayCard(player2Id, cardOf((King,Spades))))
-        result0.event should be(CardLaid(player2Id, cardOf((King,Spades))))
+        val result0 = eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Spades)))
+        result0.command should be(LayCard(player2Id, cardOf(King,Spades)))
+        result0.event should be(CardLaid(player2Id, cardOf(King,Spades)))
         result0.state should be(Playing(
           game
-            .withLay(player2Id, cardOf((King,Diamonds)))
-            .withLay(player1Id, cardOf((Ten,Diamonds)))
-            .withLay(player2Id, cardOf((King,Spades)))
+            .withLay(player2Id, cardOf(King,Diamonds))
+            .withLay(player1Id, cardOf(Ten,Diamonds))
+            .withLay(player2Id, cardOf(King,Spades))
         ))
 
-        val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf((Five,Hearts))))
-        result.command should be(LayCard(player1Id, cardOf((Five,Hearts))))
+        val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Five,Hearts)))
+        result.command should be(LayCard(player1Id, cardOf(Five,Hearts)))
         result.events should be(empty)
         result.state should be(result0.state)
       }
@@ -110,17 +110,17 @@ class PlayingGameSpec
 
     "allow the next Player to Pass" when {
       "they have no valid cards for the CurrentPlay" in playingGame { game =>
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf((King,Diamonds))))
-        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf((Ten,Diamonds))))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Diamonds)))
 
-        val result0 = eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf((King,Spades))))
-        result0.command should be(LayCard(player2Id, cardOf((King,Spades))))
-        result0.event should be(CardLaid(player2Id, cardOf((King,Spades))))
+        val result0 = eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Spades)))
+        result0.command should be(LayCard(player2Id, cardOf(King,Spades)))
+        result0.event should be(CardLaid(player2Id, cardOf(King,Spades)))
         result0.state should be(Playing(
           game
-            .withLay(player2Id, cardOf((King,Diamonds)))
-            .withLay(player1Id, cardOf((Ten,Diamonds)))
-            .withLay(player2Id, cardOf((King,Spades)))
+            .withLay(player2Id, cardOf(King,Diamonds))
+            .withLay(player1Id, cardOf(Ten,Diamonds))
+            .withLay(player2Id, cardOf(King,Spades))
         ))
 
         val result = eventSourcedTestKit.runCommand(Pass(player1Id))
@@ -143,8 +143,8 @@ class PlayingGameSpec
 
     "score the Lay" when { // Full play scoring in PlayScoreSpec
       "a Card is laid" in playingGame { game =>
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf((King,Diamonds))))
-        val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf((Five,Hearts))))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
+        val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Five,Hearts)))
         result.command should be(LayCard(player1Id, cardOf(Five,Hearts)))
         result.event should be(CardLaid(player1Id, cardOf(Five,Hearts)))
         result.state should be(Playing(game
@@ -163,9 +163,9 @@ class PlayingGameSpec
 
     "score the end of Play" when {
       "play finishes with runningTotal less than 31" in playingGame { game =>
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf((King,Diamonds))))
-        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf((Ten,Diamonds))))
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf((King,Spades))))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Spades)))
         eventSourcedTestKit.runCommand(Pass(player1Id))
         val result = eventSourcedTestKit.runCommand(Pass(player2Id))
         result.command should be(Pass(player2Id))
@@ -173,9 +173,9 @@ class PlayingGameSpec
 
         drain()
         persisted should contain theSameElementsInOrderAs(initialEvents ++ Seq(
-          CardLaid(player2Id, cardOf((King,Diamonds))),
-          CardLaid(player1Id, cardOf((Ten,Diamonds))),
-          CardLaid(player2Id, cardOf((King,Spades))),
+          CardLaid(player2Id, cardOf(King,Diamonds)),
+          CardLaid(player1Id, cardOf(Ten,Diamonds)),
+          CardLaid(player2Id, cardOf(King,Spades)),
           Passed(player1Id),
           Passed(player2Id),
           PointsScored(player2Id, 1)
@@ -183,34 +183,32 @@ class PlayingGameSpec
       }
 
       "play finishes with runningTotal exactly 31" in playingGame { game =>
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf((King,Diamonds))))
-        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf((Ten,Diamonds))))
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf((Seven,Spades))))
-        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf((Four,Clubs))))
-        eventSourcedTestKit.runCommand(Pass(player2Id)) // TODO: Pass not necessary on 31...
-        val result = eventSourcedTestKit.runCommand(Pass(player1Id))
-        result.command should be(Pass(player1Id))
-        result.event should be(Passed(player1Id))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(Seven,Spades)))
+        val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Four,Clubs)))
+        result.command should be(LayCard(player1Id, cardOf(Four,Clubs)))
+        result.event should be(CardLaid(player1Id, cardOf(Four,Clubs)))
 
         drain()
         persisted should contain theSameElementsInOrderAs(initialEvents ++ Seq(
-          CardLaid(player2Id, cardOf((King,Diamonds))),
-          CardLaid(player1Id, cardOf((Ten,Diamonds))),
-          CardLaid(player2Id, cardOf((Seven,Spades))),
-          CardLaid(player1Id, cardOf((Four,Clubs))),
-          Passed(player2Id),
-          Passed(player1Id),
-          PointsScored(player1Id, 2)
+          CardLaid(player2Id, cardOf(King,Diamonds)),
+          CardLaid(player1Id, cardOf(Ten,Diamonds)),
+          CardLaid(player2Id, cardOf(Seven,Spades)),
+          CardLaid(player1Id, cardOf(Four,Clubs)),
+          PointsScored(player1Id, 2),
+          PlayCompleted
         ))
       }
     }
 
     "start the next Play" when {
       "both Players have Passed" ignore {}
+      "current Play finished on 31" ignore {}
     }
 
     "start Scoring" when {
-      "both Players have Passed and all cards laid" ignore { }
+      "both Players have Passed and all Plays completed" ignore { }
     }
 
   }

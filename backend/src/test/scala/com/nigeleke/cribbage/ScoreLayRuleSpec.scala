@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.actors.Game.PegScore
+import com.nigeleke.cribbage.actors.Game.{CompletePlay, PegScore}
 import com.nigeleke.cribbage.actors.rules.Rules._
 import com.nigeleke.cribbage.model.{Card, Cards, Game}
 import com.nigeleke.cribbage.suit.Face
@@ -37,10 +37,15 @@ class ScorePlayRuleSpec extends AnyWordSpec with Matchers {
       val lays = initialCards.zip(Iterator.continually(playerIds).flatten)
 
       val game = lays.foldLeft(initialGame)((g, lay) => g.withLay(lay._2, lay._1))
+      val endOfPlay = game.play.runningTotal == 31
 
-      scoreLay(game) should be(
-        if (expectedScore != 0) Seq(PegScore(lays.last._2, expectedScore))
-        else Seq.empty)
+      scoreLay(game) should be {
+        (expectedScore, endOfPlay) match {
+          case (0, _)         => Seq.empty
+          case (score, false) => Seq(PegScore(lays.last._2, score))
+          case (score, true)  => Seq(PegScore(lays.last._2, score), CompletePlay)
+        }
+      }
     }
 
     "pegs totals of fifteen in a play" in {
@@ -92,6 +97,13 @@ class ScorePlayRuleSpec extends AnyWordSpec with Matchers {
         Seq((Four, Spades), (Ace, Clubs), (Three, Diamonds), (Two, Hearts)) -> 4,
         Seq((Four, Spades), (Ace, Clubs), (Three, Diamonds), (Five, Hearts)) -> 0,
         Seq((Five, Spades), (Two, Clubs), (Four, Diamonds), (Six, Hearts), (Three, Clubs)) -> 5
+      )
+      checkPlays(plays)
+    }
+
+    "pegs 2 when play finishes on exactly 31" in {
+      val plays = Seq(
+        Seq((Jack, Spades), (Ten, Spades), (King, Spades), (Ace, Spades)) -> 2
       )
       checkPlays(plays)
     }

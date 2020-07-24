@@ -55,6 +55,14 @@ object TestEvents {
 
   def layEvents(lays: Seq[PlayerFaceSuit]): Seq[Event] = lays.map(lay => CardLaid(lay._1, cardOf(lay._2)))
 
+  def passEvents(ids: PlayerId*): Seq[Event] = ids.map(Passed(_))
+
+  val playCompletedEvent : Seq[Event] = Seq(PlayCompleted)
+
+  val playsCompletedEvent : Seq[Event] = Seq(PlaysCompleted)
+
+  def scoreEvent(playerId: PlayerId, points: Int) = Seq(PointsScored(playerId, points))
+
   def cardOf(face: Face, suit: Suit): Card = deck.filter(card => card.face == face && card.suit == suit).head
   def cardOf(faceSuit: FaceSuit): Card = cardOf(faceSuit._1, faceSuit._2)
   def cardsOf(faceSuits: Seq[FaceSuit]): Seq[Card] = faceSuits.map(cardOf(_))

@@ -120,6 +120,8 @@ object Game {
       val updatedScore = Score(currentScore.front, currentScore.front + points)
       game.copy(scores = game.scores.updated(id, updatedScore))
     }
+
+    def withSwappedDealer(): Game = game.copy(optDealer = game.optPone, deck = Deck(), hands = Map.empty)
   }
 
 }

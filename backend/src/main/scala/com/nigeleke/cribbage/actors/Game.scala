@@ -26,10 +26,7 @@ object Game {
   final case class  Pass(playerId: PlayerId) extends Command
   final case object CompletePlay extends Command
   final case object CompletePlays extends Command
-//  final case object ScorePoneHand extends Command
-//  final case object ScoreDealerHand extends Command
-//  final case object ScoreCrib extends Command
-//  final case object SwapDealer extends Command
+  final case object SwapDealer extends Command
 
 //  sealed trait Query extends Command
 //  final case class GetState(replyTo: ActorRef[model.Game]) extends Query
@@ -48,6 +45,7 @@ object Game {
   final case class Passed(playerId: PlayerId) extends Event
   final case object PlayCompleted extends Event
   final case object PlaysCompleted extends Event
+  final case object DealerSwapped extends Event
   final case class PointsScored(playerId: PlayerId, points: Int) extends Event
   final case class WinnerDeclared(playerId: PlayerId) extends Event
 
@@ -69,7 +67,6 @@ object Game {
   }
 
   def onCommand(state: State, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] = {
-    println(s"Command: $command")
     state match {
       case Uninitialised(game) => uninitialisedCommands(game, command)
       case Starting(game)      => handleStartingCommands(game, command)
@@ -114,6 +111,7 @@ object Game {
   private def handleScoringCommands(game: model.Game, command: Command)(implicit notify: ActorRef[Command]) : Effect[Event, State] =
     command match {
       case PegScore(playerId, points) => pegScore(playerId, points)
+      case SwapDealer                 => swapDealer()
       case _                          => unexpectedCommand(game, command)
     }
 
@@ -173,6 +171,7 @@ object Game {
   private def handleScoringEvents(game: model.Game, event: Event) : State = {
     event match {
       case PointsScored(playerId, points) => Scoring(game.withScore(playerId, points))
+      case DealerSwapped                  => Discarding(game.withSwappedDealer())
       case WinnerDeclared(_)              => Finished(game)
       case _                              => unexpectedEvent(game, event)
     }

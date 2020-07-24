@@ -277,14 +277,15 @@ class PlayingGameSpec
           PlaysCompleted,
           PointsScored(player2Id,4),
           PointsScored(player1Id,6),
-          PointsScored(player1Id,4)
+          PointsScored(player1Id,4),
+          DealerSwapped
         )
         persisted should contain theSameElementsInOrderAs(expectedEvents)
 
         persistenceTestKit.clearAll()
         persistenceTestKit.persistForRecovery(persistenceId, expectedEvents)
         val resetResult = eventSourcedTestKit.restart()
-        resetResult.state should be(a[Scoring])
+        resetResult.state should be(a[Discarding])
       }
     }
 

@@ -91,8 +91,6 @@ object CommandHandlers {
   }
 
   def pass(game: Game, playerId: PlayerId)(implicit notify: ActorRef[Command]) : EffectBuilder[Event, State] = {
-    println(s"Passing ${game.hands}\n        ${game.play}")
-
     val playerIsNextToLay = playerId == game.play.optNextToLay.get
     val currentRunningTotal = game.play.runningTotal
     val someInRange = !game.hands(playerId).forall(card => (currentRunningTotal + card.value) > 31)
@@ -110,6 +108,9 @@ object CommandHandlers {
 
   def pegScore(playerId: PlayerId, points: Int)(implicit notify: ActorRef[Command]) : EffectBuilder[Event, State] =
     Effect.persist(PointsScored(playerId, points)).thenRun(applyRules(Rules.declareWinner))
+
+  def swapDealer()(implicit notify: ActorRef[Command]) : EffectBuilder[Event, State] =
+    Effect.persist(DealerSwapped).thenRun(applyRules(deal))
 
   private def applyRules(rules: (Game => Seq[Command])*)(state: State)(implicit notify: ActorRef[Command]) =
     rules.foreach { rule =>

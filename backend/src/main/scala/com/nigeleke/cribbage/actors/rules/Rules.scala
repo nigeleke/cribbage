@@ -99,8 +99,6 @@ object Rules {
     val score = fifteensInPlay + pairsInPlay + runsInPlay
     val scorerId = game.play.current.last.playerId
 
-    println(s"Scoring Lay ${game.play.current} => $score")
-
     if (score != 0) Seq(PegScore(scorerId, score))
     else Seq.empty
   }
@@ -114,7 +112,7 @@ object Rules {
   def scoreDealer(game: Game) : Seq[Command] = {
     val dealerId = game.optDealer.get
     val cut = game.optCut.get
-    scoreCards(dealerId, game.hands(dealerId), cut) ++ scoreCards(dealerId, game.crib, cut)
+    scoreCards(dealerId, game.hands(dealerId), cut) ++ scoreCards(dealerId, game.crib, cut) :+ SwapDealer
   }
 
   private def scoreCards(playerId: PlayerId, cards: Cards, cut: Card) : Seq[Command] = {

@@ -38,7 +38,7 @@ class PlayingGameSpec
     deckAllocatedEvent ++ playersJoinedEvents ++ dealerSelectedEvent ++
       dealEventsWith(Seq(
         (Ten,Hearts), (Ten,Clubs), (Ten,Diamonds), (Ten,Spades), (Five,Hearts), (Four,Clubs),
-        (King,Hearts), (King,Clubs), (King,Diamonds), (King,Spades), (Five,Diamonds), (Seven,Spades))) ++
+        (King,Hearts), (King,Clubs), (King,Diamonds), (King,Spades), (Eight,Diamonds), (Seven,Spades))) ++
       discardEventsWith(Seq(
         (player1Id, Seq((Ten,Hearts), (Ten,Clubs))),
         (player2Id, Seq((King,Hearts), (King,Clubs))))) ++
@@ -230,33 +230,61 @@ class PlayingGameSpec
       "all Plays completed" in playingGame { game =>
         eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
         eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Diamonds)))
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(Seven,Spades)))
-        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Four,Clubs)))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(Eight,Diamonds)))
+        eventSourcedTestKit.runCommand(Pass(player1Id))
+        eventSourcedTestKit.runCommand(Pass(player2Id))
+        drain()
 
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Five,Hearts)))
         eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Spades)))
         eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Spades)))
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(Five,Diamonds)))
-        val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Five,Hearts)))
-        result.command should be(LayCard(player1Id, cardOf(Five,Hearts)))
-        result.event should be(CardLaid(player1Id, cardOf(Five,Hearts)))
+        eventSourcedTestKit.runCommand(Pass(player2Id))
+        drain()
+
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Four,Clubs)))
+        eventSourcedTestKit.runCommand(Pass(player2Id))
+        eventSourcedTestKit.runCommand(Pass(player1Id))
+        drain()
+
+        val result = eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(Seven,Spades)))
+        result.command should be(LayCard(player2Id, cardOf(Seven,Spades)))
+        result.event should be(CardLaid(player2Id, cardOf(Seven,Spades)))
 
         drain()
-        persisted should contain theSameElementsInOrderAs(initialEvents ++ Seq(
+        val expectedEvents = initialEvents ++ Seq(
           CardLaid(player2Id, cardOf(King,Diamonds)),
           CardLaid(player1Id, cardOf(Ten,Diamonds)),
-          CardLaid(player2Id, cardOf(Seven,Spades)),
-          CardLaid(player1Id, cardOf(Four,Clubs)),
-          PointsScored(player1Id, 2),
+          CardLaid(player2Id, cardOf(Eight,Diamonds)),
+          Passed(player1Id),
+          Passed(player2Id),
+          PointsScored(player2Id, 1),
           PlayCompleted,
-          CardLaid(player2Id, cardOf(King,Spades)),
-          CardLaid(player1Id, cardOf(Ten,Spades)),
-          CardLaid(player2Id, cardOf(Five,Diamonds)),
+
           CardLaid(player1Id, cardOf(Five,Hearts)),
-          PointsScored(player1Id, 2),
+          CardLaid(player2Id, cardOf(King,Spades)),
+          PointsScored(player2Id, 2),
+          CardLaid(player1Id, cardOf(Ten,Spades)),
+          Passed(player2Id),
+          CardLaid(player1Id, cardOf(Four,Clubs)),
+          Passed(player2Id),
+          Passed(player1Id),
           PointsScored(player1Id, 1),
           PlayCompleted,
-          PlaysCompleted
-        ))
+
+          CardLaid(player2Id, cardOf(Seven,Spades)),
+          PointsScored(player2Id, 1),
+          PlayCompleted,
+          PlaysCompleted,
+          PointsScored(player2Id,4),
+          PointsScored(player1Id,6),
+          PointsScored(player1Id,4)
+        )
+        persisted should contain theSameElementsInOrderAs(expectedEvents)
+
+        persistenceTestKit.clearAll()
+        persistenceTestKit.persistForRecovery(persistenceId, expectedEvents)
+        val resetResult = eventSourcedTestKit.restart()
+        resetResult.state should be(a[Scoring])
       }
     }
 

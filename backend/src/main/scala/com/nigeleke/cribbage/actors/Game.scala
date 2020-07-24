@@ -127,7 +127,7 @@ object Game {
       case Starting(game)      => handleStartingEvents(game, event)
       case Discarding(game)    => handleDiscardEvents(game, event)
       case Playing(game)       => handlePlayingEvents(game, event)
-      case Scoring(game)       => ???
+      case Scoring(game)       => handleScoringEvents(game, event)
       case Finished(_)         => ???
     }
   }
@@ -165,6 +165,14 @@ object Game {
       case PlayCompleted                  => Playing(game.withNextPlay())
       case PlaysCompleted                 => Scoring(game.withPlaysReturned())
       case PointsScored(playerId, points) => Playing(game.withScore(playerId, points))
+      case WinnerDeclared(_)              => Finished(game)
+      case _                              => unexpectedEvent(game, event)
+    }
+  }
+
+  private def handleScoringEvents(game: model.Game, event: Event) : State = {
+    event match {
+      case PointsScored(playerId, points) => Scoring(game.withScore(playerId, points))
       case WinnerDeclared(_)              => Finished(game)
       case _                              => unexpectedEvent(game, event)
     }

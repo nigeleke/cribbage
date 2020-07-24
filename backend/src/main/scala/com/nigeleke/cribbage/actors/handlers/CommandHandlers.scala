@@ -91,6 +91,8 @@ object CommandHandlers {
   }
 
   def pass(game: Game, playerId: PlayerId)(implicit notify: ActorRef[Command]) : EffectBuilder[Event, State] = {
+    println(s"Passing ${game.hands}\n        ${game.play}")
+
     val playerIsNextToLay = playerId == game.play.optNextToLay.get
     val currentRunningTotal = game.play.runningTotal
     val someInRange = !game.hands(playerId).forall(card => (currentRunningTotal + card.value) > 31)

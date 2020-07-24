@@ -86,7 +86,7 @@ object CommandHandlers {
     val inRange = (currentRunningTotal + card.value) <= 31
     val permitted = playerIsNextToLay && inRange
 
-    if (permitted) Effect.persist(CardLaid(playerId, card)).thenRun(applyRules(scoreLay, nextToLay))
+    if (permitted) Effect.persist(CardLaid(playerId, card)).thenRun(applyRules(scoreLay, endPlay))
     else Effect.unhandled
   }
 
@@ -96,12 +96,15 @@ object CommandHandlers {
     val someInRange = !game.hands(playerId).forall(card => (currentRunningTotal + card.value) > 31)
     val permitted = playerIsNextToLay && !someInRange
 
-    if (permitted) Effect.persist(Passed(playerId)).thenRun(applyRules(scorePass, nextToLay))
+    if (permitted) Effect.persist(Passed(playerId)).thenRun(applyRules(endPlay))
     else Effect.unhandled
   }
 
   def completePlay(game: Game)(implicit notify: ActorRef[Command]) : EffectBuilder[Event, State] =
-    Effect.persist(PlayCompleted).thenRun(applyRules(resetPlay))
+    Effect.persist(PlayCompleted).thenRun(applyRules(endPlays))
+
+  def completePlays(game: Game)(implicit notify: ActorRef[Command]) : EffectBuilder[Event, State] =
+    Effect.persist(PlaysCompleted).thenRun(applyRules(scorePone, scoreDealer, deal))
 
   def pegScore(playerId: PlayerId, points: Int)(implicit notify: ActorRef[Command]) : EffectBuilder[Event, State] =
     Effect.persist(PointsScored(playerId, points)).thenRun(applyRules(Rules.declareWinner))

@@ -10,9 +10,9 @@ import com.nigeleke.cribbage.suit.Suit._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class ScorePlayRuleSpec extends AnyWordSpec with Matchers {
+class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
 
-  "The ScorePlayRule" should {
+  "The ScoreLayRule" should {
 
     def checkPlays(plays: Seq[(Seq[(Face, Suit)], Int)]) = plays.foreach { play =>
       val faceSuits = play._1
@@ -97,13 +97,6 @@ class ScorePlayRuleSpec extends AnyWordSpec with Matchers {
         Seq((Four, Spades), (Ace, Clubs), (Three, Diamonds), (Two, Hearts)) -> 4,
         Seq((Four, Spades), (Ace, Clubs), (Three, Diamonds), (Five, Hearts)) -> 0,
         Seq((Five, Spades), (Two, Clubs), (Four, Diamonds), (Six, Hearts), (Three, Clubs)) -> 5
-      )
-      checkPlays(plays)
-    }
-
-    "pegs 2 when play finishes on exactly 31" in {
-      val plays = Seq(
-        Seq((Jack, Spades), (Ten, Spades), (King, Spades), (Ace, Spades)) -> 2
       )
       checkPlays(plays)
     }

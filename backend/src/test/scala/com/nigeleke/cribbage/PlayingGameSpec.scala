@@ -141,7 +141,7 @@ class PlayingGameSpec
       }
     }
 
-    "score the Lay" when { // Full play scoring in PlayScoreSpec
+    "score the Lay" when { // Full lay scoring in ScoreLayRuleSpec
       "a Card is laid" in playingGame { game =>
         eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
         val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Five,Hearts)))
@@ -178,7 +178,8 @@ class PlayingGameSpec
           CardLaid(player2Id, cardOf(King,Spades)),
           Passed(player1Id),
           Passed(player2Id),
-          PointsScored(player2Id, 1)
+          PointsScored(player2Id, 1),
+          PlayCompleted
         ))
       }
 
@@ -203,12 +204,60 @@ class PlayingGameSpec
     }
 
     "start the next Play" when {
-      "both Players have Passed" ignore {}
-      "current Play finished on 31" ignore {}
+      "both Players have Passed" in playingGame { game =>
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Spades)))
+        eventSourcedTestKit.runCommand(Pass(player1Id))
+        eventSourcedTestKit.runCommand(Pass(player2Id))
+
+        drain()
+        persisted should contain(PlayCompleted)
+      }
+
+      "current Play finished on 31" in playingGame { game =>
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(Seven,Spades)))
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Four,Clubs)))
+
+        drain()
+        persisted should contain(PlayCompleted)
+      }
     }
 
     "start Scoring" when {
-      "both Players have Passed and all Plays completed" ignore { }
+      "all Plays completed" in playingGame { game =>
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Diamonds)))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(Seven,Spades)))
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Four,Clubs)))
+
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Spades)))
+        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Spades)))
+        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(Five,Diamonds)))
+        val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Five,Hearts)))
+        result.command should be(LayCard(player1Id, cardOf(Five,Hearts)))
+        result.event should be(CardLaid(player1Id, cardOf(Five,Hearts)))
+
+        drain()
+        persisted should contain theSameElementsInOrderAs(initialEvents ++ Seq(
+          CardLaid(player2Id, cardOf(King,Diamonds)),
+          CardLaid(player1Id, cardOf(Ten,Diamonds)),
+          CardLaid(player2Id, cardOf(Seven,Spades)),
+          CardLaid(player1Id, cardOf(Four,Clubs)),
+          PointsScored(player1Id, 2),
+          PlayCompleted,
+          CardLaid(player2Id, cardOf(King,Spades)),
+          CardLaid(player1Id, cardOf(Ten,Spades)),
+          CardLaid(player2Id, cardOf(Five,Diamonds)),
+          CardLaid(player1Id, cardOf(Five,Hearts)),
+          PointsScored(player1Id, 2),
+          PointsScored(player1Id, 1),
+          PlayCompleted,
+          PlaysCompleted
+        ))
+      }
     }
 
   }

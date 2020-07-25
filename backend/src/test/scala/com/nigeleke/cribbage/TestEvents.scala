@@ -17,7 +17,6 @@ object TestEvents {
   type PlayerFaceSuits = (PlayerId, Seq[FaceSuit])
 
   val deck: Deck = Deck()
-  val deckAllocatedEvent: Seq[Event] = Seq(DeckAllocated(deck))
 
   val player1Id: UUID = randomId
   val player1JoinedEvent: Seq[Event] = Seq(PlayerJoined(player1Id))
@@ -36,9 +35,7 @@ object TestEvents {
   val dealEvents : Seq[Event] = dealEventsWith((deck.take(12)))
 
   def dealEventsWith(cards: Seq[FaceSuit]) : Seq[Event] = Seq(
-    HandDealt(player1Id, cardsOf((cards.take(6)))),
-    HandDealt(player2Id, cardsOf((cards.drop(6).take(6)))),
-    HandsDealt
+    HandsDealt(Map((player1Id, cardsOf(cards.take(6))), (player2Id, cardsOf(cards.drop(6).take(6)))), deck)
   )
 
   def discardEvents() : Seq[Event] = discardEventsWith(Seq(

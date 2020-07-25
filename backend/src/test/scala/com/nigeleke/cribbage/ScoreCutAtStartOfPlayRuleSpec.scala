@@ -21,14 +21,14 @@ class ScoreCutAtStartOfPlayRuleSpec extends AnyWordSpec with Matchers {
     "score for dealer two for his heels if Jack is cut" in {
       val deck = Deck()
       val jack = deck.find(_.face == Face.Jack).head
-      val gameUnderTest = game.withDeck(deck).withCut(jack)
+      val gameUnderTest = game.withDeal(Map.empty, deck).withCut(jack)
       scoreCutAtStartOfPlay(gameUnderTest) should be(Seq(PegScore(player1Id, 2)))
     }
 
     "no score dealer if Jack is not cut" in {
       val deck = Deck()
       val notJack = deck.find(_.face == Face.Queen).head
-      val gameUnderTest = game.withDeck(deck).withCut(notJack)
+      val gameUnderTest = game.withDeal(Map.empty, deck).withCut(notJack)
       scoreCutAtStartOfPlay(gameUnderTest) should be(empty)
     }
 

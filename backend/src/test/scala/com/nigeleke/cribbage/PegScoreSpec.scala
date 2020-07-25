@@ -34,7 +34,7 @@ class PegScoreSpec
 
   import TestEvents._
   private val initialEvents: Seq[Event] =
-    deckAllocatedEvent ++ playersJoinedEvents ++ dealerSelectedEvent ++ dealEvents ++ discardEvents ++ playCutEvent
+    playersJoinedEvents ++ dealerSelectedEvent ++ dealEvents ++ discardEvents ++ playCutEvent
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()

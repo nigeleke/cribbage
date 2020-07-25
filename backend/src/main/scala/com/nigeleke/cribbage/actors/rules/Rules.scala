@@ -1,7 +1,11 @@
 package com.nigeleke.cribbage.actors.rules
 
+import akka.actor.typed.ActorRef
+import akka.persistence.typed.scaladsl.{Effect, EffectBuilder}
 import com.nigeleke.cribbage.actors.Game._
+import com.nigeleke.cribbage.actors.handlers.CommandHandlers.applyRules
 import com.nigeleke.cribbage.model.{Card, Cards, Game}
+import com.nigeleke.cribbage.model.Deck._
 import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
 import com.nigeleke.cribbage.suit.Face
 
@@ -9,23 +13,29 @@ import scala.language.implicitConversions
 
 object Rules {
 
-  def cutAtStartOfPlay(game: Game): Seq[Command] = {
-    val needToCut = game.crib.size == 4
-    if (needToCut) Seq(CutAtStartOfPlay)
-    else Seq.empty
+  def cutAtStartOfPlay(game: Game): Seq[Event] = {
+//    val needToCut = game.crib.size == 4
+//    if (needToCut) Seq(CutAtStartOfPlay)
+//    else
+// TODO:
+      Seq.empty
   }
 
-  def cutForDeal(game: Game): Seq[Command] = {
-    val needToCutForDeal = game.players.size == 2 && game.optDealer.isEmpty
-    if (needToCutForDeal) Seq(CutForDeal)
-    else Seq.empty
-  }
+//  def cutForDeal(game: Game): Seq[Command] = {
+//    val needToCutForDeal = game.players.size == 2 && game.optDealer.isEmpty
+//    if (needToCutForDeal) Seq(CutForDeal)
+//    else Seq.empty
+//  }
 
-  def deal(game: Game): Seq[Command] = {
-    val dealRequired = game.optDealer.isDefined && game.hands.isEmpty
-    if (dealRequired) Seq(DealHands)
-    else Seq.empty[Command]
-  }
+
+
+//  def deal(game: Game): Seq[Command] = {
+//    val dealRequired = game.optDealer.isDefined && game.hands.isEmpty
+//    if (dealRequired) Seq(DealHands)
+//    else Seq.empty[Command]
+//  }
+
+
 
   def declareWinner(game: Game): Seq[Command] =
     (for {

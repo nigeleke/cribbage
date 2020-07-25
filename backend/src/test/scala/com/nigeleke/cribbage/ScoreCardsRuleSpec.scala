@@ -21,11 +21,10 @@ class ScoreCardsRuleSpec extends AnyWordSpec with Matchers {
 
     def assertScore(cards: Seq[FaceSuit], cut: FaceSuit, expectedScore: Int) = {
       val game = model.Game(randomId)
-        .withDeck(deck)
         .withPlayer(player1Id)
         .withPlayer(player2Id)
         .withDealer(player2Id)
-        .withHand(player1Id, cardsOf(cards))
+        .withDeal(Map((player1Id, cardsOf(cards))), deck)
         .withCut(cardOf(cut))
       scorePone(game) should be {
         if (expectedScore != 0) Seq(PegScore(player1Id, expectedScore))

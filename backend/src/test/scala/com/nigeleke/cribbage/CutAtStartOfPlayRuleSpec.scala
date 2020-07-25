@@ -16,12 +16,10 @@ class CutAtStartOfPlayRuleSpec extends AnyWordSpec with Matchers {
 
     def gameWithHandsDealt(player1Id: PlayerId, player2Id: PlayerId) = {
       game
-        .withDeck(deck)
         .withPlayer(player1Id)
         .withPlayer(player2Id)
         .withDealer(player1Id)
-        .withHand(player1Id,deck.take(6))
-        .withHand(player2Id,deck.drop(6).take(6))
+        .withDeal(Map((player1Id,deck.take(6)), (player2Id,deck.drop(6).take(6))), deck.drop(12))
     }
 
     "issue the CutAtStartOfPlay command" when {

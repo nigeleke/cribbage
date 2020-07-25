@@ -31,9 +31,7 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
       val playerIds = Seq(randomId, randomId)
       val initialCards = cards.map(card => Card(randomId, card._1, card._2))
       val initialGame = Game(randomId)
-        .withDeck(initialCards)
-        .withPlayer(playerIds.head).withHand(playerIds.head, takeAlternate(initialCards))
-        .withPlayer(playerIds.last).withHand(playerIds.last, takeAlternate(initialCards.drop(1)))
+        .withDeal(Map((playerIds.head, takeAlternate(initialCards)), (playerIds.last, takeAlternate(initialCards.drop(1)))), initialCards)
       val lays = initialCards.zip(Iterator.continually(playerIds).flatten)
 
       val game = lays.foldLeft(initialGame)((g, lay) => g.withLay(lay._2, lay._1))

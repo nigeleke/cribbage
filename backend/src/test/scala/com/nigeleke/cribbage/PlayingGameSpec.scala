@@ -35,7 +35,7 @@ class PlayingGameSpec
 
   import TestEvents._
   private val initialEvents: Seq[Event] =
-    deckAllocatedEvent ++ playersJoinedEvents ++ dealerSelectedEvent ++
+    playersJoinedEvents ++ dealerSelectedEvent ++
       dealEventsWith(Seq(
         (Ten,Hearts), (Ten,Clubs), (Ten,Diamonds), (Ten,Spades), (Five,Hearts), (Four,Clubs),
         (King,Hearts), (King,Clubs), (King,Diamonds), (King,Spades), (Eight,Diamonds), (Seven,Spades))) ++

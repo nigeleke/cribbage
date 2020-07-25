@@ -32,7 +32,7 @@ class DiscardingGameSpec
 
   import TestEvents._
   private val initialEvents: Seq[Event] =
-    deckAllocatedEvent ++ playersJoinedEvents ++ dealerSelectedEvent ++ dealEvents
+    playersJoinedEvents ++ dealerSelectedEvent ++ dealEvents
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()

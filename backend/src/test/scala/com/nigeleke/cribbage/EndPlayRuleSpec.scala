@@ -16,12 +16,13 @@ class EndPlayRuleSpec extends AnyWordSpec with Matchers {
 
     val (player1Id, player2Id) = (randomId, randomId)
     val game = Game(randomId)
-      .withDeck(deck)
       .withPlayer(player1Id)
       .withPlayer(player2Id)
-      .withHand(player1Id, cardsOf(Seq((King,Hearts), (King,Clubs), (King,Diamonds), (King,Spades))))
-      .withHand(player2Id, cardsOf(Seq((Jack,Hearts), (Jack,Clubs), (Jack,Diamonds), (Jack,Spades))))
       .withDealer(player1Id)
+      .withDeal(Map(
+        (player1Id, cardsOf(Seq((King,Hearts), (King,Clubs), (King,Diamonds), (King,Spades)))),
+        (player2Id, cardsOf(Seq((Jack,Hearts), (Jack,Clubs), (Jack,Diamonds), (Jack,Spades))))),
+        deck.reverse.take(48)) // Swizzle the crib discards; we don't care for this test
 
     "not declare the Play finished" when {
       "either Player has Cards available for the CurrentPlay" in {

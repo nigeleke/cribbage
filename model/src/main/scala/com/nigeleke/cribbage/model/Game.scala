@@ -36,7 +36,7 @@ object Game {
       otherPlayers = game.players - dealer
     } yield otherPlayers.headOption).flatten
 
-    def withDeck(deck: Deck): Game = game.copy(deck = deck)
+//    def withDeck(deck: Deck): Game = game.copy(deck = deck)
 
     def withPlayer(id: PlayerId): Game = {
       require(game.players.size < 2, s"Player $id cannot join $game")
@@ -48,12 +48,10 @@ object Game {
       game.copy(optDealer = Some(id))
     }
 
-    def withHand(id: PlayerId, hand: Hand) = {
-      require(game.players.contains(id), s"Player $id is not in $game")
-      require(hand.forall(card => game.deck.contains(card)), s"Cards for player $id are not in deck")
-      val updatedHands = game.hands.updated(id, hand)
-      val updatedDeck = game.deck.filterNot(card => hand.contains(card))
-      game.copy(deck = updatedDeck, hands = updatedHands)
+    def withDeal(hands: Hands, deck: Deck) = {
+      require((game.players -- hands.keySet).size == 0, s"Players ${hands.keySet} should be part of $game")
+      require((deck.toSet -- hands.values.flatten).size == 40, s"Dealt hands ${hands.values} should be from decj $deck")
+      game.copy(deck = (deck.toSet -- hands.values.flatten).toSeq, hands = hands)
     }
 
     def withCribDiscard(id: PlayerId, cards: Cards): Game = {

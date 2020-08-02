@@ -2,8 +2,8 @@ package com.nigeleke.cribbage.actors.handlers
 
 import akka.persistence.typed.scaladsl.Effect
 import com.nigeleke.cribbage.actors.Game._
+import com.nigeleke.cribbage.actors.handlers.Validations._
 import com.nigeleke.cribbage.actors.validate.Validation._
-import com.nigeleke.cribbage.actors.validate._
 
 case class DiscardCribCardsCommandHandler(discard: DiscardCribCards, state: Discarding) extends CommandHandler {
 
@@ -14,10 +14,10 @@ case class DiscardCribCardsCommandHandler(discard: DiscardCribCards, state: Disc
   val game = state.game
 
   override def canDo: Option[String] =
-    validate(PlayerInGame(playerId, game) and
-      ValidDeal(game) and
-      PlayerHoldsCards(playerId, cards, game) and
-      DiscardingTwoCardsOnly(playerId, cards))
+    validate(playerInGame(playerId, game) and
+      validDeal(game) and
+      playerHoldsCards(playerId, cards, game) and
+      discardingTwoCardsOnly(playerId, cards))
 
   lazy val events = CribCardsDiscarded(playerId, cards) +:
     (if (state.game.crib.size == 2) scoreCutAtStartOfPlay(game) else Seq.empty)

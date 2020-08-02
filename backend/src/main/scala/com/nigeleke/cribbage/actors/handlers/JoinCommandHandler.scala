@@ -2,7 +2,7 @@ package com.nigeleke.cribbage.actors.handlers
 
 import akka.persistence.typed.scaladsl.Effect
 import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.actors.validate._
+import com.nigeleke.cribbage.actors.handlers.Validations._
 import com.nigeleke.cribbage.actors.validate.Validation._
 import com.nigeleke.cribbage.model.{Card, Deck}
 import com.nigeleke.cribbage.model.Deck._
@@ -15,8 +15,8 @@ case class JoinCommandHandler(join: Join, state: Starting) extends CommandHandle
 
   override def canDo: Option[String] =
     validate(
-      GameRequiresPlayers(game) and
-      PlayerNotAlreadyJoinedGame(playerId, game))
+      gameRequiresPlayers(game) and
+      playerNotAlreadyJoinedGame(playerId, game))
 
   override def effects: Effect[Event, State] = {
     val players = state.game.players + join.playerId

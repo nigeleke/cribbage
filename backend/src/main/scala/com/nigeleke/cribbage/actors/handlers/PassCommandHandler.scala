@@ -2,7 +2,7 @@ package com.nigeleke.cribbage.actors.handlers
 
 import akka.persistence.typed.scaladsl.Effect
 import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.actors.validate._
+import com.nigeleke.cribbage.actors.handlers.Validations._
 import com.nigeleke.cribbage.actors.validate.Validation._
 
 case class PassCommandHandler(pass: Pass, state: Playing) extends CommandHandler {
@@ -15,9 +15,9 @@ case class PassCommandHandler(pass: Pass, state: Playing) extends CommandHandler
 
   override def canDo: Option[String] =
     validate(
-      PlayerInGame(playerId, game) and
-      PlayerIsNextToLay(playerId, game) and
-      PlayHasNoCardsToLay(playerId, game))
+      playerInGame(playerId, game) and
+      playerIsNextToLay(playerId, game) and
+      playHasNoCardsToLay(playerId, game))
 
   lazy val events = Passed(playerId) +:
     (endPlay(game.withPass(playerId)) ++

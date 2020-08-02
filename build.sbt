@@ -2,6 +2,11 @@ ThisBuild / organization := "com.nigeleke"
 ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / version      := "0.1-SNAPSHOT"
 
+// License
+ThisBuild / organizationName := "Nigel Eke"
+ThisBuild / startYear := Some(2020)
+ThisBuild / licenses += ("AGPL-3.0-or-later", new URL("https://www.gnu.org/licenses/agpl-3.0.txt"))
+
 val akkaVersion = "2.6.8"
 val logbackVersion = "1.2.3"
 val scalaTestVersion = "3.1.2"

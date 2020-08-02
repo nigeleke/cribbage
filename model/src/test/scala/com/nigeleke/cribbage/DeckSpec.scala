@@ -1,7 +1,7 @@
 package com.nigeleke.cribbage
 
 import com.nigeleke.cribbage.model.Deck
-import com.nigeleke.cribbage.suit.{Face, Suit}
+import com.nigeleke.cribbage.model.{Face, Suit}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

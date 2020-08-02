@@ -3,9 +3,9 @@ package com.nigeleke.cribbage.actors
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
-import com.nigeleke.cribbage.model.Game.{Id => GameId}
+import com.nigeleke.cribbage.model.Status.{Id => GameId}
 
-// SRR: Supervise the Game creation...
+// SRR: Supervise the Status creation...
 object GameSupervisor {
 
   sealed trait Command

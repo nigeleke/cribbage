@@ -39,7 +39,7 @@ class GameSupervisorSpec
         result.state should be(State(Set.empty))
       }
 
-      "a new Game is created" in {
+      "a new Status is created" in {
         val gameId = UUID.randomUUID()
         val result = eventSourcedTestKit.runCommand(CreateGame(gameId))
         result.events should contain allElementsOf(Seq(GameCreated(gameId)))
@@ -51,7 +51,7 @@ class GameSupervisorSpec
         result2.state should be(State(Set(gameId)))
       }
 
-      "a Game is added more than once" in {
+      "a Status is added more than once" in {
         val gameId = UUID.randomUUID()
         val results = Seq(CreateGame(gameId), CreateGame(gameId)).map(eventSourcedTestKit.runCommand)
         results.flatMap(_.events) should contain theSameElementsInOrderAs(Seq(GameCreated(gameId)))

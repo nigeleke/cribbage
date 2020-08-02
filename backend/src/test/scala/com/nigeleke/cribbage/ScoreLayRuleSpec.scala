@@ -1,50 +1,59 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.actors.Game.{CompletePlay, PegScore}
-import com.nigeleke.cribbage.actors.rules.Rules._
-import com.nigeleke.cribbage.model.{Card, Cards, Game}
-import com.nigeleke.cribbage.suit.Face
-import com.nigeleke.cribbage.suit.Face._
-import com.nigeleke.cribbage.suit.Suit
-import com.nigeleke.cribbage.suit.Suit._
+import com.nigeleke.cribbage.model.{Cards, Status}
+import com.nigeleke.cribbage.model.Face
+import com.nigeleke.cribbage.model.Face._
+import com.nigeleke.cribbage.model.Suit
+import com.nigeleke.cribbage.model.Suit._
+import com.nigeleke.cribbage.TestModel._
+import com.nigeleke.cribbage.actors.Game.{PlayCompleted, PointsScored}
+import com.nigeleke.cribbage.actors.handlers.CommandHandler
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
 
+  def checkPlays(plays: Seq[(Seq[(Face, Suit)], Int)]) = plays.foreach { play =>
+    val faceSuits = play._1
+    val expectedScore = play._2
+    assertScore(faceSuits, expectedScore)
+  }
+
+  def assertScore(cards: Seq[(Face, Suit)], expectedScore: Int) = {
+
+    def takeAlternate(cards: Cards) : Cards = cards.toList match {
+      case Nil => Nil
+      case card1 :: Nil => Seq(card1)
+      case card1 :: _ :: rest => card1 +: takeAlternate(rest)
+    }
+
+    val playerIds = Seq(player1Id, player2Id)
+    val initialCards = cardsOf(cards)
+    val initialGame = Status(randomId)
+      .withPlayer(player1Id)
+      .withPlayer(player2Id)
+      .withDealer(player1Id)
+      .withZeroScores()
+      .withDeal(Map(
+        (playerIds.head, takeAlternate(initialCards)),
+        (playerIds.last, takeAlternate(initialCards.drop(1)))),
+        initialCards)
+      .withNextToLay(player2Id)
+    val lays = initialCards.zip(Iterator.continually(playerIds).flatten)
+
+    val game = lays.foldLeft(initialGame)((g, lay) => g.withLay(lay._2, lay._1))
+    val endOfPlay = game.play.runningTotal == 31
+
+    CommandHandler.scoreLay(game) should be {
+      (expectedScore, endOfPlay) match {
+        case (0, _)         => Seq.empty
+        case (score, false) => Seq(PointsScored(lays.last._2, score))
+        case (score, true)  => Seq(PointsScored(lays.last._2, score), PlayCompleted)
+      }
+    }
+  }
+
   "The ScoreLayRule" should {
-
-    def checkPlays(plays: Seq[(Seq[(Face, Suit)], Int)]) = plays.foreach { play =>
-      val faceSuits = play._1
-      val expectedScore = play._2
-      assertScore(faceSuits, expectedScore)
-    }
-
-    def assertScore(cards: Seq[(Face, Suit)], expectedScore: Int) = {
-
-      def takeAlternate(cards: Cards) : Cards = cards match {
-        case Nil => Nil
-        case card1 :: Nil => Seq(card1)
-        case card1 :: _ :: rest => card1 +: takeAlternate(rest)
-      }
-
-      val playerIds = Seq(randomId, randomId)
-      val initialCards = cards.map(card => Card(randomId, card._1, card._2))
-      val initialGame = Game(randomId)
-        .withDeal(Map((playerIds.head, takeAlternate(initialCards)), (playerIds.last, takeAlternate(initialCards.drop(1)))), initialCards)
-      val lays = initialCards.zip(Iterator.continually(playerIds).flatten)
-
-      val game = lays.foldLeft(initialGame)((g, lay) => g.withLay(lay._2, lay._1))
-      val endOfPlay = game.play.runningTotal == 31
-
-      scoreLay(game) should be {
-        (expectedScore, endOfPlay) match {
-          case (0, _)         => Seq.empty
-          case (score, false) => Seq(PegScore(lays.last._2, score))
-          case (score, true)  => Seq(PegScore(lays.last._2, score), CompletePlay)
-        }
-      }
-    }
 
     "pegs totals of fifteen in a play" in {
       val plays = Seq(

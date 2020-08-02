@@ -4,8 +4,12 @@ import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKi
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.Game
-import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.model.Score
+import com.nigeleke.cribbage.actors.Game.{WinnerDeclared, _}
+import com.nigeleke.cribbage.model.Face._
+import com.nigeleke.cribbage.model.Suit._
+import com.nigeleke.cribbage.TestModel._
+import com.nigeleke.cribbage.actors.handlers.CommandHandler
+import com.nigeleke.cribbage.model.Points
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -18,86 +22,176 @@ class PegScoreSpec
     with Matchers {
 
   val gameId = randomId
-  val persistenceId = s"game|$gameId"
 
-  implicit val implicitTestKit = testKit
+  val hand1 = cardsOf(Seq((Ten,Hearts), (Ten,Clubs), (Ten,Diamonds), (Ten,Spades), (Five,Hearts), (Four,Clubs)))
+  val hand2 = cardsOf(Seq((King,Hearts), (King,Clubs), (King,Diamonds), (King,Spades), (Eight,Diamonds), (Seven,Spades)))
+  val initialGame = model.Status(randomId)
+    .withPlayer(player1Id)
+    .withPlayer(player2Id)
+    .withDealer(player1Id)
+    .withZeroScores()
+    .withDeal(Map(player1Id -> hand1, player2Id -> hand2), deck)
+    .withCribDiscard(player1Id, hand1.take(2))
+    .withCribDiscard(player2Id, hand2.take(2))
 
-  private val eventSourcedTestKit =
+  lazy val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      Game(gameId),
+      Game(gameId, Playing(initialGame)),
       SerializationSettings.disabled)
-
-  private val persistenceTestKit = eventSourcedTestKit.persistenceTestKit
-
-  private def persisted = persistenceTestKit.persistedInStorage(persistenceId)
-
-  import TestEvents._
-  private val initialEvents: Seq[Event] =
-    playersJoinedEvents ++ dealerSelectedEvent ++ dealEvents ++ discardEvents ++ playCutEvent
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     eventSourcedTestKit.clear()
-    persistenceTestKit.persistForRecovery(persistenceId, initialEvents)
   }
 
-  def playingGame(f: model.Game => Unit) = {
-    val restart = eventSourcedTestKit.restart()
-    val state = restart.state
-    state should be(a[Playing])
-    f(state.game)
+  "A score will be pegged" when {
+    "cutting at start of Play" in {
+      val events = CommandHandler.scoreCutAtStartOfPlay(initialGame)
+      val playCut = events.head.asInstanceOf[PlayCutRevealed]
+      events should be(
+        if (playCut.card.face != Jack) Seq(playCut)
+        else Seq(playCut, PointsScored(player1Id, 2))
+      )
+    }
+
+    "pegging lays" in {
+      val gameUnderTest = initialGame
+        .withLay(player2Id, cardOf(King, Diamonds))
+        .withLay(player1Id, cardOf(Five, Hearts))
+      CommandHandler.scoreLay(gameUnderTest) should be(Seq(PointsScored(player1Id, 2)))
+    }
+
+    "scoring the hands" in {
+      val gameUnderTest = initialGame.withCut(cardOf(Three,Clubs))
+      CommandHandler.scoreHands(gameUnderTest) should be(Seq(
+        PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
+        DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
+        CribScored(player1Id, Points(pairs = 4)),
+        DealerSwapped
+      ))
+    }
+
   }
 
-  "The PegScore command" should {
-
-    "hop the back peg over the front peg to score" in playingGame { game =>
-      val command = PegScore(player1Id, 10)
-
-      val result1 = eventSourcedTestKit.runCommand(command)
-      result1.command should be(command)
-      result1.event should be(PointsScored(player1Id, 10))
-      val expectedGame1 = game.withScore(player1Id, 10)
-      result1.state should be(Playing(expectedGame1))
-      expectedGame1.scores(player1Id) should be(Score(0, 10))
-
-      val result2 = eventSourcedTestKit.runCommand(command)
-      result2.command should be(command)
-      result2.event should be(PointsScored(player1Id, 10))
-      val expectedGame2 = expectedGame1.withScore(player1Id, 10)
-      result2.state should be(Playing(expectedGame2))
-      expectedGame2.scores(player1Id) should be(Score(10, 20))
-
-      persisted should contain allElementsOf(Seq(PointsScored(player1Id, 10), PointsScored(player1Id, 10)))
+  "A win will be pegged" when {
+    "scoring exactly 121 in the cut at start of Play" in {
+      val gameUnderTest = initialGame.withScore(player1Id, 119)
+      val events = CommandHandler.scoreCutAtStartOfPlay(gameUnderTest)
+      val playCut = events.head.asInstanceOf[PlayCutRevealed]
+      events should be(
+        if (playCut.card.face != Jack) Seq(playCut)
+        else Seq(playCut, PointsScored(player1Id, 2), WinnerDeclared(player1Id))
+      )
     }
 
-    "declare winner" when {
-
-      "player's score exceeds 121" in playingGame { game =>
-        val command = PegScore(player1Id, 122)
-
-        val result = eventSourcedTestKit.runCommand(command)
-        result.command should be(command)
-        result.event should be(PointsScored(player1Id, 122))
-        drain()
-
-        persisted should contain allElementsOf(Seq(PointsScored(player1Id, 122), WinnerDeclared(player1Id)))
-      }
-
-      "player's score is exactly 121" in playingGame { game =>
-        val command = PegScore(player1Id, 121)
-
-        val result = eventSourcedTestKit.runCommand(command)
-        result.command should be(command)
-        result.event should be(PointsScored(player1Id, 121))
-        drain()
-
-        persisted should contain allElementsOf(Seq(PointsScored(player1Id, 121), WinnerDeclared(player1Id)))
-      }
-
+    "scoring exactly 121 in pegging lays" in {
+      val gameUnderTest = initialGame
+        .withScore(player1Id, 119)
+        .withLay(player2Id, cardOf(King, Diamonds))
+        .withLay(player1Id, cardOf(Five, Hearts))
+      CommandHandler.scoreLay(gameUnderTest) should be(Seq(PointsScored(player1Id, 2), WinnerDeclared(player1Id)))
     }
 
-    // TODO: Maybe - same for ScoringState ???
+    "scoring exactly 121 while scoring the Pone Hand" in {
+      val gameUnderTest = initialGame
+        .withCut(cardOf(Three,Clubs))
+        .withScore(player2Id, 117)
+      CommandHandler.scoreHands(gameUnderTest) should be(Seq(
+        PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
+        WinnerDeclared(player2Id),
+        DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
+        CribScored(player1Id, Points(pairs = 4)),
+        DealerSwapped
+      ))
+    }
+
+    "scoring exactly 121 while scoring the Dealer Hand" in {
+      val gameUnderTest = initialGame
+        .withCut(cardOf(Three,Clubs))
+        .withScore(player1Id, 112)
+      CommandHandler.scoreHands(gameUnderTest) should be(Seq(
+        PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
+        DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
+        WinnerDeclared(player1Id),
+        CribScored(player1Id, Points(pairs = 4)),
+        WinnerDeclared(player1Id),
+        DealerSwapped
+      ))
+    }
+
+    "scoring exactly 121 while scoring the Crib" in {
+      val gameUnderTest = initialGame
+        .withCut(cardOf(Three,Clubs))
+        .withScore(player1Id, 108)
+      CommandHandler.scoreHands(gameUnderTest) should be(Seq(
+        PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
+        DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
+        CribScored(player1Id, Points(pairs = 4)),
+        WinnerDeclared(player1Id),
+        DealerSwapped
+      ))
+    }
+  }
+
+  "A win will be pegged" when {
+    "scoring greater than 121 in the cut at start of Play" in {
+      val gameUnderTest = initialGame.withScore(player1Id, 120)
+      val events = CommandHandler.scoreCutAtStartOfPlay(gameUnderTest)
+      val playCut = events.head.asInstanceOf[PlayCutRevealed]
+      events should be(
+        if (playCut.card.face != Jack) Seq(playCut)
+        else Seq(playCut, PointsScored(player1Id, 2), WinnerDeclared(player1Id))
+      )
+    }
+
+    "scoring greater than 121 in pegging lays" in {
+      val gameUnderTest = initialGame
+        .withScore(player1Id, 120)
+        .withLay(player2Id, cardOf(King, Diamonds))
+        .withLay(player1Id, cardOf(Five, Hearts))
+      CommandHandler.scoreLay(gameUnderTest) should be(Seq(PointsScored(player1Id, 2), WinnerDeclared(player1Id)))
+    }
+
+    "scoring greater than 121 while scoring the Pone Hand" in {
+      val gameUnderTest = initialGame
+        .withCut(cardOf(Three,Clubs))
+        .withScore(player2Id, 120)
+      CommandHandler.scoreHands(gameUnderTest) should be(Seq(
+        PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
+        WinnerDeclared(player2Id),
+        DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
+        CribScored(player1Id, Points(pairs = 4)),
+        DealerSwapped
+      ))
+    }
+
+    "scoring greater than 121 while scoring the Dealer Hand" in {
+      val gameUnderTest = initialGame
+        .withCut(cardOf(Three,Clubs))
+        .withScore(player1Id, 120)
+      CommandHandler.scoreHands(gameUnderTest) should be(Seq(
+        PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
+        DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
+        WinnerDeclared(player1Id),
+        CribScored(player1Id, Points(pairs = 4)),
+        WinnerDeclared(player1Id),
+        DealerSwapped
+      ))
+    }
+
+    "scoring greater than 121 while scoring the Crib" in {
+      val gameUnderTest = initialGame
+        .withCut(cardOf(Three,Clubs))
+        .withScore(player1Id, 111)
+      CommandHandler.scoreHands(gameUnderTest) should be(Seq(
+        PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
+        DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
+        CribScored(player1Id, Points(pairs = 4)),
+        WinnerDeclared(player1Id),
+        DealerSwapped
+      ))
+    }
   }
 
 }

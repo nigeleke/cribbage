@@ -3,7 +3,7 @@ package com.nigeleke.cribbage.model
 import java.util.UUID
 
 import com.nigeleke.cribbage.model.Card.{Id => CardId}
-import com.nigeleke.cribbage.suit.{Face, Suit}
+import com.nigeleke.cribbage.model.{Face, Suit}
 
 import scala.util.Random
 import scala.language.implicitConversions

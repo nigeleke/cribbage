@@ -5,8 +5,9 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.Game
 import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.suit.Face._
-import com.nigeleke.cribbage.suit.Suit._
+import com.nigeleke.cribbage.model.Face._
+import com.nigeleke.cribbage.model.Suit._
+import com.nigeleke.cribbage.TestModel._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -19,42 +20,34 @@ class PlayingGameSpec
     with Matchers {
 
   val gameId = randomId
-  val persistenceId = s"game|$gameId"
 
-  implicit val implicitTestKit = testKit
+  private val hand1 = cardsOf(Seq((Ten,Hearts), (Ten,Clubs), (Ten,Diamonds), (Ten,Spades), (Five,Hearts), (Four,Clubs)))
+  private val hand2 = cardsOf(Seq((King,Hearts), (King,Clubs), (King,Diamonds), (King,Spades), (Eight,Diamonds), (Seven,Spades)))
+  private val initialGame = model.Status(randomId)
+    .withPlayer(player1Id)
+    .withPlayer(player2Id)
+    .withDealer(player1Id)
+    .withZeroScores()
+    .withDeal(Map(player1Id -> hand1, player2Id -> hand2), deck)
 
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      Game(gameId),
+      Game(gameId, Discarding(initialGame)),
       SerializationSettings.disabled)
-
-  private val persistenceTestKit = eventSourcedTestKit.persistenceTestKit
-
-  private def persisted = persistenceTestKit.persistedInStorage(persistenceId)
-
-  import TestEvents._
-  private val initialEvents: Seq[Event] =
-    playersJoinedEvents ++ dealerSelectedEvent ++
-      dealEventsWith(Seq(
-        (Ten,Hearts), (Ten,Clubs), (Ten,Diamonds), (Ten,Spades), (Five,Hearts), (Four,Clubs),
-        (King,Hearts), (King,Clubs), (King,Diamonds), (King,Spades), (Eight,Diamonds), (Seven,Spades))) ++
-      discardEventsWith(Seq(
-        (player1Id, Seq((Ten,Hearts), (Ten,Clubs))),
-        (player2Id, Seq((King,Hearts), (King,Clubs))))) ++
-      playCutEventWith((Two,Clubs))
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     eventSourcedTestKit.clear()
-    persistenceTestKit.persistForRecovery(persistenceId, initialEvents)
   }
 
-  def playingGame(f: model.Game => Unit) = {
-    val restart = eventSourcedTestKit.restart()
-    val state = restart.state
-    state should be(a[Playing])
-    f(state.game)
+  def playingGame(f: model.Status => Unit) = {
+    val commands = Seq(
+      DiscardCribCards(player1Id, cardsOf(Seq((Ten,Hearts), (Ten,Clubs)))),
+      DiscardCribCards(player2Id, cardsOf(Seq((King,Hearts), (King,Clubs)))))
+    val result = commands.map(eventSourcedTestKit.runCommand(_)).last
+    result.state should be(a[Playing])
+    f(result.stateOfType[Playing].game)
   }
 
   "A PlayingGame" should {
@@ -83,7 +76,7 @@ class PlayingGameSpec
         val command = LayCard(dealer, card)
         val result = eventSourcedTestKit.runCommand(command)
         result.command should be(command)
-        result.events should be(empty)
+        result.events should be(Seq.empty)
         result.state should be(Playing(game))
       }
 
@@ -101,10 +94,10 @@ class PlayingGameSpec
             .withLay(player2Id, cardOf(King,Spades))
         ))
 
-        val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Five,Hearts)))
-        result.command should be(LayCard(player1Id, cardOf(Five,Hearts)))
-        result.events should be(empty)
-        result.state should be(result0.state)
+        val result1 = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Five,Hearts)))
+        result1.command should be(LayCard(player1Id, cardOf(Five,Hearts)))
+        result1.events should be(Seq.empty)
+        result1.state should be(result0.state)
       }
     }
 
@@ -124,11 +117,9 @@ class PlayingGameSpec
         ))
 
         val result = eventSourcedTestKit.runCommand(Pass(player1Id))
-        drain()
-
         result.command should be(Pass(player1Id))
         result.event should be(Passed(player1Id))
-        result.state should be(Playing(result0.state.game.withPass(player1Id)))
+        result.stateOfType[Playing] should be(Playing(result0.stateOfType[Playing].game.withPass(player1Id)))
       }
     }
 
@@ -146,17 +137,13 @@ class PlayingGameSpec
         eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
         val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Five,Hearts)))
         result.command should be(LayCard(player1Id, cardOf(Five,Hearts)))
-        result.event should be(CardLaid(player1Id, cardOf(Five,Hearts)))
+        result.events should contain theSameElementsInOrderAs(Seq(
+          CardLaid(player1Id, cardOf(Five,Hearts)),
+          PointsScored(player1Id, 2)))
         result.state should be(Playing(game
           .withLay(player2Id, cardOf(King,Diamonds))
           .withLay(player1Id, cardOf(Five,Hearts))
-        ))
-
-        drain()
-        persisted should contain theSameElementsInOrderAs(initialEvents ++ Seq(
-          CardLaid(player2Id, cardOf(King,Diamonds)),
-          CardLaid(player1Id, cardOf(Five,Hearts)),
-          PointsScored(player1Id, 2)
+          .withScore(player1Id, 2)
         ))
       }
     }
@@ -170,17 +157,6 @@ class PlayingGameSpec
         val result = eventSourcedTestKit.runCommand(Pass(player2Id))
         result.command should be(Pass(player2Id))
         result.event should be(Passed(player2Id))
-
-        drain()
-        persisted should contain theSameElementsInOrderAs(initialEvents ++ Seq(
-          CardLaid(player2Id, cardOf(King,Diamonds)),
-          CardLaid(player1Id, cardOf(Ten,Diamonds)),
-          CardLaid(player2Id, cardOf(King,Spades)),
-          Passed(player1Id),
-          Passed(player2Id),
-          PointsScored(player2Id, 1),
-          PlayCompleted
-        ))
       }
 
       "play finishes with runningTotal exactly 31" in playingGame { game =>
@@ -190,16 +166,6 @@ class PlayingGameSpec
         val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Four,Clubs)))
         result.command should be(LayCard(player1Id, cardOf(Four,Clubs)))
         result.event should be(CardLaid(player1Id, cardOf(Four,Clubs)))
-
-        drain()
-        persisted should contain theSameElementsInOrderAs(initialEvents ++ Seq(
-          CardLaid(player2Id, cardOf(King,Diamonds)),
-          CardLaid(player1Id, cardOf(Ten,Diamonds)),
-          CardLaid(player2Id, cardOf(Seven,Spades)),
-          CardLaid(player1Id, cardOf(Four,Clubs)),
-          PointsScored(player1Id, 2),
-          PlayCompleted
-        ))
       }
     }
 
@@ -210,9 +176,6 @@ class PlayingGameSpec
         eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Spades)))
         eventSourcedTestKit.runCommand(Pass(player1Id))
         eventSourcedTestKit.runCommand(Pass(player2Id))
-
-        drain()
-        persisted should contain(PlayCompleted)
       }
 
       "current Play finished on 31" in playingGame { game =>
@@ -220,72 +183,43 @@ class PlayingGameSpec
         eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Diamonds)))
         eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(Seven,Spades)))
         eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Four,Clubs)))
-
-        drain()
-        persisted should contain(PlayCompleted)
       }
     }
 
     "start Scoring" when {
       "all Plays completed" in playingGame { game =>
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Diamonds)))
-        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Diamonds)))
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(Eight,Diamonds)))
-        eventSourcedTestKit.runCommand(Pass(player1Id))
-        eventSourcedTestKit.runCommand(Pass(player2Id))
-        drain()
+        val lays = Seq(
+          LayCard(player2Id, cardOf(King,Diamonds)),
+          LayCard(player1Id, cardOf(Ten,Diamonds)),
+          LayCard(player2Id, cardOf(Eight,Diamonds)),
+          Pass(player1Id),
+          Pass(player2Id),
+          LayCard(player1Id, cardOf(Five,Hearts)),
+          LayCard(player2Id, cardOf(King,Spades)),
+          LayCard(player1Id, cardOf(Ten,Spades)),
+          Pass(player2Id),
+          LayCard(player1Id, cardOf(Four,Clubs)),
+          Pass(player2Id),
+          Pass(player1Id),
+          LayCard(player2Id, cardOf(Seven,Spades))
+        )
 
-        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Five,Hearts)))
-        eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(King,Spades)))
-        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Ten,Spades)))
-        eventSourcedTestKit.runCommand(Pass(player2Id))
-        drain()
-
-        eventSourcedTestKit.runCommand(LayCard(player1Id, cardOf(Four,Clubs)))
-        eventSourcedTestKit.runCommand(Pass(player2Id))
-        eventSourcedTestKit.runCommand(Pass(player1Id))
-        drain()
-
-        val result = eventSourcedTestKit.runCommand(LayCard(player2Id, cardOf(Seven,Spades)))
+        val result = lays.map(eventSourcedTestKit.runCommand(_)).last
         result.command should be(LayCard(player2Id, cardOf(Seven,Spades)))
-        result.event should be(CardLaid(player2Id, cardOf(Seven,Spades)))
-
-        drain()
-        val expectedEvents = initialEvents ++ Seq(
-          CardLaid(player2Id, cardOf(King,Diamonds)),
-          CardLaid(player1Id, cardOf(Ten,Diamonds)),
-          CardLaid(player2Id, cardOf(Eight,Diamonds)),
-          Passed(player1Id),
-          Passed(player2Id),
-          PointsScored(player2Id, 1),
-          PlayCompleted,
-
-          CardLaid(player1Id, cardOf(Five,Hearts)),
-          CardLaid(player2Id, cardOf(King,Spades)),
-          PointsScored(player2Id, 2),
-          CardLaid(player1Id, cardOf(Ten,Spades)),
-          Passed(player2Id),
-          CardLaid(player1Id, cardOf(Four,Clubs)),
-          Passed(player2Id),
-          Passed(player1Id),
-          PointsScored(player1Id, 1),
-          PlayCompleted,
-
+        val poneScored = result.events.find(_.isInstanceOf[PoneScored]).get.asInstanceOf[PoneScored]
+        val dealerScored = result.events.find(_.isInstanceOf[DealerScored]).get.asInstanceOf[DealerScored]
+        val cribScored = result.events.find(_.isInstanceOf[CribScored]).get.asInstanceOf[CribScored]
+        result.events should be(Seq(
           CardLaid(player2Id, cardOf(Seven,Spades)),
           PointsScored(player2Id, 1),
           PlayCompleted,
           PlaysCompleted,
-          PointsScored(player2Id,4),
-          PointsScored(player1Id,6),
-          PointsScored(player1Id,4),
+          PoneScored(player2Id, poneScored.points),
+          DealerScored(player1Id, dealerScored.points),
+          CribScored(player1Id, cribScored.points),
           DealerSwapped
-        )
-        persisted should contain theSameElementsInOrderAs(expectedEvents)
-
-        persistenceTestKit.clearAll()
-        persistenceTestKit.persistForRecovery(persistenceId, expectedEvents)
-        val resetResult = eventSourcedTestKit.restart()
-        resetResult.state should be(a[Discarding])
+        ))
+        result.state should be(a[Discarding])
       }
     }
 

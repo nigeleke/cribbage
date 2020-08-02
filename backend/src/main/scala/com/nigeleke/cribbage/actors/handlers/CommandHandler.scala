@@ -1,5 +1,6 @@
 package com.nigeleke.cribbage.actors.handlers
 
+import akka.event.slf4j.Logger
 import akka.persistence.typed.scaladsl.Effect
 import com.nigeleke.cribbage.actors.Game._
 import com.nigeleke.cribbage.model.{Card, Cards, Points, Status}
@@ -9,9 +10,11 @@ import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
 
 trait CommandHandler {
 
+  import CommandHandler._
+
   def handle() : Effect[Event, State] =
     canDo.map(reasons => {
-      println(s"Error: $reasons")
+      logger.warn(s"Command not handled because:\n $reasons")
       Effect.unhandled[Event, State]}
     ).getOrElse(effects)
 
@@ -21,6 +24,8 @@ trait CommandHandler {
 }
 
 object CommandHandler {
+
+  lazy val logger = Logger(CommandHandler.getClass.getCanonicalName)
 
   def scoreCutAtStartOfPlay(game: Status) : Seq[Event] = {
     val deck = game.deck.shuffled

@@ -76,17 +76,14 @@ object Game {
   }
 
   final case class Playing(game: model.Status) extends State {
-    override def applyCommand(command: Command)(implicit log: Logger) : Effect[Event, State] = {
-      println(s"PlayingCommand $command")
+    override def applyCommand(command: Command)(implicit log: Logger) : Effect[Event, State] =
       command match {
         case lay: LayCard => LayCardCommandHandler(lay, this).handle()
         case pass: Pass   => PassCommandHandler(pass, this).handle()
         case _            => unexpectedCommand(game, command)
       }
-    }
 
-    override def applyEvent(event: Event)(implicit log: Logger) : State = {
-      println(s"PlayingEvent: $event")
+    override def applyEvent(event: Event)(implicit log: Logger) : State =
       event match {
         case CardLaid(playerId, card)       => Playing(game.withLay(playerId, card))
         case Passed(playerId)               => Playing(game.withPass(playerId))
@@ -96,7 +93,6 @@ object Game {
         case WinnerDeclared(_)              => Finished(game)
         case _                              => unexpectedEvent(game, event)
       }
-    }
   }
 
   final case class Scoring(game: model.Status) extends State {
@@ -116,8 +112,8 @@ object Game {
   }
 
   final case class Finished(game: model.Status) extends State {
-    override def applyCommand(cmd: Command)(implicit log: Logger) : Effect[Event, State] = ???
-    override def applyEvent(event: Event)(implicit log: Logger) : State = ???
+    override def applyCommand(cmd: Command)(implicit log: Logger) : Effect[Event, State] = Effect.unhandled
+    override def applyEvent(event: Event)(implicit log: Logger) : State = this
   }
 
   def apply(id: GameId) : Behavior[Command] = Game(id, Starting(model.Status(id)))

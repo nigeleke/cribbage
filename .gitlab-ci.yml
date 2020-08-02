@@ -21,7 +21,8 @@ pages:
   dependencies:
     - test
   script:
-    - mv target/scala-2.13/scoverage-report/ public/
+    - mv backend/target/scala-2.13/scoverage-report/ public/backend/
+    - mv model/target/scala-2.13/scoverage-report/ public/model/
   artifacts:
     paths:
       - public

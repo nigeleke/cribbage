@@ -11,7 +11,7 @@ before_script:
 
 test:
   script:
-    - sbt clean coverage test coverageReport
+    - sbt clean coverage test coverageReport coverageAggregate
   artifacts:
     paths:
       - target/scala-2.13/scoverage-report/
@@ -21,8 +21,7 @@ pages:
   dependencies:
     - test
   script:
-    - mv backend/target/scala-2.13/scoverage-report/ public/backend/
-    - mv model/target/scala-2.13/scoverage-report/ public/model/
+    - mv target/scala-2.13/scoverage-report/ public/
   artifacts:
     paths:
       - public

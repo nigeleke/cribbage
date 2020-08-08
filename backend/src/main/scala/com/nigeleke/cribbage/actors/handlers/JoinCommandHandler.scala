@@ -21,9 +21,9 @@ import akka.persistence.typed.scaladsl.Effect
 import com.nigeleke.cribbage.actors.Game._
 import com.nigeleke.cribbage.actors.handlers.Validations._
 import com.nigeleke.cribbage.actors.validate.Validation._
-import com.nigeleke.cribbage.model.{Card, Deck}
+import com.nigeleke.cribbage.model.{ Card, Deck }
 import com.nigeleke.cribbage.model.Deck._
-import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
+import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
 
 case class JoinCommandHandler(join: Join, state: Starting) extends CommandHandler {
 
@@ -33,7 +33,7 @@ case class JoinCommandHandler(join: Join, state: Starting) extends CommandHandle
   override def canDo: Option[String] =
     validate(
       gameRequiresPlayers(game) and
-      playerNotAlreadyJoinedGame(playerId, game))
+        playerNotAlreadyJoinedGame(playerId, game))
 
   override def effects: Effect[Event, State] = {
     val players = state.game.players + join.playerId
@@ -58,7 +58,7 @@ case class JoinCommandHandler(join: Join, state: Starting) extends CommandHandle
 
     lazy val dealHandsEvent = {
       val deck = Deck().shuffled
-      val hands = (0 to players.size).map(n => deck.drop(n*6).take(6))
+      val hands = (0 to players.size).map(n => deck.drop(n * 6).take(6))
       val deals = players.zip(hands)
       HandsDealt(deals.toMap, deck)
     }

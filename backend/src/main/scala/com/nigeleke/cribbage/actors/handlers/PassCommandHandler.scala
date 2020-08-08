@@ -33,8 +33,8 @@ case class PassCommandHandler(pass: Pass, state: Playing) extends CommandHandler
   override def canDo: Option[String] =
     validate(
       playerInGame(playerId, game) and
-      playerIsNextToLay(playerId, game) and
-      playHasNoCardsToLay(playerId, game))
+        playerIsNextToLay(playerId, game) and
+        playHasNoCardsToLay(playerId, game))
 
   lazy val events = Passed(playerId) +:
     (endPlay(game.withPass(playerId)) ++

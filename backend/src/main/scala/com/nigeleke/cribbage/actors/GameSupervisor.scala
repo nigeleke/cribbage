@@ -17,10 +17,10 @@
 
 package com.nigeleke.cribbage.actors
 
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.{ ActorRef, Behavior }
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
-import com.nigeleke.cribbage.model.Status.{Id => GameId}
+import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior }
+import com.nigeleke.cribbage.model.Status.{ Id => GameId }
 
 // SRR: Supervise the Status creation...
 object GameSupervisor {
@@ -39,15 +39,14 @@ object GameSupervisor {
 
   final case class State(games: Set[GameId])
 
-  def apply() : Behavior[Command] =
+  def apply(): Behavior[Command] =
     EventSourcedBehavior[Command, Event, State](
       persistenceId = PersistenceId.ofUniqueId("game-supervisor"),
       emptyState = State(Set.empty),
       commandHandler = onCommand,
-      eventHandler = onEvent
-    )
+      eventHandler = onEvent)
 
-  def onCommand(state: State, command: Command) : Effect[Event, State] =
+  def onCommand(state: State, command: Command): Effect[Event, State] =
     command match {
       case CreateGame(id) =>
         if (state.games.contains(id)) Effect.none
@@ -57,7 +56,7 @@ object GameSupervisor {
         Effect.reply(replyTo)(Games(state.games))
     }
 
-  def onEvent(state: State, event: Event) : State =
+  def onEvent(state: State, event: Event): State =
     event match {
       case GameCreated(id) =>
         state.copy(state.games + id)

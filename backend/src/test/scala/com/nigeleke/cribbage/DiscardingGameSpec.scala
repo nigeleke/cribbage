@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKit}
+import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.TestModel._
@@ -13,10 +13,10 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 class DiscardingGameSpec
   extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config)
-    with AnyWordSpecLike
-    with BeforeAndAfterEach
-    with LogCapturing
-    with Matchers {
+  with AnyWordSpecLike
+  with BeforeAndAfterEach
+  with LogCapturing
+  with Matchers {
 
   val gameId = randomId
   val persistenceId = s"game|$gameId"
@@ -51,7 +51,7 @@ class DiscardingGameSpec
       result.command should be(DiscardCribCards(playerId, discards))
       result.event should be(CribCardsDiscarded(playerId, discards))
       result.stateOfType[Discarding].game.hands(playerId) should not contain allElementsOf(discards)
-      result.stateOfType[Discarding].game.crib should contain allElementsOf(discards)
+      result.stateOfType[Discarding].game.crib should contain allElementsOf (discards)
     }
 
     "not allow a discard" when {
@@ -64,7 +64,7 @@ class DiscardingGameSpec
         val result = eventSourcedTestKit.runCommand(DiscardCribCards(player2Id, discards))
         result.command should be(DiscardCribCards(player2Id, discards))
         result.events should be(empty)
-        result.stateOfType[Discarding].game.hands(player1Id) should contain allElementsOf(discards)
+        result.stateOfType[Discarding].game.hands(player1Id) should contain allElementsOf (discards)
         result.stateOfType[Discarding].game.hands(player2Id) should not contain allElementsOf(discards)
         result.stateOfType[Discarding].game.crib should be(empty)
       }
@@ -76,7 +76,7 @@ class DiscardingGameSpec
         val result = eventSourcedTestKit.runCommand(DiscardCribCards(playerId, discards))
         result.command should be(DiscardCribCards(playerId, discards))
         result.events should be(empty)
-        result.stateOfType[Discarding].game.hands(playerId) should contain allElementsOf(discards)
+        result.stateOfType[Discarding].game.hands(playerId) should contain allElementsOf (discards)
         result.stateOfType[Discarding].game.crib should not contain allElementsOf(discards)
       }
 
@@ -87,7 +87,7 @@ class DiscardingGameSpec
         val result = eventSourcedTestKit.runCommand(DiscardCribCards(playerId, discards))
         result.command should be(DiscardCribCards(playerId, discards))
         result.events should be(empty)
-        result.stateOfType[Discarding].game.hands(playerId) should contain allElementsOf(discards)
+        result.stateOfType[Discarding].game.hands(playerId) should contain allElementsOf (discards)
         result.stateOfType[Discarding].game.crib should not contain allElementsOf(discards)
       }
 

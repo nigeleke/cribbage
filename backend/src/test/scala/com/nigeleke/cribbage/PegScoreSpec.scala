@@ -1,10 +1,10 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKit}
+import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.Game
-import com.nigeleke.cribbage.actors.Game.{WinnerDeclared, _}
+import com.nigeleke.cribbage.actors.Game.{ WinnerDeclared, _ }
 import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
@@ -16,15 +16,15 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 class PegScoreSpec
   extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config)
-    with AnyWordSpecLike
-    with BeforeAndAfterEach
-    with LogCapturing
-    with Matchers {
+  with AnyWordSpecLike
+  with BeforeAndAfterEach
+  with LogCapturing
+  with Matchers {
 
   val gameId = randomId
 
-  val hand1 = cardsOf(Seq((Ten,Hearts), (Ten,Clubs), (Ten,Diamonds), (Ten,Spades), (Five,Hearts), (Four,Clubs)))
-  val hand2 = cardsOf(Seq((King,Hearts), (King,Clubs), (King,Diamonds), (King,Spades), (Eight,Diamonds), (Seven,Spades)))
+  val hand1 = cardsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
+  val hand2 = cardsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
   val initialGame = model.Status(randomId)
     .withPlayer(player1Id)
     .withPlayer(player2Id)
@@ -51,8 +51,7 @@ class PegScoreSpec
       val playCut = events.head.asInstanceOf[PlayCutRevealed]
       events should be(
         if (playCut.card.face != Jack) Seq(playCut)
-        else Seq(playCut, PointsScored(player1Id, 2))
-      )
+        else Seq(playCut, PointsScored(player1Id, 2)))
     }
 
     "pegging lays" in {
@@ -63,13 +62,12 @@ class PegScoreSpec
     }
 
     "scoring the hands" in {
-      val gameUnderTest = initialGame.withCut(cardOf(Three,Clubs))
+      val gameUnderTest = initialGame.withCut(cardOf(Three, Clubs))
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
         DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
         CribScored(player1Id, Points(pairs = 4)),
-        DealerSwapped
-      ))
+        DealerSwapped))
     }
 
   }
@@ -81,8 +79,7 @@ class PegScoreSpec
       val playCut = events.head.asInstanceOf[PlayCutRevealed]
       events should be(
         if (playCut.card.face != Jack) Seq(playCut)
-        else Seq(playCut, PointsScored(player1Id, 2), WinnerDeclared(player1Id))
-      )
+        else Seq(playCut, PointsScored(player1Id, 2), WinnerDeclared(player1Id)))
     }
 
     "scoring exactly 121 in pegging lays" in {
@@ -95,20 +92,19 @@ class PegScoreSpec
 
     "scoring exactly 121 while scoring the Pone Hand" in {
       val gameUnderTest = initialGame
-        .withCut(cardOf(Three,Clubs))
+        .withCut(cardOf(Three, Clubs))
         .withScore(player2Id, 117)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
         WinnerDeclared(player2Id),
         DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
         CribScored(player1Id, Points(pairs = 4)),
-        DealerSwapped
-      ))
+        DealerSwapped))
     }
 
     "scoring exactly 121 while scoring the Dealer Hand" in {
       val gameUnderTest = initialGame
-        .withCut(cardOf(Three,Clubs))
+        .withCut(cardOf(Three, Clubs))
         .withScore(player1Id, 112)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
@@ -116,21 +112,19 @@ class PegScoreSpec
         WinnerDeclared(player1Id),
         CribScored(player1Id, Points(pairs = 4)),
         WinnerDeclared(player1Id),
-        DealerSwapped
-      ))
+        DealerSwapped))
     }
 
     "scoring exactly 121 while scoring the Crib" in {
       val gameUnderTest = initialGame
-        .withCut(cardOf(Three,Clubs))
+        .withCut(cardOf(Three, Clubs))
         .withScore(player1Id, 108)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
         DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
         CribScored(player1Id, Points(pairs = 4)),
         WinnerDeclared(player1Id),
-        DealerSwapped
-      ))
+        DealerSwapped))
     }
   }
 
@@ -141,8 +135,7 @@ class PegScoreSpec
       val playCut = events.head.asInstanceOf[PlayCutRevealed]
       events should be(
         if (playCut.card.face != Jack) Seq(playCut)
-        else Seq(playCut, PointsScored(player1Id, 2), WinnerDeclared(player1Id))
-      )
+        else Seq(playCut, PointsScored(player1Id, 2), WinnerDeclared(player1Id)))
     }
 
     "scoring greater than 121 in pegging lays" in {
@@ -155,20 +148,19 @@ class PegScoreSpec
 
     "scoring greater than 121 while scoring the Pone Hand" in {
       val gameUnderTest = initialGame
-        .withCut(cardOf(Three,Clubs))
+        .withCut(cardOf(Three, Clubs))
         .withScore(player2Id, 120)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
         WinnerDeclared(player2Id),
         DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
         CribScored(player1Id, Points(pairs = 4)),
-        DealerSwapped
-      ))
+        DealerSwapped))
     }
 
     "scoring greater than 121 while scoring the Dealer Hand" in {
       val gameUnderTest = initialGame
-        .withCut(cardOf(Three,Clubs))
+        .withCut(cardOf(Three, Clubs))
         .withScore(player1Id, 120)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
@@ -176,21 +168,19 @@ class PegScoreSpec
         WinnerDeclared(player1Id),
         CribScored(player1Id, Points(pairs = 4)),
         WinnerDeclared(player1Id),
-        DealerSwapped
-      ))
+        DealerSwapped))
     }
 
     "scoring greater than 121 while scoring the Crib" in {
       val gameUnderTest = initialGame
-        .withCut(cardOf(Three,Clubs))
+        .withCut(cardOf(Three, Clubs))
         .withScore(player1Id, 111)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
         DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
         CribScored(player1Id, Points(pairs = 4)),
         WinnerDeclared(player1Id),
-        DealerSwapped
-      ))
+        DealerSwapped))
     }
   }
 

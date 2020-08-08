@@ -19,24 +19,26 @@ package com.nigeleke.cribbage.model
 
 import java.util.UUID
 
-import Status.{Id => GameId}
-import Player.{Id => PlayerId}
+import Status.{ Id => GameId }
+import Player.{ Id => PlayerId }
 
-final case class Status(id: GameId,
-                        deck: Deck,
-                        players: Players,
-                        optDealer: Option[PlayerId],
-                        hands: Hands,
-                        crib: Crib,
-                        optCut: Option[Card],
-                        play: Play,
-                        scores: Scores)
+final case class Status(
+  id: GameId,
+  deck: Deck,
+  players: Players,
+  optDealer: Option[PlayerId],
+  hands: Hands,
+  crib: Crib,
+  optCut: Option[Card],
+  play: Play,
+  scores: Scores)
 
 object Status {
   type Id = UUID
 
-  def apply(id: Id) : Status =
-    Status(id,
+  def apply(id: Id): Status =
+    Status(
+      id,
       deck = Seq.empty,
       players = Set.empty,
       optDealer = None,
@@ -48,7 +50,7 @@ object Status {
 
   implicit class GameOps(game: Status) {
 
-    lazy val optPone : Option[PlayerId] = (for {
+    lazy val optPone: Option[PlayerId] = (for {
       dealer <- game.optDealer
       otherPlayers = game.players - dealer
     } yield otherPlayers.headOption).flatten
@@ -111,7 +113,8 @@ object Status {
     }
 
     def withNextPlay() = {
-      require(game.players.forall(game.hands(_).forall(card => game.play.runningTotal + card.value > 31)),
+      require(
+        game.players.forall(game.hands(_).forall(card => game.play.runningTotal + card.value > 31)),
         s"""Cannot progress to next play with cards still available to lay:
            | ${game.play.current}
            | ${game.hands}""".stripMargin)
@@ -129,12 +132,12 @@ object Status {
       game.copy(hands = updatedHands, play = Play())
     }
 
-    def opponent(playerId: PlayerId) : PlayerId = {
+    def opponent(playerId: PlayerId): PlayerId = {
       game.players.filterNot(_ == playerId).head
     }
 
     def withScore(id: PlayerId, points: Int): Status = {
-      val currentScore = game.scores.getOrElse(id, Score(0,0))
+      val currentScore = game.scores.getOrElse(id, Score(0, 0))
       val updatedScore = Score(currentScore.front, currentScore.front + points)
       game.copy(scores = game.scores.updated(id, updatedScore))
     }

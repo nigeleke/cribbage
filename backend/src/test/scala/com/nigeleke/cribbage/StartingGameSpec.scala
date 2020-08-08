@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKit}
+import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.Game
@@ -12,10 +12,10 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 class StartingGameSpec
   extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config)
-    with AnyWordSpecLike
-    with BeforeAndAfterEach
-    with LogCapturing
-    with Matchers {
+  with AnyWordSpecLike
+  with BeforeAndAfterEach
+  with LogCapturing
+  with Matchers {
 
   private val gameId = randomId
 
@@ -35,7 +35,7 @@ class StartingGameSpec
     "allow a new player to join" in {
       val result = eventSourcedTestKit.runCommand(Join(player1Id))
       result.command should be(Join(player1Id))
-      result.events should contain theSameElementsInOrderAs(Seq(PlayerJoined(player1Id)))
+      result.events should contain theSameElementsInOrderAs (Seq(PlayerJoined(player1Id)))
       result.state should be(a[Starting])
       result.stateOfType[Starting].game.players should contain(player1Id)
     }
@@ -50,7 +50,7 @@ class StartingGameSpec
       result.events.count(_.isInstanceOf[DealerCutRevealed]) % 2 should be(0)
       result.events.count(_.isInstanceOf[DealerSelected]) should be(1)
       result.events.count(_.isInstanceOf[HandsDealt]) should be(1)
-      result.stateOfType[Discarding].game.players should contain theSameElementsAs(Seq(player1Id, player2Id))
+      result.stateOfType[Discarding].game.players should contain theSameElementsAs (Seq(player1Id, player2Id))
       result.stateOfType[Discarding].game.optDealer should be(defined)
       result.stateOfType[Discarding].game.hands.size should be(2)
       result.stateOfType[Discarding].game.hands.values.foreach(_.size should be(6))

@@ -2,9 +2,9 @@ package com.nigeleke.cribbage
 
 import java.util.UUID
 
-import com.nigeleke.cribbage.model.{Card, Deck}
-import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
-import com.nigeleke.cribbage.model.{Face, Suit}
+import com.nigeleke.cribbage.model.{ Card, Deck }
+import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
+import com.nigeleke.cribbage.model.{ Face, Suit }
 
 object TestModel {
 

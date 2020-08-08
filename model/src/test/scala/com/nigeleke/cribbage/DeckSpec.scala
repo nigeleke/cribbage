@@ -1,7 +1,7 @@
 package com.nigeleke.cribbage
 
 import com.nigeleke.cribbage.model.Deck
-import com.nigeleke.cribbage.model.{Face, Suit}
+import com.nigeleke.cribbage.model.{ Face, Suit }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -22,12 +22,12 @@ class DeckSpec extends AnyWordSpec with Matchers {
     "contain all cards for all Suits and Faces" when {
 
       "pristine" in {
-        Deck().map(card => (card.face, card.suit)) should contain theSameElementsInOrderAs(allCards)
+        Deck().map(card => (card.face, card.suit)) should contain theSameElementsInOrderAs (allCards)
       }
 
       "shuffled" in {
         val deck = Deck()
-        deck.shuffled should contain theSameElementsAs(deck)
+        deck.shuffled should contain theSameElementsAs (deck)
       }
 
     }

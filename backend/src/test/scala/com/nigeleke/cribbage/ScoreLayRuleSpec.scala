@@ -1,12 +1,12 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.model.{Cards, Status}
+import com.nigeleke.cribbage.model.{ Cards, Status }
 import com.nigeleke.cribbage.model.Face
 import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit
 import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
-import com.nigeleke.cribbage.actors.Game.{PlayCompleted, PointsScored}
+import com.nigeleke.cribbage.actors.Game.{ PlayCompleted, PointsScored }
 import com.nigeleke.cribbage.actors.handlers.CommandHandler
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -21,7 +21,7 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
 
   def assertScore(cards: Seq[(Face, Suit)], expectedScore: Int) = {
 
-    def takeAlternate(cards: Cards) : Cards = cards.toList match {
+    def takeAlternate(cards: Cards): Cards = cards.toList match {
       case Nil => Nil
       case card1 :: Nil => Seq(card1)
       case card1 :: _ :: rest => card1 +: takeAlternate(rest)
@@ -34,9 +34,10 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
       .withPlayer(player2Id)
       .withDealer(player1Id)
       .withZeroScores()
-      .withDeal(Map(
-        (playerIds.head, takeAlternate(initialCards)),
-        (playerIds.last, takeAlternate(initialCards.drop(1)))),
+      .withDeal(
+        Map(
+          (playerIds.head, takeAlternate(initialCards)),
+          (playerIds.last, takeAlternate(initialCards.drop(1)))),
         initialCards)
       .withNextToLay(player2Id)
     val lays = initialCards.zip(Iterator.continually(playerIds).flatten)
@@ -46,9 +47,9 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
 
     CommandHandler.scoreLay(game) should be {
       (expectedScore, endOfPlay) match {
-        case (0, _)         => Seq.empty
+        case (0, _) => Seq.empty
         case (score, false) => Seq(PointsScored(lays.last._2, score))
-        case (score, true)  => Seq(PointsScored(lays.last._2, score), PlayCompleted)
+        case (score, true) => Seq(PointsScored(lays.last._2, score), PlayCompleted)
       }
     }
   }
@@ -64,8 +65,7 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
         Seq((Ace, Clubs), (Four, Clubs), (Ten, Clubs)) -> 2,
         Seq((Two, Clubs), (Three, Clubs), (Ten, Clubs)) -> 2,
         Seq((Two, Clubs), (Three, Clubs), (Ace, Clubs), (Three, Spades), (Ace, Spades), (Five, Hearts)) -> 2,
-        Seq((Two, Clubs), (Three, Clubs), (Ace, Clubs), (Three, Spades), (Ace, Spades), (Six, Hearts)) -> 0
-      )
+        Seq((Two, Clubs), (Three, Clubs), (Ace, Clubs), (Three, Spades), (Ace, Spades), (Six, Hearts)) -> 0)
       checkPlays(plays)
     }
 
@@ -74,8 +74,7 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
         Seq((Ten, Clubs), (Ten, Hearts)) -> 2,
         Seq((Ace, Clubs), (Ace, Hearts)) -> 2,
         Seq((Ten, Spades), (Jack, Spades)) -> 0,
-        Seq((Ace, Clubs), (Ten, Clubs), (Ten, Hearts)) -> 2
-      )
+        Seq((Ace, Clubs), (Ten, Clubs), (Ten, Hearts)) -> 2)
       checkPlays(plays)
     }
 
@@ -92,8 +91,7 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
         Seq((Two, Diamonds), (Ace, Clubs), (Ace, Hearts), (Two, Hearts), (Ace, Diamonds)) -> 0,
         Seq((Two, Diamonds), (Ace, Clubs), (Two, Hearts), (Ace, Hearts), (Ace, Diamonds), (Ace, Spades)) -> 6,
         Seq((Two, Diamonds), (Ace, Clubs), (Ace, Hearts), (Two, Hearts), (Ace, Diamonds), (Ace, Spades)) -> 2,
-        Seq((Two, Diamonds), (Ace, Clubs), (Ace, Hearts), (Ace, Diamonds), (Two, Hearts), (Ace, Spades)) -> 0
-      )
+        Seq((Two, Diamonds), (Ace, Clubs), (Ace, Hearts), (Ace, Diamonds), (Two, Hearts), (Ace, Spades)) -> 0)
       checkPlays(plays)
     }
 
@@ -103,8 +101,7 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
         Seq((Ace, Clubs), (Three, Diamonds), (Two, Hearts)) -> 3,
         Seq((Four, Spades), (Ace, Clubs), (Three, Diamonds), (Two, Hearts)) -> 4,
         Seq((Four, Spades), (Ace, Clubs), (Three, Diamonds), (Five, Hearts)) -> 0,
-        Seq((Five, Spades), (Two, Clubs), (Four, Diamonds), (Six, Hearts), (Three, Clubs)) -> 5
-      )
+        Seq((Five, Spades), (Two, Clubs), (Four, Diamonds), (Six, Hearts), (Three, Clubs)) -> 5)
       checkPlays(plays)
     }
 

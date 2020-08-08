@@ -2,7 +2,7 @@ package com.nigeleke.cribbage
 
 import java.util.UUID
 
-import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKit}
+import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.actors.GameSupervisor
@@ -13,10 +13,10 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 class GameSupervisorSpec
   extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config)
-    with AnyWordSpecLike
-    with BeforeAndAfterEach
-    with LogCapturing
-    with Matchers {
+  with AnyWordSpecLike
+  with BeforeAndAfterEach
+  with LogCapturing
+  with Matchers {
 
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
@@ -42,7 +42,7 @@ class GameSupervisorSpec
       "a new Status is created" in {
         val gameId = UUID.randomUUID()
         val result = eventSourcedTestKit.runCommand(CreateGame(gameId))
-        result.events should contain allElementsOf(Seq(GameCreated(gameId)))
+        result.events should contain allElementsOf (Seq(GameCreated(gameId)))
         result.state should be(State(Set(gameId)))
 
         val result2 = eventSourcedTestKit.runCommand(GetGames)
@@ -54,7 +54,7 @@ class GameSupervisorSpec
       "a Status is added more than once" in {
         val gameId = UUID.randomUUID()
         val results = Seq(CreateGame(gameId), CreateGame(gameId)).map(eventSourcedTestKit.runCommand)
-        results.flatMap(_.events) should contain theSameElementsInOrderAs(Seq(GameCreated(gameId)))
+        results.flatMap(_.events) should contain theSameElementsInOrderAs (Seq(GameCreated(gameId)))
         results.last.state should be(State(Set(gameId)))
 
         val result2 = eventSourcedTestKit.runCommand(GetGames)

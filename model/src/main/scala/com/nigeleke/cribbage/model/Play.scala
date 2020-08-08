@@ -17,23 +17,24 @@
 
 package com.nigeleke.cribbage.model
 
-import Player.{Id => PlayerId}
+import Player.{ Id => PlayerId }
 
-final case class Play(optNextToLay: Option[PlayerId],
-                      current: Lays,
-                      passCount: Int,
-                      previous: Seq[Lays])
+final case class Play(
+  optNextToLay: Option[PlayerId],
+  current: Lays,
+  passCount: Int,
+  previous: Seq[Lays])
 
 object Play {
 
-  def apply() : Play = new Play(None, Seq.empty, 0, Seq.empty)
+  def apply(): Play = new Play(None, Seq.empty, 0, Seq.empty)
 
   implicit class PlayOps(play: Play) {
-    def withLay(lay: Lay) : Play = play.copy(current = play.current :+ lay, passCount = 0)
-    def withPass() : Play = play.copy(passCount = play.passCount + 1)
-    def withNextToLay(playerId: PlayerId) : Play = play.copy(optNextToLay = Some(playerId))
-    def withNextPlay() : Play = play.copy(current = Seq.empty, passCount = 0, previous = play.previous :+ play.current)
-    lazy val runningTotal : Int = play.current.map(_.card.value).sum
+    def withLay(lay: Lay): Play = play.copy(current = play.current :+ lay, passCount = 0)
+    def withPass(): Play = play.copy(passCount = play.passCount + 1)
+    def withNextToLay(playerId: PlayerId): Play = play.copy(optNextToLay = Some(playerId))
+    def withNextPlay(): Play = play.copy(current = Seq.empty, passCount = 0, previous = play.previous :+ play.current)
+    lazy val runningTotal: Int = play.current.map(_.card.value).sum
   }
 
 }

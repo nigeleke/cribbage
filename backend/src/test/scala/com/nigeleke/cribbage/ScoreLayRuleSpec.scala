@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.model.{ Cards, Status }
+import com.nigeleke.cribbage.model.{ Cards, Attributes }
 import com.nigeleke.cribbage.model.Face
 import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit
@@ -29,7 +29,7 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
 
     val playerIds = Seq(player1Id, player2Id)
     val initialCards = cardsOf(cards)
-    val initialGame = Status(randomId)
+    val initialAttributes = Attributes()
       .withPlayer(player1Id)
       .withPlayer(player2Id)
       .withDealer(player1Id)
@@ -42,7 +42,7 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
       .withNextToLay(player2Id)
     val lays = initialCards.zip(Iterator.continually(playerIds).flatten)
 
-    val game = lays.foldLeft(initialGame)((g, lay) => g.withLay(lay._2, lay._1))
+    val game = lays.foldLeft(initialAttributes)((g, lay) => g.withLay(lay._2, lay._1))
     val endOfPlay = game.play.runningTotal == 31
 
     CommandHandler.scoreLay(game) should be {

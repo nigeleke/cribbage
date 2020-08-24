@@ -9,7 +9,7 @@ import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
 import com.nigeleke.cribbage.actors.handlers.CommandHandler
-import com.nigeleke.cribbage.model.Points
+import com.nigeleke.cribbage.model.{ Attributes, Points }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -25,7 +25,7 @@ class PegScoreSpec
 
   val hand1 = cardsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
   val hand2 = cardsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
-  val initialGame = model.Status(randomId)
+  val initialAttributes = Attributes()
     .withPlayer(player1Id)
     .withPlayer(player2Id)
     .withDealer(player1Id)
@@ -37,7 +37,7 @@ class PegScoreSpec
   lazy val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      Game(gameId, Playing(initialGame)),
+      Game(gameId, Playing(initialAttributes)),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {
@@ -47,7 +47,7 @@ class PegScoreSpec
 
   "A score will be pegged" when {
     "cutting at start of Play" in {
-      val events = CommandHandler.scoreCutAtStartOfPlay(initialGame)
+      val events = CommandHandler.scoreCutAtStartOfPlay(initialAttributes)
       val playCut = events.head.asInstanceOf[PlayCutRevealed]
       events should be(
         if (playCut.card.face != Jack) Seq(playCut)
@@ -55,14 +55,14 @@ class PegScoreSpec
     }
 
     "pegging lays" in {
-      val gameUnderTest = initialGame
+      val gameUnderTest = initialAttributes
         .withLay(player2Id, cardOf(King, Diamonds))
         .withLay(player1Id, cardOf(Five, Hearts))
       CommandHandler.scoreLay(gameUnderTest) should be(Seq(PointsScored(player1Id, 2)))
     }
 
     "scoring the hands" in {
-      val gameUnderTest = initialGame.withCut(cardOf(Three, Clubs))
+      val gameUnderTest = initialAttributes.withCut(cardOf(Three, Clubs))
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
         DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
@@ -74,7 +74,7 @@ class PegScoreSpec
 
   "A win will be pegged" when {
     "scoring exactly 121 in the cut at start of Play" in {
-      val gameUnderTest = initialGame.withScore(player1Id, 119)
+      val gameUnderTest = initialAttributes.withScore(player1Id, 119)
       val events = CommandHandler.scoreCutAtStartOfPlay(gameUnderTest)
       val playCut = events.head.asInstanceOf[PlayCutRevealed]
       events should be(
@@ -83,7 +83,7 @@ class PegScoreSpec
     }
 
     "scoring exactly 121 in pegging lays" in {
-      val gameUnderTest = initialGame
+      val gameUnderTest = initialAttributes
         .withScore(player1Id, 119)
         .withLay(player2Id, cardOf(King, Diamonds))
         .withLay(player1Id, cardOf(Five, Hearts))
@@ -91,7 +91,7 @@ class PegScoreSpec
     }
 
     "scoring exactly 121 while scoring the Pone Hand" in {
-      val gameUnderTest = initialGame
+      val gameUnderTest = initialAttributes
         .withCut(cardOf(Three, Clubs))
         .withScore(player2Id, 117)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
@@ -103,7 +103,7 @@ class PegScoreSpec
     }
 
     "scoring exactly 121 while scoring the Dealer Hand" in {
-      val gameUnderTest = initialGame
+      val gameUnderTest = initialAttributes
         .withCut(cardOf(Three, Clubs))
         .withScore(player1Id, 112)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
@@ -116,7 +116,7 @@ class PegScoreSpec
     }
 
     "scoring exactly 121 while scoring the Crib" in {
-      val gameUnderTest = initialGame
+      val gameUnderTest = initialAttributes
         .withCut(cardOf(Three, Clubs))
         .withScore(player1Id, 108)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
@@ -130,7 +130,7 @@ class PegScoreSpec
 
   "A win will be pegged" when {
     "scoring greater than 121 in the cut at start of Play" in {
-      val gameUnderTest = initialGame.withScore(player1Id, 120)
+      val gameUnderTest = initialAttributes.withScore(player1Id, 120)
       val events = CommandHandler.scoreCutAtStartOfPlay(gameUnderTest)
       val playCut = events.head.asInstanceOf[PlayCutRevealed]
       events should be(
@@ -139,7 +139,7 @@ class PegScoreSpec
     }
 
     "scoring greater than 121 in pegging lays" in {
-      val gameUnderTest = initialGame
+      val gameUnderTest = initialAttributes
         .withScore(player1Id, 120)
         .withLay(player2Id, cardOf(King, Diamonds))
         .withLay(player1Id, cardOf(Five, Hearts))
@@ -147,7 +147,7 @@ class PegScoreSpec
     }
 
     "scoring greater than 121 while scoring the Pone Hand" in {
-      val gameUnderTest = initialGame
+      val gameUnderTest = initialAttributes
         .withCut(cardOf(Three, Clubs))
         .withScore(player2Id, 120)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
@@ -159,7 +159,7 @@ class PegScoreSpec
     }
 
     "scoring greater than 121 while scoring the Dealer Hand" in {
-      val gameUnderTest = initialGame
+      val gameUnderTest = initialAttributes
         .withCut(cardOf(Three, Clubs))
         .withScore(player1Id, 120)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
@@ -172,7 +172,7 @@ class PegScoreSpec
     }
 
     "scoring greater than 121 while scoring the Crib" in {
-      val gameUnderTest = initialGame
+      val gameUnderTest = initialAttributes
         .withCut(cardOf(Three, Clubs))
         .withScore(player1Id, 111)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(

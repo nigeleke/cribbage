@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.model.Status
+import com.nigeleke.cribbage.model.Attributes
 import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
@@ -13,7 +13,7 @@ class EndPlayRuleSpec extends AnyWordSpec with Matchers {
 
   "The EndPlayRule" should {
 
-    val game = Status(randomId)
+    val attributes = Attributes()
       .withPlayer(player1Id)
       .withPlayer(player2Id)
       .withDealer(player1Id)
@@ -25,29 +25,29 @@ class EndPlayRuleSpec extends AnyWordSpec with Matchers {
 
     "not declare the Play finished" when {
       "either Player has Cards available for the CurrentPlay" in {
-        val gameUnderTest = game
+        val attributesUnderTest = attributes
           .withLay(player2Id, cardOf(Jack, Hearts))
           .withLay(player1Id, cardOf(King, Hearts))
-        CommandHandler.endPlay(gameUnderTest) should be(Seq.empty)
+        CommandHandler.endPlay(attributesUnderTest) should be(Seq.empty)
       }
     }
 
     "declare the Play finished" when {
       "both Players have no Cards available for the CurrentPlay" in {
-        val gameUnderTest = game
+        val attributesUnderTest = attributes
           .withLay(player2Id, cardOf(Jack, Hearts))
           .withLay(player1Id, cardOf(King, Hearts))
           .withLay(player2Id, cardOf(Jack, Clubs))
           .withPass(player1Id)
           .withPass(player2Id)
-        CommandHandler.endPlay(gameUnderTest) should contain theSameElementsInOrderAs (
+        CommandHandler.endPlay(attributesUnderTest) should contain theSameElementsInOrderAs (
           Seq(PointsScored(player2Id, 1), PlayCompleted))
       }
     }
 
     "declare all Plays finished" when {
       "both Player have no Cards available" in {
-        val gameUnderTest = game
+        val attributesUnderTest = attributes
           .withLay(player2Id, cardOf(Jack, Hearts))
           .withLay(player1Id, cardOf(King, Hearts))
           .withLay(player2Id, cardOf(Jack, Clubs))
@@ -62,7 +62,7 @@ class EndPlayRuleSpec extends AnyWordSpec with Matchers {
           .withNextPlay()
           .withLay(player2Id, cardOf(Jack, Spades))
           .withLay(player1Id, cardOf(King, Spades))
-        CommandHandler.endPlay(gameUnderTest) should contain theSameElementsInOrderAs (
+        CommandHandler.endPlay(attributesUnderTest) should contain theSameElementsInOrderAs (
           Seq(PointsScored(player1Id, 1), PlayCompleted))
       }
     }

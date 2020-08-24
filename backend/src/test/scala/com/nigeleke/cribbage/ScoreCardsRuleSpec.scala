@@ -5,7 +5,7 @@ import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
 import com.nigeleke.cribbage.actors.Game.{ CribScored, DealerScored, DealerSwapped, PoneScored }
 import com.nigeleke.cribbage.actors.handlers.CommandHandler
-import com.nigeleke.cribbage.model.Points
+import com.nigeleke.cribbage.model.{ Attributes, Points }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -20,7 +20,7 @@ class ScoreCardsRuleSpec extends AnyWordSpec with Matchers {
   }
 
   def assertScore(cards: Seq[FaceSuit], cut: FaceSuit, expectedPoints: Points) = {
-    val game = model.Status(randomId)
+    val attributes = Attributes()
       .withPlayer(player1Id)
       .withPlayer(player2Id)
       .withDealer(player2Id)
@@ -28,7 +28,7 @@ class ScoreCardsRuleSpec extends AnyWordSpec with Matchers {
       .withDeal(Map((player1Id, cardsOf(cards)), (player2Id, Seq.empty)), deck)
       .withCut(cardOf(cut))
 
-    CommandHandler.scoreHands(game) should be(Seq(
+    CommandHandler.scoreHands(attributes) should be(Seq(
       PoneScored(player1Id, expectedPoints),
       DealerScored(player2Id, zeroPoints),
       CribScored(player2Id, zeroPoints),

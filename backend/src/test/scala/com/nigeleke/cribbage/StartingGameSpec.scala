@@ -30,7 +30,7 @@ class StartingGameSpec
     eventSourcedTestKit.clear()
   }
 
-  "A Starting Status" should {
+  "A Starting Attributes" should {
 
     "allow a new player to join" in {
       val result = eventSourcedTestKit.runCommand(Join(player1Id))

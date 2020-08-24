@@ -8,6 +8,7 @@ import com.nigeleke.cribbage.actors.Game._
 import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
+import com.nigeleke.cribbage.model.Attributes
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -23,7 +24,7 @@ class PlayingGameSpec
 
   private val hand1 = cardsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
   private val hand2 = cardsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
-  private val initialGame = model.Status(randomId)
+  private val initialAttributes = Attributes()
     .withPlayer(player1Id)
     .withPlayer(player2Id)
     .withDealer(player1Id)
@@ -33,7 +34,7 @@ class PlayingGameSpec
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      Game(gameId, Discarding(initialGame)),
+      Game(gameId, Discarding(initialAttributes)),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {
@@ -41,7 +42,7 @@ class PlayingGameSpec
     eventSourcedTestKit.clear()
   }
 
-  def playingGame(f: model.Status => Unit) = {
+  def playingGame(f: Attributes => Unit) = {
     val commands = Seq(
       DiscardCribCards(player1Id, cardsOf(Seq((Ten, Hearts), (Ten, Clubs)))),
       DiscardCribCards(player2Id, cardsOf(Seq((King, Hearts), (King, Clubs)))))

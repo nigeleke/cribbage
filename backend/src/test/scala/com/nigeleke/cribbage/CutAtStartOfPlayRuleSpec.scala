@@ -7,7 +7,7 @@ import com.nigeleke.cribbage.TestModel._
 import com.nigeleke.cribbage.actors.Game
 import com.nigeleke.cribbage.actors.Game._
 import com.nigeleke.cribbage.model.Face._
-import com.nigeleke.cribbage.model.Score
+import com.nigeleke.cribbage.model.{ Attributes, Score }
 import com.nigeleke.cribbage.model.Suit._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -25,7 +25,7 @@ class CutAtStartOfPlayRuleSpec
 
   private val hand1 = cardsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
   private val hand2 = cardsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
-  private val initialGame = model.Status(randomId)
+  private val initialAttributes = Attributes()
     .withPlayer(player1Id)
     .withPlayer(player2Id)
     .withDealer(player1Id)
@@ -35,7 +35,7 @@ class CutAtStartOfPlayRuleSpec
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      Game(gameId, Discarding(initialGame)),
+      Game(gameId, Discarding(initialAttributes)),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {
@@ -44,7 +44,7 @@ class CutAtStartOfPlayRuleSpec
   }
 
   @tailrec
-  private def playingGame(withJackCut: Boolean)(f: model.Status => Unit): Unit = {
+  private def playingGame(withJackCut: Boolean)(f: Attributes => Unit): Unit = {
     val commands = Seq(
       DiscardCribCards(player1Id, cardsOf(Seq((Ten, Hearts), (Ten, Clubs)))),
       DiscardCribCards(player2Id, cardsOf(Seq((King, Hearts), (King, Clubs)))))

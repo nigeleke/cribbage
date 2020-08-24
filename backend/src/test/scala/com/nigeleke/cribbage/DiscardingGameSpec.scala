@@ -6,7 +6,7 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.Serializati
 import com.nigeleke.cribbage.TestModel._
 import com.nigeleke.cribbage.actors.Game
 import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.model.Face
+import com.nigeleke.cribbage.model.{ Attributes, Face }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -19,7 +19,7 @@ class DiscardingGameSpec
   with Matchers {
 
   val gameId = randomId
-  val persistenceId = s"game|$gameId"
+  val persistenceId = s"attributes|$gameId"
 
   implicit val implicitTestKit = testKit
 
@@ -34,7 +34,7 @@ class DiscardingGameSpec
     eventSourcedTestKit.clear()
   }
 
-  def discardingGame(f: model.Status => Unit) = {
+  def discardingGame(f: Attributes => Unit) = {
     val commands = Seq(Join(player1Id), Join(player2Id))
     val result = commands.map(eventSourcedTestKit.runCommand(_)).last
     result.state should be(a[Discarding])

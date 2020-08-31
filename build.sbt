@@ -9,8 +9,11 @@ ThisBuild / licenses += ("AGPL-3.0-or-later", new URL("https://www.gnu.org/licen
 
 val akkaVersion = "2.6.8"
 val akkaHttpVersion = "10.2.0"
-val logbackVersion = "1.2.3"
+val akkaPersistenceJdbcVersion = "4.0.0"
+val h2Version = "1.4.200"
+val logbackClassicVersion = "1.2.3"
 val scalaTestVersion = "3.1.2"
+val slickVersion = "3.3.2"
 
 lazy val root = (project in file("."))
   .settings(
@@ -28,9 +31,14 @@ lazy val backend = (project in file("backend"))
   .settings(
     commonSettings,
     libraryDependencies ++= Seq(
+      "ch.qos.logback" % "logback-classic" % logbackClassicVersion,
+      "com.h2database" % "h2" % h2Version, // Not really for production...
+      "com.lightbend.akka" %% "akka-persistence-jdbc" % akkaPersistenceJdbcVersion,
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
+      "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
       "com.typesafe.akka" %% "akka-persistence-typed" % akkaVersion,
-      "ch.qos.logback" % "logback-classic" % logbackVersion,
+      "com.typesafe.slick" %% "slick" % slickVersion,
+      "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % "test",
       "com.typesafe.akka" %% "akka-persistence-testkit" % akkaVersion % "test",
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
@@ -50,6 +58,13 @@ lazy val api = (project in file("api"))
   .settings(
     commonSettings,
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
+      "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
+      "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
+      "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
+      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % "test",
+      "com.typesafe.akka" %% "akka-http-testkit"        % akkaHttpVersion % "test",
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
     )
-  ).dependsOn(model, backend)
+  )
+  .dependsOn(backend)

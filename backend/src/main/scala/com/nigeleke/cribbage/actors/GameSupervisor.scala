@@ -19,9 +19,10 @@ package com.nigeleke.cribbage.actors
 
 import java.util.UUID
 
-import akka.actor.typed.{ ActorRef, Behavior }
+import akka.actor.SupervisorStrategy
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior }
+import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
 
 // SRR: Supervise the Game creation...
 object GameSupervisor {
@@ -44,7 +45,7 @@ object GameSupervisor {
 
   def apply(): Behavior[Command] =
     EventSourcedBehavior[Command, Event, State](
-      persistenceId = PersistenceId.ofUniqueId("attributes-supervisor"),
+      persistenceId = PersistenceId.ofUniqueId("game-supervisor"),
       emptyState = State(Set.empty),
       commandHandler = onCommand,
       eventHandler = onEvent)

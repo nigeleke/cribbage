@@ -34,6 +34,7 @@ lazy val backend = (project in file("backend"))
       "ch.qos.logback" % "logback-classic" % logbackClassicVersion,
       "com.h2database" % "h2" % h2Version, // Not really for production...
       "com.lightbend.akka" %% "akka-persistence-jdbc" % akkaPersistenceJdbcVersion,
+      "com.typesafe.akka" %% "akka-stream-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
       "com.typesafe.akka" %% "akka-persistence-typed" % akkaVersion,

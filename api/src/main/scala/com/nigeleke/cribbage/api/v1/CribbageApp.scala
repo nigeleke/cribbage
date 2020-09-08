@@ -1,14 +1,11 @@
 package com.nigeleke.cribbage
 
-import akka.NotUsed
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.adapter._
 import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
-import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
-import com.nigeleke.cribbage.actors.GameSupervisor
+import com.nigeleke.cribbage.actors.Game
 
 import scala.util.Failure
 import scala.util.Success
@@ -39,7 +36,7 @@ object CribbageApp {
 
   def main(args: Array[String]): Unit = {
     val root = Behaviors.setup[Nothing] { context =>
-      val gameSupervisor = context.spawn(GameSupervisor(), "game-supervisor")
+      val gameSupervisor = context.spawn(Game(), "game")
       context.watch(gameSupervisor)
 
       val routes = new GameSupervisorRoutes(gameSupervisor)(context.system)

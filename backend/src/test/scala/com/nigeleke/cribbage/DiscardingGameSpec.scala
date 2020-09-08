@@ -26,7 +26,7 @@ class DiscardingGameSpec
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      Game(gameId),
+      Game(),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {
@@ -35,7 +35,7 @@ class DiscardingGameSpec
   }
 
   def discardingGame(f: Attributes => Unit) = {
-    val commands = Seq(Join(player1Id), Join(player2Id))
+    val commands = Seq(CreateGame(gameId), Join(player1Id), Join(player2Id))
     val result = commands.map(eventSourcedTestKit.runCommand(_)).last
     result.state should be(a[Discarding])
     f(result.stateOfType[Discarding].game)

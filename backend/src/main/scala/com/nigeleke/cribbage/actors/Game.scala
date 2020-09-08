@@ -20,27 +20,30 @@ package com.nigeleke.cribbage.actors
 import java.util.UUID
 
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.Behavior
+import akka.actor.typed.{Behavior, LogOptions}
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior }
+import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
 import com.nigeleke.cribbage.actors.handlers._
 import com.nigeleke.cribbage.model
-import com.nigeleke.cribbage.model.{ Attributes, Card, Cards, Deck, Hands, Points }
-import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
+import com.nigeleke.cribbage.model.{Attributes, Card, Cards, Deck, Hands, Points}
+import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
 import org.slf4j.Logger
+import org.slf4j.event.Level
 
 // SRR: Apply actions to the Attributes...
 object Game {
 
-  type GameId = UUID
+  type Id = UUID
 
   sealed trait Command
+  final case class CreateGame(gameId: Id) extends Command
   final case class Join(playerId: PlayerId) extends Command
   final case class DiscardCribCards(playerId: PlayerId, cards: Cards) extends Command
   final case class LayCard(playerId: PlayerId, card: Card) extends Command
   final case class Pass(playerId: PlayerId) extends Command
 
   sealed trait Event
+  final case class GameCreated(gameId: Id) extends Event
   final case class PlayerJoined(playerId: PlayerId) extends Event
   final case class DealerCutRevealed(playerId: PlayerId, card: Card) extends Event
   final case class DealerSelected(playerId: PlayerId) extends Event
@@ -61,6 +64,21 @@ object Game {
   sealed trait State {
     def applyCommand(command: Command)(implicit log: Logger): Effect[Event, State]
     def applyEvent(event: Event)(implicit log: Logger): State
+  }
+
+  final case object Idle extends State {
+    override def applyCommand(command: Command)(implicit log: Logger): Effect[Event, State] =
+      command match {
+        case CreateGame(gameId) => CreateCommandHandler(gameId).handle
+        case _ => unexpectedCommand(command)
+      }
+
+    override def applyEvent(event: Event)(implicit log: Logger): State =
+      event match {
+        case GameCreated(_) => Starting(Attributes())
+        case _ => unexpectedEvent(event)
+      }
+
   }
 
   final case class Starting(game: model.Attributes) extends State {
@@ -136,20 +154,39 @@ object Game {
     override def applyEvent(event: Event)(implicit log: Logger): State = this
   }
 
-  def apply(id: GameId): Behavior[Command] = Game(id, Starting(Attributes()))
+  def apply(): Behavior[Command] = apply(UUID.randomUUID(), Idle)
 
-  private[cribbage] def apply(id: GameId, state: State): Behavior[Command] = Behaviors.setup { context =>
+  private[cribbage] def apply(id: Id, state: State): Behavior[Command] = Behaviors.setup { context =>
     implicit val log = context.log
+    log.debug(s"Actor created: $id")
     EventSourcedBehavior[Command, Event, State](
-      persistenceId = PersistenceId("attributes", id.toString),
+      persistenceId = PersistenceId("game", id.toString),
       emptyState = state,
-      commandHandler = (state: State, command: Command) => state.applyCommand(command),
-      eventHandler = (state: State, event: Event) => state.applyEvent(event))
+      commandHandler = (state: State, command: Command) => {
+        log.debug(s"Command: $command")
+        state.applyCommand(command)
+      },
+      eventHandler = (state: State, event: Event) => {
+        log.debug(s"Event: $event")
+        state.applyEvent(event)
+      })
+      .withTagger(_ => Set("game"))
+  }
+
+  private def unexpectedCommand(command: Command)(implicit log: Logger): Effect[Event, State] = {
+    log.warn(s"Unexpected command [$command] before game creation")
+    Effect.unhandled
   }
 
   private def unexpectedCommand(game: model.Attributes, command: Command)(implicit log: Logger): Effect[Event, State] = {
     log.warn(s"Unexpected command [$command] for attributes [$game]")
     Effect.unhandled
+  }
+
+  private def unexpectedEvent(event: Event)(implicit log: Logger) = {
+    val message = s"Unexpected event [$event] before game creation"
+    log.error(message)
+    throw new IllegalStateException(message)
   }
 
   private def unexpectedEvent(game: model.Attributes, event: Event)(implicit log: Logger) = {

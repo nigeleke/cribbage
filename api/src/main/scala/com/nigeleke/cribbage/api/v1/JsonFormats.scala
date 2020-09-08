@@ -2,7 +2,6 @@ package com.nigeleke.cribbage
 
 import java.util.UUID
 
-import com.nigeleke.cribbage.actors.GameSupervisor.Games
 import spray.json.{ DefaultJsonProtocol, DeserializationException, JsString, JsValue, JsonFormat }
 
 trait JsonFormats extends DefaultJsonProtocol {
@@ -16,6 +15,6 @@ trait JsonFormats extends DefaultJsonProtocol {
       }
   }
 
-  implicit val gamesJsonFormat = jsonFormat1(Games)
+  //  implicit val gamesJsonFormat = jsonFormat1(Games)
 
 }

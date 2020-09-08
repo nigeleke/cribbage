@@ -16,6 +16,8 @@ object TestModel {
 
   val deck: Deck = Deck()
 
+  val gameId: UUID = randomId
+
   val player1Id: UUID = randomId
   val player2Id: UUID = randomId
 

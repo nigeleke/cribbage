@@ -4,10 +4,10 @@ import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestK
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.TestModel._
-import com.nigeleke.cribbage.actors.Game
-import com.nigeleke.cribbage.actors.Game._
+import com.nigeleke.cribbage.entity.GameEntity
+import com.nigeleke.cribbage.entity.GameEntity._
 import com.nigeleke.cribbage.model.Face._
-import com.nigeleke.cribbage.model.{ Attributes, Lay, Play, Points }
+import com.nigeleke.cribbage.model.{ Game, Lay, Play, Points }
 import com.nigeleke.cribbage.model.Suit._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -20,11 +20,11 @@ class FinishedGameSpec
   with LogCapturing
   with Matchers {
 
-  val gameId = randomId
+  private val probe = createTestProbe[Reply]()
 
   private val hand1 = cardsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
   private val hand2 = cardsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
-  private val initialAttributes0 = Attributes()
+  private val initialAttributes0 = Game()
     .withPlayer(player1Id)
     .withPlayer(player2Id)
     .withDealer(player1Id)
@@ -52,7 +52,7 @@ class FinishedGameSpec
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      Game(gameId, Playing(initialAttributes1)),
+      GameEntity(Playing(initialAttributes1)),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {
@@ -63,10 +63,10 @@ class FinishedGameSpec
   "A FinishedGame" should {
 
     "ignore any further commands" in {
-      val result0 = eventSourcedTestKit.runCommand(LayCard(player2Id, initialAttributes1.hands(player2Id).last))
+      val result0 = eventSourcedTestKit.runCommand(LayCard(player2Id, initialAttributes1.hands(player2Id).last, probe.ref))
       result0.state should be(a[Finished])
 
-      val command = Join(player1Id)
+      val command = Join(player1Id, probe.ref)
       val result1 = eventSourcedTestKit.runCommand(command)
       result1.command should be(command)
       result1.events should be(Seq.empty)
@@ -74,7 +74,7 @@ class FinishedGameSpec
     }
 
     "ignore any further events" in {
-      val command = LayCard(player2Id, initialAttributes1.hands(player2Id).last)
+      val command = LayCard(player2Id, initialAttributes1.hands(player2Id).last, probe.ref)
       val result = eventSourcedTestKit.runCommand(command)
       result.command should be(command)
       result.events should be(Seq(

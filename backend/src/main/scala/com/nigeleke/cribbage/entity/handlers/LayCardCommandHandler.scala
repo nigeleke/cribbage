@@ -15,12 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.nigeleke.cribbage.actors.handlers
+package com.nigeleke.cribbage.entity.handlers
 
-import akka.persistence.typed.scaladsl.Effect
-import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.actors.handlers.Validations._
-import com.nigeleke.cribbage.actors.validate.Validation._
+import akka.persistence.typed.scaladsl.{ Effect, EffectBuilder }
+import com.nigeleke.cribbage.entity.GameEntity._
+import com.nigeleke.cribbage.entity.handlers.Validations._
+import com.nigeleke.cribbage.entity.validate.Validation._
 
 case class LayCardCommandHandler(lay: LayCard, state: Playing) extends CommandHandler {
 
@@ -32,16 +32,20 @@ case class LayCardCommandHandler(lay: LayCard, state: Playing) extends CommandHa
   val playerId = lay.playerId
   val card = lay.card
 
-  override def canDo: Option[String] =
+  val optRejectedReasons =
     validate(playerInGame(playerId, game) and
       playerIsNextToLay(playerId, game) and
       cardCanBeLaid(lay.card, play))
+
+  override def canDo: Boolean = optRejectedReasons.isEmpty
+
+  override def rejectionReasons: String = optRejectedReasons.getOrElse("")
 
   lazy val events = CardLaid(playerId, card) +: {
     val gameWithLay = game.withLay(playerId, card)
     scoreLay(gameWithLay) ++ endPlay(gameWithLay) ++ endPlays(gameWithLay)
   }
 
-  override def effects: Effect[Event, State] = Effect.persist(events)
+  override def acceptedEffect: EffectBuilder[Event, State] = Effect.persist(events)
 
 }

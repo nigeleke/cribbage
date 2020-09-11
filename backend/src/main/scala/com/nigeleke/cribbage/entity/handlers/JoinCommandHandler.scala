@@ -15,27 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.nigeleke.cribbage.actors.handlers
+package com.nigeleke.cribbage.entity.handlers
 
-import akka.persistence.typed.scaladsl.Effect
-import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.actors.handlers.Validations._
-import com.nigeleke.cribbage.actors.validate.Validation._
+import akka.persistence.typed.scaladsl.{ Effect, EffectBuilder }
+import com.nigeleke.cribbage.entity.GameEntity._
+import com.nigeleke.cribbage.entity.handlers.Validations._
+import com.nigeleke.cribbage.entity.validate.Validation._
 import com.nigeleke.cribbage.model.{ Card, Deck }
 import com.nigeleke.cribbage.model.Deck._
 import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
 
 case class JoinCommandHandler(join: Join, state: Starting) extends CommandHandler {
 
-  lazy val playerId = join.playerId
-  lazy val game = state.game
+  val playerId = join.playerId
+  val game = state.game
 
-  override def canDo: Option[String] =
-    validate(
-      gameRequiresPlayers(game) and
-        playerNotAlreadyJoinedGame(playerId, game))
+  val optRejectionReasons =
+    validate(gameRequiresPlayers(game) and
+      playerNotAlreadyJoinedGame(playerId, game))
 
-  override def effects: Effect[Event, State] = {
+  override def canDo: Boolean = optRejectionReasons.isEmpty
+
+  override def rejectionReasons: String = optRejectionReasons.getOrElse("")
+
+  override def acceptedEffect: EffectBuilder[Event, State] = {
     val players = state.game.players + join.playerId
 
     lazy val cutForDealEvents = {

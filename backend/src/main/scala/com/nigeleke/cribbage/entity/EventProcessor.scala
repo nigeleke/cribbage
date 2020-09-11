@@ -1,4 +1,4 @@
-package com.nigeleke.cribbage.actors
+package com.nigeleke.cribbage.entity
 
 import akka.actor.typed.ActorSystem
 

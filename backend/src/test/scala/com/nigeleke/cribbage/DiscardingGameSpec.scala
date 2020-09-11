@@ -4,9 +4,9 @@ import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestK
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.TestModel._
-import com.nigeleke.cribbage.actors.Game
-import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.model.{ Attributes, Face }
+import com.nigeleke.cribbage.entity.GameEntity
+import com.nigeleke.cribbage.entity.GameEntity._
+import com.nigeleke.cribbage.model.{ Game, Face }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -18,15 +18,14 @@ class DiscardingGameSpec
   with LogCapturing
   with Matchers {
 
-  val gameId = randomId
-  val persistenceId = s"attributes|$gameId"
-
   implicit val implicitTestKit = testKit
+
+  val probe = createTestProbe[Reply]()
 
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      Game(),
+      GameEntity(Idle("test-game")),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {
@@ -34,8 +33,8 @@ class DiscardingGameSpec
     eventSourcedTestKit.clear()
   }
 
-  def discardingGame(f: Attributes => Unit) = {
-    val commands = Seq(CreateGame(gameId), Join(player1Id), Join(player2Id))
+  def discardingGame(f: Game => Unit) = {
+    val commands = Seq(CreateGame(probe.ref), Join(player1Id, probe.ref), Join(player2Id, probe.ref))
     val result = commands.map(eventSourcedTestKit.runCommand(_)).last
     result.state should be(a[Discarding])
     f(result.stateOfType[Discarding].game)
@@ -47,8 +46,8 @@ class DiscardingGameSpec
       val playerId = game.players.head
       val discards = game.hands(playerId).take(2)
 
-      val result = eventSourcedTestKit.runCommand(DiscardCribCards(playerId, discards))
-      result.command should be(DiscardCribCards(playerId, discards))
+      val result = eventSourcedTestKit.runCommand(DiscardCribCards(playerId, discards, probe.ref))
+      result.command should be(DiscardCribCards(playerId, discards, probe.ref))
       result.event should be(CribCardsDiscarded(playerId, discards))
       result.stateOfType[Discarding].game.hands(playerId) should not contain allElementsOf(discards)
       result.stateOfType[Discarding].game.crib should contain allElementsOf (discards)
@@ -61,8 +60,8 @@ class DiscardingGameSpec
         val discards = game.hands(player1Id).take(2)
 
         val player2Id = game.players.last
-        val result = eventSourcedTestKit.runCommand(DiscardCribCards(player2Id, discards))
-        result.command should be(DiscardCribCards(player2Id, discards))
+        val result = eventSourcedTestKit.runCommand(DiscardCribCards(player2Id, discards, probe.ref))
+        result.command should be(DiscardCribCards(player2Id, discards, probe.ref))
         result.events should be(empty)
         result.stateOfType[Discarding].game.hands(player1Id) should contain allElementsOf (discards)
         result.stateOfType[Discarding].game.hands(player2Id) should not contain allElementsOf(discards)
@@ -73,8 +72,8 @@ class DiscardingGameSpec
         val playerId = game.players.head
         val discards = game.hands(playerId).take(1)
 
-        val result = eventSourcedTestKit.runCommand(DiscardCribCards(playerId, discards))
-        result.command should be(DiscardCribCards(playerId, discards))
+        val result = eventSourcedTestKit.runCommand(DiscardCribCards(playerId, discards, probe.ref))
+        result.command should be(DiscardCribCards(playerId, discards, probe.ref))
         result.events should be(empty)
         result.stateOfType[Discarding].game.hands(playerId) should contain allElementsOf (discards)
         result.stateOfType[Discarding].game.crib should not contain allElementsOf(discards)
@@ -84,8 +83,8 @@ class DiscardingGameSpec
         val playerId = game.players.head
         val discards = game.hands(playerId).take(3)
 
-        val result = eventSourcedTestKit.runCommand(DiscardCribCards(playerId, discards))
-        result.command should be(DiscardCribCards(playerId, discards))
+        val result = eventSourcedTestKit.runCommand(DiscardCribCards(playerId, discards, probe.ref))
+        result.command should be(DiscardCribCards(playerId, discards, probe.ref))
         result.events should be(empty)
         result.stateOfType[Discarding].game.hands(playerId) should contain allElementsOf (discards)
         result.stateOfType[Discarding].game.crib should not contain allElementsOf(discards)
@@ -102,10 +101,10 @@ class DiscardingGameSpec
         val player2Id = game.players.last
         val discards2 = game.hands(player2Id).take(2)
 
-        eventSourcedTestKit.runCommand(DiscardCribCards(player1Id, discards1))
+        eventSourcedTestKit.runCommand(DiscardCribCards(player1Id, discards1, probe.ref))
 
-        val result = eventSourcedTestKit.runCommand(DiscardCribCards(player2Id, discards2))
-        result.command should be(DiscardCribCards(player2Id, discards2))
+        val result = eventSourcedTestKit.runCommand(DiscardCribCards(player2Id, discards2, probe.ref))
+        result.command should be(DiscardCribCards(player2Id, discards2, probe.ref))
         result.events should contain(CribCardsDiscarded(player2Id, discards2))
         result.events.count(_.isInstanceOf[PlayCutRevealed]) should be(1)
         result.events.filter(_.isInstanceOf[PlayCutRevealed]).foreach { reveal =>

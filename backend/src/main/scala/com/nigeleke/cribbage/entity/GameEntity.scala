@@ -15,35 +15,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.nigeleke.cribbage.actors
+package com.nigeleke.cribbage.entity
 
 import java.util.UUID
 
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{Behavior, LogOptions}
+import akka.actor.typed.{ ActorRef, Behavior }
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
-import com.nigeleke.cribbage.actors.handlers._
+import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior, ReplyEffect }
+import com.nigeleke.cribbage.entity.handlers._
+import com.nigeleke.cribbage.json.CborSerializable
 import com.nigeleke.cribbage.model
-import com.nigeleke.cribbage.model.{Attributes, Card, Cards, Deck, Hands, Points}
-import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
+import com.nigeleke.cribbage.model.{ Card, Cards, Deck, Game, Hands, Points }
+import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
 import org.slf4j.Logger
-import org.slf4j.event.Level
 
-// SRR: Apply actions to the Attributes...
-object Game {
+// SRR: Apply actions to the GameEntity...
+object GameEntity {
 
   type Id = UUID
 
-  sealed trait Command
-  final case class CreateGame(gameId: Id) extends Command
-  final case class Join(playerId: PlayerId) extends Command
-  final case class DiscardCribCards(playerId: PlayerId, cards: Cards) extends Command
-  final case class LayCard(playerId: PlayerId, card: Card) extends Command
-  final case class Pass(playerId: PlayerId) extends Command
+  sealed trait Command extends CborSerializable { val replyTo: ActorRef[Reply] }
+  final case class CreateGame(replyTo: ActorRef[Reply]) extends Command
+  final case class Join(playerId: PlayerId, replyTo: ActorRef[Reply]) extends Command
+  final case class DiscardCribCards(playerId: PlayerId, cards: Cards, replyTo: ActorRef[Reply]) extends Command
+  final case class LayCard(playerId: PlayerId, card: Card, replyTo: ActorRef[Reply]) extends Command
+  final case class Pass(playerId: PlayerId, replyTo: ActorRef[Reply]) extends Command
 
-  sealed trait Event
-  final case class GameCreated(gameId: Id) extends Event
+  sealed trait Reply extends CborSerializable
+  final case object Accepted extends Reply
+  final case class Rejected(reason: String) extends Reply
+
+  sealed trait Event extends CborSerializable
+  final case class GameCreated(id: String) extends Event
   final case class PlayerJoined(playerId: PlayerId) extends Event
   final case class DealerCutRevealed(playerId: PlayerId, card: Card) extends Event
   final case class DealerSelected(playerId: PlayerId) extends Event
@@ -61,31 +65,30 @@ object Game {
   final case class PointsScored(playerId: PlayerId, points: Int) extends Event
   final case class WinnerDeclared(playerId: PlayerId) extends Event
 
-  sealed trait State {
-    def applyCommand(command: Command)(implicit log: Logger): Effect[Event, State]
+  sealed trait State extends CborSerializable {
+    def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State]
     def applyEvent(event: Event)(implicit log: Logger): State
   }
 
-  final case object Idle extends State {
-    override def applyCommand(command: Command)(implicit log: Logger): Effect[Event, State] =
+  final case class Idle(id: String) extends State {
+    override def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
       command match {
-        case CreateGame(gameId) => CreateCommandHandler(gameId).handle
+        case CreateGame(replyTo) => CreateCommandHandler(id).handle(replyTo)
         case _ => unexpectedCommand(command)
       }
 
     override def applyEvent(event: Event)(implicit log: Logger): State =
       event match {
-        case GameCreated(_) => Starting(Attributes())
+        case GameCreated(_) => Starting(Game())
         case _ => unexpectedEvent(event)
       }
-
   }
 
-  final case class Starting(game: model.Attributes) extends State {
-    override def applyCommand(command: Command)(implicit log: Logger): Effect[Event, State] =
+  final case class Starting(game: model.Game) extends State {
+    override def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
       command match {
-        case join: Join => JoinCommandHandler(join, this).handle()
-        case _ => unexpectedCommand(game, command)
+        case join: Join => JoinCommandHandler(join, this).handle(join.replyTo)
+        case _ => unexpectedCommand(command)
       }
 
     override def applyEvent(event: Event)(implicit log: Logger): State =
@@ -98,11 +101,11 @@ object Game {
       }
   }
 
-  final case class Discarding(game: model.Attributes) extends State {
-    override def applyCommand(command: Command)(implicit log: Logger): Effect[Event, State] =
+  final case class Discarding(game: model.Game) extends State {
+    override def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
       command match {
-        case discard: DiscardCribCards => DiscardCribCardsCommandHandler(discard, this).handle()
-        case _ => unexpectedCommand(game, command)
+        case discard: DiscardCribCards => DiscardCribCardsCommandHandler(discard, this).handle(discard.replyTo)
+        case _ => unexpectedCommand(command)
       }
 
     override def applyEvent(event: Event)(implicit log: Logger): State =
@@ -113,12 +116,12 @@ object Game {
       }
   }
 
-  final case class Playing(game: model.Attributes) extends State {
-    override def applyCommand(command: Command)(implicit log: Logger): Effect[Event, State] =
+  final case class Playing(game: model.Game) extends State {
+    override def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
       command match {
-        case lay: LayCard => LayCardCommandHandler(lay, this).handle()
-        case pass: Pass => PassCommandHandler(pass, this).handle()
-        case _ => unexpectedCommand(game, command)
+        case lay: LayCard => LayCardCommandHandler(lay, this).handle(lay.replyTo)
+        case pass: Pass => PassCommandHandler(pass, this).handle(pass.replyTo)
+        case _ => unexpectedCommand(command)
       }
 
     override def applyEvent(event: Event)(implicit log: Logger): State =
@@ -133,9 +136,9 @@ object Game {
       }
   }
 
-  final case class Scoring(game: model.Attributes) extends State {
-    override def applyCommand(command: Command)(implicit log: Logger): Effect[Event, State] =
-      unexpectedCommand(game, command)
+  final case class Scoring(game: model.Game) extends State {
+    override def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
+      unexpectedCommand(command)
 
     override def applyEvent(event: Event)(implicit log: Logger): State =
       event match {
@@ -149,48 +152,39 @@ object Game {
 
   }
 
-  final case class Finished(game: model.Attributes) extends State {
-    override def applyCommand(cmd: Command)(implicit log: Logger): Effect[Event, State] = Effect.unhandled
+  final case class Finished(game: model.Game) extends State {
+    override def applyCommand(cmd: Command)(implicit log: Logger): ReplyEffect[Event, State] = Effect.noReply
     override def applyEvent(event: Event)(implicit log: Logger): State = this
   }
 
-  def apply(): Behavior[Command] = apply(UUID.randomUUID(), Idle)
+  def apply(entityId: String, persistenceId: PersistenceId): Behavior[Command] =
+    apply(entityId, persistenceId, Idle(persistenceId.id))
 
-  private[cribbage] def apply(id: Id, state: State): Behavior[Command] = Behaviors.setup { context =>
-    implicit val log = context.log
-    log.debug(s"Actor created: $id")
-    EventSourcedBehavior[Command, Event, State](
-      persistenceId = PersistenceId("game", id.toString),
-      emptyState = state,
-      commandHandler = (state: State, command: Command) => {
-        log.debug(s"Command: $command")
-        state.applyCommand(command)
-      },
-      eventHandler = (state: State, event: Event) => {
-        log.debug(s"Event: $event")
-        state.applyEvent(event)
-      })
-      .withTagger(_ => Set("game"))
-  }
+  private[cribbage] def apply(state: State): Behavior[Command] =
+    apply("test", PersistenceId.ofUniqueId("game"), state)
 
-  private def unexpectedCommand(command: Command)(implicit log: Logger): Effect[Event, State] = {
-    log.warn(s"Unexpected command [$command] before game creation")
-    Effect.unhandled
-  }
+  private def apply(entityId: String, persistenceId: PersistenceId, state: State): Behavior[Command] =
+    Behaviors.setup { context =>
+      implicit val log = context.log
+      EventSourcedBehavior.withEnforcedReplies[Command, Event, State](
+        persistenceId = persistenceId,
+        emptyState = state,
+        commandHandler = (state: State, command: Command) => state.applyCommand(command),
+        eventHandler = (state: State, event: Event) => state.applyEvent(event))
+        .withTagger(_ => Set("game"))
+    }
 
-  private def unexpectedCommand(game: model.Attributes, command: Command)(implicit log: Logger): Effect[Event, State] = {
-    log.warn(s"Unexpected command [$command] for attributes [$game]")
-    Effect.unhandled
-  }
+  private def unexpectedCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
+    Effect.none.thenReply(command.replyTo)(state => Rejected(s"Invalid command $command for state $state"))
 
   private def unexpectedEvent(event: Event)(implicit log: Logger) = {
-    val message = s"Unexpected event [$event] before game creation"
+    val message = s"Unexpected event $event"
     log.error(message)
     throw new IllegalStateException(message)
   }
 
-  private def unexpectedEvent(game: model.Attributes, event: Event)(implicit log: Logger) = {
-    val message = s"Unexpected event [$event] for attributes [$game]"
+  private def unexpectedEvent(game: model.Game, event: Event)(implicit log: Logger) = {
+    val message = s"Unexpected event $event for game $game"
     log.error(message)
     throw new IllegalStateException(message)
   }

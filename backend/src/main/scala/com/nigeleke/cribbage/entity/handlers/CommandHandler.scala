@@ -15,36 +15,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.nigeleke.cribbage.actors.handlers
+package com.nigeleke.cribbage.entity.handlers
 
-import akka.event.slf4j.Logger
-import akka.persistence.typed.scaladsl.Effect
-import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.model.{ Card, Cards, Points, Attributes }
+import akka.actor.typed.ActorRef
+import akka.persistence.typed.scaladsl.{ Effect, EffectBuilder, ReplyEffect }
+import com.nigeleke.cribbage.entity.GameEntity._
+import com.nigeleke.cribbage.model.{ Game, Card, Cards, Points }
 import com.nigeleke.cribbage.model.Deck._
 import com.nigeleke.cribbage.model.Face
 import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
 
 trait CommandHandler {
 
-  import CommandHandler._
+  def handle(replyTo: ActorRef[Reply]): ReplyEffect[Event, State] =
+    if (canDo) acceptedEffect.thenReply(replyTo)(_ => Accepted)
+    else Effect.reply(replyTo)(Rejected(rejectionReasons))
 
-  def handle(): Effect[Event, State] =
-    canDo.map(reasons => {
-      logger.warn(s"Command not handled because:\n $reasons")
-      Effect.unhandled[Event, State]
-    }).getOrElse(effects)
-
-  def canDo: Option[String]
-  def effects: Effect[Event, State]
+  def canDo: Boolean
+  def rejectionReasons: String
+  def acceptedEffect: EffectBuilder[Event, State]
 
 }
 
 object CommandHandler {
 
-  lazy val logger = Logger(CommandHandler.getClass.getCanonicalName)
-
-  def scoreCutAtStartOfPlay(attributes: Attributes): Seq[Event] = {
+  def scoreCutAtStartOfPlay(attributes: Game): Seq[Event] = {
     val deck = attributes.deck.shuffled
     val cut = deck.head // Will always be Some[Card]
     val dealer = attributes.optDealer.get
@@ -55,12 +50,12 @@ object CommandHandler {
     (cutEvent +: (scoreEvent ++ winnerEvent)).toList
   }
 
-  private def checkWinner(attributes: Attributes, playerId: PlayerId, points: Int) = {
+  private def checkWinner(attributes: Game, playerId: PlayerId, points: Int) = {
     val currentScore = attributes.scores(playerId).front
     if (currentScore + points >= 121) Seq(WinnerDeclared(playerId)) else Seq.empty
   }
 
-  def scoreLay(attributes: Attributes): Seq[Event] = {
+  def scoreLay(attributes: Game): Seq[Event] = {
     val play = attributes.play
     val currentCards = play.current.map(_.card)
 
@@ -99,12 +94,12 @@ object CommandHandler {
     scoreEvent ++ winnerEvent
   }
 
-  def endPlay(attributes: Attributes): Seq[Event] = {
+  def endPlay(attributes: Game): Seq[Event] = {
     val play = attributes.play
     val playerId = play.current.last.playerId
 
     val twoFormalPasses = play.passCount == 2
-    val allCardsLaid = attributes.hands.forall(_._2.size == 0)
+    val allCardsLaid = attributes.hands.forall(_._2.isEmpty)
 
     val playEndedAt31 = play.runningTotal == 31
     val playEndedBelow31 = (twoFormalPasses || allCardsLaid) && !playEndedAt31
@@ -120,13 +115,13 @@ object CommandHandler {
     else Seq.empty
   }
 
-  def endPlays(attributes: Attributes): Seq[Event] = {
+  def endPlays(attributes: Game): Seq[Event] = {
     val allCardsLaid = attributes.hands.forall(_._2.isEmpty)
     if (allCardsLaid) PlaysCompleted +: scoreHands(attributes.withPlaysReturned())
     else Seq.empty
   }
 
-  def scoreHands(attributes: Attributes): Seq[Event] = {
+  def scoreHands(attributes: Game): Seq[Event] = {
     val cut = attributes.optCut.get
 
     def scoreWithWinner(scorerId: PlayerId, points: Int, scoreEvent: Event): Seq[Event] = {

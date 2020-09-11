@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.nigeleke.cribbage.actors.validate
+package com.nigeleke.cribbage.entity.validate
 
 trait Validation {
   def validate: Option[String]

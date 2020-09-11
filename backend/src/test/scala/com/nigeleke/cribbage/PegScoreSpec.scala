@@ -3,13 +3,13 @@ package com.nigeleke.cribbage
 import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
-import com.nigeleke.cribbage.actors.Game
-import com.nigeleke.cribbage.actors.Game.{ WinnerDeclared, _ }
+import com.nigeleke.cribbage.entity.GameEntity
+import com.nigeleke.cribbage.entity.GameEntity.{ WinnerDeclared, _ }
 import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
-import com.nigeleke.cribbage.actors.handlers.CommandHandler
-import com.nigeleke.cribbage.model.{ Attributes, Points }
+import com.nigeleke.cribbage.entity.handlers.CommandHandler
+import com.nigeleke.cribbage.model.{ Game, Points }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -21,11 +21,9 @@ class PegScoreSpec
   with LogCapturing
   with Matchers {
 
-  val gameId = randomId
-
   val hand1 = cardsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
   val hand2 = cardsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
-  val initialAttributes = Attributes()
+  val initialAttributes = Game()
     .withPlayer(player1Id)
     .withPlayer(player2Id)
     .withDealer(player1Id)
@@ -37,7 +35,7 @@ class PegScoreSpec
   lazy val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      Game(gameId, Playing(initialAttributes)),
+      GameEntity(Playing(initialAttributes)),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {

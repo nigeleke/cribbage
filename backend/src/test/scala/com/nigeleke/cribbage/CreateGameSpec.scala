@@ -5,8 +5,9 @@ import java.util.UUID
 import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
-import com.nigeleke.cribbage.actors.Game
-import com.nigeleke.cribbage.actors.Game._
+import akka.persistence.typed.PersistenceId
+import com.nigeleke.cribbage.entity.GameEntity
+import com.nigeleke.cribbage.entity.GameEntity._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -21,7 +22,7 @@ class CreateGameSpec
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      Game(),
+      GameEntity("gane", PersistenceId.ofUniqueId("game")),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {
@@ -29,22 +30,27 @@ class CreateGameSpec
     eventSourcedTestKit.clear()
   }
 
-  "A Game" should {
+  "A GameEntity" should {
 
     "be creatable" in {
-      val gameId = UUID.randomUUID()
-      val createGameCommand = CreateGame(gameId)
+      val probe = createTestProbe[Reply]()
+      val createGameCommand = CreateGame(probe.ref)
       val result = eventSourcedTestKit.runCommand(createGameCommand)
+      probe.expectMessage(Accepted)
       result.command should be(createGameCommand)
-      result.event should be(GameCreated(gameId))
+      result.event should be(a[GameCreated])
       result.state should be(a[Starting])
     }
 
     "not be able to be created more than once" in {
-      val gameId = UUID.randomUUID()
-      val createGameCommand = CreateGame(gameId)
+      val probe = createTestProbe[Reply]()
+      val createGameCommand = CreateGame(probe.ref)
       val results = Seq(createGameCommand, createGameCommand).map(eventSourcedTestKit.runCommand)
-      results.flatMap(_.events) should contain theSameElementsInOrderAs (Seq(GameCreated(gameId)))
+
+      probe.expectMessage(Accepted)
+      probe.expectMessageType[Rejected]
+
+      results.flatMap(_.events).filter(_.isInstanceOf[GameCreated]).size should be(1)
       results.last.state should be(a[Starting])
     }
 

@@ -8,8 +8,8 @@ import akka.actor.typed.ActorRef
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.util.Timeout
-import com.nigeleke.cribbage.actors.Game
-import com.nigeleke.cribbage.actors.Game._
+import com.nigeleke.cribbage.entity.GameEntity
+import com.nigeleke.cribbage.entity.GameEntity._
 
 class GameSupervisorRoutes(gameSupervisor: ActorRef[Command])(implicit val system: ActorSystem[_])
   extends JsonFormats {

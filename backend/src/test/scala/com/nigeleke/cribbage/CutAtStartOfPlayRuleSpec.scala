@@ -2,12 +2,12 @@ package com.nigeleke.cribbage
 
 import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
-import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
+import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit._
 import com.nigeleke.cribbage.TestModel._
-import com.nigeleke.cribbage.actors.Game
-import com.nigeleke.cribbage.actors.Game._
+import com.nigeleke.cribbage.entity.GameEntity
+import com.nigeleke.cribbage.entity.GameEntity._
 import com.nigeleke.cribbage.model.Face._
-import com.nigeleke.cribbage.model.{ Attributes, Score }
+import com.nigeleke.cribbage.model.{ Game, Score }
 import com.nigeleke.cribbage.model.Suit._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -21,11 +21,11 @@ class CutAtStartOfPlayRuleSpec
   with BeforeAndAfterEach
   with Matchers {
 
-  val gameId = randomId
+  private val probe = createTestProbe[Reply]()
 
   private val hand1 = cardsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
   private val hand2 = cardsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
-  private val initialAttributes = Attributes()
+  private val initialAttributes = Game()
     .withPlayer(player1Id)
     .withPlayer(player2Id)
     .withDealer(player1Id)
@@ -35,7 +35,7 @@ class CutAtStartOfPlayRuleSpec
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      Game(gameId, Discarding(initialAttributes)),
+      GameEntity(Discarding(initialAttributes)),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {
@@ -44,10 +44,10 @@ class CutAtStartOfPlayRuleSpec
   }
 
   @tailrec
-  private def playingGame(withJackCut: Boolean)(f: Attributes => Unit): Unit = {
+  private def playingGame(withJackCut: Boolean)(f: Game => Unit): Unit = {
     val commands = Seq(
-      DiscardCribCards(player1Id, cardsOf(Seq((Ten, Hearts), (Ten, Clubs)))),
-      DiscardCribCards(player2Id, cardsOf(Seq((King, Hearts), (King, Clubs)))))
+      DiscardCribCards(player1Id, cardsOf(Seq((Ten, Hearts), (Ten, Clubs))), probe.ref),
+      DiscardCribCards(player2Id, cardsOf(Seq((King, Hearts), (King, Clubs))), probe.ref))
     val result = commands.map(eventSourcedTestKit.runCommand(_)).last
     result.state should be(a[Playing])
 

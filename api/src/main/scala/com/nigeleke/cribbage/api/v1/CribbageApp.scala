@@ -1,11 +1,14 @@
 package com.nigeleke.cribbage
 
+import java.util.UUID
+
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.adapter._
 import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
-import com.nigeleke.cribbage.actors.Game
+import akka.persistence.typed.PersistenceId
+import com.nigeleke.cribbage.entity.GameEntity
 
 import scala.util.Failure
 import scala.util.Success
@@ -36,7 +39,8 @@ object CribbageApp {
 
   def main(args: Array[String]): Unit = {
     val root = Behaviors.setup[Nothing] { context =>
-      val gameSupervisor = context.spawn(Game(), "game")
+      val gameId = UUID.randomUUID()
+      val gameSupervisor = context.spawn(GameEntity("game", PersistenceId.ofUniqueId(gameId.toString)), "game")
       context.watch(gameSupervisor)
 
       val routes = new GameSupervisorRoutes(gameSupervisor)(context.system)

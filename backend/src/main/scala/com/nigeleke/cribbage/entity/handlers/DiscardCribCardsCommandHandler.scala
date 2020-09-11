@@ -15,12 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.nigeleke.cribbage.actors.handlers
+package com.nigeleke.cribbage.entity.handlers
 
-import akka.persistence.typed.scaladsl.Effect
-import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.actors.handlers.Validations._
-import com.nigeleke.cribbage.actors.validate.Validation._
+import akka.persistence.typed.scaladsl.{ Effect, EffectBuilder }
+import com.nigeleke.cribbage.entity.GameEntity._
+import com.nigeleke.cribbage.entity.handlers.Validations._
+import com.nigeleke.cribbage.entity.validate.Validation._
 
 case class DiscardCribCardsCommandHandler(discard: DiscardCribCards, state: Discarding) extends CommandHandler {
 
@@ -30,15 +30,19 @@ case class DiscardCribCardsCommandHandler(discard: DiscardCribCards, state: Disc
   val cards = discard.cards
   val game = state.game
 
-  override def canDo: Option[String] =
+  val optRejectionReasons: Option[String] =
     validate(playerInGame(playerId, game) and
       validDeal(game) and
       playerHoldsCards(playerId, cards, game) and
       discardingTwoCardsOnly(playerId, cards))
 
+  override def canDo: Boolean = optRejectionReasons.isEmpty
+
+  override def rejectionReasons: String = optRejectionReasons.getOrElse("")
+
   lazy val events = CribCardsDiscarded(playerId, cards) +:
     (if (state.game.crib.size == 2) scoreCutAtStartOfPlay(game) else Seq.empty)
 
-  override def effects: Effect[Event, State] = Effect.persist(events)
+  override def acceptedEffect: EffectBuilder[Event, State] = Effect.persist(events)
 
 }

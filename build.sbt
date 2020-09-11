@@ -7,13 +7,12 @@ ThisBuild / organizationName := "Nigel Eke"
 ThisBuild / startYear := Some(2020)
 ThisBuild / licenses += ("AGPL-3.0-or-later", new URL("https://www.gnu.org/licenses/agpl-3.0.txt"))
 
-val akkaVersion = "2.6.8"
+val akkaVersion = "2.6.9"
 val akkaHttpVersion = "10.2.0"
 val akkaPersistenceJdbcVersion = "4.0.0"
-val h2Version = "1.4.200"
+val inMemoryPersistenceVersion = "2.5.15.2"
 val logbackClassicVersion = "1.2.3"
 val scalaTestVersion = "3.1.2"
-val slickVersion = "3.3.2"
 
 lazy val root = (project in file("."))
   .settings(
@@ -32,14 +31,11 @@ lazy val backend = (project in file("backend"))
     commonSettings,
     libraryDependencies ++= Seq(
       "ch.qos.logback" % "logback-classic" % logbackClassicVersion,
-      "com.h2database" % "h2" % h2Version, // Not really for production...
-      "com.lightbend.akka" %% "akka-persistence-jdbc" % akkaPersistenceJdbcVersion,
-      "com.typesafe.akka" %% "akka-stream-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
       "com.typesafe.akka" %% "akka-persistence-typed" % akkaVersion,
-      "com.typesafe.slick" %% "slick" % slickVersion,
-      "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
+      "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
+      "com.github.dnvriend" %% "akka-persistence-inmemory" % inMemoryPersistenceVersion % "test",
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % "test",
       "com.typesafe.akka" %% "akka-persistence-testkit" % akkaVersion % "test",
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test"

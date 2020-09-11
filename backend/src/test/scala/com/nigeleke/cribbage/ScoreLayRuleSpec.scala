@@ -1,13 +1,13 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.model.{ Cards, Attributes }
+import com.nigeleke.cribbage.model.{ Cards, Game }
 import com.nigeleke.cribbage.model.Face
 import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit
 import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
-import com.nigeleke.cribbage.actors.Game.{ PlayCompleted, PointsScored }
-import com.nigeleke.cribbage.actors.handlers.CommandHandler
+import com.nigeleke.cribbage.entity.GameEntity.{ PlayCompleted, PointsScored }
+import com.nigeleke.cribbage.entity.handlers.CommandHandler
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -29,7 +29,7 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
 
     val playerIds = Seq(player1Id, player2Id)
     val initialCards = cardsOf(cards)
-    val initialAttributes = Attributes()
+    val initialAttributes = Game()
       .withPlayer(player1Id)
       .withPlayer(player2Id)
       .withDealer(player1Id)

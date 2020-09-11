@@ -3,9 +3,9 @@ package com.nigeleke.cribbage
 import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
-import com.nigeleke.cribbage.actors.Game.{ CribScored, DealerScored, DealerSwapped, PoneScored }
-import com.nigeleke.cribbage.actors.handlers.CommandHandler
-import com.nigeleke.cribbage.model.{ Attributes, Points }
+import com.nigeleke.cribbage.entity.GameEntity.{ CribScored, DealerScored, DealerSwapped, PoneScored }
+import com.nigeleke.cribbage.entity.handlers.CommandHandler
+import com.nigeleke.cribbage.model.{ Game, Points }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -20,7 +20,7 @@ class ScoreCardsRuleSpec extends AnyWordSpec with Matchers {
   }
 
   def assertScore(cards: Seq[FaceSuit], cut: FaceSuit, expectedPoints: Points) = {
-    val attributes = Attributes()
+    val attributes = Game()
       .withPlayer(player1Id)
       .withPlayer(player2Id)
       .withDealer(player2Id)

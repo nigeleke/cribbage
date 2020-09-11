@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.actors.validate.Validation
+import com.nigeleke.cribbage.entity.validate.Validation
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

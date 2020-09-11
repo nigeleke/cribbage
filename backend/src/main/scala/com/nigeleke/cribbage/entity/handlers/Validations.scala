@@ -15,9 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.nigeleke.cribbage.actors.handlers
+package com.nigeleke.cribbage.entity.handlers
 
-import com.nigeleke.cribbage.actors.validate.Validation
+import com.nigeleke.cribbage.entity.validate.Validation
 import com.nigeleke.cribbage.model._
 import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
 
@@ -37,37 +37,37 @@ object Validations {
     }
   }
 
-  def gameRequiresPlayers(attributes: Attributes): Validation = new Validation {
+  def gameRequiresPlayers(attributes: Game): Validation = new Validation {
     def validate =
       if (attributes.players.size < 2) None
-      else Option(s"Game has enough players")
+      else Option(s"GameEntity has enough players")
   }
 
-  def playerHoldsCards(id: PlayerId, cards: Cards, attributes: Attributes): Validation = new Validation {
+  def playerHoldsCards(id: PlayerId, cards: Cards, attributes: Game): Validation = new Validation {
     override def validate: Option[String] =
       if (cards.forall(attributes.hands(id).contains(_))) None
       else Option(s"Player $id does not hold all $cards")
   }
 
-  def playerInGame(id: PlayerId, attributes: Attributes): Validation = new Validation {
+  def playerInGame(id: PlayerId, attributes: Game): Validation = new Validation {
     def validate =
       if (attributes.players.contains(id)) None
-      else Option(s"Player $id is not a member of attributes")
+      else Option(s"Player $id is not a member of game")
   }
 
-  def playerIsNextToLay(id: PlayerId, attributes: Attributes): Validation = new Validation {
+  def playerIsNextToLay(id: PlayerId, attributes: Game): Validation = new Validation {
     def validate =
       if (id == attributes.play.optNextToLay.get) None
       else Option(s"Player $id's opponent is the next player to lay a card")
   }
 
-  def playerNotAlreadyJoinedGame(id: PlayerId, attributes: Attributes): Validation = new Validation {
+  def playerNotAlreadyJoinedGame(id: PlayerId, attributes: Game): Validation = new Validation {
     def validate =
       if (!attributes.players.contains(id)) None
-      else Some(s"Player ${id} already joined attributes")
+      else Some(s"Player ${id} already joined game")
   }
 
-  def playHasNoCardsToLay(id: PlayerId, attributes: Attributes): Validation = new Validation {
+  def playHasNoCardsToLay(id: PlayerId, attributes: Game): Validation = new Validation {
     def validate = {
       val runningTotal = attributes.play.runningTotal
       val playableCards = attributes.hands(id).filter(runningTotal + _.value <= 31)
@@ -76,7 +76,7 @@ object Validations {
     }
   }
 
-  def validDeal(attributes: Attributes): Validation = new Validation {
+  def validDeal(attributes: Game): Validation = new Validation {
     def validate = {
       val allCardsDealt = (attributes.deck ++ attributes.hands.flatMap(_._2) ++ attributes.crib).size == 52
       if (allCardsDealt) None

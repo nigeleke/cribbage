@@ -1,11 +1,11 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.model.Attributes
+import com.nigeleke.cribbage.model.Game
 import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
-import com.nigeleke.cribbage.actors.Game._
-import com.nigeleke.cribbage.actors.handlers.CommandHandler
+import com.nigeleke.cribbage.entity.GameEntity._
+import com.nigeleke.cribbage.entity.handlers.CommandHandler
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -13,7 +13,7 @@ class EndPlayRuleSpec extends AnyWordSpec with Matchers {
 
   "The EndPlayRule" should {
 
-    val attributes = Attributes()
+    val attributes = Game()
       .withPlayer(player1Id)
       .withPlayer(player2Id)
       .withDealer(player1Id)

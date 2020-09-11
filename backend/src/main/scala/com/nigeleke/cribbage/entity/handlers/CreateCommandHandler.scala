@@ -15,14 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.nigeleke.cribbage.actors.handlers
+package com.nigeleke.cribbage.entity.handlers
 
-import akka.persistence.typed.scaladsl.Effect
-import com.nigeleke.cribbage.actors.Game._
+import akka.persistence.typed.scaladsl.{ Effect, EffectBuilder }
+import com.nigeleke.cribbage.entity.GameEntity._
 
-case class CreateCommandHandler(id: Id) extends CommandHandler {
+case class CreateCommandHandler(id: String) extends CommandHandler {
 
-  override def canDo: Option[String] = None
-  override def effects: Effect[Event, State] = Effect.persist(GameCreated(id))
+  override def canDo: Boolean = true
+
+  override def rejectionReasons: String = ???
+
+  override def acceptedEffect: EffectBuilder[Event, State] = Effect.persist(GameCreated(id))
 
 }

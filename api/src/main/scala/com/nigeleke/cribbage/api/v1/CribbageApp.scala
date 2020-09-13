@@ -7,7 +7,6 @@ import akka.actor.typed.scaladsl.adapter._
 import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
-import akka.persistence.typed.PersistenceId
 import com.nigeleke.cribbage.entity.GameEntity
 
 import scala.util.Failure
@@ -39,8 +38,10 @@ object CribbageApp {
 
   def main(args: Array[String]): Unit = {
     val root = Behaviors.setup[Nothing] { context =>
+      implicit val log = context.log
+
       val gameId = UUID.randomUUID()
-      val gameSupervisor = context.spawn(GameEntity("game", PersistenceId.ofUniqueId(gameId.toString)), "game")
+      val gameSupervisor = context.spawn(GameEntity(UUID.randomUUID()), "game")
       context.watch(gameSupervisor)
 
       val routes = new GameSupervisorRoutes(gameSupervisor)(context.system)

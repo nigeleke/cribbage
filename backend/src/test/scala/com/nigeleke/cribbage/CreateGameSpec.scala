@@ -1,13 +1,11 @@
 package com.nigeleke.cribbage
 
-import java.util.UUID
-
 import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
-import akka.persistence.typed.PersistenceId
 import com.nigeleke.cribbage.entity.GameEntity
 import com.nigeleke.cribbage.entity.GameEntity._
+import com.nigeleke.cribbage.TestModel._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -19,10 +17,12 @@ class CreateGameSpec
   with LogCapturing
   with Matchers {
 
+  implicit val log = system.log
+
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      GameEntity("gane", PersistenceId.ofUniqueId("game")),
+      GameEntity(randomId),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {
@@ -36,7 +36,7 @@ class CreateGameSpec
       val probe = createTestProbe[Reply]()
       val createGameCommand = CreateGame(probe.ref)
       val result = eventSourcedTestKit.runCommand(createGameCommand)
-      probe.expectMessage(Accepted)
+      probe.expectMessage(Accepted(createGameCommand))
       result.command should be(createGameCommand)
       result.event should be(a[GameCreated])
       result.state should be(a[Starting])
@@ -47,7 +47,7 @@ class CreateGameSpec
       val createGameCommand = CreateGame(probe.ref)
       val results = Seq(createGameCommand, createGameCommand).map(eventSourcedTestKit.runCommand)
 
-      probe.expectMessage(Accepted)
+      probe.expectMessage(Accepted(createGameCommand))
       probe.expectMessageType[Rejected]
 
       results.flatMap(_.events).filter(_.isInstanceOf[GameCreated]).size should be(1)

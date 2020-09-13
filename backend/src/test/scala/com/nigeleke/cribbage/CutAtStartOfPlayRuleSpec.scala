@@ -21,10 +21,12 @@ class CutAtStartOfPlayRuleSpec
   with BeforeAndAfterEach
   with Matchers {
 
+  implicit val log = system.log
+
   private val probe = createTestProbe[Reply]()
 
-  private val hand1 = cardsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
-  private val hand2 = cardsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
+  private val hand1 = cardIdsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
+  private val hand2 = cardIdsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
   private val initialAttributes = Game()
     .withPlayer(player1Id)
     .withPlayer(player2Id)
@@ -46,15 +48,19 @@ class CutAtStartOfPlayRuleSpec
   @tailrec
   private def playingGame(withJackCut: Boolean)(f: Game => Unit): Unit = {
     val commands = Seq(
-      DiscardCribCards(player1Id, cardsOf(Seq((Ten, Hearts), (Ten, Clubs))), probe.ref),
-      DiscardCribCards(player2Id, cardsOf(Seq((King, Hearts), (King, Clubs))), probe.ref))
+      DiscardCribCards(player1Id, cardIdsOf(Seq((Ten, Hearts), (Ten, Clubs))), probe.ref),
+      DiscardCribCards(player2Id, cardIdsOf(Seq((King, Hearts), (King, Clubs))), probe.ref))
     val result = commands.map(eventSourcedTestKit.runCommand(_)).last
-    result.state should be(a[Playing])
+    val game = result.stateOfType[Playing].game
 
-    val cutWasAsRequested =
-      result.stateOfType[Playing].game.optCut.exists { cut =>
-        (withJackCut && cut.face == Jack) || (!withJackCut && (cut.face != Jack))
+    val cutWasAsRequested = {
+      game.optCut.exists { cutId =>
+        {
+          val cut = game.card(cutId)
+          (withJackCut && cut.face == Jack) || (!withJackCut && (cut.face != Jack))
+        }
       }
+    }
 
     if (cutWasAsRequested) f(result.stateOfType[Playing].game)
     else {

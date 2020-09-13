@@ -17,6 +17,7 @@
 
 package com.nigeleke.cribbage.model
 
+import Card.{ Id => CardId }
 import Player.{ Id => PlayerId }
 
 final case class Game(
@@ -25,7 +26,7 @@ final case class Game(
   optDealer: Option[PlayerId],
   hands: Hands,
   crib: Crib,
-  optCut: Option[Card],
+  optCut: Option[CardId],
   play: Play,
   scores: Scores)
 
@@ -63,51 +64,60 @@ object Game {
       game.copy(scores = updatedScores)
     }
 
-    def withDeal(hands: Hands, deck: Deck) = {
-      require((game.players -- hands.keySet).size == 0, s"Players ${hands.keySet} should be part of $game")
-      require((deck.toSet intersect hands.values.flatten.toSet) == hands.values.flatten.toSet, s"Dealt hands ${hands.values} should be from deck $deck")
-      game.copy(deck = (deck.toSet -- hands.values.flatten).toSeq, hands = hands)
+    lazy val availableDeck: Seq[CardId] = {
+      val usedCardIds = game.optCut.toList ++ game.hands.values.flatten ++ game.crib
+      game.deck.map(_.id).filterNot(usedCardIds.contains(_))
     }
 
-    def withCribDiscard(id: PlayerId, cards: Cards): Game = {
+    def withDeal(hands: Hands, deck: Deck) = {
+      require((game.players -- hands.keySet).size == 0, s"Players ${hands.keySet} should be part of $game")
+      require((deck.map(_.id).toSet intersect hands.values.flatten.toSet) == hands.values.flatten.toSet, s"Dealt hands ${hands.values} should be from deck $deck")
+      game.copy(deck = deck, hands = hands)
+    }
+
+    def withCribDiscard(id: PlayerId, cardIds: CardIds): Game = {
       require(game.players.contains(id), s"Player $id is not in $game")
-      require(cards.size == 2, s"Player $id must discard two cards")
-      require((game.hands(id).toSet -- cards).size == 4, s"Player $id does not own cards being discarded")
-      val updatedHand = game.hands(id).filterNot(cards.contains(_))
-      val updatedCrib = game.crib ++ cards
+      require(cardIds.size == 2, s"Player $id must discard two cards")
+      require((game.hands(id).toSet -- cardIds).size == 4, s"Player $id does not own cards being discarded")
+      val updatedHand = game.hands(id).filterNot(cardIds.contains(_))
+      val updatedCrib = game.crib ++ cardIds
       game.copy(hands = game.hands.updated(id, updatedHand), crib = updatedCrib)
     }
 
-    def withCut(cut: Card): Game = {
-      require(game.deck.contains(cut), s"Cut card $cut not in deck")
-      game.copy(optCut = Some(cut))
+    def withCut(cardId: CardId): Game = {
+      require(game.deck.map(_.id).contains(cardId), s"Cut $cardId not in deck")
+      game.copy(optCut = Some(cardId))
     }
 
-    def withNextToLay(id: PlayerId) = {
-      require(game.players.contains(id), s"Player $id is not in $game")
-      val updatedPlay = game.play.withNextToLay(id)
+    def withNextToLay(playerId: PlayerId): Game = {
+      require(game.players.contains(playerId), s"Player $playerId is not in $game")
+      val updatedPlay = game.play.withNextToLay(playerId)
       game.copy(play = updatedPlay)
     }
 
-    def withLay(id: PlayerId, card: Card) = {
-      require(game.players.contains(id), s"Player $id is not in $game")
-      require(game.hands(id).contains(card), s"Player $id does not hold $card in ${game.hands(id)}")
-      require(game.play.runningTotal + card.value <= 31, s"Player $id cannot lay $card in current play ${game.play.current}")
-      val updatedHand = game.hands(id).filterNot(_ == card)
-      val updatedPlay = game.play.withLay(Lay(id, card)).withNextToLay(opponent(id))
-      game.copy(hands = game.hands.updated(id, updatedHand), play = updatedPlay)
+    def withLay(playerId: PlayerId, cardId: CardId): Game = {
+      require(game.players.contains(playerId), s"Player $playerId is not in $game")
+      require(game.hands(playerId).contains(cardId), s"Player $playerId does not hold $cardId in ${game.hands(playerId)}")
+      require(runningTotal + card(cardId).value <= 31, s"Player $playerId cannot lay $cardId in current play ${game.play.current}")
+      val updatedHand = game.hands(playerId).filterNot(_ == cardId)
+      val updatedPlay = game.play.withLay(Lay(playerId, cardId)).withNextToLay(opponent(playerId))
+      game.copy(hands = game.hands.updated(playerId, updatedHand), play = updatedPlay)
     }
 
-    def withPass(id: PlayerId) = {
-      require(game.players.contains(id), s"Player $id is not in $game")
-      require(game.hands(id).forall(card => game.play.runningTotal + card.value > 31), s"Player $id cannot pass")
-      val updatedPlay = game.play.withPass().withNextToLay(opponent(id))
+    lazy val runningTotal: Int = game.play.current.map(_.cardId).map(card).map(_.value).sum
+
+    def card(cardId: CardId): Card = game.deck.find(_.id == cardId).head
+
+    def withPass(playerId: PlayerId): Game = {
+      require(game.players.contains(playerId), s"Player $playerId is not in $game")
+      require(game.hands(playerId).forall(cardId => runningTotal + card(cardId).value > 31), s"Player $playerId cannot pass")
+      val updatedPlay = game.play.withPass().withNextToLay(opponent(playerId))
       game.copy(play = updatedPlay)
     }
 
-    def withNextPlay() = {
+    def withNextPlay(): Game = {
       require(
-        game.players.forall(game.hands(_).forall(card => game.play.runningTotal + card.value > 31)),
+        game.players.forall(game.hands(_).forall(cardId => runningTotal + card(cardId).value > 31)),
         s"""Cannot progress to next play with cards still available to lay:
            | ${game.play.current}
            | ${game.hands}""".stripMargin)
@@ -115,13 +125,13 @@ object Game {
       game.copy(play = updatedPlay)
     }
 
-    def withPlaysReturned() = {
+    def withPlaysReturned(): Game = {
       require(game.hands.forall(_._2.isEmpty), s"All cards should have been played")
       val laysByPlayerId = (for {
         lays <- game.play.previous :+ game.play.current
         lay <- lays
       } yield lay).groupBy(_.playerId)
-      val updatedHands = laysByPlayerId.view.mapValues(_.map(_.card)).toMap
+      val updatedHands = laysByPlayerId.view.mapValues(_.map(_.cardId)).toMap
       game.copy(hands = updatedHands, play = Play())
     }
 
@@ -129,10 +139,10 @@ object Game {
       game.players.filterNot(_ == playerId).head
     }
 
-    def withScore(id: PlayerId, points: Int): Game = {
-      val currentScore = game.scores.getOrElse(id, Score(0, 0))
+    def withScore(playerId: PlayerId, points: Int): Game = {
+      val currentScore = game.scores.getOrElse(playerId, Score(0, 0))
       val updatedScore = Score(currentScore.front, currentScore.front + points)
-      game.copy(scores = game.scores.updated(id, updatedScore))
+      game.copy(scores = game.scores.updated(playerId, updatedScore))
     }
 
     def withSwappedDealer(): Game = game.copy(optDealer = game.optPone, deck = Deck(), hands = Map.empty)

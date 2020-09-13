@@ -30,19 +30,19 @@ case class LayCardCommandHandler(lay: LayCard, state: Playing) extends CommandHa
   val play = game.play
 
   val playerId = lay.playerId
-  val card = lay.card
+  val cardId = lay.cardId
 
   val optRejectedReasons =
     validate(playerInGame(playerId, game) and
       playerIsNextToLay(playerId, game) and
-      cardCanBeLaid(lay.card, play))
+      cardCanBeLaid(lay.cardId, game))
 
   override def canDo: Boolean = optRejectedReasons.isEmpty
 
   override def rejectionReasons: String = optRejectedReasons.getOrElse("")
 
-  lazy val events = CardLaid(playerId, card) +: {
-    val gameWithLay = game.withLay(playerId, card)
+  lazy val events = CardLaid(playerId, cardId) +: {
+    val gameWithLay = game.withLay(playerId, cardId)
     scoreLay(gameWithLay) ++ endPlay(gameWithLay) ++ endPlays(gameWithLay)
   }
 

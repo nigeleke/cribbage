@@ -3,6 +3,7 @@ package com.nigeleke.cribbage
 import java.util.UUID
 
 import com.nigeleke.cribbage.model.{ Card, Deck }
+import com.nigeleke.cribbage.model.Card.{ Id => CardId }
 import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
 import com.nigeleke.cribbage.model.{ Face, Suit }
 
@@ -20,7 +21,9 @@ object TestModel {
   val player2Id: UUID = randomId
 
   def cardOf(face: Face, suit: Suit): Card = deck.filter(card => card.face == face && card.suit == suit).head
+  def cardIdOf(face: Face, suit: Suit): CardId = cardOf(face, suit).id
   def cardOf(faceSuit: FaceSuit): Card = cardOf(faceSuit._1, faceSuit._2)
+  def cardIdOf(faceSuit: FaceSuit): CardId = cardOf(faceSuit).id
   def cardsOf(faceSuits: Seq[FaceSuit]): Seq[Card] = faceSuits.map(cardOf(_))
-
+  def cardIdsOf(faceSuits: Seq[FaceSuit]): Seq[CardId] = cardsOf(faceSuits).map(_.id)
 }

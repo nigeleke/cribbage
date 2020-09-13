@@ -31,7 +31,7 @@ object Deck {
   } yield Card(UUID.randomUUID(), face, suit)).toSeq
 
   implicit class DeckOps(deck: Deck) {
-    val shuffled = Random.shuffle(deck)
+    val shuffled: Seq[Card] = Random.shuffle(deck)
   }
 
 }

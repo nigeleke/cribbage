@@ -17,6 +17,7 @@
 
 package com.nigeleke.cribbage.model
 
+import Card.{ Id => CardId }
 import Player.{ Id => PlayerId }
 
-case class Lay(playerId: PlayerId, card: Card)
+case class Lay(playerId: PlayerId, cardId: CardId)

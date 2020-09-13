@@ -17,19 +17,21 @@
 
 package com.nigeleke.cribbage.entity.handlers
 
-import akka.actor.typed.ActorRef
 import akka.persistence.typed.scaladsl.{ Effect, EffectBuilder, ReplyEffect }
 import com.nigeleke.cribbage.entity.GameEntity._
-import com.nigeleke.cribbage.model.{ Game, Card, Cards, Points }
+import com.nigeleke.cribbage.model._
+import com.nigeleke.cribbage.model.Card.{ Id => CardId }
 import com.nigeleke.cribbage.model.Deck._
 import com.nigeleke.cribbage.model.Face
 import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
 
+import scala.language.implicitConversions
+
 trait CommandHandler {
 
-  def handle(replyTo: ActorRef[Reply]): ReplyEffect[Event, State] =
-    if (canDo) acceptedEffect.thenReply(replyTo)(_ => Accepted)
-    else Effect.reply(replyTo)(Rejected(rejectionReasons))
+  def handle(command: Command): ReplyEffect[Event, State] =
+    if (canDo) acceptedEffect.thenReply(command.replyTo)(_ => Accepted(command))
+    else Effect.reply(command.replyTo)(Rejected(command, rejectionReasons))
 
   def canDo: Boolean
   def rejectionReasons: String
@@ -39,25 +41,26 @@ trait CommandHandler {
 
 object CommandHandler {
 
-  def scoreCutAtStartOfPlay(attributes: Game): Seq[Event] = {
-    val deck = attributes.deck.shuffled
+  def scoreCutAtStartOfPlay(game: Game): Seq[Event] = {
+    val deck = game.deck.shuffled
     val cut = deck.head // Will always be Some[Card]
-    val dealer = attributes.optDealer.get
+    val dealer = game.optDealer.get
     val points = if (cut.face == Face.Jack) 2 else 0
     val cutEvent: Event = PlayCutRevealed(cut)
     val scoreEvent: Seq[Event] = if (points != 0) Seq(PointsScored(dealer, points)) else Seq.empty
-    val winnerEvent: Seq[Event] = checkWinner(attributes, dealer, points)
+    val winnerEvent: Seq[Event] = checkWinner(game, dealer, points)
     (cutEvent +: (scoreEvent ++ winnerEvent)).toList
   }
 
-  private def checkWinner(attributes: Game, playerId: PlayerId, points: Int) = {
-    val currentScore = attributes.scores(playerId).front
+  private def checkWinner(game: Game, playerId: PlayerId, points: Int) = {
+    val currentScore = game.scores(playerId).front
     if (currentScore + points >= 121) Seq(WinnerDeclared(playerId)) else Seq.empty
   }
 
-  def scoreLay(attributes: Game): Seq[Event] = {
-    val play = attributes.play
-    val currentCards = play.current.map(_.card)
+  def scoreLay(game: Game): Seq[Event] = {
+    val play = game.play
+    val currentCardIds = play.current.map(_.cardId)
+    val currentCards = currentCardIds.map(game.card(_))
 
     val fifteensInPlay = {
       val total = currentCards.map(_.value).sum
@@ -89,24 +92,23 @@ object CommandHandler {
     val scorerId = play.current.last.playerId
 
     val scoreEvent = if (points != 0) Seq(PointsScored(scorerId, points)) else Seq.empty
-    val winnerEvent: Seq[Event] = checkWinner(attributes, scorerId, points)
+    val winnerEvent: Seq[Event] = checkWinner(game, scorerId, points)
 
     scoreEvent ++ winnerEvent
   }
 
-  def endPlay(attributes: Game): Seq[Event] = {
-    val play = attributes.play
+  def endPlay(game: Game): Seq[Event] = {
+    val play = game.play
     val playerId = play.current.last.playerId
 
     val twoFormalPasses = play.passCount == 2
-    val allCardsLaid = attributes.hands.forall(_._2.isEmpty)
+    val allCardsLaid = game.hands.forall(_._2.isEmpty)
 
-    val playEndedAt31 = play.runningTotal == 31
+    val playEndedAt31 = game.runningTotal == 31
     val playEndedBelow31 = (twoFormalPasses || allCardsLaid) && !playEndedAt31
     val playEnded = playEndedAt31 || playEndedBelow31
 
     val points = {
-      import scala.language.implicitConversions
       implicit def booleanToInt(b: Boolean): Int = if (b) 1 else 0
       playEndedBelow31 * 1 + playEndedAt31 * 2
     }
@@ -115,38 +117,40 @@ object CommandHandler {
     else Seq.empty
   }
 
-  def endPlays(attributes: Game): Seq[Event] = {
-    val allCardsLaid = attributes.hands.forall(_._2.isEmpty)
-    if (allCardsLaid) PlaysCompleted +: scoreHands(attributes.withPlaysReturned())
+  def endPlays(game: Game): Seq[Event] = {
+    val allCardsLaid = game.hands.forall(_._2.isEmpty)
+    if (allCardsLaid) PlaysCompleted +: scoreHands(game.withPlaysReturned())
     else Seq.empty
   }
 
-  def scoreHands(attributes: Game): Seq[Event] = {
-    val cut = attributes.optCut.get
+  def scoreHands(game: Game): Seq[Event] = {
+    val cutId = game.optCut.get
 
     def scoreWithWinner(scorerId: PlayerId, points: Int, scoreEvent: Event): Seq[Event] = {
       val winnerEvent =
-        if (attributes.scores(scorerId).front + points >= 121) Seq(WinnerDeclared(scorerId))
+        if (game.scores(scorerId).front + points >= 121) Seq(WinnerDeclared(scorerId))
         else Seq.empty
       scoreEvent +: winnerEvent
     }
 
     lazy val scorePone = {
-      val poneId = attributes.optPone.get
-      val points = scoreFor(attributes.hands(poneId), cut)
+      val poneId = game.optPone.get
+      val points = scoreFor(game.hands(poneId), cutId)
       scoreWithWinner(poneId, points.total, PoneScored(poneId, points))
     }
 
     lazy val scoreDealer = {
-      val dealerId = attributes.optDealer.get
-      val handPoints = scoreFor(attributes.hands(dealerId), cut)
-      val cribPoints = scoreFor(attributes.crib, cut)
+      val dealerId = game.optDealer.get
+      val handPoints = scoreFor(game.hands(dealerId), cutId)
+      val cribPoints = scoreFor(game.crib, cutId)
       scoreWithWinner(dealerId, handPoints.total, DealerScored(dealerId, handPoints)) ++
         scoreWithWinner(dealerId, handPoints.total + cribPoints.total, CribScored(dealerId, cribPoints))
     }
 
-    def scoreFor(cards: Cards, cut: Card): Points = {
+    def scoreFor(cardIds: CardIds, cutId: CardId): Points = {
 
+      val cards = cardIds.map(game.card)
+      val cut = game.card(cutId)
       val allCards = cards :+ cut
 
       val fifteens = {

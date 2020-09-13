@@ -19,72 +19,76 @@ package com.nigeleke.cribbage.entity.handlers
 
 import com.nigeleke.cribbage.entity.validate.Validation
 import com.nigeleke.cribbage.model._
+import com.nigeleke.cribbage.model.Card.{ Id => CardId }
 import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
 
 object Validations {
 
-  def cardCanBeLaid(card: Card, play: Play): Validation = new Validation {
+  def cardCanBeLaid(cardId: CardId, game: Game): Validation = new Validation {
     def validate: Option[String] = {
-      if (play.runningTotal + card.value <= 31) None
-      else Some(s"Card $card cannot be laid in play $play (makes total > 31)")
+      val card = game.card(cardId)
+      if (game.runningTotal + card.value <= 31) None
+      else Some(s"Card $card cannot be laid in play (will make total > 31)")
     }
   }
 
-  def discardingTwoCardsOnly(id: PlayerId, cards: Cards): Validation = new Validation {
-    def validate = {
-      if (cards.size == 2) None
-      else Some(s"Player $id must discard two cards into the crib")
+  def discardingTwoCardsOnly(playerId: PlayerId, cardIds: CardIds): Validation = new Validation {
+    def validate: Option[String] = {
+      if (cardIds.size == 2) None
+      else Some(s"Player $playerId must discard two cards into the crib")
     }
   }
 
-  def gameRequiresPlayers(attributes: Game): Validation = new Validation {
-    def validate =
-      if (attributes.players.size < 2) None
+  def gameRequiresPlayers(game: Game): Validation = new Validation {
+    def validate: Option[String] =
+      if (game.players.size < 2) None
       else Option(s"GameEntity has enough players")
   }
 
-  def playerHoldsCards(id: PlayerId, cards: Cards, attributes: Game): Validation = new Validation {
-    override def validate: Option[String] =
-      if (cards.forall(attributes.hands(id).contains(_))) None
-      else Option(s"Player $id does not hold all $cards")
+  def playerHoldsCards(playerId: PlayerId, cardIds: CardIds, game: Game): Validation = new Validation {
+    override def validate: Option[String] = {
+      val playerCardIds = game.hands(playerId)
+      if (cardIds.forall(playerCardIds.contains(_))) None
+      else Option(s"Player $playerId does not hold all cards")
+    }
   }
 
-  def playerInGame(id: PlayerId, attributes: Game): Validation = new Validation {
-    def validate =
-      if (attributes.players.contains(id)) None
+  def playerInGame(id: PlayerId, game: Game): Validation = new Validation {
+    def validate: Option[String] =
+      if (game.players.contains(id)) None
       else Option(s"Player $id is not a member of game")
   }
 
-  def playerIsNextToLay(id: PlayerId, attributes: Game): Validation = new Validation {
-    def validate =
-      if (id == attributes.play.optNextToLay.get) None
-      else Option(s"Player $id's opponent is the next player to lay a card")
+  def playerIsNextToLay(id: PlayerId, game: Game): Validation = new Validation {
+    def validate: Option[String] =
+      if (id == game.play.optNextToLay.get) None
+      else Option(s"Player $id's opponent is the next player to lay a cardId")
   }
 
-  def playerNotAlreadyJoinedGame(id: PlayerId, attributes: Game): Validation = new Validation {
-    def validate =
-      if (!attributes.players.contains(id)) None
+  def playerNotAlreadyJoinedGame(id: PlayerId, game: Game): Validation = new Validation {
+    def validate: Option[String] =
+      if (!game.players.contains(id)) None
       else Some(s"Player ${id} already joined game")
   }
 
-  def playHasNoCardsToLay(id: PlayerId, attributes: Game): Validation = new Validation {
-    def validate = {
-      val runningTotal = attributes.play.runningTotal
-      val playableCards = attributes.hands(id).filter(runningTotal + _.value <= 31)
+  def playHasNoCardsToLay(id: PlayerId, game: Game): Validation = new Validation {
+    def validate: Option[String] = {
+      val runningTotal = game.runningTotal
+      val playableCards = game.hands(id).filter(cardId => runningTotal + game.card(cardId).value <= 31)
       if (playableCards.isEmpty) None
       else Some(s"Player $id cannot pass; they hold cards that can be laid")
     }
   }
 
-  def validDeal(attributes: Game): Validation = new Validation {
-    def validate = {
-      val allCardsDealt = (attributes.deck ++ attributes.hands.flatMap(_._2) ++ attributes.crib).size == 52
+  def validDeal(game: Game): Validation = new Validation {
+    def validate: Option[String] = {
+      val allCardsDealt = (game.availableDeck ++ game.hands.flatMap(_._2) ++ game.crib).size == 52
       if (allCardsDealt) None
       else Option(
         s"""Invalid deal:
-           | Deck: (${attributes.deck.size}) ${attributes.deck}
-           | Deal: (${attributes.hands.flatMap(_._2).size}) ${attributes.hands}
-           | Crib: (${attributes.crib})  ${attributes.crib}
+           | Deck: (${game.availableDeck.size}) ${game.availableDeck}
+           | Deal: (${game.hands.flatMap(_._2).size}) ${game.hands}
+           | Crib: (${game.crib.size})  ${game.crib}
            |""".stripMargin)
     }
   }

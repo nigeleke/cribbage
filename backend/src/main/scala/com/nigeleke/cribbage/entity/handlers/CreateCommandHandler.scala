@@ -19,8 +19,9 @@ package com.nigeleke.cribbage.entity.handlers
 
 import akka.persistence.typed.scaladsl.{ Effect, EffectBuilder }
 import com.nigeleke.cribbage.entity.GameEntity._
+import com.nigeleke.cribbage.entity.GameEntity.{ Id => GameId }
 
-case class CreateCommandHandler(id: String) extends CommandHandler {
+case class CreateCommandHandler(id: GameId) extends CommandHandler {
 
   override def canDo: Boolean = true
 

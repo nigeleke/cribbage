@@ -3,12 +3,9 @@ package com.nigeleke.cribbage
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 
-import scala.concurrent.Future
 import akka.actor.typed.ActorRef
 import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.AskPattern._
 import akka.util.Timeout
-import com.nigeleke.cribbage.entity.GameEntity
 import com.nigeleke.cribbage.entity.GameEntity._
 
 class GameSupervisorRoutes(gameSupervisor: ActorRef[Command])(implicit val system: ActorSystem[_])

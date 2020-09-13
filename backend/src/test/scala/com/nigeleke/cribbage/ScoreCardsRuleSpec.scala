@@ -25,8 +25,8 @@ class ScoreCardsRuleSpec extends AnyWordSpec with Matchers {
       .withPlayer(player2Id)
       .withDealer(player2Id)
       .withZeroScores()
-      .withDeal(Map((player1Id, cardsOf(cards)), (player2Id, Seq.empty)), deck)
-      .withCut(cardOf(cut))
+      .withDeal(Map((player1Id, cardIdsOf(cards)), (player2Id, Seq.empty)), deck)
+      .withCut(cardIdOf(cut))
 
     CommandHandler.scoreHands(attributes) should be(Seq(
       PoneScored(player1Id, expectedPoints),

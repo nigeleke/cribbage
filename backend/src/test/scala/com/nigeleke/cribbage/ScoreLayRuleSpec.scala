@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.model.{ Cards, Game }
+import com.nigeleke.cribbage.model._
 import com.nigeleke.cribbage.model.Face
 import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit
@@ -21,7 +21,7 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
 
   def assertScore(cards: Seq[(Face, Suit)], expectedScore: Int) = {
 
-    def takeAlternate(cards: Cards): Cards = cards.toList match {
+    def takeAlternate(cardIds: CardIds): CardIds = cardIds.toList match {
       case Nil => Nil
       case card1 :: Nil => Seq(card1)
       case card1 :: _ :: rest => card1 +: takeAlternate(rest)
@@ -29,6 +29,7 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
 
     val playerIds = Seq(player1Id, player2Id)
     val initialCards = cardsOf(cards)
+    val initialCardIds = initialCards.map(_.id)
     val initialAttributes = Game()
       .withPlayer(player1Id)
       .withPlayer(player2Id)
@@ -36,14 +37,14 @@ class ScoreLayRuleSpec extends AnyWordSpec with Matchers {
       .withZeroScores()
       .withDeal(
         Map(
-          (playerIds.head, takeAlternate(initialCards)),
-          (playerIds.last, takeAlternate(initialCards.drop(1)))),
+          (playerIds.head, takeAlternate(initialCardIds)),
+          (playerIds.last, takeAlternate(initialCardIds.drop(1)))),
         initialCards)
       .withNextToLay(player2Id)
-    val lays = initialCards.zip(Iterator.continually(playerIds).flatten)
+    val lays = initialCardIds.zip(Iterator.continually(playerIds).flatten)
 
     val game = lays.foldLeft(initialAttributes)((g, lay) => g.withLay(lay._2, lay._1))
-    val endOfPlay = game.play.runningTotal == 31
+    val endOfPlay = game.runningTotal == 31
 
     CommandHandler.scoreLay(game) should be {
       (expectedScore, endOfPlay) match {

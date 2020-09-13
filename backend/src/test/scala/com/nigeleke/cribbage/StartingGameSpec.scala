@@ -18,12 +18,14 @@ class StartingGameSpec
   with LogCapturing
   with Matchers {
 
+  implicit val log = system.log
+
   val probe = createTestProbe[Reply]()
 
   val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      GameEntity(Idle("test-game")),
+      GameEntity(randomId),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {
@@ -104,9 +106,9 @@ class StartingGameSpec
         val game = result.stateOfType[Discarding].game
         game.players.foreach { id =>
           game.hands(id).size should be(6)
-          game.deck should not contain allElementsOf(game.hands(id))
+          game.availableDeck should not contain allElementsOf(game.hands(id))
         }
-        game.deck.size should be(40)
+        game.availableDeck.size should be(40)
       }
     }
   }

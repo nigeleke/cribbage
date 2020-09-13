@@ -61,7 +61,8 @@ case class JoinCommandHandler(join: Join, state: Starting) extends CommandHandle
 
     lazy val dealHandsEvent = {
       val deck = Deck().shuffled
-      val hands = (0 to players.size).map(n => deck.drop(n * 6).take(6))
+      val deckIds = deck.map(_.id)
+      val hands = (0 to players.size).map(n => deckIds.drop(n * 6).take(6))
       val deals = players.zip(hands)
       HandsDealt(deals.toMap, deck)
     }

@@ -21,8 +21,10 @@ class PegScoreSpec
   with LogCapturing
   with Matchers {
 
-  val hand1 = cardsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
-  val hand2 = cardsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
+  implicit val log = system.log
+
+  val hand1 = cardIdsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
+  val hand2 = cardIdsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
   val initialAttributes = Game()
     .withPlayer(player1Id)
     .withPlayer(player2Id)
@@ -54,13 +56,13 @@ class PegScoreSpec
 
     "pegging lays" in {
       val gameUnderTest = initialAttributes
-        .withLay(player2Id, cardOf(King, Diamonds))
-        .withLay(player1Id, cardOf(Five, Hearts))
+        .withLay(player2Id, cardIdOf(King, Diamonds))
+        .withLay(player1Id, cardIdOf(Five, Hearts))
       CommandHandler.scoreLay(gameUnderTest) should be(Seq(PointsScored(player1Id, 2)))
     }
 
     "scoring the hands" in {
-      val gameUnderTest = initialAttributes.withCut(cardOf(Three, Clubs))
+      val gameUnderTest = initialAttributes.withCut(cardIdOf(Three, Clubs))
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
         DealerScored(player1Id, Points(pairs = 2, fifteens = 4, runs = 3)),
@@ -83,14 +85,14 @@ class PegScoreSpec
     "scoring exactly 121 in pegging lays" in {
       val gameUnderTest = initialAttributes
         .withScore(player1Id, 119)
-        .withLay(player2Id, cardOf(King, Diamonds))
-        .withLay(player1Id, cardOf(Five, Hearts))
+        .withLay(player2Id, cardIdOf(King, Diamonds))
+        .withLay(player1Id, cardIdOf(Five, Hearts))
       CommandHandler.scoreLay(gameUnderTest) should be(Seq(PointsScored(player1Id, 2), WinnerDeclared(player1Id)))
     }
 
     "scoring exactly 121 while scoring the Pone Hand" in {
       val gameUnderTest = initialAttributes
-        .withCut(cardOf(Three, Clubs))
+        .withCut(cardIdOf(Three, Clubs))
         .withScore(player2Id, 117)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
@@ -102,7 +104,7 @@ class PegScoreSpec
 
     "scoring exactly 121 while scoring the Dealer Hand" in {
       val gameUnderTest = initialAttributes
-        .withCut(cardOf(Three, Clubs))
+        .withCut(cardIdOf(Three, Clubs))
         .withScore(player1Id, 112)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
@@ -115,7 +117,7 @@ class PegScoreSpec
 
     "scoring exactly 121 while scoring the Crib" in {
       val gameUnderTest = initialAttributes
-        .withCut(cardOf(Three, Clubs))
+        .withCut(cardIdOf(Three, Clubs))
         .withScore(player1Id, 108)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
@@ -139,14 +141,14 @@ class PegScoreSpec
     "scoring greater than 121 in pegging lays" in {
       val gameUnderTest = initialAttributes
         .withScore(player1Id, 120)
-        .withLay(player2Id, cardOf(King, Diamonds))
-        .withLay(player1Id, cardOf(Five, Hearts))
+        .withLay(player2Id, cardIdOf(King, Diamonds))
+        .withLay(player1Id, cardIdOf(Five, Hearts))
       CommandHandler.scoreLay(gameUnderTest) should be(Seq(PointsScored(player1Id, 2), WinnerDeclared(player1Id)))
     }
 
     "scoring greater than 121 while scoring the Pone Hand" in {
       val gameUnderTest = initialAttributes
-        .withCut(cardOf(Three, Clubs))
+        .withCut(cardIdOf(Three, Clubs))
         .withScore(player2Id, 120)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
@@ -158,7 +160,7 @@ class PegScoreSpec
 
     "scoring greater than 121 while scoring the Dealer Hand" in {
       val gameUnderTest = initialAttributes
-        .withCut(cardOf(Three, Clubs))
+        .withCut(cardIdOf(Three, Clubs))
         .withScore(player1Id, 120)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),
@@ -171,7 +173,7 @@ class PegScoreSpec
 
     "scoring greater than 121 while scoring the Crib" in {
       val gameUnderTest = initialAttributes
-        .withCut(cardOf(Three, Clubs))
+        .withCut(cardIdOf(Three, Clubs))
         .withScore(player1Id, 111)
       CommandHandler.scoreHands(gameUnderTest) should be(Seq(
         PoneScored(player2Id, Points(pairs = 2, fifteens = 2)),

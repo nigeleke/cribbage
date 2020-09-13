@@ -6,7 +6,7 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.Serializati
 import com.nigeleke.cribbage.TestModel._
 import com.nigeleke.cribbage.entity.GameEntity
 import com.nigeleke.cribbage.entity.GameEntity._
-import com.nigeleke.cribbage.model.{ Game, Face }
+import com.nigeleke.cribbage.model.{ Face, Game }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -19,13 +19,14 @@ class DiscardingGameSpec
   with Matchers {
 
   implicit val implicitTestKit = testKit
+  implicit val log = system.log
 
   val probe = createTestProbe[Reply]()
 
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
-      GameEntity(Idle("test-game")),
+      GameEntity(randomId),
       SerializationSettings.disabled)
 
   override protected def beforeEach(): Unit = {
@@ -102,6 +103,7 @@ class DiscardingGameSpec
         val discards2 = game.hands(player2Id).take(2)
 
         eventSourcedTestKit.runCommand(DiscardCribCards(player1Id, discards1, probe.ref))
+        probe.expectMessageType[Accepted]
 
         val result = eventSourcedTestKit.runCommand(DiscardCribCards(player2Id, discards2, probe.ref))
         result.command should be(DiscardCribCards(player2Id, discards2, probe.ref))

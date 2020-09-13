@@ -34,7 +34,6 @@ object Play {
     def withPass(): Play = play.copy(passCount = play.passCount + 1)
     def withNextToLay(playerId: PlayerId): Play = play.copy(optNextToLay = Some(playerId))
     def withNextPlay(): Play = play.copy(current = Seq.empty, passCount = 0, previous = play.previous :+ play.current)
-    lazy val runningTotal: Int = play.current.map(_.card.value).sum
   }
 
 }

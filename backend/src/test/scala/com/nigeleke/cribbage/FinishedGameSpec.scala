@@ -20,10 +20,12 @@ class FinishedGameSpec
   with LogCapturing
   with Matchers {
 
+  implicit val log = system.log
+
   private val probe = createTestProbe[Reply]()
 
-  private val hand1 = cardsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
-  private val hand2 = cardsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
+  private val hand1 = cardIdsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
+  private val hand2 = cardIdsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
   private val initialAttributes0 = Game()
     .withPlayer(player1Id)
     .withPlayer(player2Id)
@@ -32,7 +34,7 @@ class FinishedGameSpec
     .withScore(player1Id, 118)
     .withScore(player2Id, 118)
     .withDeal(Map(player1Id -> hand1, player2Id -> hand2), deck)
-    .withCut(cardOf(Two, Clubs))
+    .withCut(cardIdOf(Two, Clubs))
     .withCribDiscard(player1Id, hand1.take(2))
     .withCribDiscard(player2Id, hand2.take(2))
 

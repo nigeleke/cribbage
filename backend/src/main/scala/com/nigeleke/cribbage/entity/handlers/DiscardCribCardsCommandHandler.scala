@@ -27,20 +27,20 @@ case class DiscardCribCardsCommandHandler(discard: DiscardCribCards, state: Disc
   import CommandHandler._
 
   val playerId = discard.playerId
-  val cards = discard.cards
+  val cardIds = discard.cardIds
   val game = state.game
 
   val optRejectionReasons: Option[String] =
     validate(playerInGame(playerId, game) and
       validDeal(game) and
-      playerHoldsCards(playerId, cards, game) and
-      discardingTwoCardsOnly(playerId, cards))
+      playerHoldsCards(playerId, cardIds, game) and
+      discardingTwoCardsOnly(playerId, cardIds))
 
   override def canDo: Boolean = optRejectionReasons.isEmpty
 
   override def rejectionReasons: String = optRejectionReasons.getOrElse("")
 
-  lazy val events = CribCardsDiscarded(playerId, cards) +:
+  lazy val events = CribCardsDiscarded(playerId, cardIds) +:
     (if (state.game.crib.size == 2) scoreCutAtStartOfPlay(game) else Seq.empty)
 
   override def acceptedEffect: EffectBuilder[Event, State] = Effect.persist(events)

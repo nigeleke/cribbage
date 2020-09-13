@@ -25,8 +25,9 @@ import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior, ReplyEffect }
 import com.nigeleke.cribbage.entity.handlers._
 import com.nigeleke.cribbage.json.CborSerializable
-import com.nigeleke.cribbage.model
-import com.nigeleke.cribbage.model.{ Card, Cards, Deck, Game, Hands, Points }
+import com.nigeleke.cribbage.model._
+import com.nigeleke.cribbage.model.{ Card, Deck, Game, Hands, Points }
+import com.nigeleke.cribbage.model.Card.{ Id => CardId }
 import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
 import org.slf4j.Logger
 
@@ -38,23 +39,23 @@ object GameEntity {
   sealed trait Command extends CborSerializable { val replyTo: ActorRef[Reply] }
   final case class CreateGame(replyTo: ActorRef[Reply]) extends Command
   final case class Join(playerId: PlayerId, replyTo: ActorRef[Reply]) extends Command
-  final case class DiscardCribCards(playerId: PlayerId, cards: Cards, replyTo: ActorRef[Reply]) extends Command
-  final case class LayCard(playerId: PlayerId, card: Card, replyTo: ActorRef[Reply]) extends Command
+  final case class DiscardCribCards(playerId: PlayerId, cardIds: CardIds, replyTo: ActorRef[Reply]) extends Command
+  final case class LayCard(playerId: PlayerId, cardId: CardId, replyTo: ActorRef[Reply]) extends Command
   final case class Pass(playerId: PlayerId, replyTo: ActorRef[Reply]) extends Command
 
   sealed trait Reply extends CborSerializable
-  final case object Accepted extends Reply
-  final case class Rejected(reason: String) extends Reply
+  final case class Accepted(command: Command) extends Reply
+  final case class Rejected(command: Command, reason: String) extends Reply
 
   sealed trait Event extends CborSerializable
-  final case class GameCreated(id: String) extends Event
+  final case class GameCreated(id: Id) extends Event
   final case class PlayerJoined(playerId: PlayerId) extends Event
   final case class DealerCutRevealed(playerId: PlayerId, card: Card) extends Event
   final case class DealerSelected(playerId: PlayerId) extends Event
   final case class HandsDealt(hands: Hands, fromDeck: Deck) extends Event
-  final case class CribCardsDiscarded(playerId: PlayerId, cards: Cards) extends Event
+  final case class CribCardsDiscarded(playerId: PlayerId, cardIds: CardIds) extends Event
   final case class PlayCutRevealed(card: Card) extends Event
-  final case class CardLaid(playerId: PlayerId, card: Card) extends Event
+  final case class CardLaid(playerId: PlayerId, cardId: CardId) extends Event
   final case class Passed(playerId: PlayerId) extends Event
   final case object PlayCompleted extends Event
   final case object PlaysCompleted extends Event
@@ -66,32 +67,32 @@ object GameEntity {
   final case class WinnerDeclared(playerId: PlayerId) extends Event
 
   sealed trait State extends CborSerializable {
-    def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State]
-    def applyEvent(event: Event)(implicit log: Logger): State
+    def applyCommand(command: Command): ReplyEffect[Event, State]
+    def applyEvent(event: Event): State
   }
 
-  final case class Idle(id: String) extends State {
-    override def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
+  final case class Idle(id: Id)(implicit log: Logger) extends State {
+    override def applyCommand(command: Command): ReplyEffect[Event, State] =
       command match {
-        case CreateGame(replyTo) => CreateCommandHandler(id).handle(replyTo)
+        case CreateGame(replyTo) => CreateCommandHandler(id).handle(command)
         case _ => unexpectedCommand(command)
       }
 
-    override def applyEvent(event: Event)(implicit log: Logger): State =
+    override def applyEvent(event: Event): State =
       event match {
         case GameCreated(_) => Starting(Game())
         case _ => unexpectedEvent(event)
       }
   }
 
-  final case class Starting(game: model.Game) extends State {
-    override def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
+  final case class Starting(game: Game)(implicit log: Logger) extends State {
+    override def applyCommand(command: Command): ReplyEffect[Event, State] =
       command match {
-        case join: Join => JoinCommandHandler(join, this).handle(join.replyTo)
+        case join: Join => JoinCommandHandler(join, this).handle(command)
         case _ => unexpectedCommand(command)
       }
 
-    override def applyEvent(event: Event)(implicit log: Logger): State =
+    override def applyEvent(event: Event): State =
       event match {
         case PlayerJoined(id) => Starting(game.withPlayer(id))
         case DealerCutRevealed(_, _) => Starting(game)
@@ -101,32 +102,32 @@ object GameEntity {
       }
   }
 
-  final case class Discarding(game: model.Game) extends State {
-    override def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
+  final case class Discarding(game: Game)(implicit log: Logger) extends State {
+    override def applyCommand(command: Command): ReplyEffect[Event, State] =
       command match {
-        case discard: DiscardCribCards => DiscardCribCardsCommandHandler(discard, this).handle(discard.replyTo)
+        case discard: DiscardCribCards => DiscardCribCardsCommandHandler(discard, this).handle(command)
         case _ => unexpectedCommand(command)
       }
 
-    override def applyEvent(event: Event)(implicit log: Logger): State =
+    override def applyEvent(event: Event): State =
       event match {
         case CribCardsDiscarded(playerId, cards) => Discarding(game.withCribDiscard(playerId, cards))
-        case PlayCutRevealed(cut) => Playing(game.withCut(cut).withNextToLay(game.optPone.get))
+        case PlayCutRevealed(cut) => Playing(game.withCut(cut.id).withNextToLay(game.optPone.get))
         case _ => unexpectedEvent(game, event)
       }
   }
 
-  final case class Playing(game: model.Game) extends State {
-    override def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
+  final case class Playing(game: Game)(implicit log: Logger) extends State {
+    override def applyCommand(command: Command): ReplyEffect[Event, State] =
       command match {
-        case lay: LayCard => LayCardCommandHandler(lay, this).handle(lay.replyTo)
-        case pass: Pass => PassCommandHandler(pass, this).handle(pass.replyTo)
+        case lay: LayCard => LayCardCommandHandler(lay, this).handle(command)
+        case pass: Pass => PassCommandHandler(pass, this).handle(command)
         case _ => unexpectedCommand(command)
       }
 
-    override def applyEvent(event: Event)(implicit log: Logger): State =
+    override def applyEvent(event: Event): State =
       event match {
-        case CardLaid(playerId, card) => Playing(game.withLay(playerId, card))
+        case CardLaid(playerId, cardId) => Playing(game.withLay(playerId, cardId))
         case Passed(playerId) => Playing(game.withPass(playerId))
         case PlayCompleted => Playing(game.withNextPlay())
         case PlaysCompleted => Scoring(game.withPlaysReturned())
@@ -136,11 +137,10 @@ object GameEntity {
       }
   }
 
-  final case class Scoring(game: model.Game) extends State {
-    override def applyCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
-      unexpectedCommand(command)
+  final case class Scoring(game: Game)(implicit log: Logger) extends State {
+    override def applyCommand(command: Command): ReplyEffect[Event, State] = unexpectedCommand(command)
 
-    override def applyEvent(event: Event)(implicit log: Logger): State =
+    override def applyEvent(event: Event): State =
       event match {
         case PoneScored(playerId, points) => Scoring(game.withScore(playerId, points.total))
         case DealerScored(playerId, points) => Scoring(game.withScore(playerId, points.total))
@@ -152,30 +152,28 @@ object GameEntity {
 
   }
 
-  final case class Finished(game: model.Game) extends State {
-    override def applyCommand(cmd: Command)(implicit log: Logger): ReplyEffect[Event, State] = Effect.noReply
-    override def applyEvent(event: Event)(implicit log: Logger): State = this
+  final case class Finished(game: Game) extends State {
+    override def applyCommand(command: Command): ReplyEffect[Event, State] = unexpectedCommand(command)
+    override def applyEvent(event: Event): State = this
   }
 
-  def apply(entityId: String, persistenceId: PersistenceId): Behavior[Command] =
-    apply(entityId, persistenceId, Idle(persistenceId.id))
+  def apply(id: Id)(implicit log: Logger): Behavior[Command] =
+    apply(PersistenceId.of("game", id.toString), Idle(id))
 
   private[cribbage] def apply(state: State): Behavior[Command] =
-    apply("test", PersistenceId.ofUniqueId("game"), state)
+    apply(PersistenceId.ofUniqueId("game-test"), state)
 
-  private def apply(entityId: String, persistenceId: PersistenceId, state: State): Behavior[Command] =
+  private def apply(persistenceId: PersistenceId, state: State): Behavior[Command] =
     Behaviors.setup { context =>
-      implicit val log = context.log
       EventSourcedBehavior.withEnforcedReplies[Command, Event, State](
         persistenceId = persistenceId,
         emptyState = state,
         commandHandler = (state: State, command: Command) => state.applyCommand(command),
         eventHandler = (state: State, event: Event) => state.applyEvent(event))
-        .withTagger(_ => Set("game"))
     }
 
-  private def unexpectedCommand(command: Command)(implicit log: Logger): ReplyEffect[Event, State] =
-    Effect.none.thenReply(command.replyTo)(state => Rejected(s"Invalid command $command for state $state"))
+  private def unexpectedCommand(command: Command): ReplyEffect[Event, State] =
+    Effect.none.thenReply(command.replyTo)(state => Rejected(command, s"Invalid command $command for state $state"))
 
   private def unexpectedEvent(event: Event)(implicit log: Logger) = {
     val message = s"Unexpected event $event"
@@ -183,7 +181,7 @@ object GameEntity {
     throw new IllegalStateException(message)
   }
 
-  private def unexpectedEvent(game: model.Game, event: Event)(implicit log: Logger) = {
+  private def unexpectedEvent(game: Game, event: Event)(implicit log: Logger) = {
     val message = s"Unexpected event $event for game $game"
     log.error(message)
     throw new IllegalStateException(message)

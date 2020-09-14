@@ -61,7 +61,7 @@ class DiscardingGameSpec
         val player2Id = game.players.last
         val result = eventSourcedTestKit.runCommand(DiscardCribCards(player2Id, discards, _))
         result.reply.isError should be(true)
-        result.events should be(empty)
+        result.hasNoEvents should be(true)
         result.stateOfType[Discarding].game.hands(player1Id) should contain allElementsOf (discards)
         result.stateOfType[Discarding].game.hands(player2Id) should not contain allElementsOf(discards)
         result.stateOfType[Discarding].game.crib should be(empty)
@@ -73,7 +73,7 @@ class DiscardingGameSpec
 
         val result = eventSourcedTestKit.runCommand(DiscardCribCards(playerId, discards, _))
         result.reply.isError should be(true)
-        result.events should be(empty)
+        result.hasNoEvents should be(true)
         result.stateOfType[Discarding].game.hands(playerId) should contain allElementsOf (discards)
         result.stateOfType[Discarding].game.crib should not contain allElementsOf(discards)
       }
@@ -84,7 +84,7 @@ class DiscardingGameSpec
 
         val result = eventSourcedTestKit.runCommand(DiscardCribCards(playerId, discards, _))
         result.reply.isError should be(true)
-        result.events should be(empty)
+        result.hasNoEvents should be(true)
         result.stateOfType[Discarding].game.hands(playerId) should contain allElementsOf (discards)
         result.stateOfType[Discarding].game.crib should not contain allElementsOf(discards)
       }

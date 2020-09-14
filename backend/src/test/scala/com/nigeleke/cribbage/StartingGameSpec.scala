@@ -72,7 +72,7 @@ class StartingGameSpec
 
       val result1 = eventSourcedTestKit.runCommand(Join(player3Id, _))
       result1.reply.isError should be(true)
-      result1.events should be(empty)
+      result1.hasNoEvents should be(true)
       result1.state should be(results.last.state)
     }
 
@@ -80,7 +80,7 @@ class StartingGameSpec
       val result0 = eventSourcedTestKit.runCommand(Join(player1Id, _))
       val result1 = eventSourcedTestKit.runCommand(Join(player1Id, _))
       result1.reply.isError should be(true)
-      result1.events should be(empty)
+      result1.hasNoEvents should be(true)
       result1.state should be(result0.state)
     }
 

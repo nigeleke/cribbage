@@ -77,7 +77,7 @@ class PlayingGameSpec
         val command = LayCard(dealer, cardId, _)
         val result = eventSourcedTestKit.runCommand(command)
         result.reply.isError should be(true)
-        result.events should be(Seq.empty)
+        result.hasNoEvents should be(true)
         result.state should be(Playing(game))
       }
 
@@ -96,7 +96,7 @@ class PlayingGameSpec
 
         val result1 = eventSourcedTestKit.runCommand(LayCard(player1Id, cardIdOf(Five, Hearts), _))
         result1.reply.isError should be(true)
-        result1.events should be(Seq.empty)
+        result1.hasNoEvents should be(true)
         result1.state should be(result0.state)
       }
     }
@@ -126,7 +126,7 @@ class PlayingGameSpec
       "they have at least one valid cardId for the CurrentPlay" in playingGame { game =>
         val result = eventSourcedTestKit.runCommand(Pass(player2Id, _))
         result.reply.isError should be(true)
-        result.events should be(empty)
+        result.hasNoEvents should be(true)
         result.state should be(Playing(game))
       }
     }

@@ -69,7 +69,7 @@ class FinishedGameSpec
       val command = Join(player1Id, _)
       val result1 = eventSourcedTestKit.runCommand(command)
       result1.reply.isSuccess should be(false)
-      result1.events should be(Seq.empty)
+      result1.hasNoEvents should be(true)
       result1.state should be(result0.state)
     }
 

@@ -20,15 +20,16 @@ package com.nigeleke.cribbage.entity
 import java.util.UUID
 
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ ActorRef, Behavior }
+import akka.actor.typed.{ActorRef, Behavior}
+import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior, ReplyEffect }
+import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect}
 import com.nigeleke.cribbage.entity.handlers._
 import com.nigeleke.cribbage.json.CborSerializable
 import com.nigeleke.cribbage.model._
-import com.nigeleke.cribbage.model.{ Card, Deck, Game, Hands, Points }
-import com.nigeleke.cribbage.model.Card.{ Id => CardId }
-import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
+import com.nigeleke.cribbage.model.{Card, Deck, Game, Hands, Points}
+import com.nigeleke.cribbage.model.Card.{Id => CardId}
+import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
 import org.slf4j.Logger
 
 // SRR: Apply actions to the GameEntity...
@@ -36,16 +37,12 @@ object GameEntity {
 
   type Id = UUID
 
-  sealed trait Command extends CborSerializable { val replyTo: ActorRef[Reply] }
-  final case class CreateGame(replyTo: ActorRef[Reply]) extends Command
-  final case class Join(playerId: PlayerId, replyTo: ActorRef[Reply]) extends Command
-  final case class DiscardCribCards(playerId: PlayerId, cardIds: CardIds, replyTo: ActorRef[Reply]) extends Command
-  final case class LayCard(playerId: PlayerId, cardId: CardId, replyTo: ActorRef[Reply]) extends Command
-  final case class Pass(playerId: PlayerId, replyTo: ActorRef[Reply]) extends Command
-
-  sealed trait Reply extends CborSerializable
-  final case class Accepted(command: Command) extends Reply
-  final case class Rejected(command: Command, reason: String) extends Reply
+  sealed trait Command extends CborSerializable { val replyTo: ActorRef[StatusReply[_]] }
+  final case class CreateGame(replyTo: ActorRef[StatusReply[_]]) extends Command
+  final case class Join(playerId: PlayerId, replyTo: ActorRef[StatusReply[_]]) extends Command
+  final case class DiscardCribCards(playerId: PlayerId, cardIds: CardIds, replyTo: ActorRef[StatusReply[_]]) extends Command
+  final case class LayCard(playerId: PlayerId, cardId: CardId, replyTo: ActorRef[StatusReply[_]]) extends Command
+  final case class Pass(playerId: PlayerId, replyTo: ActorRef[StatusReply[_]]) extends Command
 
   sealed trait Event extends CborSerializable
   final case class GameCreated(id: Id) extends Event
@@ -173,7 +170,7 @@ object GameEntity {
     }
 
   private def unexpectedCommand(command: Command): ReplyEffect[Event, State] =
-    Effect.none.thenReply(command.replyTo)(state => Rejected(command, s"Invalid command $command for state $state"))
+    Effect.none.thenReply(command.replyTo)(state => StatusReply.Error(s"Invalid command $command in current state"))
 
   private def unexpectedEvent(event: Event)(implicit log: Logger) = {
     val message = s"Unexpected event $event"

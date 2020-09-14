@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
+import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKit}
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.entity.GameEntity
@@ -20,8 +20,6 @@ class StartingGameSpec
 
   implicit val log = system.log
 
-  val probe = createTestProbe[Reply]()
-
   val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[Command, Event, State](
       system,
@@ -34,7 +32,7 @@ class StartingGameSpec
   }
 
   def startingGame(f: Game => Unit) = {
-    val commands = Seq(CreateGame(probe.ref))
+    val commands = Seq(CreateGame(_))
     val result = commands.map(eventSourcedTestKit.runCommand(_)).last
     result.state should be(a[Starting])
     f(result.stateOfType[Starting].game)
@@ -43,17 +41,17 @@ class StartingGameSpec
   "A Starting Game" should {
 
     "allow a new player to join" in startingGame { _ =>
-      val result = eventSourcedTestKit.runCommand(Join(player1Id, probe.ref))
-      result.command should be(Join(player1Id, probe.ref))
+      val result = eventSourcedTestKit.runCommand(Join(player1Id, _))
+      result.reply.isSuccess should be(true)
       result.events should contain theSameElementsInOrderAs (Seq(PlayerJoined(player1Id)))
       result.state should be(a[Starting])
       result.stateOfType[Starting].game.players should contain(player1Id)
     }
 
     "allow two new players to join" in startingGame { _ =>
-      eventSourcedTestKit.runCommand(Join(player1Id, probe.ref))
-      val result = eventSourcedTestKit.runCommand(Join(player2Id, probe.ref))
-      result.command should be(Join(player2Id, probe.ref))
+      eventSourcedTestKit.runCommand(Join(player1Id, _))
+      val result = eventSourcedTestKit.runCommand(Join(player2Id, _))
+      result.reply.isSuccess should be(true)
       result.events.size should be >= (5)
       result.events should contain(PlayerJoined(player2Id))
       result.events.count(_.isInstanceOf[DealerCutRevealed]) should be >= (2)
@@ -69,28 +67,27 @@ class StartingGameSpec
     "not allow three players to join" in startingGame { _ =>
       val player3Id = randomId
 
-      eventSourcedTestKit.runCommand(Join(player1Id, probe.ref))
-      val result0 = eventSourcedTestKit.runCommand(Join(player2Id, probe.ref))
-      result0.state should be(a[Discarding])
+      val results = Seq(player1Id, player2Id).map(id => Join(id, _)).map(eventSourcedTestKit.runCommand(_))
+      results.last.state should be(a[Discarding])
 
-      val result1 = eventSourcedTestKit.runCommand(Join(player3Id, probe.ref))
-      result1.command should be(Join(player3Id, probe.ref))
+      val result1 = eventSourcedTestKit.runCommand(Join(player3Id, _))
+      result1.reply.isError should be(true)
       result1.events should be(empty)
-      result1.state should be(result0.state)
+      result1.state should be(results.last.state)
     }
 
     "not allow the same player to join twice" in startingGame { _ =>
-      val result0 = eventSourcedTestKit.runCommand(Join(player1Id, probe.ref))
-      val result1 = eventSourcedTestKit.runCommand(Join(player1Id, probe.ref))
-      result1.command should be(Join(player1Id, probe.ref))
+      val result0 = eventSourcedTestKit.runCommand(Join(player1Id, _))
+      val result1 = eventSourcedTestKit.runCommand(Join(player1Id, _))
+      result1.reply.isError should be(true)
       result1.events should be(empty)
       result1.state should be(result0.state)
     }
 
     "deal hands" when {
       "two players have joined" in startingGame { _ =>
-        eventSourcedTestKit.runCommand(Join(player1Id, probe.ref))
-        val result = eventSourcedTestKit.runCommand(Join(player2Id, probe.ref))
+        eventSourcedTestKit.runCommand(Join(player1Id, _))
+        val result = eventSourcedTestKit.runCommand(Join(player2Id, _))
         result.events.count(_.isInstanceOf[HandsDealt]) should be(1)
 
         val game = result.stateOfType[Discarding].game
@@ -100,8 +97,8 @@ class StartingGameSpec
 
     "remove cards from deck" when {
       "players cards have in dealt" in startingGame { _ =>
-        eventSourcedTestKit.runCommand(Join(player1Id, probe.ref))
-        val result = eventSourcedTestKit.runCommand(Join(player2Id, probe.ref))
+        eventSourcedTestKit.runCommand(Join(player1Id, _))
+        val result = eventSourcedTestKit.runCommand(Join(player2Id, _))
 
         val game = result.stateOfType[Discarding].game
         game.players.foreach { id =>

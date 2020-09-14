@@ -1,4 +1,4 @@
-package com.nigeleke.cribbage.api.v1
+package com.nigeleke.cribbage.services
 
 import akka.NotUsed
 import akka.actor.typed.ActorSystem

@@ -7,7 +7,7 @@ import com.nigeleke.cribbage.TestModel._
 import com.nigeleke.cribbage.entity.GameEntity
 import com.nigeleke.cribbage.entity.GameEntity._
 import com.nigeleke.cribbage.model.Face._
-import com.nigeleke.cribbage.model.{ Game, Score }
+import com.nigeleke.cribbage.model.{Game, Score}
 import com.nigeleke.cribbage.model.Suit._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -22,8 +22,6 @@ class CutAtStartOfPlayRuleSpec
   with Matchers {
 
   implicit val log = system.log
-
-  private val probe = createTestProbe[Reply]()
 
   private val hand1 = cardIdsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
   private val hand2 = cardIdsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
@@ -48,8 +46,8 @@ class CutAtStartOfPlayRuleSpec
   @tailrec
   private def playingGame(withJackCut: Boolean)(f: Game => Unit): Unit = {
     val commands = Seq(
-      DiscardCribCards(player1Id, cardIdsOf(Seq((Ten, Hearts), (Ten, Clubs))), probe.ref),
-      DiscardCribCards(player2Id, cardIdsOf(Seq((King, Hearts), (King, Clubs))), probe.ref))
+      DiscardCribCards(player1Id, cardIdsOf(Seq((Ten, Hearts), (Ten, Clubs))), _),
+      DiscardCribCards(player2Id, cardIdsOf(Seq((King, Hearts), (King, Clubs))), _))
     val result = commands.map(eventSourcedTestKit.runCommand(_)).last
     val game = result.stateOfType[Playing].game
 

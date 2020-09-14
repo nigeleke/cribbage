@@ -1,16 +1,15 @@
-package com.nigeleke.cribbage
+package com.nigeleke.cribbage.app
 
 import java.util.UUID
 
 import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.adapter._
 import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
+import com.nigeleke.cribbage.GameServiceRoutes
 import com.nigeleke.cribbage.entity.GameEntity
 
-import scala.util.Failure
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 object CribbageApp {
 
@@ -26,14 +25,14 @@ object CribbageApp {
       system.terminate()
     }
 
-    implicit val classicSystem: akka.actor.ActorSystem = system.toClassic
+//    implicit val classicSystem: akka.actor.ActorSystem = system
     import system.executionContext
 
-    val fBinding = Http().newServerAt("localhost", 8080).bindFlow(routes)
-    fBinding.onComplete {
-      case Success(binding) => logStarted(binding)
-      case Failure(ex) => logNotStarted(ex)
-    }
+//    val fBinding = Http().newServerAt("localhost", 8080).bindFlow(routes)
+//    fBinding.onComplete {
+//      case Success(binding) => logStarted(binding)
+//      case Failure(ex) => logNotStarted(ex)
+//    }
   }
 
   def main(args: Array[String]): Unit = {
@@ -41,10 +40,10 @@ object CribbageApp {
       implicit val log = context.log
 
       val gameId = UUID.randomUUID()
-      val gameSupervisor = context.spawn(GameEntity(UUID.randomUUID()), "game")
+      val gameSupervisor = context.spawn(GameEntity(gameId), "game")
       context.watch(gameSupervisor)
 
-      val routes = new GameSupervisorRoutes(gameSupervisor)(context.system)
+      val routes = new GameServiceRoutes(gameSupervisor)(context.system)
       startHttpServer(routes.routes, context.system)
 
       Behaviors.empty

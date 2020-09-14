@@ -1,13 +1,13 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
+import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKit}
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.TestModel._
 import com.nigeleke.cribbage.entity.GameEntity
 import com.nigeleke.cribbage.entity.GameEntity._
 import com.nigeleke.cribbage.model.Face._
-import com.nigeleke.cribbage.model.{ Game, Lay, Play, Points }
+import com.nigeleke.cribbage.model.{Game, Lay, Play, Points}
 import com.nigeleke.cribbage.model.Suit._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -21,8 +21,6 @@ class FinishedGameSpec
   with Matchers {
 
   implicit val log = system.log
-
-  private val probe = createTestProbe[Reply]()
 
   private val hand1 = cardIdsOf(Seq((Ten, Hearts), (Ten, Clubs), (Ten, Diamonds), (Ten, Spades), (Five, Hearts), (Four, Clubs)))
   private val hand2 = cardIdsOf(Seq((King, Hearts), (King, Clubs), (King, Diamonds), (King, Spades), (Eight, Diamonds), (Seven, Spades)))
@@ -64,21 +62,21 @@ class FinishedGameSpec
 
   "A FinishedGame" should {
 
-    "ignore any further commands" in {
-      val result0 = eventSourcedTestKit.runCommand(LayCard(player2Id, initialAttributes1.hands(player2Id).last, probe.ref))
+    "reject any further commands" in {
+      val result0 = eventSourcedTestKit.runCommand(LayCard(player2Id, initialAttributes1.hands(player2Id).last, _))
       result0.state should be(a[Finished])
 
-      val command = Join(player1Id, probe.ref)
+      val command = Join(player1Id, _)
       val result1 = eventSourcedTestKit.runCommand(command)
-      result1.command should be(command)
+      result1.reply.isSuccess should be(false)
       result1.events should be(Seq.empty)
       result1.state should be(result0.state)
     }
 
     "ignore any further events" in {
-      val command = LayCard(player2Id, initialAttributes1.hands(player2Id).last, probe.ref)
+      val command = LayCard(player2Id, initialAttributes1.hands(player2Id).last, _)
       val result = eventSourcedTestKit.runCommand(command)
-      result.command should be(command)
+      result.reply.isSuccess should be(true)
       result.events should be(Seq(
         CardLaid(player2Id, initialAttributes1.hands(player2Id).last),
         PointsScored(player2Id, 1),

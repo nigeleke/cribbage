@@ -17,21 +17,22 @@
 
 package com.nigeleke.cribbage.entity.handlers
 
-import akka.persistence.typed.scaladsl.{ Effect, EffectBuilder, ReplyEffect }
+import akka.pattern.StatusReply
+import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, ReplyEffect}
 import com.nigeleke.cribbage.entity.GameEntity._
 import com.nigeleke.cribbage.model._
-import com.nigeleke.cribbage.model.Card.{ Id => CardId }
+import com.nigeleke.cribbage.model.Card.{Id => CardId}
 import com.nigeleke.cribbage.model.Deck._
 import com.nigeleke.cribbage.model.Face
-import com.nigeleke.cribbage.model.Player.{ Id => PlayerId }
+import com.nigeleke.cribbage.model.Player.{Id => PlayerId}
 
 import scala.language.implicitConversions
 
 trait CommandHandler {
 
   def handle(command: Command): ReplyEffect[Event, State] =
-    if (canDo) acceptedEffect.thenReply(command.replyTo)(_ => Accepted(command))
-    else Effect.reply(command.replyTo)(Rejected(command, rejectionReasons))
+    if (canDo) acceptedEffect.thenReply(command.replyTo)(_ => StatusReply.Success(command))
+    else Effect.reply(command.replyTo)(StatusReply.Error(s"Rejected $command: rejectionReasons"))
 
   def canDo: Boolean
   def rejectionReasons: String

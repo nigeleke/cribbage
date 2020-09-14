@@ -8,7 +8,7 @@ import akka.actor.typed.ActorSystem
 import akka.util.Timeout
 import com.nigeleke.cribbage.entity.GameEntity._
 
-class GameSupervisorRoutes(gameSupervisor: ActorRef[Command])(implicit val system: ActorSystem[_])
+class GameServiceRoutes(gameSupervisor: ActorRef[Command])(implicit val system: ActorSystem[_])
   extends JsonFormats {
 
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._

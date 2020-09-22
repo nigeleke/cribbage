@@ -17,16 +17,20 @@
 
 package com.nigeleke.cribbage.entity.handlers
 
+import akka.pattern.StatusReply
+import akka.pattern.StatusReply.Success
 import akka.persistence.typed.scaladsl.{ Effect, EffectBuilder }
+import com.nigeleke.cribbage.entity.GameEntity
 import com.nigeleke.cribbage.entity.GameEntity._
-import com.nigeleke.cribbage.entity.GameEntity.{ Id => GameId }
 
-case class CreateCommandHandler(id: GameId) extends CommandHandler {
+case class CreateCommandHandler(id: GameEntity.Id) extends CommandHandler {
 
   override def canDo: Boolean = true
 
   override def rejectionReasons: String = ???
 
   override def acceptedEffect: EffectBuilder[Event, State] = Effect.persist(GameCreated(id))
+
+  override def acceptedReply: StatusReply[_] = Success(GameCreated(id))
 
 }

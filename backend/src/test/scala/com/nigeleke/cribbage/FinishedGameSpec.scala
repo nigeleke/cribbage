@@ -1,13 +1,13 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKit}
+import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.TestModel._
 import com.nigeleke.cribbage.entity.GameEntity
 import com.nigeleke.cribbage.entity.GameEntity._
 import com.nigeleke.cribbage.model.Face._
-import com.nigeleke.cribbage.model.{Game, Lay, Play, Points}
+import com.nigeleke.cribbage.model.{ Game, Lay, Play, Points }
 import com.nigeleke.cribbage.model.Suit._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers

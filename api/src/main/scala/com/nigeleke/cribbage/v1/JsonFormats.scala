@@ -1,4 +1,4 @@
-package com.nigeleke.cribbage
+package com.nigeleke.cribbage.v1
 
 import java.util.UUID
 

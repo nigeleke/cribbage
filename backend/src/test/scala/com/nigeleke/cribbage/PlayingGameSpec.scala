@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKit}
+import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.entity.GameEntity
@@ -8,7 +8,7 @@ import com.nigeleke.cribbage.entity.GameEntity._
 import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
-import com.nigeleke.cribbage.model.{Game, Lay}
+import com.nigeleke.cribbage.model.{ Game, Lay }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -175,21 +175,19 @@ class PlayingGameSpec
         eventSourcedTestKit.runCommand(Pass(player1Id, _))
         val result = eventSourcedTestKit.runCommand(Pass(player2Id, _))
         result.reply.isSuccess should be(true)
-        result.events should contain theSameElementsInOrderAs(Seq(
+        result.events should contain theSameElementsInOrderAs (Seq(
           Passed(player2Id),
           PointsScored(player2Id, 1),
-          PlayCompleted
-        ))
+          PlayCompleted))
 
         val updatedGame = result.stateOfType[Playing].game
         updatedGame.play.passCount should be(0)
         updatedGame.play.optNextToLay should be(Some(player1Id))
         updatedGame.play.current should be(empty)
-        updatedGame.play.previous.head should contain theSameElementsInOrderAs(Seq(
+        updatedGame.play.previous.head should contain theSameElementsInOrderAs (Seq(
           Lay(player2Id, cardIdOf(King, Diamonds)),
           Lay(player1Id, cardIdOf(Ten, Diamonds)),
-          Lay(player2Id, cardIdOf(King, Spades))
-        ))
+          Lay(player2Id, cardIdOf(King, Spades))))
       }
 
       "current Play finished on 31" in playingGame { game =>
@@ -198,22 +196,20 @@ class PlayingGameSpec
         eventSourcedTestKit.runCommand(LayCard(player2Id, cardIdOf(Seven, Spades), _))
         val result = eventSourcedTestKit.runCommand(LayCard(player1Id, cardIdOf(Four, Clubs), _))
         result.reply.isSuccess should be(true)
-        result.events should contain theSameElementsInOrderAs(Seq(
+        result.events should contain theSameElementsInOrderAs (Seq(
           CardLaid(player1Id, cardIdOf(Four, Clubs)),
           PointsScored(player1Id, 2),
-          PlayCompleted
-        ))
+          PlayCompleted))
 
         val updatedGame = result.stateOfType[Playing].game
         updatedGame.play.passCount should be(0)
         updatedGame.play.optNextToLay should be(Some(player2Id))
         updatedGame.play.current should be(empty)
-        updatedGame.play.previous.head should contain theSameElementsInOrderAs(Seq(
+        updatedGame.play.previous.head should contain theSameElementsInOrderAs (Seq(
           Lay(player2Id, cardIdOf(King, Diamonds)),
           Lay(player1Id, cardIdOf(Ten, Diamonds)),
           Lay(player2Id, cardIdOf(Seven, Spades)),
-          Lay(player1Id, cardIdOf(Four, Clubs))
-        ))
+          Lay(player1Id, cardIdOf(Four, Clubs))))
       }
     }
 

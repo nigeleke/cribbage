@@ -7,7 +7,7 @@ import com.nigeleke.cribbage.TestModel._
 import com.nigeleke.cribbage.entity.GameEntity
 import com.nigeleke.cribbage.entity.GameEntity._
 import com.nigeleke.cribbage.model.Face._
-import com.nigeleke.cribbage.model.{Game, Score}
+import com.nigeleke.cribbage.model.{ Game, Score }
 import com.nigeleke.cribbage.model.Suit._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers

@@ -1,32 +1,40 @@
 package com.nigeleke.cribbage.services
 
+import java.util.UUID
+
 import akka.actor.typed.ActorSystem
-//import akka.cluster.typed._
+import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, Entity, EntityRef }
+import akka.persistence.typed.PersistenceId
 import akka.util.Timeout
+import com.nigeleke.cribbage.entity.GameEntity
+import com.nigeleke.cribbage.entity.GameEntity._
+
+import scala.concurrent.Future
+import scala.concurrent.duration._
 
 class GameService(system: ActorSystem[_]) {
 
-  //  private implicit val log = system.log
-  //
-//  val TypeKey = Entity
+  implicit private val log = system.log
 
-//  sharding.init(Entity(typeKey = TypeKey) { entityContext =>
-//    GameEntity(PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId))
-//  })
+  private val sharding = ClusterSharding(system)
 
-  private implicit val askTimeout: Timeout = ??? //Timeout(5.seconds)
+  sharding.init(Entity(typeKey = GameEntity.TypeKey)(createBehavior = { entityContext =>
+    GameEntity(entityContext.entityId, PersistenceId.ofUniqueId(entityContext.entityId))
+  }))
 
-//  def createGame(): Future[Reply] = {
-//    val id = UUID.randomUUID()
-//    val entityRef = sharding.entityRefFor(TypeKey, id)
-//    entityRef ? CreateGame
-//  }
-  //
-  //  def join(gameId: GameEntityId, playerId: PlayerId): Future[Reply] = {
-  //    val entityRef = sharding.entityRefFor(TypeKey, gameId)
-  //    entityRef ? (Join(playerId, _))
-  //  }
-  //
+  private implicit val askTimeout = Timeout(5.seconds)
+
+  def createGame(): Future[GameCreated] = {
+    val id = UUID.randomUUID()
+    entityRefFor(id).askWithStatus(CreateGame(_)).mapTo[GameCreated]
+  }
+
+  private def entityRefFor(id: UUID): EntityRef[Command] = sharding.entityRefFor[Command](GameEntity.TypeKey, id.toString)
+
+  def join(gameId: UUID, playerId: UUID): Future[_] = {
+    entityRefFor(gameId).askWithStatus(Join(playerId, _))
+  }
+
   //  def discard(gameId: GameEntityId, playerId: PlayerId, cards: CardIds) = {
   //    val entityRef = sharding.entityRefFor(TypeKey, gameId)
   //    entityRef ? (DiscardCribCards(playerId, cards, _))

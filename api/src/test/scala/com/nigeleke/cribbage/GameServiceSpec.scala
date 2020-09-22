@@ -1,35 +1,70 @@
-package com.example
+package com.nigeleke.cribbage
 
-//#user-routes-spec
-//#test-top
+import java.util.UUID
+
+import akka.Done
 import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.stream.scaladsl.Sink
+import com.nigeleke.cribbage.entity.GameEntity.GameCreated
+import com.nigeleke.cribbage.services.{ GameJournal, GameService }
+import com.typesafe.config.ConfigFactory
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.wordspec.AsyncWordSpecLike
 
-class RoutesSpec extends ScalaTestWithActorTestKit() /*with ScalatestRouteTest*/ with AnyWordSpecLike with Matchers {
+class GameServiceSpec
+  extends ScalaTestWithActorTestKit(ConfigFactory.parseString(
+    """akka {
+      |  cluster {
+      |    seed-nodes = ["akka://GameServiceSpec@127.0.0.1:2551"]
+      |  }
+      |}
+      |""".stripMargin).withFallback(ConfigFactory.load()))
+  with AsyncWordSpecLike
+  with Matchers {
 
-  //  lazy val testKit = ActorTestKit()
-  //  implicit def typedSystem = testKit.system
-  //  override def createActorSystem(): akka.actor.ActorSystem = testKit.system.toClassic
-  //
-  //  val userRegistry = testKit.spawn(UserRegistry())
-//  lazy val routes = new GameSupervisorRoutes(userRegistry).routes
-  //
-  //  // use the json formats to marshal and unmarshall objects in the test
-  //  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-  //  import JsonFormats._
-  //  //#set-up
+  implicit val config = testKit.config
 
   "A GameService" should {
 
-    "allow a game to be created" ignore {
-//      val request = HttpRequest(uri = "game").withMethod(HttpMethods.POST)
-//      request ~> routes ~> check {
-//        status should be(StatusCodes.OK)
-//      }
+    "allow a game to be created" in {
+      val service = new GameService(system)
+      for {
+        created <- service.createGame()
+      } yield (created should be(GameCreated(created.id)))
+    }
 
+    "allow a player to join a game" in {
+      val service = new GameService(system)
+      val playerId = UUID.randomUUID()
+      val fCreated = service.createGame()
+      for {
+        created <- fCreated
+        joined <- service.join(created.id, playerId)
+      } yield (joined should be(Done))
+    }
+
+    "provide current games" in {
+      val service = new GameService(system)
+      val journal = new GameJournal(system)
+      val fCreated = service.createGame()
+      for {
+        created <- fCreated
+        fGames = journal.currentGames
+        gameIds <- fGames.runWith(Sink.seq)
+      } yield (gameIds should contain(created.id))
+    }
+
+    "allow a player to view the cards in their hand" ignore {
+      val service = new GameService(system)
+      val player1Id = UUID.randomUUID()
+      val player2Id = UUID.randomUUID()
+      for {
+        created <- service.createGame().mapTo[GameCreated]
+        gameId = created.id
+        _ <- service.join(gameId, player1Id)
+        _ <- service.join(gameId, player2Id)
+        // hand <- journal.hand(gameId, player1Id).mapTo[Hand]
+      } yield ??? //(hand.size should be(6))
     }
 
     //    "return no users if no present (GET /users)" in {

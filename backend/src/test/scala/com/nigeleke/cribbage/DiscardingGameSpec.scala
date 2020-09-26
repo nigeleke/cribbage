@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
+import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.TestModel._
@@ -15,7 +15,6 @@ class DiscardingGameSpec
   extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config)
   with AnyWordSpecLike
   with BeforeAndAfterEach
-  with LogCapturing
   with Matchers {
 
   implicit val implicitTestKit = testKit

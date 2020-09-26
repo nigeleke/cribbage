@@ -70,6 +70,6 @@ lazy val api = (project in file("api"))
       "com.typesafe.akka" %% "akka-persistence-testkit" % akkaVersion % "test",
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
     ),
-    parallelExecution in Test := false,
+    parallelExecution in Test := false
   )
   .dependsOn(backend)

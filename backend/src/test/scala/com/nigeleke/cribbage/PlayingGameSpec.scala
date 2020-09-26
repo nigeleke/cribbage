@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage
 
-import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
+import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings
 import com.nigeleke.cribbage.entity.GameEntity
@@ -9,15 +9,15 @@ import com.nigeleke.cribbage.model.Face._
 import com.nigeleke.cribbage.model.Suit._
 import com.nigeleke.cribbage.TestModel._
 import com.nigeleke.cribbage.model.{ Game, Lay }
+import com.typesafe.config.ConfigFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class PlayingGameSpec
-  extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config)
+  extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config.withFallback(ConfigFactory.load()))
   with AnyWordSpecLike
   with BeforeAndAfterEach
-  with LogCapturing
   with Matchers {
 
   implicit val log = system.log

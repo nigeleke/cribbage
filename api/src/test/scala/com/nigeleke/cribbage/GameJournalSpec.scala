@@ -7,11 +7,11 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpecLike
 
-class GameQuerySpec
+class GameJournalSpec
   extends ScalaTestWithActorTestKit(ConfigFactory.parseString(
     """akka {
       |  cluster {
-      |    seed-nodes = ["akka://GameQuerySpec@127.0.0.1:2551"]
+      |    seed-nodes = ["akka://GameJournalSpec@127.0.0.1:2551"]
       |  }
       |}
       |""".stripMargin).withFallback(ConfigFactory.load()))

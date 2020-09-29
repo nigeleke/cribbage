@@ -1,5 +1,5 @@
 ThisBuild / organization := "com.nigeleke"
-ThisBuild / scalaVersion := "2.13.2"
+ThisBuild / scalaVersion := "2.13.3"
 ThisBuild / version      := "0.1-SNAPSHOT"
 
 // License
@@ -12,12 +12,13 @@ val akkaHttpVersion = "10.2.0"
 val akkaJdbcVersion = "4.0.0"
 val h2DatabaseVersion = "1.4.200"
 val logbackClassicVersion = "1.2.3"
+val postgresDriverVersion = "42.2.16"
 val scalaTestVersion = "3.1.2"
 val slickVersion = "3.3.2"
 
 lazy val root = (project in file("."))
   .settings(
-    name := "cribbage"
+    name := "cribbage",
   )
   .aggregate(backend, model, api)
 
@@ -25,6 +26,13 @@ lazy val commonSettings = Seq(
   scalacOptions in Compile ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlog-reflective-calls", "-Xlint"),
   scalacOptions in Test ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlog-reflective-calls", "-Xlint"),
   javacOptions in Compile ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
+)
+
+lazy val dockerSettings = Seq(
+  maintainer in Docker := "Nigel Eke <https://nigel-eke.com>",
+  packageName in Docker := "nigeleke/cribbage-api",
+  dockerBaseImage := "openjdk:16-jdk-alpine",
+  dockerExposedPorts := Seq(8080)
 )
 
 lazy val backend = (project in file("backend"))
@@ -53,8 +61,10 @@ lazy val model = (project in file("model"))
   )
 
 lazy val api = (project in file("api"))
+  .enablePlugins(JavaAppPackaging, AshScriptPlugin, DockerPlugin)
   .settings(
     commonSettings,
+    dockerSettings,
     libraryDependencies ++= Seq(
       "com.lightbend.akka" %% "akka-persistence-jdbc" % akkaJdbcVersion,
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
@@ -64,12 +74,14 @@ lazy val api = (project in file("api"))
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "com.typesafe.slick" %% "slick" % slickVersion,
       "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
+      "org.postgresql" % "postgresql" % postgresDriverVersion,
       "com.h2database" % "h2" % h2DatabaseVersion % "test",
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % "test",
       "com.typesafe.akka" %% "akka-http-testkit"        % akkaHttpVersion % "test",
       "com.typesafe.akka" %% "akka-persistence-testkit" % akkaVersion % "test",
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
     ),
+//    mainClass := Some("com.nigeleke.cribbage.app.CribbageServer"),
     parallelExecution in Test := false
   )
   .dependsOn(backend)

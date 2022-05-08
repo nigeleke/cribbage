@@ -1,15 +1,8 @@
-# Cribbage
+## sbt project compiled with Scala 3
 
-[Cribbage](https://en.wikipedia.org/wiki/Cribbage) is a popular cardId game, predominately played by two players.
+### Usage
 
-This project has been developed as a learning exercise, using Cribbage as the example domain, for:
+This is a normal sbt project. You can compile code with `sbt compile`, run it with `sbt run`, and `sbt console` will start a Scala 3 REPL.
 
-  - [Akka](https://akka.io/) and its related libraries
-  - [CQRS](https://martinfowler.com/bliki/CQRS.html) - Command Query Responsibility Segregation
-  - [Domain Driven Design](https://martinfowler.com/tags/domain%20driven%20design.html) 
-  - [Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html), and
-  - [Event Storming](https://www.eventstorming.com/)
-
-Credits:
-
-  - Card images [American Contract Bridge League](https://www.acbl.org/)
+For more information on the sbt-dotty plugin, see the
+[scala3-example-project](https://github.com/scala/scala3-example-project/blob/main/README.md).

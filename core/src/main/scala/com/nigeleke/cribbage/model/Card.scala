@@ -6,7 +6,8 @@ type CardId = Card.Id
 type Face = Card.Face
 type Suit = Card.Suit
 
-final case class Card(id: CardId, face: Face, suit: Suit):
+case class Card(id: CardId, face: Face, suit: Suit):
+  import Card.Ansi
   override val toString = s"${suit.ansiColor}${face.smallFace}${suit.smallSuit}${Ansi.reset}"
 
 extension (card: Card)
@@ -14,7 +15,7 @@ extension (card: Card)
   def value = card.face.value
 
 object Card:
-  opaque type Id = UUID
+  type Id = UUID
 
   def apply(face: Face, suit: Suit): Card = Card(UUID.randomUUID(), face, suit)
 
@@ -39,12 +40,12 @@ object Card:
     case Hearts extends Suit(Ansi.heart, Ansi.red)
     case Spades extends Suit(Ansi.spade, Ansi.black)
 
-private object Ansi:
-  private val escape = "\u001b"
-  val red = escape + "[31m"
-  val black = escape + "[30m"
-  val reset = escape + "[0m"
-  val club = "\u2663"
-  val diamond = "\u2666"
-  val heart = "\u2665"
-  val spade = "\u2660"
+  object Ansi:
+    private val escape = "\u001b"
+    val red = escape + "[31m"
+    val black = escape + "[30m"
+    val reset = escape + "[0m"
+    val club = "\u2663"
+    val diamond = "\u2666"
+    val heart = "\u2665"
+    val spade = "\u2660"

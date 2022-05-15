@@ -14,7 +14,7 @@ object Scorer:
 
   def forPlay(play: Seq[Play]): PlayPoints =
     val currentCards: Seq[Card] =
-      play.collect { case Plays.Play.Laid(_, card) => card }
+      play.collect { case Plays.Laid(_, card) => card }
 
     val pairsPoints =
       val reversed = currentCards.reverse

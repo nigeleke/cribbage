@@ -9,9 +9,9 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class DeckSpec extends AnyWordSpec with Matchers {
 
-  "A Full Deck" should {
+  val fullDeck = Deck.shuffledDeck
 
-    val fullDeck = Deck.shuffledDeck
+  "A Full Deck" should {
 
     "contain 52 Cards" in {
       fullDeck.size should be(52)
@@ -23,9 +23,18 @@ class DeckSpec extends AnyWordSpec with Matchers {
         suit <- Suit.values
       } yield (face, suit)).toSeq
 
-      fullDeck.toCardSeq.map(card => (card.face, card.suit)) should contain theSameElementsAs (allCards)
+      fullDeck.map(card => (card.face, card.suit)) should contain theSameElementsAs (allCards)
     }
 
+  }
+
+  "A Deck" should {
+    "allow a random card to be selected" in {
+      val (remaining, cut) = fullDeck.cut
+      fullDeck should contain(cut)
+      remaining should not contain (cut)
+      remaining.size should be(fullDeck.size - 1)
+    }
   }
 
 }

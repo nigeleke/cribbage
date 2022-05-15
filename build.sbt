@@ -5,7 +5,10 @@ val scalatestVersion = "3.2.11"
 
 lazy val root = project
   .in(file("."))
-  .settings(name := "cribbage", version := "0.1.0-SNAPSHOT")
+  .settings(
+    name := "cribbage",
+    version := "0.1.0-SNAPSHOT"
+  )
   .aggregate(core)
 
 lazy val core = project
@@ -13,7 +16,6 @@ lazy val core = project
   .settings(
     name := "cribbage-core",
     scalaVersion := scala3Version,
-    scalafixDependencies in ThisBuild += "org.scalalint" %% "rules" % "0.1.4",
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % catsVersion,
       "org.scalactic" %% "scalactic" % scalatestVersion,

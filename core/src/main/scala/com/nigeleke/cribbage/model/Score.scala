@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage.model
 
-final case class Score(back: Int, front: Int)
+case class Score(back: Int, front: Int)
 
 extension (score: Score)
 

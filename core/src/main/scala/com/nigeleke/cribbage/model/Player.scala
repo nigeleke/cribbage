@@ -1,7 +1,5 @@
 package com.nigeleke.cribbage.model
 
-import Cards.*
-
 import java.util.UUID
 
 type PlayerId = Player.Id

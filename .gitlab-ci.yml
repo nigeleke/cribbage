@@ -11,17 +11,17 @@ before_script:
 
 test:
   script:
-    - sbt clean headerCreate coverage test coverageReport coverageAggregate
+    - sbt clean coverage test coverageReport coverageAggregate doc
   artifacts:
     paths:
-      - target/scala-2.13/scoverage-report/
+      - target/scala-3.2.0/scoverage-report/
 
 pages:
   stage: deploy
   dependencies:
     - test
   script:
-    - mv target/scala-2.13/scoverage-report/ public/
+    - mv target/scala-3.2.0/scoverage-report/ public/
   artifacts:
     paths:
       - public

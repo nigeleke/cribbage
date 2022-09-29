@@ -1,6 +1,4 @@
-package com.nigeleke.cribbage.model
-
-import Card.{Face, Suit}
+package com.nigeleke.cribbage.domain
 
 import java.util.UUID
 import scala.util.Random
@@ -8,10 +6,10 @@ import scala.util.Random
 type Hand = Seq[Card]
 
 object Hand:
-  def apply(cards: Seq[Card] = Seq.empty): Hand = cards
+  val undealt: Hand = Seq.empty
 
 extension (cards: Hand)
-  def isEmpty: Boolean = cards.isEmpty
   def remove(axed: Seq[Card]): (Seq[Card], Seq[Card]) =
     val (removed, remaining) = cards.partition(card => axed.contains(card))
     (removed, remaining)
+  def values: Seq[Int] = cards.map(_.face.value)

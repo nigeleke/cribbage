@@ -7,7 +7,7 @@ import akka.actor.typed.ActorSystem
 import akka.persistence.query.{ EventEnvelope, PersistenceQuery }
 import akka.persistence.query.scaladsl._
 import akka.stream.scaladsl.Source
-import com.nigeleke.cribbage.entity.GameEntity.{ Id => GameId }
+import com.nigeleke.cribbage.entity.GameEntity.{ Id => Game.Id }
 import com.typesafe.config.Config
 
 import scala.language.implicitConversions
@@ -20,15 +20,15 @@ class GameJournal(system: ActorSystem[_])(implicit config: Config) {
 
   private val queries = PersistenceQuery(system).readJournalFor[Journal](readJournal)
 
-  val currentGames: Source[GameId, NotUsed] = queries.currentPersistenceIds().map(UUID.fromString)
-  val games: Source[GameId, NotUsed] = queries.persistenceIds().map(UUID.fromString)
+  val currentGames: Source[Game.Id, NotUsed] = queries.currentPersistenceIds().map(UUID.fromString)
+  val games: Source[Game.Id, NotUsed] = queries.persistenceIds().map(UUID.fromString)
 
   private implicit def uuidToString(id: UUID): String = id.toString
 
-  def currentGameEvents(gameId: GameId): Source[EventEnvelope, NotUsed] =
+  def currentGameEvents(gameId: Game.Id): Source[EventEnvelope, NotUsed] =
     queries.currentEventsByPersistenceId(gameId, 0L, Long.MaxValue)
 
-  def gameEvents(gameId: GameId): Source[EventEnvelope, NotUsed] =
+  def gameEvents(gameId: Game.Id): Source[EventEnvelope, NotUsed] =
     queries.eventsByPersistenceId(gameId, 0L, Long.MaxValue)
 
 }

@@ -1,0 +1,89 @@
+openapi: "3.0.3"
+
+info:
+  title: Cribbage API
+  description: "Cribbage service"
+  version: "1.0"
+  license:
+    name: "CC Attribution-ShareAlike 4.0 (CC BY-SA 4.0)"
+    url: "https://creativecommons.org/licenses/by-sa/4.0/"
+
+servers:
+  - url: "{protocol}://{tenant}{environment}{domain}:{port}/cribbage/api/v1"
+    variables:
+      protocol:
+        enum:
+          - "http"
+          - "https"
+        default: "https"
+      tenant:
+        default: ""
+        description: "This value is assigned by the service provider"
+      environment:
+        enum:
+          - ""
+          - "staging."
+        default: ""
+        description: "This value is assigned by the service provider"
+      domain:
+        default: "localhost"
+        description: "This value is assigned by the service provider"
+      port:
+        enum:
+          - "80"
+          - "8080"
+          - "443"
+          - "8443"
+        default: "443"
+
+paths:
+  /game:
+    get:
+      summary: "Get current games"
+      description: "Return games requiring players or current user's games in progress"
+      operationId: GetCurrentGames
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameList"
+
+components:
+  schemas:
+    GameList:
+      type: array
+      items:
+        $ref: "#/components/schemas/GameListItem"
+
+    GameListItem:
+      type: object
+      required:
+        - id
+        - dateCreated
+        - title
+        - state
+      properties:
+        id:
+          $ref: "#/components/schemas/GameId"
+        dateCreated:
+          type: string
+          format: date
+        title:
+          type: string
+        state:
+          $ref: "#/components/schemas/GameState"
+
+    GameId:
+      type: string
+      format: uuid
+
+    GameState:
+      type: integer
+      enum: [0, 1, 2]
+      x-enumNames: ["Starting", "InProgress", "Finished"]
+      x-enumDescriptions: [
+        "Any game waiting for another player. Can be the player's game or that of another player",
+        "Game currently in progress. A player will only see games that they are playing in",
+        "Completed game. A player will see games that they have played in"]

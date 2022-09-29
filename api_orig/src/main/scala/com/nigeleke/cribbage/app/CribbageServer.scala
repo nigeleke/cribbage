@@ -9,29 +9,25 @@ import com.typesafe.config.ConfigFactory
 
 import scala.util.{ Failure, Success }
 
-object CribbageServer extends App {
+object CribbageServer extends App:
 
-  private def startHttpServer(routes: Route, system: ActorSystem[_]): Unit = {
+  private def startHttpServer(routes: Route, system: ActorSystem[_]) =
 
-    def logStarted(binding: Http.ServerBinding) = {
+    def logStarted(binding: Http.ServerBinding) =
       val address = binding.localAddress
       system.log.info("Server online at http://{}:{}/", address.getHostString, address.getPort)
-    }
 
-    def logNotStarted(ex: Throwable) = {
+    def logNotStarted(ex: Throwable) =
       system.log.error("Failed to bind HTTP endpoint, terminating system", ex)
       system.terminate()
-    }
 
     implicit val classicSystem: akka.actor.ActorSystem = system.classicSystem
     import system.executionContext
 
     val fBinding = Http().newServerAt("localhost", 8080).bindFlow(routes)
-    fBinding.onComplete {
+    fBinding.onComplete
       case Success(binding) => logStarted(binding)
       case Failure(ex) => logNotStarted(ex)
-    }
-  }
 
   implicit val config = ConfigFactory.load()
 
@@ -42,5 +38,3 @@ object CribbageServer extends App {
   }
 
   ActorSystem[Nothing](root, "cribbage-server")
-
-}

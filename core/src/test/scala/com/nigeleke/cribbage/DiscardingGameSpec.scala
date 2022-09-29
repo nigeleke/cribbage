@@ -1,13 +1,14 @@
 package com.nigeleke.cribbage
 
-import effects.*
-import model.*
-import Card.Face.*
+import com.nigeleke.cribbage.domain.*
+import com.nigeleke.cribbage.domain.Card.Face.*
+import com.nigeleke.cribbage.effects.*
 
 import cats.data.NonEmptyList
 import cats.data.Validated.*
 import cats.data.ValidatedNel
 import cats.syntax.validated.*
+
 import org.scalatest.*
 import org.scalatest.matchers.should.*
 import org.scalatest.wordspec.*
@@ -27,7 +28,7 @@ class DiscardingGameSpec extends AnyWordSpec with Matchers:
   def discardingGame(test: DiscardingGame => Unit) =
     val id1 = Player.newId
     val id2 = Player.newId
-    Game().validNel andThen
+    StartingGame().validNel andThen
       addPlayer(id1) andThen
       addPlayer(id2) andThen
       start match

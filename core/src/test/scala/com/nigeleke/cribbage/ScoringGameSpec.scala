@@ -1,10 +1,10 @@
 package com.nigeleke.cribbage
 
-import effects.*
-import model.*
-
-import model.Card.{Face, Suit}
-import Face.*, Suit.*
+import com.nigeleke.cribbage.domain.*
+import com.nigeleke.cribbage.domain.Card.*
+import Face.*
+import Suit.*
+import com.nigeleke.cribbage.effects.*
 
 import cats.data.NonEmptyList
 import cats.data.Validated.*
@@ -25,18 +25,18 @@ class ScoringGameSpec extends AnyWordSpec with Matchers:
       val dealer = Player.newId
       val pone = Player.newId
       val game = ScoringGame(
-        UUID.randomUUID().asInstanceOf[GameId],
+        UUID.randomUUID().asInstanceOf[Game.Id],
         Map(
           dealer -> Score.zero,
           pone -> Score.zero
         ),
         Map(
-          dealer -> Hand(Seq(Card(Ten, Diamonds), Card(Ten, Spades), Card(Five, Hearts), Card(Four, Clubs))),
-          pone -> Hand(Seq(Card(King, Diamonds), Card(King, Spades), Card(Eight, Diamonds), Card(Seven, Spades)))
+          dealer -> Seq(Card(Ten, Diamonds), Card(Ten, Spades), Card(Five, Hearts), Card(Four, Clubs)),
+          pone -> Seq(Card(King, Diamonds), Card(King, Spades), Card(Eight, Diamonds), Card(Seven, Spades))
         ),
         dealer,
         pone,
-        Crib(Seq(Card(Ten, Hearts), Card(Ten, Clubs), Card(King, Hearts), Card(King, Clubs))),
+        Seq(Card(Ten, Hearts), Card(Ten, Clubs), Card(King, Hearts), Card(King, Clubs)),
         Card(Ace, Spades)
       )
       test(game)

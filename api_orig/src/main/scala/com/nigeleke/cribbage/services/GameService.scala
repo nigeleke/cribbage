@@ -35,13 +35,13 @@ class GameService(system: ActorSystem[_]) {
     entityRefFor(gameId).askWithStatus(Join(playerId, _))
   }
 
-  //  def discard(gameId: GameEntityId, playerId: PlayerId, cards: CardIds) = {
+  //  def discard(gameId: GameEntityId, playerId: Player.Id, cards: CardIds) = {
   //    val entityRef = sharding.entityRefFor(TypeKey, gameId)
   //    entityRef ? (DiscardCribCards(playerId, cards, _))
   //  }
   //
-  //  //  final case class LayCard(playerId: PlayerId, cardId: Card, replyTo: ActorRef[Reply]) extends Command
-  //  //  final case class Pass(playerId: PlayerId, replyTo: ActorRef[Reply]) extends Command
+  //  //  final case class LayCard(playerId: Player.Id, cardId: Card, replyTo: ActorRef[Reply]) extends Command
+  //  //  final case class Pass(playerId: Player.Id, replyTo: ActorRef[Reply]) extends Command
   //
   //  implicit private def uuidToString(id: UUID): String = id.toString
   //  implicit private def stringToUUID(name: String): UUID = UUID.fromString(name)

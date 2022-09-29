@@ -1,12 +1,8 @@
-package com.nigeleke.cribbage.model
+package com.nigeleke.cribbage.domain
 
 import java.util.UUID
 
-type CardId = Card.Id
-type Face = Card.Face
-type Suit = Card.Suit
-
-case class Card(id: CardId, face: Face, suit: Suit):
+case class Card(id: Card.Id, face: Card.Face, suit: Card.Suit):
   import Card.Ansi
   override val toString = s"${suit.ansiColor}${face.smallFace}${suit.smallSuit}${Ansi.reset}"
 
@@ -15,7 +11,7 @@ extension (card: Card)
   def value = card.face.value
 
 object Card:
-  type Id = UUID
+  opaque type Id = UUID
 
   def apply(face: Face, suit: Suit): Card = Card(UUID.randomUUID(), face, suit)
 

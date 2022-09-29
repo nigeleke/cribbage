@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage.effects
 
-import com.nigeleke.cribbage.model.*
+import com.nigeleke.cribbage.domain.*
 import com.nigeleke.cribbage.util.*
 
 import cats.data.Validated.*
@@ -9,19 +9,19 @@ import cats.syntax.validated.*
 
 def scorePoneHand(game: ScoringGame): ValidatedNel[String, ScoringGame | WonGame] =
   val pone = game.pone
-  scoreCardsForPlayer(game, pone, game.hands(pone).asCards, game.cut)
+  scoreCardsForPlayer(game, pone, game.hands(pone), game.cut)
 
 def scoreDealerHand(game: ScoringGame): ValidatedNel[String, ScoringGame | WonGame] =
   val dealerId = game.dealer
-  scoreCardsForPlayer(game, dealerId, game.hands(dealerId).asCards, game.cut)
+  scoreCardsForPlayer(game, dealerId, game.hands(dealerId), game.cut)
 
 def scoreCrib(game: ScoringGame): ValidatedNel[String, ScoringGame | WonGame] =
   val dealerId = game.dealer
-  scoreCardsForPlayer(game, dealerId, game.crib.asCards, game.cut)
+  scoreCardsForPlayer(game, dealerId, game.crib, game.cut)
 
 private def scoreCardsForPlayer(
     game: ScoringGame,
-    player: PlayerId,
+    player: Player.Id,
     cards: Seq[Card],
     cut: Card
 ): ValidatedNel[String, ScoringGame | WonGame] =
@@ -40,5 +40,5 @@ def swapDealer(game: ScoringGame): ValidatedNel[String, DiscardingGame] =
     hands = Map.empty,
     dealer = game.pone,
     pone = game.dealer,
-    crib = Crib()
+    crib = Crib.empty
   ).validNel andThen deal

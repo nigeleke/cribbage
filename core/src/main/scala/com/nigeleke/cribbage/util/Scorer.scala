@@ -1,6 +1,6 @@
 package com.nigeleke.cribbage.util
 
-import com.nigeleke.cribbage.model.*
+import com.nigeleke.cribbage.domain.*
 
 object Scorer:
 
@@ -12,7 +12,7 @@ object Scorer:
 
   private def makesRun(playedCard: Card, cards: Seq[Card]) = isRun(cards) && cards.contains(playedCard)
 
-  def forPlay(play: Seq[Play]): PlayPoints =
+  def forPlay(play: Seq[Plays.Play]): PlayPoints =
     val currentCards: Seq[Card] =
       play.collect { case Plays.Laid(_, card) => card }
 
@@ -53,9 +53,8 @@ object Scorer:
     val allCards = cards :+ cut
 
     val fifteens =
-      val nCards = 2 to 5
       val nFifteens = for {
-        n <- nCards
+        n <- 2 to 5
         c <- allCards.combinations(n)
         total = c.map(_.value).sum if total == 15
       } yield ("fifteen: ", c)
@@ -71,18 +70,17 @@ object Scorer:
       nPairs.size * 2
 
     val runs =
-      val nCards = 3 to 5
       val allRuns = (for {
-        n <- nCards
+        n <- 3 to 5
         c <- allCards.combinations(n) if isRun(c)
       } yield c).groupBy(_.size)
 
       val (count, length) =
-        if (allRuns.isEmpty) (0, 0)
-        else {
+        if allRuns.isEmpty
+        then (0, 0)
+        else
           val max = allRuns.keySet.max
           (allRuns(max).size, max)
-        }
 
       count * length
 

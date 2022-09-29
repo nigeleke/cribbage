@@ -1,7 +1,7 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.domain.*
-import com.nigeleke.cribbage.effects.*
+import effects.*
+import model.*
 
 import cats.data.Validated.*
 import cats.data.ValidatedNel
@@ -18,7 +18,7 @@ class StartingGameSpec extends AnyWordSpec with Matchers:
     val game = Game()
 
     "have an id" in {
-      game.id should be(a[Game.Id])
+      game.id should be(a[GameId])
     }
 
     "have no players" in {
@@ -27,7 +27,7 @@ class StartingGameSpec extends AnyWordSpec with Matchers:
 
     "allow a new player to join" in {
       val id = Player.newId
-      StartingGame().validNel andThen
+      Game().validNel andThen
         addPlayer(id) match
         case Valid(game) =>
           game.players.size should be(1)
@@ -37,7 +37,7 @@ class StartingGameSpec extends AnyWordSpec with Matchers:
     "allow two new players to join" in {
       val id1 = Player.newId
       val id2 = Player.newId
-      StartingGame().validNel andThen
+      Game().validNel andThen
         addPlayer(id1) andThen
         addPlayer(id2) match
         case Valid(game) =>
@@ -49,7 +49,7 @@ class StartingGameSpec extends AnyWordSpec with Matchers:
       val id1 = Player.newId
       val id2 = Player.newId
       val id3 = Player.newId
-      val game = StartingGame()
+      val game = Game()
       game.validNel andThen
         addPlayer(id1) andThen
         addPlayer(id2) andThen
@@ -60,7 +60,7 @@ class StartingGameSpec extends AnyWordSpec with Matchers:
 
     "not allow the same player to join twice" in {
       val id = Player.newId
-      val game = StartingGame()
+      val game = Game()
       game.validNel andThen
         addPlayer(id) andThen
         addPlayer(id) match
@@ -71,7 +71,7 @@ class StartingGameSpec extends AnyWordSpec with Matchers:
     "allow the game to be started with two players" in {
       val id1 = Player.newId
       val id2 = Player.newId
-      val game = StartingGame()
+      val game = Game()
       game.validNel andThen
         addPlayer(id1) andThen
         addPlayer(id2) andThen
@@ -82,7 +82,7 @@ class StartingGameSpec extends AnyWordSpec with Matchers:
 
     "not allow the game to be started with less than two players" in {
       val id1 = Player.newId
-      val game = StartingGame()
+      val game = Game()
       game.validNel andThen
         addPlayer(id1) andThen
         start match

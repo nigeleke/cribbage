@@ -1,7 +1,7 @@
 package com.nigeleke.cribbage
 
-import com.nigeleke.cribbage.domain.*
-import com.nigeleke.cribbage.domain.Card.*
+import model.*
+import Card.*
 
 import org.scalatest.*
 import org.scalatest.matchers.should.Matchers
@@ -31,7 +31,7 @@ class DeckSpec extends AnyWordSpec with Matchers {
   "A Deck" should {
     "allow a random card to be selected" in {
       val (remaining, cut) = fullDeck.cut
-      fullDeck.asInstanceOf[Seq[Card]] should contain(cut)
+      fullDeck should contain(cut)
       remaining should not contain (cut)
       remaining.size should be(fullDeck.size - 1)
     }

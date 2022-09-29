@@ -1,4 +1,6 @@
-package com.nigeleke.cribbage.domain
+package com.nigeleke.cribbage.model
+
+import Card.{Face, Suit}
 
 import java.util.UUID
 import scala.util.Random
@@ -7,10 +9,10 @@ type Deck = Seq[Card]
 
 object Deck:
   // Must be def, not val, so new CardIds are generated...
-  private[domain] def fullSetOfCards: Seq[Card] = (for
-    face <- Card.Face.values
-    suit <- Card.Suit.values
-  yield Card(face, suit)).toIndexedSeq
+  private[model] def fullSetOfCards: Seq[Card] = for
+    face <- Face.values
+    suit <- Suit.values
+  yield Card(face, suit)
 
   val handsToDeal = Game.maxPlayers
   val cardsPerHandToDeal = 6
@@ -21,8 +23,7 @@ object Deck:
 
   def deal: (Deck, Seq[Hand]) =
     val cards = shuffledDeck
-    val hands =
-      (1 to handsToDeal).map(i => cards.drop((handsToDeal - i) * cardsPerHandToDeal).take(cardsPerHandToDeal))
+    val hands = (1 to handsToDeal).map(i => cards.drop((handsToDeal - i) * cardsPerHandToDeal).take(cardsPerHandToDeal))
     val remainder = cards.drop(handsToDeal * cardsPerHandToDeal)
     (remainder, hands)
 

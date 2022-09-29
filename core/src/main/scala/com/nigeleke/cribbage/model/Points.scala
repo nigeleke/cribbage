@@ -1,4 +1,4 @@
-package com.nigeleke.cribbage.domain
+package com.nigeleke.cribbage.model
 
 trait Points
 case class PlayPoints(pairs: Int = 0, fifteens: Int = 0, runs: Int = 0) extends Points

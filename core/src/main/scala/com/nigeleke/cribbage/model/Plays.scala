@@ -1,13 +1,15 @@
-package com.nigeleke.cribbage.domain
+package com.nigeleke.cribbage.model
 
-case class Plays(nextToPlay: Player.Id, current: Seq[Plays.Play], passedPlayers: Set[Player.Id], previous: Seq[Plays.Play])
+type Play = Plays.Play
+
+case class Plays(nextToPlay: PlayerId, current: Seq[Play], passedPlayers: Set[PlayerId], previous: Seq[Play])
 
 object Plays:
-  def apply(player: Player.Id): Plays = new Plays(nextToPlay = player, Seq.empty, Set.empty, Seq.empty)
+  def apply(player: PlayerId): Plays = new Plays(nextToPlay = player, Seq.empty, Set.empty, Seq.empty)
 
   sealed trait Play
-  case class Laid(playerId: Player.Id, card: Card) extends Play
-  case class Pass(playerId: Player.Id) extends Play
+  case class Laid(playerId: PlayerId, card: Card) extends Play
+  case class Pass(playerId: PlayerId) extends Play
 
 extension (plays: Plays)
   def runningTotal =
@@ -23,5 +25,5 @@ extension (plays: Plays)
     passedPlayers = Set.empty,
     previous = plays.previous ++ plays.current
   )
-  private def firstPassed: Player.Id = plays.current.collect { case Plays.Pass(id) => id }.head
+  private def firstPassed: PlayerId = plays.current.collect { case Plays.Pass(id) => id }.head
   def laidSoFar: Seq[Plays.Laid] = (plays.current ++ plays.previous).collect { case play @ Plays.Laid(_, _) => play }

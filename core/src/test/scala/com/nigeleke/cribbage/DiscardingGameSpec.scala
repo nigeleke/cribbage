@@ -1,6 +1,8 @@
 package com.nigeleke.cribbage
 
 import model.*
+import model.Card.Face.*
+import GameState.*
 
 import org.scalatest.*
 import org.scalatest.matchers.should.*
@@ -8,18 +10,18 @@ import org.scalatest.wordspec.*
 
 import scala.util.Random
 
-extension (game: Game)
+extension (state: Discarding)
   def usingPlayers =
-    val shuffled = Random.shuffle(game.players)
+    val shuffled = Random.shuffle(Seq(state.dealer, state.pone))
     (shuffled.head, shuffled.last)
 
 class DiscardingGameSpec extends AnyWordSpec with Matchers:
 
-  def discardingGame(
+  def discardingState(
       dealerScore: Score = Score.zero,
       poneScore: Score = Score.zero
   )(
-      test: Game => Unit
+      test: Discarding => Unit
   ) =
     val players        = Set(Player.createPlayer, Player.createPlayer)
     val cut            = Random.shuffle(players)
@@ -28,128 +30,79 @@ class DiscardingGameSpec extends AnyWordSpec with Matchers:
     val (deck, hands)  = Deck.shuffledDeck.deal(players.size, cardsPerHand)
     val dealtHands     = players.zip(hands).toMap
     val crib           = Crib.empty
-    val state          = GameState.Discarding(deck, scores, dealtHands, dealer, pone, crib)
-    test(Game(state))
+    test(Discarding(deck, scores, dealtHands, dealer, pone, crib))
 
   "A DiscardingGame" should {
-    "initially start with zero scores for players" in discardingGame() { game =>
-      game.state match
-        case state: GameState.Discarding =>
-          state.scores(state.dealer) should be(Score(0, 0))
-          state.scores(state.pone) should be(Score(0, 0))
-        case other                       => fail(s"Unexpected state $game")
-    }
 
-    "start with an empty crib" in discardingGame() { game =>
-      game.state match
-        case state: GameState.Discarding => state.crib should be(empty)
-        case other                       => fail(s"Unexpected state $game")
-    }
-
-    "start with dealt hands" in discardingGame() { game =>
-      game.state match
-        case state: GameState.Discarding =>
-          val dealerHand = state.hands(state.dealer)
-          val poneHand   = state.hands(state.pone)
-          val deck       = state.deck
-          dealerHand.size should be(cardsPerHand)
-          poneHand.size should be(cardsPerHand)
-          deck.size should be(Deck.fullDeck.size - maxPlayers * cardsPerHand)
-          dealerHand.toSet intersect deck.toSet should be(empty)
-          poneHand.toSet intersect deck.toSet should be(empty)
-          dealerHand.toSet intersect poneHand.toSet should be(empty)
-        case other                       => fail(s"Unexpected state $game")
-    }
-
-    "allow a player to discard cards into the crib" in discardingGame() { game =>
-      game.state match
-        case state: GameState.Discarding =>
-          val (player, _) = game.usingPlayers
-          val discards    = state.hands(player).take(2)
-          game.discardCribCards(player, discards) match
-            case Right(game) =>
-              val state = game.state.asInstanceOf[GameState.Discarding]
-              state.hands(player) should not contain allElementsOf(discards)
-              state.crib should contain allElementsOf (discards)
-            case Left(error) => fail(error)
-        case other                       => fail(s"Unexpected state $game")
+    "allow a player to discard cards into the crib" in discardingState() { state =>
+      val (player, _) = state.usingPlayers
+      val discards    = state.hands(player).take(2)
+      Game(state).discardCribCards(player, discards) match
+        case Right(Game(Discarding(_, _, hands, _, _, crib))) =>
+          hands(player) should not contain allElementsOf(discards)
+          crib should contain allElementsOf (discards)
+        case other                                            => fail(s"Unexpected state $other")
     }
 
     "not allow a discard" when {
 
-      "the discard contains cards not owned by the player" in discardingGame() { game =>
-        game.state match
-          case state: GameState.Discarding =>
-            val (player1, player2) = game.usingPlayers
-            val discards           = state.hands(player1).take(2)
-            game.discardCribCards(player2, discards) match
-              case Right(game) => fail(s"Incorrectly discarded $discards for $player2 in $game")
-              case Left(error) => error should be("Cannot discard cards")
-          case other                       => fail(s"Unexpected state $game")
+      "the discard contains cards not owned by the player" in discardingState() { state =>
+        val (player1, player2) = state.usingPlayers
+        val discards           = state.hands(player1).take(2)
+        Game(state).discardCribCards(player2, discards) match
+          case Left(error) => error should be("Cannot discard cards")
+          case other       => fail(s"Unexpected state $other")
       }
 
-      "the discard contains too many cards" in discardingGame() { game =>
-        game.state match
-          case state: GameState.Discarding =>
-            val (player, _) = game.usingPlayers
-            val discards    = state.hands(player).take(3)
-            game.discardCribCards(player, discards) match
-              case Right(game) => fail(s"Incorrectly discarded $discards for $player in $game")
-              case Left(error) => error should be("Cannot discard cards")
-          case other                       => fail(s"Unexpected state $game")
+      "the discard contains too many cards" in discardingState() { state =>
+        val (player, _) = state.usingPlayers
+        val discards    = state.hands(player).take(3)
+        Game(state).discardCribCards(player, discards) match
+          case Left(error) => error should be("Cannot discard cards")
+          case other       => fail(s"Unexpected state $other")
       }
-
     }
 
     "allow the Play to start" when {
 
-      "both Players have discarded" in discardingGame() { game =>
-        extension (card: Card) def isJack = card.face == Card.Face.Jack
-        game.state match
-          case state: GameState.Discarding =>
-            val (dealer, pone) = (state.dealer, state.pone)
-            val discards1      = state.hands(dealer).take(2)
-            val discards2      = state.hands(pone).take(2)
-            game
-              .discardCribCards(dealer, discards1)
-              .flatMap(_.discardCribCards(pone, discards2))
-              .flatMap(_.startPlay(pone)) match
-              case Right(game) =>
-                val state = game.state.asInstanceOf[GameState.Playing]
-                val plays = state.plays
-                plays.nextPlayer should be(state.pone)
-                plays.inPlay should be(empty)
-                plays.passCount should be(0)
-                plays.played should be(empty)
-                state.crib should contain allElementsOf (discards1 ++ discards2)
-                (state.cut, state.dealer) match
-                  case (card, dealer) if card.isJack => state.scores(dealer) should be(Score(0, 2))
-                  case (_, dealer)                   => state.scores(dealer) should be(Score(0, 0))
-              case Left(error) => fail(error)
-          case other                       => fail(s"Unexpected state $game")
+      "both Players have discarded" in discardingState() {
+        case state @ Discarding(_, _, hands0, dealer0, pone0, _) =>
+          val dealerDiscards = hands0(dealer0).take(2)
+          val poneDiscards   = hands0(pone0).take(2)
+          Game(state)
+            .discardCribCards(dealer0, dealerDiscards)
+            .flatMap(_.discardCribCards(pone0, poneDiscards))
+            .flatMap(_.startPlay(pone0)) match
+            case Right(Game(Playing(scores, hands1, dealer1, pone1, crib, cut, plays))) =>
+              dealer1 should be(dealer0)
+              pone1 should be(pone0)
+              hands1(dealer1) ++ dealerDiscards should contain allElementsOf (hands0(dealer0))
+              hands1(pone1) ++ poneDiscards should contain allElementsOf (hands0(pone0))
+              plays.nextPlayer should be(state.pone)
+              plays.inPlay should be(empty)
+              plays.passCount should be(0)
+              plays.played should be(empty)
+              crib should contain allElementsOf (dealerDiscards ++ poneDiscards)
+              if cut.face == Jack
+              then scores(dealer1) should be(Score(0, 2))
+              else scores(dealer1) should be(Score(0, 0))
+            case other                                                                  => fail(s"Unexpected state $other")
       }
     }
 
     "be a WonGame" when {
-      "winning point(s) scored for his Heels" in
-        discardingGame(Score(0, 120), Score(0, 120)) { game =>
-          game.state match
-            case d: GameState.Discarding =>
-              // This test won't always test the condition as the cut is random.
-              val (dealer, pone) = (d.dealer, d.pone)
-              val discards1      = d.hands(dealer).take(2)
-              val discards2      = d.hands(pone).take(2)
-              game
-                .discardCribCards(dealer, discards1)
-                .flatMap(_.discardCribCards(pone, discards2))
-                .flatMap(_.startPlay(pone)) match
-                case Right(game) =>
-                  game.state match
-                    case p: GameState.Playing  => p.cut.face should not be (Card.Face.Jack)
-                    case f: GameState.Finished => f.scores(dealer) should be(Score(120, 122))
-                    case _                     => fail(s"Unexpected state $game")
-                case Left(error) => fail(error)
-            case other                   => fail(s"Unexpected state $game")
-        }
+      "winning point(s) scored for his Heels" in discardingState(Score(0, 120), Score(0, 120)) {
+        case state @ Discarding(deck, scores, hands, dealer, pone, crib) =>
+          // This test won't always test the condition as the cut is random.
+          val discards1 = hands(dealer).take(2)
+          val discards2 = hands(pone).take(2)
+          Game(state)
+            .discardCribCards(dealer, discards1)
+            .flatMap(_.discardCribCards(pone, discards2))
+            .flatMap(_.startPlay(pone)) match
+            case Right(Game(Playing(_, _, _, _, _, cut, _))) => cut.face should not be (Jack)
+            case Right(Game(Finished(scores)))               => scores(dealer) should be(Score(120, 122))
+            case other                                       => fail(s"Unexpected state $other")
+      }
     }
   }

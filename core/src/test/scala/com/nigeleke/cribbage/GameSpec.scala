@@ -163,7 +163,7 @@
 ////      }
 ////    }
 ////
-////    def discardingGame(test: Game => Unit) =
+////    def discardingState(test: Game => Unit) =
 ////      val id1 = Player.newId
 ////      val id2 = Player.newId
 ////      Game().validNel andThen
@@ -171,11 +171,11 @@
 ////        addPlayer(id2) andThen
 ////        start match
 ////        case Valid(state)   => test(state)
-////        case Invalid(error) => fail(s"Failed to create discardingGame for test: $error")
+////        case Invalid(error) => fail(s"Failed to create discardingState for test: $error")
 ////
 ////    "discarding" should {
 ////
-////      "allow a player to discard cards into the crib" in discardingGame { state =>
+////      "allow a player to discard cards into the crib" in discardingState { state =>
 ////        val player   = state.players.head
 ////        val discards = state.hands(player).take(2)
 ////        state.validNel andThen
@@ -188,7 +188,7 @@
 ////
 ////      "not allow a discard" when {
 ////
-////        "the discard contains cards not owned by the player" in discardingGame { state =>
+////        "the discard contains cards not owned by the player" in discardingState { state =>
 ////          val player1Id = state.players.head
 ////          val discards  = state.hands(player1Id).take(2)
 ////          val player2Id = state.players.last
@@ -202,7 +202,7 @@
 ////              )
 ////        }
 ////
-////        "the discard contains too few cards" in discardingGame { state =>
+////        "the discard contains too few cards" in discardingState { state =>
 ////          val player   = state.players.head
 ////          val discards = state.hands(player).take(1)
 ////          state.validNel andThen
@@ -213,7 +213,7 @@
 ////              errors.toList should be(List(s"Game ${state.id} expecting 2 cards discarded; have 1"))
 ////        }
 ////
-////        "the discard contains too many cards" in discardingGame { state =>
+////        "the discard contains too many cards" in discardingState { state =>
 ////          val player   = state.players.head
 ////          val discards = state.hands(player).take(3)
 ////          state.validNel andThen
@@ -228,7 +228,7 @@
 ////
 ////      "start the Play" when {
 ////
-////        "both Players have discarded" in discardingGame { state =>
+////        "both Players have discarded" in discardingState { state =>
 ////          val player1Id = state.players.head
 ////          val discards1 = state.hands(player1Id).take(2)
 ////
@@ -259,7 +259,7 @@
 ////
 ////    }
 ////
-////    def playingGame(test: Game => Unit) =
+////    def playingState(test: Game => Unit) =
 ////      val state = Game()
 ////        .withPlayer(
 ////          Seq(Card(Ten, Diamonds), Card(Ten, Spades), Card(Five, Hearts), Card(Four, Clubs))
@@ -273,8 +273,8 @@
 ////        .withCut(Card(Ace, Spades))
 ////      test(state)
 ////
-////    def fullyPlayedGame(test: Game => Unit) =
-////      playingGame { state =>
+////    def playingStateFinished(test: Game => Unit) =
+////      playingState { state =>
 ////        val dealerId           = state.optDealer.head
 ////        val poneId             = state.optPone.head
 ////        val originalDealerHand = state.hands(dealerId)
@@ -308,7 +308,7 @@
 ////    "playing" should {
 ////
 ////      "allow the next Player to Play" when {
-////        "they have at least one valid cardId for the CurrentPlay" in playingGame { state =>
+////        "they have at least one valid cardId for the CurrentPlay" in playingState { state =>
 ////          val dealerId = state.optDealer.head
 ////          val poneId   = state.optPone.head
 ////          val card     = state.hands(poneId).toCardSeq.head
@@ -323,7 +323,7 @@
 ////      }
 ////
 ////      "not allow the next Player to Play" when {
-////        "it's not their turn" in playingGame { state =>
+////        "it's not their turn" in playingState { state =>
 ////          val dealerId = state.optDealer.head
 ////          val card     = state.hands(dealerId).toCardSeq.head
 ////          state.validNel andThen
@@ -333,7 +333,7 @@
 ////              errors.toList should be(List(s"It is not Player ${dealerId}'s turn to play"))
 ////        }
 ////
-////        "they have no valid cards for the inPlay play" in playingGame { state =>
+////        "they have no valid cards for the inPlay play" in playingState { state =>
 ////          val dealerId     = state.optDealer.head
 ////          val poneId       = state.optPone.head
 ////          val kingDiamonds = state.card(King, Diamonds)
@@ -354,7 +354,7 @@
 ////      }
 ////
 ////      "allow the next Player to Pass" when {
-////        "they have no valid cards for the CurrentPlay" in playingGame { state =>
+////        "they have no valid cards for the CurrentPlay" in playingState { state =>
 ////          val dealerId     = state.optDealer.head
 ////          val poneId       = state.optPone.head
 ////          val kingDiamonds = state.card(King, Diamonds)
@@ -384,7 +384,7 @@
 ////      }
 ////
 ////      "not allow the next Player to Pass" when {
-////        "they have at least one valid Card for the inPlay Play" in playingGame { state =>
+////        "they have at least one valid Card for the inPlay Play" in playingState { state =>
 ////          val poneId = state.optPone.head
 ////          state.validNel andThen
 ////            pass(poneId) match
@@ -397,7 +397,7 @@
 ////      }
 ////
 ////      "score the Play" when {
-////        "a Card is laid" in playingGame { state =>
+////        "a Card is laid" in playingState { state =>
 ////          val dealerId            = state.optDealer.head
 ////          val poneId              = state.optPone.head
 ////          val kingDiamonds        = state.card(King, Diamonds)
@@ -414,7 +414,7 @@
 ////      }
 ////
 ////      "score the end of Play" when {
-////        "play finishes with runningTotal less than 31" in playingGame { state =>
+////        "play finishes with runningTotal less than 31" in playingState { state =>
 ////          val dealerId          = state.optDealer.head
 ////          val poneId            = state.optPone.head
 ////          val kingDiamonds      = state.card(King, Diamonds)
@@ -433,7 +433,7 @@
 ////            case Invalid(errors) => fail(errors.toList.mkString(", "))
 ////        }
 ////
-////        "play finishes with runningTotal exactly 31" in playingGame { state =>
+////        "play finishes with runningTotal exactly 31" in playingState { state =>
 ////          val dealerId            = state.optDealer.head
 ////          val poneId              = state.optPone.head
 ////          val kingDiamonds        = state.card(King, Diamonds)
@@ -456,7 +456,7 @@
 ////      }
 ////
 ////      "start the next Play" when {
-////        "both Players have Passed" in playingGame { state =>
+////        "both Players have Passed" in playingState { state =>
 ////          val dealerId     = state.optDealer.head
 ////          val poneId       = state.optPone.head
 ////          val kingDiamonds = state.card(King, Diamonds)
@@ -486,7 +486,7 @@
 ////            case Invalid(errors) => fail(errors.toList.mkString(", "))
 ////        }
 ////
-////        "inPlay Play finished on 31" in playingGame { state =>
+////        "inPlay Play finished on 31" in playingState { state =>
 ////          val dealerId     = state.optDealer.head
 ////          val poneId       = state.optPone.head
 ////          val kingDiamonds = state.card(King, Diamonds)
@@ -521,7 +521,7 @@
 ////      }
 ////
 ////      "perform Scoring" when {
-////        "all Plays completed" in fullyPlayedGame { state =>
+////        "all Plays completed" in playingStateFinished { state =>
 ////          val dealerId = state.optDealer.get
 ////          val poneId   = state.optPone.get
 ////
@@ -550,7 +550,7 @@
 ////    }
 ////
 ////    "scored" should {
-////      "swap the Dealer" in fullyPlayedGame { game1 =>
+////      "swap the Dealer" in playingStateFinished { game1 =>
 ////        game1.validNel andThen
 ////          swapDealer match
 ////          case Valid(game2)    =>
@@ -559,7 +559,7 @@
 ////          case Invalid(errors) => fail(errors.toList.mkString(", "))
 ////      }
 ////
-////      "deal new Hands" in fullyPlayedGame { state =>
+////      "deal new Hands" in playingStateFinished { state =>
 ////        state.validNel andThen
 ////          swapDealer match
 ////          case Valid(state)    =>

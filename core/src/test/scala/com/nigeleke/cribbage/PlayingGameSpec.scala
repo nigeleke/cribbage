@@ -11,11 +11,11 @@ import org.scalatest.wordspec.*
 
 class PlayingGameSpec extends AnyWordSpec with Matchers:
 
-  def playingGame(
+  def playingState(
       dealerScore: Score = Score.zero,
       poneScore: Score = Score.zero
   )(
-      test: Game => Unit
+      test: Playing => Unit
   ) =
     // format: off
     val (dealer, pone) = (Player.createPlayer, Player.createPlayer)
@@ -32,11 +32,10 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
       cut,
       Plays(pone)
     )
-    val game = Game(state)
-    test(game)
+    test(state)
     // format: on
 
-  def fullyPlayedGame(test: Game => Unit) =
+  def playingStateFinished(test: Playing => Unit) =
     // format: off
     val (dealer, pone) = (Player.createPlayer, Player.createPlayer)
     val crib  = Seq(Card(Ten, Hearts), Card(Ten, Clubs), Card(King, Hearts), Card(King, Clubs))
@@ -67,262 +66,218 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
       cut,
       plays
     )
-    val game = Game(state)
-    test(game)
+    test(state)
     // format: on
 
   "A PlayingGame" should {
     "allow the next Player to Play" when {
-      "they have at least one valid cardId for the CurrentPlay" in playingGame() { game =>
-        game.state match
-          case Playing(_, hands, dealer, pone, _, _, _) =>
-            val card = hands(pone).head
-            game.playCard(pone, card) match
-              case Right(game) =>
-                game.state match
-                  case Playing(_, hands, _, _, _, _, plays) =>
-                    hands(pone) should not contain (card)
-                    plays.inPlay.head should be(Plays.Laid(pone, card))
-                    plays.nextPlayer should be(dealer)
-                  case _                                    => fail(s"Unexpected state $game")
-              case Left(error) => fail(error)
-          case _                                        => fail(s"Unexpected state $game")
+      "they have at least one valid cardId for the CurrentPlay" in playingState() {
+        case state @ Playing(_, hands, dealer, pone, _, _, _) =>
+          val card = hands(pone).head
+          Game(state).playCard(pone, card) match
+            case Right(Game(Playing(_, hands, _, _, _, _, plays))) =>
+              hands(pone) should not contain (card)
+              plays.inPlay.head should be(Plays.Laid(pone, card))
+              plays.nextPlayer should be(dealer)
+            case other                                             => fail(s"Unexpected state $other")
       }
     }
 
     "not allow the next Player to Play" when {
-      "it's not their turn" in playingGame() { game =>
-        game.state match
-          case Playing(_, hands, dealer, pone, _, _, _) =>
-            val card = hands(dealer).head
-            game.playCard(dealer, card) match
-              case Right(game) => fail(s"Incorrectly allowed Play($dealer, $card)")
-              case Left(error) => error should be(s"Cannot play")
-          case _                                        => fail(s"Unexpected state $game")
+      "it's not their turn" in playingState() {
+        case state @ Playing(_, hands, dealer, _, _, _, _) =>
+          val card = hands(dealer).head
+          Game(state).playCard(dealer, card) match
+            case Left(error) => error should be(s"Cannot play")
+            case other       => fail(s"Unexpected state $other")
       }
 
-      "they have no valid cards for the current play" in playingGame() { game =>
-        game.state match
-          case Playing(_, hands, dealer, pone, _, _, _) =>
-            game
-              .playCard(pone, Card(King, Diamonds))
-              .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
-              .flatMap(_.playCard(pone, Card(King, Spades)))
-              .flatMap(_.playCard(dealer, Card(Five, Hearts))) match
-              case Right(game) => fail("Incorrectly allowed Play that would break 31")
-              case Left(error) => error should be(s"Cannot play")
-          case _                                        => fail(s"Unexpected state $game")
+      "they have no valid cards for the current play" in playingState() {
+        case state @ Playing(_, hands, dealer, pone, _, _, _) =>
+          Game(state)
+            .playCard(pone, Card(King, Diamonds))
+            .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
+            .flatMap(_.playCard(pone, Card(King, Spades)))
+            .flatMap(_.playCard(dealer, Card(Five, Hearts))) match
+            case Left(error) => error should be(s"Cannot play")
+            case other       => fail(s"Unexpected state $other")
       }
     }
 
     "allow the next Player to Pass" when {
-      "they have no valid cards for the CurrentPlay" in playingGame() { game =>
-        game.state match
-          case Playing(_, _, dealer, pone, _, _, _) =>
-            game
-              .playCard(pone, Card(King, Diamonds))
-              .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
-              .flatMap(_.playCard(pone, Card(King, Spades)))
-              .flatMap(_.pass(dealer)) match
-              case Right(game) =>
-                game.state match
-                  case Playing(_, _, _, _, _, _, plays) =>
-                    val expectedPlays =
-                      Plays(
-                        pone,
-                        Seq(
-                          Plays.Laid(pone, Card(King, Diamonds)),
-                          Plays.Laid(dealer, Card(Ten, Diamonds)),
-                          Plays.Laid(pone, Card(King, Spades)),
-                          Plays.Pass(dealer)
-                        ),
-                        Seq.empty
-                      )
-                    plays should be(expectedPlays)
-                    plays.passCount should be(1)
-                    plays.passedPlayers should contain(dealer)
-                  case _                                => fail(s"Unexpected state $game")
-              case Left(error) => fail(error)
-          case _                                    => fail(s"Unexpected state $game")
+      "they have no valid cards for the CurrentPlay" in playingState() {
+        case state @ Playing(_, _, dealer, pone, _, _, _) =>
+          Game(state)
+            .playCard(pone, Card(King, Diamonds))
+            .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
+            .flatMap(_.playCard(pone, Card(King, Spades)))
+            .flatMap(_.pass(dealer)) match
+            case Right(Game(Playing(_, _, _, _, _, _, plays))) =>
+              val expectedPlays =
+                Plays(
+                  pone,
+                  Seq(
+                    Plays.Laid(pone, Card(King, Diamonds)),
+                    Plays.Laid(dealer, Card(Ten, Diamonds)),
+                    Plays.Laid(pone, Card(King, Spades)),
+                    Plays.Pass(dealer)
+                  ),
+                  Seq.empty
+                )
+              plays should be(expectedPlays)
+              plays.passCount should be(1)
+              plays.passedPlayers should contain(dealer)
+            case other                                         => fail(s"Unexpected state $other")
       }
     }
 
     "not allow the next Player to Pass" when {
-      "they have at least one valid Card for the current Play" in playingGame() { game =>
-        game.state match
-          case Playing(scores, hands, dealer, pone, crib, cut, plays) =>
-            game.pass(pone) match
-              case Right(game) => fail(s"Incorrectly allowed pass for $pone in $game")
-              case Left(error) => error should be("Cannot pass")
-          case _                                                      => fail(s"Unexpected state $game")
+      "they have at least one valid Card for the current Play" in playingState() {
+        case state @ Playing(scores, hands, dealer, pone, crib, cut, plays) =>
+          Game(state).pass(pone) match
+            case Left(error) => error should be("Cannot pass")
+            case other       => fail(s"Unexpected state $other")
       }
     }
 
     "score the Play" when {
-      "a Card is laid" in playingGame() { game =>
-        game.state match
-          case Playing(scores, _, dealer, pone, _, _, _) =>
-            val initialDealerPoints = scores(dealer).points
-            game
-              .playCard(pone, Card(King, Diamonds))
-              .flatMap(_.playCard(dealer, Card(Five, Hearts))) match
-              case Right(game) =>
-                game.scores(dealer).back should be(initialDealerPoints)
-                game.scores(dealer).front should be(initialDealerPoints + 2)
-              case Left(error) => fail(error)
-          case _                                         => fail(s"Unexpected state $game")
+      "a Card is laid" in playingState() { case state @ Playing(scores, _, dealer, pone, _, _, _) =>
+        val initialDealerPoints = scores(dealer).points
+        Game(state)
+          .playCard(pone, Card(King, Diamonds))
+          .flatMap(_.playCard(dealer, Card(Five, Hearts))) match
+          case Right(game) =>
+            game.scores(dealer).back should be(initialDealerPoints)
+            game.scores(dealer).front should be(initialDealerPoints + 2)
+          case other       => fail(s"Unexpected state $other")
       }
     }
 
     "score the end of Play" when {
-      "play finishes with runningTotal less than 31" in playingGame() { game =>
-        game.state match
-          case Playing(scores, hands, dealer, pone, crib, cut, plays) =>
-            val initialPonePoints = game.scores(dealer).points
-            game
-              .playCard(pone, Card(King, Diamonds))
-              .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
-              .flatMap(_.playCard(pone, Card(King, Spades)))
-              .flatMap(_.pass(dealer))
-              .flatMap(_.pass(pone)) match
-              case Right(game) =>
-                game.scores(pone).back should be(initialPonePoints)
-                game.scores(pone).front should be(initialPonePoints + 1)
-              case Left(error) => fail(error)
-          case _                                                      => fail(s"Unexpected state $game")
+      "play finishes with runningTotal less than 31" in playingState() {
+        case state @ Playing(scores, hands, dealer, pone, crib, cut, plays) =>
+          val initialPonePoints = scores(dealer).points
+          Game(state)
+            .playCard(pone, Card(King, Diamonds))
+            .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
+            .flatMap(_.playCard(pone, Card(King, Spades)))
+            .flatMap(_.pass(dealer))
+            .flatMap(_.pass(pone)) match
+            case Right(game) =>
+              game.scores(pone).back should be(initialPonePoints)
+              game.scores(pone).front should be(initialPonePoints + 1)
+            case other       => fail(s"Unexpected state $other")
       }
 
-      "play finishes with runningTotal exactly 31" in playingGame() { game =>
-        game.state match
-          case Playing(scores, _, dealer, pone, _, _, _) =>
-            val initialDealerPoints = scores(dealer).points
-            game
-              .playCard(pone, Card(King, Diamonds))
-              .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
-              .flatMap(_.playCard(pone, Card(Seven, Spades)))
-              .flatMap(_.playCard(dealer, Card(Four, Clubs)))
-              .flatMap(_.pass(pone))
-              .flatMap(_.pass(dealer)) match
-              case Right(game) =>
-                game.scores(dealer).back should be(initialDealerPoints)
-                game.scores(dealer).front should be(initialDealerPoints + 2)
-              case Left(error) => fail(error)
-          case _                                         => fail(s"Unexpected state $game")
+      "play finishes with runningTotal exactly 31" in playingState() {
+        case state @ Playing(scores, _, dealer, pone, _, _, _) =>
+          val initialDealerPoints = scores(dealer).points
+          Game(state)
+            .playCard(pone, Card(King, Diamonds))
+            .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
+            .flatMap(_.playCard(pone, Card(Seven, Spades)))
+            .flatMap(_.playCard(dealer, Card(Four, Clubs)))
+            .flatMap(_.pass(pone))
+            .flatMap(_.pass(dealer)) match
+            case Right(game) =>
+              game.scores(dealer).back should be(initialDealerPoints)
+              game.scores(dealer).front should be(initialDealerPoints + 2)
+            case other       => fail(s"Unexpected state $other")
       }
     }
 
     "start the next Play" when {
-      "both Players have Passed" in playingGame() { game =>
-        game.state match
-          case Playing(scores, hands, dealer, pone, crib, cut, plays) =>
-            game
-              .playCard(pone, Card(King, Diamonds))
-              .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
-              .flatMap(_.playCard(pone, Card(King, Spades)))
-              .flatMap(_.pass(dealer))
-              .flatMap(_.pass(pone)) match
-              case Right(game) =>
-                game.state match
-                  case Playing(_, _, dealer, pone, _, _, plays) =>
-                    plays.passCount should be(0)
-                    plays.nextPlayer should be(dealer)
-                    plays.inPlay should be(empty)
-                    plays.runningTotal should be(0)
-                    plays.played should contain theSameElementsInOrderAs (
-                      Seq(
-                        Plays.Laid(pone, Card(King, Diamonds)),
-                        Plays.Laid(dealer, Card(Ten, Diamonds)),
-                        Plays.Laid(pone, Card(King, Spades)),
-                        Plays.Pass(dealer),
-                        Plays.Pass(pone)
-                      )
-                    )
-                  case _                                        => fail(s"Unexpected state $game")
-              case Left(error) => fail(error)
-          case _                                                      => fail(s"Unexpected state $game")
+      "both Players have Passed" in playingState() {
+        case state @ Playing(scores, hands, dealer, pone, crib, cut, plays) =>
+          Game(state)
+            .playCard(pone, Card(King, Diamonds))
+            .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
+            .flatMap(_.playCard(pone, Card(King, Spades)))
+            .flatMap(_.pass(dealer))
+            .flatMap(_.pass(pone)) match
+            case Right(Game(Playing(_, _, dealer, pone, _, _, plays))) =>
+              plays.passCount should be(0)
+              plays.nextPlayer should be(dealer)
+              plays.inPlay should be(empty)
+              plays.runningTotal should be(0)
+              plays.played should contain theSameElementsInOrderAs (
+                Seq(
+                  Plays.Laid(pone, Card(King, Diamonds)),
+                  Plays.Laid(dealer, Card(Ten, Diamonds)),
+                  Plays.Laid(pone, Card(King, Spades)),
+                  Plays.Pass(dealer),
+                  Plays.Pass(pone)
+                )
+              )
+            case other                                                 => fail(s"Unexpected state $other")
       }
 
-      "inPlay Play finished on 31" in playingGame() { game =>
-        game.state match
-          case Playing(scores, hands, dealer, pone, crib, cut, plays) =>
-            game
-              .playCard(pone, Card(King, Diamonds))
-              .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
-              .flatMap(_.playCard(pone, Card(Seven, Spades)))
-              .flatMap(_.playCard(dealer, Card(Four, Clubs)))
-              .flatMap(_.pass(pone))
-              .flatMap(_.pass(dealer)) match
-              case Right(game) =>
-                game.state match
-                  case Playing(scores, hands, dealer, pone, crib, cut, plays) =>
-                    plays.passCount should be(0)
-                    plays.nextPlayer should be(pone)
-                    plays.inPlay should be(empty)
-                    plays.runningTotal should be(0)
-                    plays.played should contain theSameElementsInOrderAs (
-                      Seq(
-                        Plays.Laid(pone, Card(King, Diamonds)),
-                        Plays.Laid(dealer, Card(Ten, Diamonds)),
-                        Plays.Laid(pone, Card(Seven, Spades)),
-                        Plays.Laid(dealer, Card(Four, Clubs)),
-                        Plays.Pass(pone),
-                        Plays.Pass(dealer)
-                      )
-                    )
-                  case _                                                      => fail(s"Unexpected state $game")
-              case Left(error) => fail(error)
-          case _                                                      => fail(s"Unexpected state $game")
+      "inPlay Play finished on 31" in playingState() {
+        case state @ Playing(scores, hands, dealer, pone, crib, cut, plays) =>
+          Game(state)
+            .playCard(pone, Card(King, Diamonds))
+            .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
+            .flatMap(_.playCard(pone, Card(Seven, Spades)))
+            .flatMap(_.playCard(dealer, Card(Four, Clubs)))
+            .flatMap(_.pass(pone))
+            .flatMap(_.pass(dealer)) match
+            case Right(Game(Playing(scores, hands, dealer, pone, crib, cut, plays))) =>
+              plays.passCount should be(0)
+              plays.nextPlayer should be(pone)
+              plays.inPlay should be(empty)
+              plays.runningTotal should be(0)
+              plays.played should contain theSameElementsInOrderAs (
+                Seq(
+                  Plays.Laid(pone, Card(King, Diamonds)),
+                  Plays.Laid(dealer, Card(Ten, Diamonds)),
+                  Plays.Laid(pone, Card(Seven, Spades)),
+                  Plays.Laid(dealer, Card(Four, Clubs)),
+                  Plays.Pass(pone),
+                  Plays.Pass(dealer)
+                )
+              )
+            case other                                                               => fail(s"Unexpected state $other")
       }
     }
 
     "be a WonGame" when {
-      "winning point(s) scored in Play" in playingGame(Score(0, 120), Score(0, 120)) { game0 =>
-        game0.state match
-          case Playing(_, _, dealer, pone, _, _, _) =>
-            game0
-              .playCard(pone, Card(King, Diamonds))
-              .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
-              .flatMap(_.playCard(pone, Card(Seven, Spades)))
-              .flatMap(_.playCard(dealer, Card(Four, Clubs)))
-              .flatMap(_.pass(pone))
-              .flatMap(_.pass(dealer)) match
-              case Right(game1) =>
-                game1.state match
-                  case Finished(scores) =>
-                    scores(dealer) should be(Score(120, 122))
-                    scores(pone) should be(Score(0, 120))
-                  case _                => fail(s"Unexpected state $game1")
-              case Left(error)  => fail(error)
-          case _                                    => fail(s"Unexpected state $game0")
+      "winning point(s) scored in Play" in playingState(Score(0, 120), Score(0, 120)) {
+        case state @ Playing(_, _, dealer, pone, _, _, _) =>
+          Game(state)
+            .playCard(pone, Card(King, Diamonds))
+            .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
+            .flatMap(_.playCard(pone, Card(Seven, Spades)))
+            .flatMap(_.playCard(dealer, Card(Four, Clubs)))
+            .flatMap(_.pass(pone))
+            .flatMap(_.pass(dealer)) match
+            case Right(Game(Finished(scores))) =>
+              scores(dealer) should be(Score(120, 122))
+              scores(pone) should be(Score(0, 120))
+            case other                         => fail(s"Unexpected state $other")
       }
     }
 
     "regather Plays" when {
-      "all Plays completed" in fullyPlayedGame { game0 =>
-        game0.state match
-          case Playing(scores0, _, dealer0, pone0, crib0, cut0, _) =>
-            game0.regatherPlays match
-              case Right(game1) =>
-                game1.state match
-                  case Scoring(scores1, hands1, dealer1, pone1, crib1, cut1) =>
-                    scores1 should be(scores0)
-                    hands1(dealer1).size should be(4)
-                    hands1(pone1).size should be(4)
-                    dealer1 should be(dealer0)
-                    pone1 should be(pone0)
-                    crib1 should be(crib0)
-                    cut1 should be(cut0)
-                  case _                                                     => fail(s"Unexpected state $game1")
-              case Left(error)  => fail(error)
-          case _                                                   => fail(s"Unexpected state $game0")
+      "all Plays completed" in playingStateFinished {
+        case state @ Playing(scores0, _, dealer0, pone0, crib0, cut0, _) =>
+          Game(state).regatherPlays match
+            case Right(Game(Scoring(scores1, hands1, dealer1, pone1, crib1, cut1))) =>
+              scores1 should be(scores0)
+              hands1(dealer1).size should be(4)
+              hands1(pone1).size should be(4)
+              dealer1 should be(dealer0)
+              pone1 should be(pone0)
+              crib1 should be(crib0)
+              cut1 should be(cut0)
+            case other                                                              => fail(s"Unexpected state $other")
       }
     }
 
     "not regather Plays" when {
-      "some Cards left to Play" in playingGame() { game =>
-        game.regatherPlays match
-          case Right(game) => fail(s"Incorrectly regathered Plays with Cards left to Play")
+      "some Cards left to Play" in playingState() { state =>
+        Game(state).regatherPlays match
           case Left(error) => error should be("Cannot regather")
+          case other       => fail(s"Unexpected state $other")
       }
     }
 

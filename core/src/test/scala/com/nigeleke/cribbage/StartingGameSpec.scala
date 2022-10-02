@@ -1,11 +1,6 @@
 package com.nigeleke.cribbage
 
-import effects.*
-import model.*
-
-import cats.data.Validated.*
-import cats.data.ValidatedNel
-import cats.syntax.validated.*
+import model.{*, given}
 
 import org.scalatest.*
 import org.scalatest.matchers.should.*
@@ -15,79 +10,72 @@ class StartingGameSpec extends AnyWordSpec with Matchers:
 
   "A StartingGame" should {
 
-    val game = Game()
-
-    "have an id" in {
-      game.id should be(a[GameId])
-    }
+    val game = Game.create
 
     "have no players" in {
       game.players should be(empty)
     }
 
     "allow a new player to join" in {
-      val id = Player.newId
-      Game().validNel andThen
-        addPlayer(id) match
-        case Valid(game) =>
-          game.players.size should be(1)
-        case Invalid(errors) => failWith(errors)
+      val id            = Player.createPlayer
+      val expectedState = GameState.Starting(players = Set(id))
+      val expectedGame  = Game(expectedState)
+      game.addPlayer(id) match
+        case Right(game) => game should be(expectedGame)
+        case Left(error) => fail(s"Unexpected $error")
     }
 
     "allow two new players to join" in {
-      val id1 = Player.newId
-      val id2 = Player.newId
-      Game().validNel andThen
-        addPlayer(id1) andThen
-        addPlayer(id2) match
-        case Valid(game) =>
-          game.players.size should be(2)
-        case Invalid(errors) => failWith(errors)
+      val id1           = Player.createPlayer
+      val id2           = Player.createPlayer
+      val expectedState = GameState.Starting(players = Set(id1, id2))
+      val expectedGame  = game.copy(state = expectedState)
+      game
+        .addPlayer(id1)
+        .flatMap(_.addPlayer(id2)) match
+        case Right(game) => game should be(expectedGame)
+        case Left(error) => fail(error)
     }
 
     "not allow three players to join" in {
-      val id1 = Player.newId
-      val id2 = Player.newId
-      val id3 = Player.newId
-      val game = Game()
-      game.validNel andThen
-        addPlayer(id1) andThen
-        addPlayer(id2) andThen
-        addPlayer(id3) match
-        case Valid(game)     => fail(s"Incorrectly added Player ${id3} to Game ${game.id}")
-        case Invalid(errors) => passIfMatched(errors, List(s"Game ${game.id} does not need any further players"))
+      val id1 = Player.createPlayer
+      val id2 = Player.createPlayer
+      val id3 = Player.createPlayer
+      game
+        .addPlayer(id1)
+        .flatMap(_.addPlayer(id2))
+        .flatMap(_.addPlayer(id3)) match
+        case Right(game) => fail(s"Unexpected $game")
+        case Left(error) => error should be(s"Cannot add player $id3")
     }
 
     "not allow the same player to join twice" in {
-      val id = Player.newId
-      val game = Game()
-      game.validNel andThen
-        addPlayer(id) andThen
-        addPlayer(id) match
-        case Valid(game)     => fail(s"Incorrectly added Player ${id} twice to Game ${game.id}")
-        case Invalid(errors) => passIfMatched(errors, List(s"Player ${id} has already joined Game ${game.id}"))
+      val id = Player.createPlayer
+      game
+        .addPlayer(id)
+        .flatMap(_.addPlayer(id)) match
+        case Right(game) => fail(s"Unexpected $game")
+        case Left(error) => error should be(s"Player $id already added")
     }
 
     "allow the game to be started with two players" in {
-      val id1 = Player.newId
-      val id2 = Player.newId
-      val game = Game()
-      game.validNel andThen
-        addPlayer(id1) andThen
-        addPlayer(id2) andThen
-        start match
-        case Valid(_)        => succeed
-        case Invalid(errors) => failWith(errors)
+      val id1 = Player.createPlayer
+      val id2 = Player.createPlayer
+      game
+        .addPlayer(id1)
+        .flatMap(_.addPlayer(id2))
+        .flatMap(_.start) match
+        case Right(game) => game.state should be(a[GameState.Discarding])
+        case Left(error) => fail(error)
     }
 
     "not allow the game to be started with less than two players" in {
-      val id1 = Player.newId
-      val game = Game()
-      game.validNel andThen
-        addPlayer(id1) andThen
-        start match
-        case Valid(game)     => fail(s"Incorrectly allowed Game ${game.id} to start")
-        case Invalid(errors) => passIfMatched(errors, List(s"Game ${game.id} requires more Players"))
+      val id1 = Player.createPlayer
+      game
+        .addPlayer(id1)
+        .flatMap(_.start) match
+        case Right(game) => fail(s"Unexpected $game")
+        case Left(error) => error should be(s"Cannot start game")
     }
 
   }

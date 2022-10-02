@@ -1,33 +1,28 @@
 package com.nigeleke.cribbage.model
 
-import Card.{Face, Suit}
-
-import java.util.UUID
 import scala.util.Random
 
 type Deck = Seq[Card]
 
 object Deck:
-  // Must be def, not val, so new CardIds are generated...
-  private[model] def fullSetOfCards: Seq[Card] = for
-    face <- Face.values
-    suit <- Suit.values
-  yield Card(face, suit)
+  val fullDeck: Deck = (for
+    face <- Card.faces
+    suit <- Card.suits
+  yield Card(face, suit)).toIndexedSeq
 
-  val handsToDeal = Game.maxPlayers
-  val cardsPerHandToDeal = 6
-
-  val fullSize: Int = fullSetOfCards.size
-
-  def shuffledDeck: Deck = Random.shuffle(fullSetOfCards)
-
-  def deal: (Deck, Seq[Hand]) =
-    val cards = shuffledDeck
-    val hands = (1 to handsToDeal).map(i => cards.drop((handsToDeal - i) * cardsPerHandToDeal).take(cardsPerHandToDeal))
-    val remainder = cards.drop(handsToDeal * cardsPerHandToDeal)
-    (remainder, hands)
+  def shuffledDeck: Deck = Random.shuffle(fullDeck)
 
 extension (deck: Deck)
+  def deal(numberOfHands: Int, cardsPerHand: Int): (Deck, Seq[Hand]) =
+    require(deck.size >= numberOfHands * cardsPerHand)
+    def dealHand(n: Int): Hand =
+      deck
+        .drop((numberOfHands - n) * cardsPerHand)
+        .take(cardsPerHand)
+    val hands: Seq[Hand]       = (1 to numberOfHands).map(dealHand)
+    val remainder: Deck        = deck.drop(numberOfHands * cardsPerHand)
+    (remainder, hands)
+
   def cut: (Deck, Card) =
     val card = deck.head
     (deck.filterNot(_ == card), card)

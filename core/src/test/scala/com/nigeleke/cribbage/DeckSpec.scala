@@ -1,7 +1,6 @@
 package com.nigeleke.cribbage
 
 import model.*
-import Card.*
 
 import org.scalatest.*
 import org.scalatest.matchers.should.Matchers
@@ -9,31 +8,32 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class DeckSpec extends AnyWordSpec with Matchers {
 
-  val fullDeck = Deck.shuffledDeck
+  val deck: Deck = Deck.shuffledDeck
 
   "A Full Deck" should {
 
     "contain 52 Cards" in {
-      fullDeck.size should be(52)
+      deck.size should be(52)
     }
 
     "contain all Cards for all Suits and Faces" in {
       val allCards = (for {
-        face <- Face.values
-        suit <- Suit.values
-      } yield (face, suit)).toSeq
+        face <- Card.faces
+        suit <- Card.suits
+      } yield (face, suit)).map(Card(_, _))
 
-      fullDeck.map(card => (card.face, card.suit)) should contain theSameElementsAs (allCards)
+      deck should contain theSameElementsAs (allCards)
     }
 
   }
 
   "A Deck" should {
     "allow a random card to be selected" in {
-      val (remaining, cut) = fullDeck.cut
-      fullDeck should contain(cut)
+      val (remaining, cut) = deck.cut
+      deck should contain(cut)
       remaining should not contain (cut)
-      remaining.size should be(fullDeck.size - 1)
+      remaining.size should be(deck.size - 1)
+      deck should contain allElementsOf (remaining)
     }
   }
 

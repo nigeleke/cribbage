@@ -1,9 +1,10 @@
 package com.nigeleke.cribbage.model
 
-import java.util.UUID
-
-type PlayerId = Player.Id
+case class Player(value: Player.Id) extends AnyVal {
+  override def toString: String = value.toString.takeRight(6)
+}
 
 object Player:
+  import java.util.UUID
   opaque type Id = UUID
-  def newId: PlayerId = UUID.randomUUID()
+  def createPlayer: Player = Player(UUID.randomUUID())

@@ -1,6 +1,9 @@
 package com.nigeleke.cribbage.model
 
-case class Score(back: Int, front: Int)
+case class Score(back: Int, front: Int) {
+  import Score.*
+  override def toString: String = s"[$back ${Ansi.arrowRight} $front]"
+}
 
 extension (score: Score)
 
@@ -14,3 +17,6 @@ extension (score: Score)
 object Score:
 
   val zero = Score(0, 0)
+
+  object Ansi:
+    val arrowRight = "\u00bb"

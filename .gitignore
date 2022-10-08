@@ -41,6 +41,7 @@ pnpm-debug.log*
 .vscode
 .bloop/
 .metals/
+metals.sbt
 *.suo
 *.ntvs*
 *.njsproj

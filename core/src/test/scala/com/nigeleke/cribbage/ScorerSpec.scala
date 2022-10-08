@@ -1,10 +1,10 @@
 package com.nigeleke.cribbage
 
 import model.*
-import model.Card.*
+import Card.*
 import Face.*, Suit.*
+import Cards.*
 import Points.*
-
 import util.*
 
 import org.scalatest.*
@@ -27,7 +27,7 @@ class ScorerSpec extends AnyWordSpec with Matchers {
 
   "ScoreCut" should {
     "score 2 for his heals" in {
-      Deck.fullDeck.foreach { card =>
+      fullDeck.toSeq.foreach { card =>
         val expectedPoints = Cut(heals = if card.face == Card.Face.Jack then 2 else 0)
         Scorer.forCut(card) should be(expectedPoints)
       }
@@ -183,72 +183,68 @@ class ScorerSpec extends AnyWordSpec with Matchers {
     }
 
     def assertScore(faceSuits: Seq[FaceSuit], cutFaceSuit: FaceSuit, expectedScore: Cards) =
-      val cards = faceSuitsToCards(faceSuits)
+      val cards = handOf(faceSuitsToCards(faceSuits))
       val cut   = faceSuitToCard(cutFaceSuit)
       Scorer.forCards(cards, cut) should be(expectedScore)
 
     "score cards with fifteens" in {
       val cut   = (Queen, Hearts)
+      // format: off
       val cards = Seq(
-        Seq((Five, Clubs), (Nine, Hearts), (Four, Diamonds), (Two, Spades)) ->
-          Cards(fifteens = 4),
-        Seq((Ace, Clubs), (Four, Clubs), (Ten, Clubs), (King, Hearts))      ->
-          Cards(fifteens = 6)
+        Seq((Five, Clubs), (Nine, Hearts), (Four, Diamonds), (Two, Spades)) -> Points.Cards(fifteens = 4),
+        Seq((Ace, Clubs), (Four, Clubs), (Ten, Clubs), (King, Hearts))      -> Points.Cards(fifteens = 6)
       )
+      // format: on
       checkCards(cards, cut)
     }
 
     "score cards with pairs" in {
       val cut   = (Ace, Hearts)
+      // format: off
       val cards = Seq(
-        Seq((Five, Clubs), (Five, Hearts), (Ace, Diamonds), (Two, Spades))     ->
-          Cards(pairs = 4),
-        Seq((Queen, Clubs), (Three, Clubs), (Three, Diamonds), (King, Hearts)) ->
-          Cards(pairs = 2),
-        Seq((Four, Hearts), (Four, Clubs), (Four, Diamonds), (Five, Hearts))   ->
-          Cards(pairs = 6),
-        Seq((Four, Hearts), (Four, Clubs), (Four, Diamonds), (Four, Spades))   ->
-          Cards(pairs = 12)
+        Seq((Five, Clubs), (Five, Hearts), (Ace, Diamonds), (Two, Spades))     -> Points.Cards(pairs = 4),
+        Seq((Queen, Clubs), (Three, Clubs), (Three, Diamonds), (King, Hearts)) -> Points.Cards(pairs = 2),
+        Seq((Four, Hearts), (Four, Clubs), (Four, Diamonds), (Five, Hearts))   -> Points.Cards(pairs = 6),
+        Seq((Four, Hearts), (Four, Clubs), (Four, Diamonds), (Four, Spades))   -> Points.Cards(pairs = 12)
       )
+      // format: on
       checkCards(cards, cut)
     }
 
     "score cards with runs" in {
       val cut   = (Ace, Diamonds)
+      // format: off
       val cards = Seq(
-        Seq((Two, Clubs), (Jack, Hearts), (Queen, Diamonds), (King, Spades))  ->
-          Cards(runs = 3),
-        Seq((Jack, Clubs), (Jack, Hearts), (Queen, Diamonds), (King, Spades)) ->
-          Cards(pairs = 2, runs = 6),
-        Seq((Ten, Clubs), (Jack, Hearts), (Queen, Diamonds), (King, Spades))  ->
-          Cards(runs = 4),
-        Seq((Two, Hearts), (Two, Clubs), (Three, Diamonds), (Four, Spades))   ->
-          Cards(pairs = 2, runs = 8),
-        Seq((Two, Hearts), (Five, Clubs), (Three, Diamonds), (Four, Spades))  ->
-          Cards(runs = 5, fifteens = 2)
+        Seq((Two, Clubs), (Jack, Hearts), (Queen, Diamonds), (King, Spades))  -> Points.Cards(runs = 3),
+        Seq((Jack, Clubs), (Jack, Hearts), (Queen, Diamonds), (King, Spades)) -> Points.Cards(pairs = 2, runs = 6),
+        Seq((Ten, Clubs), (Jack, Hearts), (Queen, Diamonds), (King, Spades))  -> Points.Cards(runs = 4),
+        Seq((Two, Hearts), (Two, Clubs), (Three, Diamonds), (Four, Spades))   -> Points.Cards(pairs = 2, runs = 8),
+        Seq((Two, Hearts), (Five, Clubs), (Three, Diamonds), (Four, Spades))  -> Points.Cards(runs = 5, fifteens = 2)
       )
+      // format: on
       checkCards(cards, cut)
     }
 
     "score cards with one for his heels" in {
       val cut   = (Ace, Hearts)
+      // format: off
       val cards = Seq(
-        Seq((Two, Clubs), (Jack, Hearts), (Ten, Diamonds), (Six, Spades))   -> Cards(heels = 1),
-        Seq((Two, Clubs), (Jack, Diamonds), (Ten, Diamonds), (Six, Spades)) -> Cards()
+        Seq((Two, Clubs), (Jack, Hearts), (Ten, Diamonds), (Six, Spades))   -> Points.Cards(heels = 1),
+        Seq((Two, Clubs), (Jack, Diamonds), (Ten, Diamonds), (Six, Spades)) -> Points.Cards()
       )
+      // format: on
       checkCards(cards, cut)
     }
 
     "score cards with flushes" in {
       val cut   = (Ace, Diamonds)
+      // format: off
       val cards = Seq(
-        Seq((Two, Diamonds), (Seven, Diamonds), (Queen, Diamonds), (King, Diamonds)) ->
-          Cards(flushes = 5),
-        Seq((Two, Hearts), (Seven, Hearts), (Queen, Hearts), (King, Hearts))         ->
-          Cards(flushes = 4),
-        Seq((Two, Diamonds), (Seven, Diamonds), (Queen, Diamonds), (King, Clubs))    ->
-          Cards()
+        Seq((Two, Diamonds), (Seven, Diamonds), (Queen, Diamonds), (King, Diamonds)) -> Points.Cards(flushes = 5),
+        Seq((Two, Hearts), (Seven, Hearts), (Queen, Hearts), (King, Hearts))         -> Points.Cards(flushes = 4),
+        Seq((Two, Diamonds), (Seven, Diamonds), (Queen, Diamonds), (King, Clubs))    -> Points.Cards()
       )
+      // format: on
       checkCards(cards, cut)
     }
 

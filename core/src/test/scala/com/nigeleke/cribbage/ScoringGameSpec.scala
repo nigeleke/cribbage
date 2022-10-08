@@ -1,9 +1,10 @@
 package com.nigeleke.cribbage
 
 import model.*
-import model.Card.{Face, Suit}
+import Card.{Face, Suit}
 import Face.*, Suit.*
-import model.GameState.*
+import Cards.*
+import GameState.*
 
 import org.scalatest.*
 import org.scalatest.matchers.should.*
@@ -11,26 +12,30 @@ import org.scalatest.wordspec.*
 
 class ScoringGameSpec extends AnyWordSpec with Matchers:
 
+  // TODO: test the empty hands after scoring
+  // TODO: test the sequence of scoring
+  // TODO: Check runs scores for 2,3,3,4 in Play and in Cards.
+
   "A ScoringGame" should {
 
-    // format: off
     def scoringState(
-                     dealerScore: Score = Score.zero,
-                     poneScore: Score = Score.zero
-                   )(
-      test: Scoring => Unit
+        dealerScore: Score = Score.zero,
+        poneScore: Score = Score.zero
+    )(
+        test: Scoring => Unit
     ) =
+      // format: off
       val (dealer, pone) = (Player.createPlayer, Player.createPlayer)
       val state          =
         Scoring(
           Map(dealer -> dealerScore, pone -> poneScore),
           Map(
-            dealer -> Seq(Card(Ten, Diamonds), Card(Ten, Spades), Card(Five, Hearts), Card(Four, Clubs)),
-            pone   -> Seq(Card(King, Diamonds), Card(King, Spades), Card(Eight, Diamonds), Card(Seven, Spades))
+            dealer -> handOf(Seq(Card(Ten, Diamonds), Card(Ten, Spades), Card(Five, Hearts), Card(Four, Clubs))),
+            pone   -> handOf(Seq(Card(King, Diamonds), Card(King, Spades), Card(Eight, Diamonds), Card(Seven, Spades)))
           ),
           dealer,
           pone,
-          Seq(Card(Ten, Hearts), Card(Ten, Clubs), Card(King, Hearts), Card(King, Clubs)),
+          cribOf(Seq(Card(Ten, Hearts), Card(Ten, Clubs), Card(King, Hearts), Card(King, Clubs))),
           Card(Ace, Spades)
         )
       test(state)

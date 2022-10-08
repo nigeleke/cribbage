@@ -1,7 +1,9 @@
 package com.nigeleke.cribbage
 
 import model.*
+import Cards.*
 import GameState.*
+
 import org.scalatest.*
 import org.scalatest.matchers.should.*
 import org.scalatest.wordspec.*
@@ -81,14 +83,14 @@ class StartingGameSpec extends AnyWordSpec with Matchers:
         case Right(Game(Discarding(deck, scores, hands, dealer, pone, crib))) =>
           scores(dealer) should be(Score(0, 0))
           scores(pone) should be(Score(0, 0))
-          crib should be(empty)
-          val dealerHand = hands(dealer)
-          val poneHand   = hands(pone)
+          crib.toSeq should be(empty)
+          val dealerHand = hands(dealer).toSeq
+          val poneHand   = hands(pone).toSeq
           dealerHand.size should be(cardsPerHand)
           poneHand.size should be(cardsPerHand)
-          deck.size should be(Deck.fullDeck.size - maxPlayers * cardsPerHand)
-          dealerHand.toSet intersect deck.toSet should be(empty)
-          poneHand.toSet intersect deck.toSet should be(empty)
+          deck.size should be(fullDeck.size - playersInGame * cardsPerHand)
+          dealerHand.toSet intersect deck.toSeq.toSet should be(empty)
+          poneHand.toSet intersect deck.toSeq.toSet should be(empty)
           dealerHand.toSet intersect poneHand.toSet should be(empty)
         case other                                                            => fail(s"Unexpected state $other")
     }

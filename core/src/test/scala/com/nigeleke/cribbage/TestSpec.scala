@@ -1,6 +1,7 @@
 package com.nigeleke.cribbage
 
 import com.nigeleke.cribbage.model.*
+import Cards.*
 import GameState.*
 
 import org.scalatest.*
@@ -14,11 +15,11 @@ class TestSpec extends AnyWordSpec with Matchers:
     "display pretty GameStates" when {
       val players        = Set(Player.createPlayer, Player.createPlayer)
       val (dealer, pone) = (players.head, players.last)
-      val deck           = Deck.fullDeck
+      val deck           = fullDeck
       val scores         = players.map((_, Score.zero)).toMap
-      val hands          = players.map((_, deck.take(2))).toMap
-      val crib           = deck.take(4)
-      val cut            = deck.last
+      val hands          = players.map((_, handOf(deck.toSeq.take(2)))).toMap
+      val crib           = cribOf(deck.toSeq.take(4))
+      val cut            = deck.toSeq.last
       val plays          = Plays(dealer, Seq.empty, Seq.empty)
 
       val sPlayers         = players.map(_.toPrettyString).mkString(", ")

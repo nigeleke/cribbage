@@ -1,8 +1,9 @@
 package com.nigeleke.cribbage
 
 import model.*
-import model.Card.*
+import Card.*
 import Face.*, Suit.*
+import Cards.*
 import GameState.*
 
 import org.scalatest.*
@@ -19,9 +20,9 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
   ) =
     // format: off
     val (dealer, pone) = (Player.createPlayer, Player.createPlayer)
-    val dealerHand = Seq(Card(Ten, Diamonds), Card(Ten, Spades), Card(Five, Hearts), Card(Four, Clubs))
-    val poneHand   = Seq(Card(King, Diamonds), Card(King, Spades), Card(Eight, Diamonds), Card(Seven, Spades))
-    val crib  = Seq(Card(Ten, Hearts), Card(Ten, Clubs), Card(King, Hearts), Card(King, Clubs))
+    val dealerHand = handOf(Seq(Card(Ten, Diamonds), Card(Ten, Spades), Card(Five, Hearts), Card(Four, Clubs)))
+    val poneHand   = handOf(Seq(Card(King, Diamonds), Card(King, Spades), Card(Eight, Diamonds), Card(Seven, Spades)))
+    val crib  = cribOf(Seq(Card(Ten, Hearts), Card(Ten, Clubs), Card(King, Hearts), Card(King, Clubs)))
     val cut   = Card(Ace, Spades)
     val state = Playing(
       Map(dealer -> dealerScore, pone -> poneScore),
@@ -38,7 +39,7 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
   def playingStateFinished(test: Playing => Unit) =
     // format: off
     val (dealer, pone) = (Player.createPlayer, Player.createPlayer)
-    val crib  = Seq(Card(Ten, Hearts), Card(Ten, Clubs), Card(King, Hearts), Card(King, Clubs))
+    val crib  = cribOf(Seq(Card(Ten, Hearts), Card(Ten, Clubs), Card(King, Hearts), Card(King, Clubs)))
     val cut   = Card(Ace, Spades)
     val plays = Plays(
       pone,
@@ -59,7 +60,7 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
     )
     val state = Playing(
       Map(dealer -> Score.zero, pone -> Score.zero),
-      Map(dealer -> Hand.empty, pone -> Hand.empty),
+      Map(dealer -> emptyHand, pone -> emptyHand),
       dealer,
       pone,
       crib,
@@ -73,10 +74,10 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
     "allow the next Player to Play" when {
       "they have at least one valid cardId for the CurrentPlay" in playingState() {
         case state @ Playing(_, hands, dealer, pone, _, _, _) =>
-          val card = hands(pone).head
+          val card = hands(pone).toSeq.head
           Game(state).playCard(pone, card) match
             case Right(Game(Playing(_, hands, _, _, _, _, plays))) =>
-              hands(pone) should not contain (card)
+              hands(pone).toSeq should not contain (card)
               plays.inPlay.head should be(Plays.Laid(pone, card))
               plays.nextPlayer should be(dealer)
             case other                                             => fail(s"Unexpected state $other")
@@ -86,7 +87,7 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
     "not allow the next Player to Play" when {
       "it's not their turn" in playingState() {
         case state @ Playing(_, hands, dealer, _, _, _, _) =>
-          val card = hands(dealer).head
+          val card = hands(dealer).toSeq.head
           Game(state).playCard(dealer, card) match
             case Left(error) => error should be(s"Cannot play card")
             case other       => fail(s"Unexpected state $other")
@@ -142,7 +143,7 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
 
     "disallow discarding more cards to the crib" in playingState() {
       case state @ Playing(_, hands, _, pone, _, _, _) =>
-        Game(state).discardCribCards(pone, hands(pone).take(2)) match
+        Game(state).discardCribCards(pone, hands(pone).toSeq.take(2)) match
           case Left(error) => error should be("Cannot discard cards")
           case other       => fail(s"Unexpected state $other")
     }
@@ -270,14 +271,14 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
       }
 
       "winning point(s) scored during Play" in playingState(Score(0, 120), Score(0, 120)) {
-        case state@Playing(_, _, dealer, pone, _, _, _) =>
+        case state @ Playing(_, _, dealer, pone, _, _, _) =>
           Game(state)
             .playCard(pone, Card(King, Diamonds))
             .flatMap(_.playCard(dealer, Card(Five, Hearts))) match
             case Right(Game(Finished(scores))) =>
               scores(dealer) should be(Score(120, 122))
               scores(pone) should be(Score(0, 120))
-            case other => fail(s"Unexpected state $other")
+            case other                         => fail(s"Unexpected state $other")
       }
 
     }

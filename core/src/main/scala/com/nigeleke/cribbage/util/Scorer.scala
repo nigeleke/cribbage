@@ -1,6 +1,7 @@
 package com.nigeleke.cribbage.util
 
 import com.nigeleke.cribbage.model.*
+import Cards.*
 import Points.*
 
 object Scorer:
@@ -54,8 +55,8 @@ object Scorer:
     val endOfPlayPoints        = if isEndPlay then runningTotalScore else 0
     EndPlay(endOfPlayPoints)
 
-  def forCards(cards: Seq[Card], cut: Card): Cards =
-    val allCards = cards :+ cut
+  def forCards(cards: Hand | Crib, cut: Card): Cards =
+    val allCards = cards.toSeq :+ cut
 
     val fifteens =
       val nCards    = 2 to 5
@@ -92,14 +93,14 @@ object Scorer:
       count * length
 
     val heels = (for {
-      card <- cards if card.face == Card.Face.Jack && card.suit == cut.suit
+      card <- cards.toSeq if card.face == Card.Face.Jack && card.suit == cut.suit
     } yield card).length
 
     val flushes =
-      val allFlush   = (cards :+ cut).groupBy(_.suit).size == 1
-      val cardsFlush = cards.groupBy(_.suit).size == 1
+      val allFlush   = allCards.groupBy(_.suit).size == 1
+      val cardsFlush = cards.toSeq.groupBy(_.suit).size == 1
       if (allFlush) 5
       else if (cardsFlush) 4
       else 0
 
-    Cards(pairs = pairs, fifteens = fifteens, runs = runs, flushes = flushes, heels = heels)
+    Points.Cards(pairs = pairs, fifteens = fifteens, runs = runs, flushes = flushes, heels = heels)

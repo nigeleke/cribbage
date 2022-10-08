@@ -1,13 +1,12 @@
 package com.nigeleke.cribbage.model
 
+import Cards.*
+
 import scala.util.Random
 
-trait GameState
+sealed trait GameState
 
 object GameState:
-  extension (cards: Seq[Card])
-    def toPrettyString = cards.map(_.toPrettyString).mkString("[", " ", "]")
-
   private def prettyHands(hands: Map[Player, Hand]) =
     hands.map { (p, h) => s"${p.toPrettyString}: ${h.toPrettyString}" }.mkString(", ")
 
@@ -16,6 +15,10 @@ object GameState:
   private def prettyScores(scores: Map[Player, Score]) =
     scores.map((p, s) => s"${p.toPrettyString}: ${s.toPrettyString}").mkString(", ")
 
+  /** The Starting state for a game, while players are joining.
+    * @param players
+    *   The currently joined players.
+    */
   case class Starting(
       players: Set[Player]
   ) extends GameState:
@@ -25,6 +28,20 @@ object GameState:
            |  players:     $sPlayers
            |)""".stripMargin
 
+  /** The state of play while players are discarding into the crib,
+    * @param deck
+    *   The remaining deck of cards after dealing.
+    * @param scores
+    *   The current scores.
+    * @param hands
+    *   The player's hands, with discarded cards removed if applicable.
+    * @param dealer
+    *   The current dealer.
+    * @param pone
+    *   The dealer's opponent.
+    * @param crib
+    *   The current crib discards.
+    */
   case class Discarding(
       deck: Deck,
       scores: Map[Player, Score],
@@ -48,6 +65,22 @@ object GameState:
            |  crib:        $sCrib
            |)""".stripMargin
 
+  /** The state of the game while making plays.
+    * @param scores
+    *   The current scores.
+    * @param hands
+    *   The player's current hands, after plays have been made.
+    * @param dealer
+    *   The current dealer.
+    * @param pone
+    *   The dealer's opponent.
+    * @param crib
+    *   The previously discarded crib,
+    * @param cut
+    *   The cut that was made prior to play.
+    * @param plays
+    *   The current and previous plays.
+    */
   case class Playing(
       scores: Map[Player, Score],
       hands: Map[Player, Hand],
@@ -74,6 +107,20 @@ object GameState:
            |  plays:       $sPlays
            |)""".stripMargin
 
+  /** The game in its Scoring state.
+    * @param scores
+    *   The current scores.
+    * @param hands
+    *   The player's hands (if not scored).
+    * @param dealer
+    *   The current dealer.
+    * @param pone
+    *   The dealer's opponent.
+    * @param crib
+    *   The crib (if not scored).
+    * @param cut
+    *   The cut that was made prior to play.
+    */
   case class Scoring(
       scores: Map[Player, Score],
       hands: Map[Player, Hand],
@@ -97,6 +144,10 @@ object GameState:
            |  cut:         $sCut
            |)""".stripMargin
 
+  /** A finished game.
+    * @param scores
+    *   The final scores.
+    */
   case class Finished(
       scores: Map[Player, Score]
   ) extends GameState:

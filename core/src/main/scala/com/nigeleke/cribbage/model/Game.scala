@@ -6,27 +6,31 @@ import scala.util.Random
 
 case class Game(state: GameState)
 
+object Game:
+  def create = Game(Starting(Set.empty))
+
 extension (game: Game)
+  def players: Set[Player] =
+    game.state match
+      case Starting(players)                 => players
+      case Discarding(_, scores, _, _, _, _) => scores.keySet
+      case Playing(scores, _, _, _, _, _, _) => scores.keySet
+      case Scoring(scores, _, _, _, _, _)    => scores.keySet
+      case Finished(scores)                  => scores.keySet
 
-  def players: Set[Player] = game.state match
-    case Starting(players)                 => players
-    case Discarding(_, scores, _, _, _, _) => scores.keySet
-    case Playing(scores, _, _, _, _, _, _) => scores.keySet
-    case Scoring(scores, _, _, _, _, _)    => scores.keySet
-    case Finished(scores)                  => scores.keySet
-
-  // Dangerous call when Starting...
   def opponent(player: Player): Player =
+    require(game.players.contains(player))
+    require(game.players.size == maxPlayers)
     val others = players.filterNot(_ == player)
     others.head
 
-  // Player not verified...
-  def scores(player: Player): Score = game.state match
-    case Starting(players)                 => Score.zero
-    case Discarding(_, scores, _, _, _, _) => scores.get(player).getOrElse(Score.zero)
-    case Playing(scores, _, _, _, _, _, _) => scores.get(player).getOrElse(Score.zero)
-    case Scoring(scores, _, _, _, _, _)    => scores.get(player).getOrElse(Score.zero)
-    case Finished(scores)                  => scores.get(player).getOrElse(Score.zero)
+  def scores(player: Player): Score =
+    game.state match
+      case Starting(_)                       => Score.zero
+      case Discarding(_, scores, _, _, _, _) => scores.get(player).getOrElse(Score.zero)
+      case Playing(scores, _, _, _, _, _, _) => scores.get(player).getOrElse(Score.zero)
+      case Scoring(scores, _, _, _, _, _)    => scores.get(player).getOrElse(Score.zero)
+      case Finished(scores)                  => scores.get(player).getOrElse(Score.zero)
 
   def withState(state: GameState) = Right(game.copy(state = state))
   def withError(message: String)  = Left(message)
@@ -78,8 +82,8 @@ extension (game: Game)
           if updatedScore.points >= winningPoints
           then withState(Finished(updatedScores))
           else withState(Playing(updatedScores, hands, dealer, pone, crib, cut, plays))
-        else withError("Cannot discard cards")
-      case _                                                   => withError("Cannot discard cards")
+        else withError("Cannot start play")
+      case _                                                   => withError("Cannot start play")
 
   def playCard(player: Player, card: Card): Either[String, Game] =
     game.state match
@@ -99,8 +103,8 @@ extension (game: Game)
           if updatedScore.points >= winningPoints
           then withState(Finished(updatedScores))
           else withState(p.copy(scores = updatedScores, hands = updatedHands, plays = updatedPlays))
-        else withError("Cannot play")
-      case _                                             => withError("Cannot discard cards")
+        else withError("Cannot play card")
+      case _                                             => withError("Cannot play card")
 
   def pass(player: Player): Either[String, Game] =
     game.state match
@@ -122,7 +126,7 @@ extension (game: Game)
           then withState(Finished(updatedScores))
           else withState(p.copy(scores = updatedScores, plays = updatedPlays1))
         else withError("Cannot pass")
-      case _                                             => withError("Cannot discard cards")
+      case _                                             => withError("Cannot pass")
 
   def regatherPlays: Either[String, Game] =
     game.state match
@@ -173,7 +177,11 @@ extension (game: Game)
     game.state match
       case Scoring(scores, _, dealer, pone, _, _) =>
         withState(newDiscarding(scores, pone, dealer))
-      case _                                      => withError("Cannot score crib")
+      case _                                      => withError("Cannot swap dealer")
 
-object Game:
-  def create = Game(Starting(players = Set.empty))
+  def winner: Option[Player] =
+    game.state match
+      case Finished(scores) => scores.toList.sortBy(_._2.points).lastOption.map(_._1)
+      case _                => None
+
+  def loser: Option[Player] = winner.map(opponent)

@@ -21,7 +21,7 @@ class ScoringGameSpec extends AnyWordSpec with Matchers:
       test: Scoring => Unit
     ) =
       val (dealer, pone) = (Player.createPlayer, Player.createPlayer)
-      val state          = 
+      val state          =
         Scoring(
           Map(dealer -> dealerScore, pone -> poneScore),
           Map(
@@ -81,6 +81,18 @@ class ScoringGameSpec extends AnyWordSpec with Matchers:
       }
     }
 
+    "report scores for existing players" in scoringState(Score(0, 10), Score(0, 20)) {
+      case state @ Scoring(_, _, dealer, pone, _, _) =>
+        Game(state).scores(dealer) should be(Score(0, 10))
+        Game(state).scores(pone) should be(Score(0, 20))
+    }
+
+    "report scores for non-existing players as zero" in scoringState(Score(0, 10), Score(0, 20)) {
+      case state: Scoring =>
+        val player = Player.createPlayer
+        Game(state).scores(player) should be(Score.zero)
+    }
+
     "swap the Dealer" in scoringState() { case state @ Scoring(_, _, dealer0, pone0, _, _) =>
       Game(state).swapDealer match
         case Right(Game(Discarding(_, _, _, dealer1, pone1, _))) =>
@@ -95,6 +107,11 @@ class ScoringGameSpec extends AnyWordSpec with Matchers:
           hands.values.map(_.size) should be(Seq(6, 6))
           crib.size should be(0)
         case other                                            => fail(s"Unexpected state $other")
+    }
+
+    "will not declare winner in an unfinished game" in scoringState() { state =>
+      Game(state).winner should be(None)
+      Game(state).loser should be(None)
     }
 
   }

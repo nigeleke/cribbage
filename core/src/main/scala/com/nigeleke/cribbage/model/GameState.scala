@@ -2,7 +2,7 @@ package com.nigeleke.cribbage.model
 
 import scala.util.Random
 
-sealed trait GameState
+trait GameState
 
 object GameState:
   case class Starting(

@@ -88,7 +88,7 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
         case state @ Playing(_, hands, dealer, _, _, _, _) =>
           val card = hands(dealer).head
           Game(state).playCard(dealer, card) match
-            case Left(error) => error should be(s"Cannot play")
+            case Left(error) => error should be(s"Cannot play card")
             case other       => fail(s"Unexpected state $other")
       }
 
@@ -99,7 +99,7 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
             .flatMap(_.playCard(dealer, Card(Ten, Diamonds)))
             .flatMap(_.playCard(pone, Card(King, Spades)))
             .flatMap(_.playCard(dealer, Card(Five, Hearts))) match
-            case Left(error) => error should be(s"Cannot play")
+            case Left(error) => error should be(s"Cannot play card")
             case other       => fail(s"Unexpected state $other")
       }
     }
@@ -138,6 +138,19 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
             case Left(error) => error should be("Cannot pass")
             case other       => fail(s"Unexpected state $other")
       }
+    }
+
+    "disallow discarding more cards to the crib" in playingState() {
+      case state @ Playing(_, hands, _, pone, _, _, _) =>
+        Game(state).discardCribCards(pone, hands(pone).take(2)) match
+          case Left(error) => error should be("Cannot discard cards")
+          case other       => fail(s"Unexpected state $other")
+    }
+
+    "disallow re-starting play" in playingState() { case state @ Playing(_, _, _, pone, _, _, _) =>
+      Game(state).startPlay(pone) match
+        case Left(error) => error should be("Cannot start play")
+        case other       => fail(s"Unexpected state $other")
     }
 
     "score the Play" when {
@@ -241,7 +254,7 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
     }
 
     "be a WonGame" when {
-      "winning point(s) scored in Play" in playingState(Score(0, 120), Score(0, 120)) {
+      "winning point(s) scored at end of Play" in playingState(Score(0, 120), Score(0, 120)) {
         case state @ Playing(_, _, dealer, pone, _, _, _) =>
           Game(state)
             .playCard(pone, Card(King, Diamonds))
@@ -255,6 +268,18 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
               scores(pone) should be(Score(0, 120))
             case other                         => fail(s"Unexpected state $other")
       }
+
+      "winning point(s) scored during Play" in playingState(Score(0, 120), Score(0, 120)) {
+        case state@Playing(_, _, dealer, pone, _, _, _) =>
+          Game(state)
+            .playCard(pone, Card(King, Diamonds))
+            .flatMap(_.playCard(dealer, Card(Five, Hearts))) match
+            case Right(Game(Finished(scores))) =>
+              scores(dealer) should be(Score(120, 122))
+              scores(pone) should be(Score(0, 120))
+            case other => fail(s"Unexpected state $other")
+      }
+
     }
 
     "regather Plays" when {
@@ -281,4 +306,29 @@ class PlayingGameSpec extends AnyWordSpec with Matchers:
       }
     }
 
+    "disallow Score action" when {
+      "for pone hand" in playingState() { state =>
+        Game(state).scorePoneHand match
+          case Left(error) => error should be("Cannot score pone hand")
+          case other       => fail(s"Unexpected state $other")
+      }
+
+      "for dealer hand" in playingState() { state =>
+        Game(state).scoreDealerHand match
+          case Left(error) => error should be("Cannot score dealer hand")
+          case other       => fail(s"Unexpected state $other")
+      }
+
+      "for crib" in playingState() { state =>
+        Game(state).scoreCrib match
+          case Left(error) => error should be("Cannot score crib")
+          case other       => fail(s"Unexpected state $other")
+      }
+
+      "swapping dealer" in playingState() { state =>
+        Game(state).swapDealer match
+          case Left(error) => error should be("Cannot swap dealer")
+          case other       => fail(s"Unexpected state $other")
+      }
+    }
   }

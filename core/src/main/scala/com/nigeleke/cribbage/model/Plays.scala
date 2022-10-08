@@ -5,7 +5,7 @@ case class Plays(
     inPlay: Seq[Plays.Play],
     played: Seq[Plays.Play]
 ):
-  override def toString: String =
+  lazy val toPrettyString: String =
     val sInPlay = inPlay.mkString("[", ", ", "]")
     val sPlayed = played.mkString("[", ", ", "]")
     s"Plays( nextPlayer: $nextPlayer  inPlay: $sInPlay  played: $sPlayed )"

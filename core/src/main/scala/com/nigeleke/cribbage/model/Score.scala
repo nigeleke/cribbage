@@ -1,9 +1,8 @@
 package com.nigeleke.cribbage.model
 
-case class Score(back: Int, front: Int) {
+case class Score(back: Int, front: Int):
   import Score.*
-  override def toString: String = s"[$back ${Ansi.arrowRight} $front]"
-}
+  def toPrettyString: String = s"[$back ${Ansi.arrowRight} $front]"
 
 extension (score: Score)
 

@@ -2,7 +2,7 @@ package com.nigeleke.cribbage.model
 
 final case class Card(face: Card.Face, suit: Card.Suit):
   import Card.Ansi.*
-  override val toString = s"${suit.ansiColor}$face$suit$reset"
+  lazy val toPrettyString = s"${suit.ansiColor}${face.toPrettyString}${suit.toPrettyString}$reset"
 
 object Card:
   enum Face(val value: Int, val rank: Int, val smallFace: String):
@@ -19,14 +19,14 @@ object Card:
     case Jack  extends Face(10, 11, "J")
     case Queen extends Face(10, 12, "Q")
     case King  extends Face(10, 13, "K")
-    override val toString = smallFace
+    val toPrettyString = smallFace
 
   enum Suit(val smallSuit: String, val ansiColor: String):
     case Clubs    extends Suit(Ansi.club, Ansi.black)
     case Diamonds extends Suit(Ansi.diamond, Ansi.red)
     case Hearts   extends Suit(Ansi.heart, Ansi.red)
     case Spades   extends Suit(Ansi.spade, Ansi.black)
-    override val toString = smallSuit
+    val toPrettyString = smallSuit
 
   def faces = Face.values
   def suits = Suit.values

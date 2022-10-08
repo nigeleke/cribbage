@@ -14,42 +14,44 @@ class TestSpec extends AnyWordSpec with Matchers:
     "display pretty GameStates" when {
       val players        = Set(Player.createPlayer, Player.createPlayer)
       val (dealer, pone) = (players.head, players.last)
-      val sPlayers       = players.mkString(", ")
       val deck           = Deck.fullDeck
-      val sDeck          = deck.mkString("ArraySeq(", ", ", ")")
       val scores         = players.map((_, Score.zero)).toMap
-      val sScores        = scores.mkString(", ")
       val hands          = players.map((_, deck.take(2))).toMap
-      val sHands         = hands.mkString(", ")
       val crib           = deck.take(4)
-      val sCrib          = crib.mkString("ArraySeq(", ", ", ")")
       val cut            = deck.last
-      val sCut           = cut.toString
       val plays          = Plays(dealer, Seq.empty, Seq.empty)
-      val sPlays         = plays.toString
+
+      val sPlayers         = players.map(_.toPrettyString).mkString(", ")
+      val (sDealer, sPone) = (dealer.toPrettyString, pone.toPrettyString)
+      val sDeck            = deck.toPrettyString
+      val sScores          = scores.map((p, s) => s"${p.toPrettyString}: ${s.toPrettyString}").mkString(", ")
+      val sHands           = hands.map((p, h) => s"${p.toPrettyString}: ${h.toPrettyString}").mkString(", ")
+      val sCrib            = crib.toPrettyString
+      val sCut             = cut.toPrettyString
+      val sPlays           = plays.toPrettyString
 
       "Starting" in {
-        Starting(players).toString should be(s"""Starting(
+        Starting(players).toPrettyString should be(s"""Starting(
              |  players:     $sPlayers
              |)""".stripMargin)
       }
 
       "Discarding" in {
-        Discarding(deck, scores, hands, dealer, pone, crib).toString should be(s"""Discarding(
+        Discarding(deck, scores, hands, dealer, pone, crib).toPrettyString should be(s"""Discarding(
              |  deck:        $sDeck
              |  scores:      $sScores
              |  hands:       $sHands
-             |  dealer/pone: $dealer / $pone
+             |  dealer/pone: $sDealer / $sPone
              |  crib:        $sCrib
              |)""".stripMargin)
       }
 
       "Playing" in {
-        Playing(scores, hands, dealer, pone, crib, cut, plays).toString should be(
+        Playing(scores, hands, dealer, pone, crib, cut, plays).toPrettyString should be(
           s"""Playing(
              |  scores:      $sScores
              |  hands:       $sHands
-             |  dealer/pone: $dealer / $pone
+             |  dealer/pone: $sDealer / $sPone
              |  crib:        $sCrib
              |  cut:         $sCut
              |  plays:       $sPlays
@@ -58,11 +60,11 @@ class TestSpec extends AnyWordSpec with Matchers:
       }
 
       "Scoring" in {
-        Scoring(scores, hands, dealer, pone, crib, cut).toString should be(
+        Scoring(scores, hands, dealer, pone, crib, cut).toPrettyString should be(
           s"""Scoring(
              |  scores:      $sScores
              |  hands:       $sHands
-             |  dealer/pone: $dealer / $pone
+             |  dealer/pone: $sDealer / $sPone
              |  crib:        $sCrib
              |  cut:         $sCut
              |)""".stripMargin
@@ -70,7 +72,7 @@ class TestSpec extends AnyWordSpec with Matchers:
       }
 
       "Finished" in {
-        Finished(scores).toString should be(
+        Finished(scores).toPrettyString should be(
           s"""Finished(
              |  scores:      $sScores
              |)""".stripMargin

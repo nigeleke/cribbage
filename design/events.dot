@@ -4,196 +4,138 @@ digraph Cribbage {
 	edge [fontname="comic sans ms"]
 
 	subgraph Events {
-		node [color=orange];
+		node [color=orange, style="filled, rounded", fontname="comic sans ms", shape=rectangle];
+		DealerSelected
+		HandsDealt
+		DealerCribCardsDiscarded
+		PoneCribCardsDiscarded
+		CutMade
+		HisHeelsScored
+		PoneLaid
+		DealerLaid
+		PonePassed
+		DealerPassed
+		PlayPointsScored
+		PlayCompleted
+		PlaysCompleted
+		PoneHandScored
+		DealerHandScored
+		CribScored
+		DealerSwapped
+		GameFinished
+	}
 
-		subgraph cluster_GameStartedEvents {
-			label="Game Starting"
-			style=filled;
-			fillcolor=ghostwhite;
-
-			GameCreated
-			PlayerJoined
-			OpponentJoined
-			DealerSelected
-		}
-
-		subgraph cluster_GamePlayingEvents {
-			label="Game Playing";
-			style=filled;
-			fillcolor=ghostwhite;
-		
-			subgraph cluster_DealingPhase {
-				label="The Deal"
-				fillcolor=aliceblue;
-				HandsDealt
-				DealerCribCardsDiscarded
-				PoneCribCardsDiscarded
-				CutMade
-			}
-
-			subgraph cluster_PlayingPhase {
-				label="The Play"
-				fillcolor=aliceblue;
-				PoneLaid
-				PonePassed
-				DealerLaid
-				DealerPassed
-				PlayCompleted
-				PlaysCompleted
-			}
-
-			subgraph cluster_ScoringPhase {
-				label="The Score"
-				fillcolor=aliceblue;
-				PoneHandScored
-				DealerHandScored
-				DealerCribScored
-				DealerSwapped
-			}
-		}
-
-		subgraph cluster_GameCompletionEvents {
-			label="Game Completion";
-			style=filled;
-			fillcolor=ghostwhite;
-
-			PointsScored
-			GameCompleted
-		}
-
-		GameCreated -> PlayerJoined
-		GameCreated -> OpponentJoined
-
-		PlayerJoined -> DealerSelected
-		OpponentJoined -> DealerSelected
-
+	subgraph Timeline {
+		edge [style=invis]
 		DealerSelected -> HandsDealt
-
 		HandsDealt -> DealerCribCardsDiscarded
 		HandsDealt -> PoneCribCardsDiscarded
-
-		DealerCribCardsDiscarded -> CutMade
-		PoneCribCardsDiscarded -> CutMade
-
-		CutMade -> PointsScored
 		CutMade -> PoneLaid
-
-		PoneLaid -> PointsScored
-		PonePassed -> PointsScored
-		DealerLaid -> PointsScored
-		DealerPassed -> PointsScored
-
+		CutMade -> HisHeelsScored
+		PoneLaid -> PlayPointsScored
 		PoneLaid -> DealerLaid
 		PoneLaid -> DealerPassed
+		DealerLaid -> PlayPointsScored
 		DealerLaid -> PoneLaid
 		DealerLaid -> PonePassed
 		PonePassed -> DealerLaid
 		PonePassed -> DealerPassed -> PlayCompleted
 		DealerPassed -> PoneLaid
 		DealerPassed -> PonePassed -> PlayCompleted
-
-		PlayCompleted -> PoneLaid
 		PlayCompleted -> DealerLaid
-
-		PlayCompleted -> PlaysCompleted -> PoneHandScored
-
-		PoneHandScored -> PointsScored
-		DealerHandScored -> PointsScored
-		DealerCribScored -> PointsScored
-
+		PlayCompleted -> PoneLaid
+		PlayCompleted -> PlaysCompleted
+		PlaysCompleted -> PoneHandScored
 		PoneHandScored -> DealerHandScored
-		DealerHandScored -> DealerCribScored
-		DealerCribScored -> DealerSwapped
-		DealerSwapped -> HandsDealt
-
-		PointsScored -> GameCompleted
-	}
-
-	subgraph Issues {
-		node [color=red, fontcolor=white];
+		DealerHandScored -> CribScored
+		CribScored -> DealerSelected
+		HisHeelsScored -> GameFinished
+		PlayPointsScored -> GameFinished
+		PoneHandScored -> GameFinished
+		DealerHandScored -> GameFinished
+		CribScored -> GameFinished
+		PlayCompleted -> PlayPointsScored
 	}
 
 	subgraph BusinessProcesses {
-		node [color=purple, fontcolor=white];
-		CribbageRules
+		node [color=purple, style="filled", fontname="comic sans ms", fontcolor=white];
+		CutForDealer
+		BothPlayersPass
+		PlayerLaidTarget31
+		AllCardsLaid
+		Scored121
+	}
+
+	subgraph Policies {
+		node [color=orchid1, style="filled", fontname="comic sans ms", fontcolor=gray20, shape=rectangle];
+		DiscardPolicy [label="PlayerMustOwnCard\nMaxTwoDiscards"]
+		StartPlayPolicy [label="BothPlayersDiscarded"]
+		PlayPolicy [label="PlayerMustTakeTurns\nPlayerMustOwnCard\nTargetMustNotExceed31"]
+		PassPolicy [label="PlayerMustTakeTurns\nPlayerMustNotHoldPlayableCard"]
 	}
 
 	subgraph Commands {
-		node [color=blue, fontcolor=white];
-		CreateGame
-		JoinGame
-		CutForDeal
-		DealHands
+		node [color=deepskyblue3, style="filled", fontname="comic sans ms", fontcolor=white];
 		DiscardCribCards
-		MakeCut
 		LayCard
 		Pass
-		CompletePlay
-		CompletePlays
+	}
+
+	subgraph Actions {
+		node [color=lightblue, style="filled", fontname="comic sans ms", fontcolor=black];
+		edge [style=invis]
+		DealHands
+		PoneMakesCut
+		CheckForWinner
+		ScoreHisHeels
+		ScorePlay
+		CheckAllPlaysCompleted
 		ScorePoneHand
 		ScoreDealerHand
-		ScoreDealerCrib
-		SwapDealer
+		ScoreCrib
 	}
 
-	subgraph Actors {
-		node [fillcolor=lightyellow, color=black]
-		Player
-		Opponent
-		Dealer
-		Pone
+	subgraph {
+		CutForDealer -> DealerSelected -> DealHands
+		PoneMakesCut -> CutMade
+		BothPlayersPass -> PlayCompleted
+		PlayerLaidTarget31 -> PlayCompleted
+		AllCardsLaid -> PlaysCompleted
+		Scored121 -> GameFinished
+		DealHands -> HandsDealt -> DiscardCribCards
+		DiscardCribCards -> DiscardPolicy -> DealerCribCardsDiscarded
+		DiscardCribCards -> DiscardPolicy -> PoneCribCardsDiscarded
+		DealerCribCardsDiscarded -> StartPlayPolicy
+		PoneCribCardsDiscarded -> StartPlayPolicy
+		StartPlayPolicy -> PoneMakesCut
+		CutMade -> ScoreHisHeels -> HisHeelsScored
+		HisHeelsScored -> LayCard
+		HisHeelsScored -> CheckForWinner
+		CheckForWinner -> GameFinished
+		LayCard -> PlayPolicy
+		PlayPolicy -> PoneLaid
+		PlayPolicy -> DealerLaid
+		PoneLaid -> ScorePlay
+		DealerLaid -> ScorePlay
+		PoneLaid -> LayCard
+		PoneLaid -> Pass
+		DealerLaid -> LayCard
+		DealerLaid -> Pass
+		ScorePlay -> PlayPointsScored
+		Pass -> PassPolicy
+		PassPolicy -> PonePassed
+		PassPolicy -> DealerPassed
+		PonePassed -> ScorePlay
+		DealerPassed -> ScorePlay
+		PlayPointsScored -> CheckForWinner
+		ScorePlay -> PlayCompleted
+		PlayCompleted -> CheckAllPlaysCompleted
+		CheckAllPlaysCompleted -> LayCard
+		CheckAllPlaysCompleted -> PlaysCompleted
+		PlaysCompleted -> ScorePoneHand -> PoneHandScored -> CheckForWinner
+		PoneHandScored -> ScoreDealerHand -> DealerHandScored -> CheckForWinner
+		DealerHandScored -> ScoreCrib -> CribScored -> CheckForWinner
+		ScoreCrib -> DealerSwapped -> DealHands
 	}
-
-	subgraph Aggregates {
-		node [color=yellow];
-		Game
-		User
-	}
-
-	subgraph ExternalSystems {
-		node [color=magenta];
-	}
-
-	subgraph Views {
-		node [color=green];
-	}
-
-	CreateGame -> GameCreated
-	JoinGame -> PlayerJoined
-	JoinGame -> OpponentJoined
-	CutForDeal -> DealerSelected
-	DealHands -> HandsDealt
-	DiscardCribCards -> DealerCribCardsDiscarded
-	DiscardCribCards -> PoneCribCardsDiscarded
-	MakeCut -> CutMade
-	LayCard -> PoneLaid
-	LayCard -> DealerLaid
-	Pass -> PonePassed
-	Pass -> DealerPassed
-	CompletePlay -> PlayCompleted
-	CompletePlays -> PlaysCompleted
-	ScorePoneHand -> PoneHandScored
-	ScoreDealerHand -> DealerHandScored
-	ScoreDealerCrib -> DealerCribScored
-	SwapDealer -> DealerSwapped
-
-	User -> CreateGame
-	Player -> JoinGame
-	Opponent -> JoinGame
-	CribbageRules -> CutForDeal
-	Dealer -> DealHands
-	Pone -> DiscardCribCards
-	Dealer -> DiscardCribCards
-	CribbageRules -> MakeCut
-	Pone -> LayCard
-	Dealer -> LayCard
-	Pone -> Pass
-	Dealer -> Pass
-	CribbageRules -> CompletePlay
-	CribbageRules -> CompletePlays
-	CribbageRules -> ScorePoneHand
-	CribbageRules -> ScoreDealerHand
-	CribbageRules -> ScoreDealerCrib
-	CribbageRules -> SwapDealer
 
 }

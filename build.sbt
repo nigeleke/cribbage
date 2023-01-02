@@ -1,7 +1,8 @@
-val scala3Version = "3.2.0"
+val scala3Version = "3.2.2-RC2"
 
-val catsVersion      = "2.7.0"
-val scalatestVersion = "3.2.13"
+val catsVersion          = "2.9.0"
+val catsScalatestVersion = "2.1.5"
+val scalatestVersion     = "3.2.14"
 
 lazy val root = project
   .in(file("."))

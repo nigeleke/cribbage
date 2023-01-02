@@ -1,41 +1,24 @@
-ThisBuild / organization := "com.nigeleke"
-ThisBuild / scalaVersion := "2.13.2"
-ThisBuild / version      := "0.1-SNAPSHOT"
+val scala3Version = "3.2.2-RC2"
 
-// License
-ThisBuild / organizationName := "Nigel Eke"
-ThisBuild / startYear := Some(2020)
-ThisBuild / licenses += ("AGPL-3.0-or-later", new URL("https://www.gnu.org/licenses/agpl-3.0.txt"))
+val catsVersion          = "2.9.0"
+val catsScalatestVersion = "2.1.5"
+val scalatestVersion     = "3.2.14"
 
-val akkaVersion = "2.6.8"
-val logbackVersion = "1.2.3"
-val scalaTestVersion = "3.1.2"
-
-lazy val root = (project in file("."))
+lazy val root = project
+  .in(file("."))
   .settings(
-    name := "cribbage"
+    name    := "cribbage",
+    version := "0.1.0-SNAPSHOT"
   )
-  .aggregate(backend, model)
+  .aggregate(core)
 
-lazy val backend = project
+lazy val core = project
+  .in(file("core"))
   .settings(
-    scalacOptions in Compile ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlog-reflective-calls", "-Xlint"),
-    scalacOptions in Test ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlog-reflective-calls", "-Xlint"),
-    javacOptions in Compile ++= Seq("-Xlint:unchecked", "-Xlint:deprecation"),
+    name         := "cribbage-core",
+    scalaVersion := scala3Version,
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
-      "com.typesafe.akka" %% "akka-persistence-typed" % akkaVersion,
-      "ch.qos.logback" % "logback-classic" % logbackVersion,
-      "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % "test",
-      "com.typesafe.akka" %% "akka-persistence-testkit" % akkaVersion % "test",
-      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
-    )
-  )
-  .dependsOn(model)
-
-lazy val model = project
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+      "org.scalactic" %% "scalactic" % scalatestVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
     )
   )

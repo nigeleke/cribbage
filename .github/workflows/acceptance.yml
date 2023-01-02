@@ -1,0 +1,126 @@
+# Run acceptance-cycle on develop commits.
+#
+# Acceptance cycle comprises:
+# - run tests on develop
+# - release into main with bumped versions
+# - publish site, coverage reports and API documentation to https://nigeleke.github.io
+#
+name: Acceptance Cycle
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install xmllint
+        run: sudo apt-get install -y libxml2-utils
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: "sbt"
+
+      - name: Compile
+        run: sbt clean compile
+
+      - name: License Header Check
+        run: sbt headerCheck
+
+      - name: Test
+        run: sbt coverage test
+
+      - name: Coverage Report
+        run: |
+          sbt coverageAggrgate
+          export COVERAGE=$(xmllint --xpath "(/scoverage/@statement-rate + /scoverage/@branch-rate) div 2" target/scala-2.12/scoverage-report/scoverage.xml)
+          if [ $COVERAGE -lt 75 ];
+          then
+            echo "::error file=scoverage.xml::Insufficient coverage; required 75% or more, got $COVERAGE"
+            exit 1
+          elif [ $COVERAGE -lt 90 ];
+          then
+            echo "::warning file=scoverage.xml::Insufficient coverage; required 75%, preferred 90% or more, got $COVERAGE"
+          fi
+
+      - name: Publish Check
+        run: |
+          sbt publishLocal
+          sbt publishM2
+
+  release:
+    needs: acceptance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: "sbt"
+
+      - name: Build
+        run: |
+          git config --global user.email "nigeleke@users.noreply.github.com"
+          git config --global user.name "Nigel Eke"
+          sbt "release with-defaults"
+          export VERSION=$(git describe --abbrev=0 --tags)
+          git checkout main
+          git merge $VERSION
+          git push
+
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: "sbt"
+
+      - name: Build
+        run: |
+          git checkout main
+          sbt clean coverage headerCheck test coverageReport doc
+
+      - name: Publish Site
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: .
+
+      - name: Publish Coverage
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: target/scala-3.2.1/scoverage-report
+          target-folder: coverage
+          clean: false
+
+      - name: Publish API
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: target/scala-3.2.1/api
+          target-folder: api
+          clean: false

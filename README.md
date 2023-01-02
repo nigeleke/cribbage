@@ -1,6 +1,6 @@
 # Cribbage
 
-[Cribbage](https://en.wikipedia.org/wiki/Cribbage) is a popular card game, predominately played by two players.
+[Cribbage](https://en.wikipedia.org/wiki/Cribbage) is a popular card state, predominately played by two players.
 
 This project has been developed as a learning exercise, using Cribbage as the example domain, for:
 

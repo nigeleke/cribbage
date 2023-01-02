@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+
+  cribbage:
+    build: ./ui/vue
+    ports:
+      - 80:80
+
+  server:
+    image: nigeleke/cribbage-api:0.1-SNAPSHOT
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker

@@ -41,7 +41,7 @@ jobs:
 
       - name: Coverage Report
         run: |
-          sbt coverageAggrgate
+          sbt coverageAggregate
           export COVERAGE=$(xmllint --xpath "(/scoverage/@statement-rate + /scoverage/@branch-rate) div 2" target/scala-2.12/scoverage-report/scoverage.xml)
           if [ $COVERAGE -lt 75 ];
           then

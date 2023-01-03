@@ -12,7 +12,6 @@ lazy val root = project
   .disablePlugins(HeaderPlugin)
   .settings(
     name           := "cribbage",
-    version        := "0.1.0-SNAPSHOT",
     publish / skip := true
   )
   .aggregate(core)

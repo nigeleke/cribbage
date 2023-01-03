@@ -114,13 +114,13 @@ jobs:
       - name: Publish Coverage
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: target/scala-3.2.1/scoverage-report
+          folder: core/target/scala-3.2.2-RC2/scoverage-report
           target-folder: coverage
           clean: false
 
       - name: Publish API
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: target/scala-3.2.1/api
+          folder: core/target/scala-3.2.2-RC2/api
           target-folder: api
           clean: false

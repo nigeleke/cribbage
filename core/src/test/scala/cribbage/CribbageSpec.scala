@@ -561,7 +561,7 @@ class CribbageSpec extends AnyWordSpec with Matchers:
       * have a Go on the last card if not earlier.
       */
     "accept pass" when {
-      "player has no valid card" in dummyPlaying() {
+      "pone has no valid card" in dummyPlaying() {
         case playing0 @ Playing(_, _, _, pone0, _, _, plays0) =>
           val playing1 = doPassFor[Playing](pone0)(playing0)
 
@@ -570,6 +570,22 @@ class CribbageSpec extends AnyWordSpec with Matchers:
           plays1.nextPlayer should be(dealer1)
           plays1.runningTotal should be(plays0.runningTotal)
           plays1.inPlay should contain theSameElementsInOrderAs (Seq(Pass(pone0)))
+      }
+
+      "dealer has no valid card" in dummyPlaying(
+        poneCards = Seq(Card(Ten, Spades))
+      ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, plays0) =>
+        val playing1 = doPlayFor[Playing](pone0, Card(Ten, Spades))(playing0)
+        val playing2 = doPassFor[Playing](dealer0)(playing1)
+
+        val Playing(_, _, dealer2, pone2, _, _, plays2) = playing2
+
+        plays2.nextPlayer should be(pone2)
+        plays2.runningTotal should be(Card(Ten, Spades).value)
+        plays2.inPlay should contain theSameElementsInOrderAs (Seq(
+          Laid(pone0, Card(Ten, Spades)),
+          Pass(dealer0)
+        ))
       }
     }
 

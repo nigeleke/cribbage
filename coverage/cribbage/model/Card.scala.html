@@ -1,0 +1,167 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          cribbage/model/Card.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>/*
+</span>2 <span style=''> * Copyright (c) 2022, Nigel Eke
+</span>3 <span style=''> * All rights reserved.
+</span>4 <span style=''> *
+</span>5 <span style=''> * Redistribution and use in source and binary forms, with or without modification,
+</span>6 <span style=''> * are permitted provided that the following conditions are met:
+</span>7 <span style=''> *
+</span>8 <span style=''> * 1. Redistributions of source code must retain the above copyright notice, this
+</span>9 <span style=''> *    list of conditions and the following disclaimer.
+</span>10 <span style=''> *
+</span>11 <span style=''> * 2. Redistributions in binary form must reproduce the above copyright notice,
+</span>12 <span style=''> *    this list of conditions and the following disclaimer in the documentation
+</span>13 <span style=''> *    and/or other materials provided with the distribution.
+</span>14 <span style=''> *
+</span>15 <span style=''> * 3. Neither the name of the copyright holder nor the names of its contributors
+</span>16 <span style=''> *    may be used to endorse or promote products derived from this software without
+</span>17 <span style=''> *    specific prior written permission.
+</span>18 <span style=''> *
+</span>19 <span style=''> * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND
+</span>20 <span style=''> * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+</span>21 <span style=''> * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+</span>22 <span style=''> * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+</span>23 <span style=''> * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+</span>24 <span style=''> * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+</span>25 <span style=''> * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+</span>26 <span style=''> * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+</span>27 <span style=''> * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+</span>28 <span style=''> * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</span>29 <span style=''> */
+</span>30 <span style=''>
+</span>31 <span style=''>package cribbage
+</span>32 <span style=''>package model
+</span>33 <span style=''>
+</span>34 <span style=''>/** A playing card.
+</span>35 <span style=''>  *
+</span>36 <span style=''>  * @param face
+</span>37 <span style=''>  *   The card's face.
+</span>38 <span style=''>  * @param suit
+</span>39 <span style=''>  *   The card's suit.
+</span>40 <span style=''>  */
+</span>41 <span style=''>final case class Card(face: Card.Face, suit: Card.Suit)
+</span>42 <span style=''>
+</span>43 <span style=''>object Card:
+</span>44 <span style=''>  /** A Card.Face, providing the face id, the run &amp; cut ranking, and a short string for printing.
+</span>45 <span style=''>    */
+</span>46 <span style=''>  enum Face(val value: Int, val rank: Int):
+</span>47 <span style=''>    case Ace   extends Face(1, 1)
+</span>48 <span style=''>    case Two   extends Face(2, 2)
+</span>49 <span style=''>    case Three extends Face(3, 3)
+</span>50 <span style=''>    case Four  extends Face(4, 4)
+</span>51 <span style=''>    case Five  extends Face(5, 5)
+</span>52 <span style=''>    case Six   extends Face(6, 6)
+</span>53 <span style=''>    case Seven extends Face(7, 7)
+</span>54 <span style=''>    case Eight extends Face(8, 8)
+</span>55 <span style=''>    case Nine  extends Face(9, 9)
+</span>56 <span style=''>    case Ten   extends Face(10, 10)
+</span>57 <span style=''>    case Jack  extends Face(10, 11)
+</span>58 <span style=''>    case Queen extends Face(10, 12)
+</span>59 <span style=''>    case King  extends Face(10, 13)
+</span>60 <span style=''>
+</span>61 <span style=''>  /** A Card.Suit providing a symbolic string and suit colour for printing.
+</span>62 <span style=''>    */
+</span>63 <span style=''>  enum Suit:
+</span>64 <span style=''>    case Clubs, Diamonds, Hearts, Spades
+</span>65 <span style=''>
+</span>66 <span style=''>  /** Expose the faces as a collection. */
+</span>67 <span style=''>  val faces = Face.values
+</span>68 <span style=''>
+</span>69 <span style=''>  /** Expose the suits as a collection. */
+</span>70 <span style=''>  val suits = Suit.values
+</span>71 <span style=''>
+</span>72 <span style=''>  extension (card: Card)
+</span>73 <span style=''>    /** Expose the card's rank. */
+</span>74 <span style=''>    </span><span style='background: #AEF1AE'>def rank</span><span style=''> = card.face.rank
+</span>75 <span style=''>
+</span>76 <span style=''>    /** Expose the card's face id. */
+</span>77 <span style=''>    </span><span style='background: #AEF1AE'>def value</span><span style=''> = card.face.value
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          73
+        </td>
+        <td>
+          124
+        </td>
+        <td>
+          2730
+          -
+          2738
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          rank
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def rank
+        </td>
+      </tr><tr>
+        <td>
+          76
+        </td>
+        <td>
+          125
+        </td>
+        <td>
+          2799
+          -
+          2808
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          value
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def value
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>

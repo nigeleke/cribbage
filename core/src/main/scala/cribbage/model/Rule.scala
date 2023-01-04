@@ -31,6 +31,7 @@
 package cribbage
 package model
 
+/** The rules that need to be adhered to for the game to progress without error. */
 trait Rule
 
 object Rule:

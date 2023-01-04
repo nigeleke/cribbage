@@ -124,10 +124,10 @@ object Cards:
       */
     def contains(card: Card): Boolean = hand.contains(card)
 
-    /** Check if the Hand contains any Card the satisfies the rule predicate. */
+    /** @returns true if the Hand contains any Card that satisfies the rule predicate. */
     def containsAny(rule: Card => Boolean): Boolean = hand.filter(rule).nonEmpty
 
-    /** Check if the Hand contains the provided Cards.
+    /** Check if the Hand contains all of the provided Cards.
       *
       * @param these
       *   The Cards to be checked.
@@ -160,8 +160,7 @@ object Cards:
       * @param cardsPerHand
       *   The number of cards to deal in each hand.
       * @return
-      *   A tuple of a) cards remaining from the Deck after the and b) a sequence of the Hands
-      *   dealt.
+      *   A tuple of a) cards remaining from the Deck after the and b) a sequence of Hands dealt.
       * @throws RuntimeException
       *   if not enough cards in the deck.
       */

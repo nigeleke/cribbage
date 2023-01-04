@@ -41,7 +41,7 @@ package model
 final case class Card(face: Card.Face, suit: Card.Suit)
 
 object Card:
-  /** A Card.Face, providing the face id, the run & cut ranking, and a short string for printing.
+  /** A Card.Face, providing the face id, the run & cut ranking.
     */
   enum Face(val value: Int, val rank: Int):
     case Ace   extends Face(1, 1)
@@ -58,7 +58,7 @@ object Card:
     case Queen extends Face(10, 12)
     case King  extends Face(10, 13)
 
-  /** A Card.Suit providing a symbolic string and suit colour for printing.
+  /** A Card.Suit is one of the four standard suits.
     */
   enum Suit:
     case Clubs, Diamonds, Hearts, Spades

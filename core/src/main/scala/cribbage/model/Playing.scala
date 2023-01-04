@@ -33,6 +33,23 @@ package model
 
 import Cards.*
 
+/** The game while players are playing the Play sequences.
+  *
+  * @param scores
+  *   The current scores.
+  * @param hands
+  *   The player's hands, with discarded / played cards removed if applicable.
+  * @param dealer
+  *   The current dealer.
+  * @param pone
+  *   The dealer's opponent.
+  * @param crib
+  *   The current crib discards.
+  * @param cut
+  *   The cut that was cut at the start of Plays, used during scoring only.
+  * @parem
+  *   The current and past plays.
+  */
 final case class Playing(
     scores: Map[Player, Score],
     hands: Map[Player, Hand],

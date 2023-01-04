@@ -34,8 +34,17 @@ package scorer
 import model.*
 import model.Score.*
 
+/** The Scorer is used to score different stages of the Cribbage game:
+  *   - His Heels (when card is cut after discarding and prior to playing,
+  *   - During Play (including when a Player has passed)
+  *   - After all Plays, when pone / dealer hands and crib are scored.
+  *
+  * All scores may result in a Finished game if the points scored make the players total score
+  * greater than 121.
+  */
 object Scorer:
 
+  /** Score his heels - if a Jack is cut prior to Play. */
   val scoreHisHeels: Playing => Playing | Finished =
     case playing @ Playing(currentScores, _, dealer, _, _, cut, _) =>
       if cut.face == Card.Face.Jack
@@ -50,6 +59,9 @@ object Scorer:
       then Finished(scores = updatedScores)
       else playing.copy(scores = updatedScores)
 
+  /** Score the current play as a result of the last card laid. This includes fifteens, runs, pairs
+    * and final card play.
+    */
   val scorePlay: Playing => Playing | Finished =
     case playing @ Playing(scores, hands, dealer, pone, crib, cut, plays) =>
       val fifteens   = if plays.runningTotal == 15 then 2 else 0
@@ -87,11 +99,17 @@ object Scorer:
   private def makesRun(playedCard: Card, cards: Seq[Card]) =
     isRun(cards) && cards.contains(playedCard)
 
+  /** Scores one for the final play, if neither player acn lay any further cards and the target 31
+    * wasn't reached.
+    */
   val scorePass: Playing => Playing | Finished =
     case playing @ Playing(_, _, _, _, _, _, plays) =>
       val passScore = if plays.allPassed then 1 else 0
       scoreFor(plays.nextPlayer, passScore)(playing) // 2 for 31 scored in scorePlay
 
+  /** Scores the pone's hand, dealer's hand then crib. Any score may result in a finished game, in
+    * which case subsequent hands aren't scored.
+    */
   val scoreHands: Playing => Playing | Finished =
     case playing: Playing => (scorePoneHand andThen scoreDealerHand andThen scoreCrib)(playing)
 

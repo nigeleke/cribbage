@@ -33,7 +33,16 @@ package model
 
 import java.util.UUID
 
+/** A player playing the cribbage game.
+  * @param id
+  *   Player's identity.
+  */
 final case class Player(val id: UUID) extends AnyVal
 
 object Player:
+  /** @constructor
+    *   Create a new Player, with a unique Id.
+    * @return
+    *   The new player.
+    */
   def newPlayer: Player = Player(UUID.randomUUID())

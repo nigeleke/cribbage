@@ -31,4 +31,8 @@
 package cribbage
 package model
 
+/** The completed game with a definitive winner.
+  * @param scores
+  *   The end scores; winning score may be greater than 121.
+  */
 final case class Finished(scores: Map[Player, Score])

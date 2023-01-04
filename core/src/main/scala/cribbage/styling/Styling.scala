@@ -36,6 +36,8 @@ import model.Card.Face.*
 import model.Card.Suit.*
 import model.Cards.*
 
+/** Provides styling for pretty-printing of the model objects to an ANSI terminal.
+  */
 object Styling:
 
   private def styledFace: Card.Face => String =
@@ -71,7 +73,7 @@ object Styling:
       s"$colour$face$suit${Ansi.reset}"
 
   /** ANSI escape codes for pretty printing to console. */
-  object Ansi:
+  private object Ansi:
     val escape = "\u001b"
     val reset  = s"$escape[0m"
 

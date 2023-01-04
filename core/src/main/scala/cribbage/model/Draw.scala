@@ -31,6 +31,7 @@
 package cribbage
 package model
 
+/** The Draw made for the initial dealer. May require redraw if both cards have same face value. */
 trait Draw
 
 object Draw:

@@ -32,7 +32,9 @@ package cribbage
 package model
 
 /** The Draw made for the initial dealer. May require redraw if both cards have same face value. */
-trait Draw
+trait Draw:
+  def draws: Map[Player, Card]
+  def players: Set[Player] = draws.keySet
 
 object Draw:
   final case class Decided(draws: Map[Player, Card], dealer: Player, pone: Player) extends Draw

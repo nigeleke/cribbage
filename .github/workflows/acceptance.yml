@@ -42,7 +42,7 @@ jobs:
       - name: Coverage Report
         run: |
           sbt coverageAggregate
-          export COVERAGE=$(xmllint --xpath "(/scoverage/@statement-rate + /scoverage/@branch-rate) div 2" target/scala-2.12/scoverage-report/scoverage.xml)
+          export COVERAGE=$(xmllint --xpath "round((/scoverage/@statement-rate + /scoverage/@branch-rate) div 2)" target/scala-2.12/scoverage-report/scoverage.xml)
           if [ $COVERAGE -lt 75 ];
           then
             echo "::error file=scoverage.xml::Insufficient coverage; required 75% or more, got $COVERAGE"

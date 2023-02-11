@@ -6,9 +6,11 @@
 name: Publish Cycle
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Acceptance Cycle"]
+    branches: [main]
+    types:
+      - completed
 
 jobs:
   acceptance:

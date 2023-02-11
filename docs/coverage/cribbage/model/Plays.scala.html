@@ -2,7 +2,7 @@
       <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <title id="title">
-          cribbage\model\Plays.scala.html
+          cribbage/model/Plays.scala.html
         </title>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
         $(document).ready(function() {$(".tablesorter").tablesorter();});
@@ -161,9 +161,9 @@
           13
         </td>
         <td>
-          2147
+          2091
           -
-          2156
+          2100
         </td>
         <td>
           DefDef
@@ -185,9 +185,9 @@
           185
         </td>
         <td>
-          2218
+          2161
           -
-          2221
+          2164
         </td>
         <td>
           Ident
@@ -209,9 +209,9 @@
           295
         </td>
         <td>
-          2229
+          2172
           -
-          2232
+          2175
         </td>
         <td>
           Ident
@@ -233,9 +233,9 @@
           483
         </td>
         <td>
-          2218
+          2161
           -
-          2227
+          2170
         </td>
         <td>
           Select
@@ -257,9 +257,9 @@
           214
         </td>
         <td>
-          2229
+          2172
           -
-          2238
+          2181
         </td>
         <td>
           Select
@@ -281,9 +281,9 @@
           348
         </td>
         <td>
-          2187
+          2130
           -
-          2239
+          2182
         </td>
         <td>
           Apply
@@ -305,9 +305,9 @@
           497
         </td>
         <td>
-          2572
+          2505
           -
-          2588
+          2521
         </td>
         <td>
           DefDef
@@ -329,9 +329,9 @@
           137
         </td>
         <td>
-          2598
+          2530
           -
-          2744
+          2672
         </td>
         <td>
           Apply
@@ -343,7 +343,7 @@
           
         </td>
         <td style="background: #F0ADAD">
-          plays.inPlay.map { play =&gt;\r\n        play match\r\n          case Plays.Laid(_, card) =&gt; card.value\r\n          case Plays.Pass(_)       =&gt; 0\r\n      }
+          plays.inPlay.map { play =&gt;\n        play match\n          case Plays.Laid(_, card) =&gt; card.value\n          case Plays.Pass(_)       =&gt; 0\n      }
         </td>
       </tr><tr>
         <td>
@@ -353,9 +353,9 @@
           344
         </td>
         <td>
-          2598
+          2530
           -
-          2748
+          2676
         </td>
         <td>
           Apply
@@ -367,7 +367,7 @@
           
         </td>
         <td style="background: #AEF1AE">
-          plays.inPlay.map { play =&gt;\r\n        play match\r\n          case Plays.Laid(_, card) =&gt; card.value\r\n          case Plays.Pass(_)       =&gt; 0\r\n      }.sum
+          plays.inPlay.map { play =&gt;\n        play match\n          case Plays.Laid(_, card) =&gt; card.value\n          case Plays.Pass(_)       =&gt; 0\n      }.sum
         </td>
       </tr><tr>
         <td>
@@ -377,9 +377,9 @@
           373
         </td>
         <td>
-          2684
+          2614
           -
-          2694
+          2624
         </td>
         <td>
           Apply
@@ -401,9 +401,9 @@
           43
         </td>
         <td>
-          2656
+          2586
           -
-          2680
+          2610
         </td>
         <td>
           Block
@@ -425,9 +425,9 @@
           186
         </td>
         <td>
-          2706
+          2635
           -
-          2724
+          2653
         </td>
         <td>
           Block
@@ -449,9 +449,9 @@
           345
         </td>
         <td>
-          2756
+          2682
           -
-          2768
+          2694
         </td>
         <td>
           DefDef
@@ -473,9 +473,9 @@
           309
         </td>
         <td>
-          2809
+          2734
           -
-          2827
+          2752
         </td>
         <td>
           Apply
@@ -497,9 +497,9 @@
           9
         </td>
         <td>
-          2853
+          2777
           -
-          2860
+          2784
         </td>
         <td>
           Apply
@@ -521,9 +521,9 @@
           203
         </td>
         <td>
-          2836
+          2760
           -
-          2890
+          2814
         </td>
         <td>
           Apply
@@ -545,9 +545,9 @@
           499
         </td>
         <td>
-          2967
+          2888
           -
-          2992
+          2913
         </td>
         <td>
           DefDef
@@ -569,9 +569,9 @@
           470
         </td>
         <td>
-          2995
+          2916
           -
-          3051
+          2971
         </td>
         <td>
           Apply
@@ -583,7 +583,7 @@
           
         </td>
         <td style="background: #F0ADAD">
-          plays.inPlay\r\n      .collect { case p: Plays.Pass =&gt; p }
+          plays.inPlay\n      .collect { case p: Plays.Pass =&gt; p }
         </td>
       </tr><tr>
         <td>
@@ -593,9 +593,9 @@
           374
         </td>
         <td>
-          3026
+          2946
           -
-          3044
+          2964
         </td>
         <td>
           Block
@@ -617,9 +617,9 @@
           156
         </td>
         <td>
-          2995
+          2916
           -
-          3073
+          2992
         </td>
         <td>
           Apply
@@ -631,7 +631,7 @@
           
         </td>
         <td style="background: #AEF1AE">
-          plays.inPlay\r\n      .collect { case p: Plays.Pass =&gt; p }\r\n      .map(_.player)
+          plays.inPlay\n      .collect { case p: Plays.Pass =&gt; p }\n      .map(_.player)
         </td>
       </tr><tr>
         <td>
@@ -641,9 +641,9 @@
           174
         </td>
         <td>
-          2995
+          2916
           -
-          3087
+          3005
         </td>
         <td>
           Select
@@ -655,7 +655,7 @@
           
         </td>
         <td style="background: #AEF1AE">
-          plays.inPlay\r\n      .collect { case p: Plays.Pass =&gt; p }\r\n      .map(_.player)\r\n      .toSet
+          plays.inPlay\n      .collect { case p: Plays.Pass =&gt; p }\n      .map(_.player)\n      .toSet
         </td>
       </tr><tr>
         <td>
@@ -665,9 +665,9 @@
           11
         </td>
         <td>
-          3193
+          3106
           -
-          3214
+          3127
         </td>
         <td>
           DefDef
@@ -689,9 +689,9 @@
           303
         </td>
         <td>
-          3217
+          3130
           -
-          3236
+          3149
         </td>
         <td>
           Apply
@@ -713,9 +713,9 @@
           204
         </td>
         <td>
-          3217
+          3130
           -
-          3241
+          3154
         </td>
         <td>
           Select
@@ -737,9 +737,9 @@
           337
         </td>
         <td>
-          3274
+          3185
           -
-          3289
+          3200
         </td>
         <td>
           Apply
@@ -761,9 +761,9 @@
           144
         </td>
         <td>
-          3249
+          3160
           -
-          3262
+          3173
         </td>
         <td>
           DefDef
@@ -785,9 +785,9 @@
           349
         </td>
         <td>
-          3322
+          3231
           -
-          3330
+          3239
         </td>
         <td>
           DefDef
@@ -809,9 +809,9 @@
           471
         </td>
         <td>
-          3395
+          3303
           -
-          3435
+          3343
         </td>
         <td>
           Apply
@@ -833,9 +833,9 @@
           491
         </td>
         <td>
-          3485
+          3390
           -
-          3493
+          3398
         </td>
         <td>
           DefDef
@@ -857,9 +857,9 @@
           175
         </td>
         <td>
-          3546
+          3450
           -
-          3580
+          3484
         </td>
         <td>
           Apply
@@ -881,9 +881,9 @@
           304
         </td>
         <td>
-          3663
+          3564
           -
-          3670
+          3571
         </td>
         <td>
           Apply
@@ -905,9 +905,9 @@
           205
         </td>
         <td>
-          3663
+          3564
           -
-          3675
+          3576
         </td>
         <td>
           Select
@@ -929,9 +929,9 @@
           3
         </td>
         <td>
-          3630
+          3531
           -
-          3651
+          3552
         </td>
         <td>
           DefDef
@@ -953,9 +953,9 @@
           154
         </td>
         <td>
-          3743
+          3642
           -
-          3771
+          3670
         </td>
         <td>
           Apply
@@ -977,9 +977,9 @@
           350
         </td>
         <td>
-          3703
+          3602
           -
-          3722
+          3621
         </td>
         <td>
           DefDef
@@ -1001,9 +1001,9 @@
           338
         </td>
         <td>
-          3742
+          3641
           -
-          3826
+          3723
         </td>
         <td>
           Apply
@@ -1015,7 +1015,7 @@
           
         </td>
         <td style="background: #AEF1AE">
-          (plays.inPlay ++ plays.played).collect {\r\n      case play: Plays.Laid =&gt; play\r\n    }
+          (plays.inPlay ++ plays.played).collect {\n      case play: Plays.Laid =&gt; play\n    }
         </td>
       </tr><tr>
         <td>
@@ -1025,9 +1025,9 @@
           465
         </td>
         <td>
-          3790
+          3688
           -
-          3811
+          3709
         </td>
         <td>
           Block
@@ -1049,9 +1049,9 @@
           165
         </td>
         <td>
-          3834
+          3729
           -
-          3852
+          3747
         </td>
         <td>
           DefDef
@@ -1073,9 +1073,9 @@
           4
         </td>
         <td>
-          3924
+          3816
           -
-          3937
+          3829
         </td>
         <td>
           DefDef
@@ -1097,9 +1097,9 @@
           498
         </td>
         <td>
-          3974
+          3865
           -
-          4002
+          3893
         </td>
         <td>
           Apply
@@ -1121,9 +1121,9 @@
           121
         </td>
         <td>
-          4030
+          3920
           -
-          4039
+          3929
         </td>
         <td>
           Select
@@ -1145,9 +1145,9 @@
           296
         </td>
         <td>
-          4030
+          3920
           -
-          4033
+          3923
         </td>
         <td>
           Ident
@@ -1169,9 +1169,9 @@
           155
         </td>
         <td>
-          4211
+          4096
           -
-          4235
+          4120
         </td>
         <td>
           Block
@@ -1193,9 +1193,9 @@
           328
         </td>
         <td>
-          4188
+          4073
           -
-          4245
+          4130
         </td>
         <td>
           Apply
@@ -1217,9 +1217,9 @@
           455
         </td>
         <td>
-          4159
+          4044
           -
-          4174
+          4059
         </td>
         <td>
           DefDef
@@ -1241,9 +1241,9 @@
           128
         </td>
         <td>
-          4253
+          4136
           -
-          4265
+          4148
         </td>
         <td>
           DefDef
@@ -1265,9 +1265,9 @@
           167
         </td>
         <td>
-          4294
+          4176
           -
-          4328
+          4210
         </td>
         <td>
           Apply
@@ -1289,9 +1289,9 @@
           316
         </td>
         <td>
-          4348
+          4230
           -
-          4364
+          4246
         </td>
         <td>
           Apply
@@ -1313,9 +1313,9 @@
           500
         </td>
         <td>
-          4294
+          4176
           -
-          4301
+          4183
         </td>
         <td>
           Apply
@@ -1337,9 +1337,9 @@
           380
         </td>
         <td>
-          4294
+          4176
           -
-          4366
+          4248
         </td>
         <td>
           Apply

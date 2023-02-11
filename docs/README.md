@@ -5,6 +5,7 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/nigeleke/cribbage/acceptance.yml?style=plastic)](https://github.com/nigeleke/cribbage/actions/workflows/acceptance.yml)
 [![Coverage](https://img.shields.io/badge/dynamic/xml?style=plastic&color=success&label=coverage&query=round%28%28%2Fscoverage%2F%40statement-rate%20%2B%20%2Fscoverage%2F%40branch-rate%29%20div%202%29&suffix=%20%25&url=https%3A%2F%2Fnigeleke.github.io%2Fcribbage%2Fcoverage%2Fscoverage.xml)](https://nigeleke.github.io/cribbage/coverage)
 ![Version](https://img.shields.io/github/v/tag/nigeleke/cribbage?style=plastic)
+[![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=plastic&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
 [Cribbage](https://en.wikipedia.org/wiki/Cribbage) is a popular card game, predominately played by two players.
 

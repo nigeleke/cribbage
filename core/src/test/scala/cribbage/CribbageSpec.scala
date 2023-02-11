@@ -12,8 +12,6 @@ import org.scalatest.*
 import org.scalatest.matchers.should.*
 import org.scalatest.wordspec.*
 
-import scala.collection.immutable.Seq.from
-
 class CribbageSpec extends AnyWordSpec with Matchers:
 
   // # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
@@ -26,8 +24,8 @@ class CribbageSpec extends AnyWordSpec with Matchers:
       * number.
       */
     "start with two Players" in {
-      val game = Cribbage.newGame
-      game.players.size should be(NumberOfPlayersInGame)
+      val draw = Cribbage.newGame
+      draw.players.size should be(NumberOfPlayersInGame)
     }
 
     /** ## The Pack
@@ -37,8 +35,7 @@ class CribbageSpec extends AnyWordSpec with Matchers:
       * Rank of Cards: K (high), Q, J, 10, 9, 8, 7, 6, 5, 4, 3, 2, A.
       */
     "use a standard pack of Cards" in {
-      val game = Cribbage.newGame
-      game.deck.toSeq should contain theSameElementsInOrderAs (Cards.fullDeck.toSeq)
+      Cards.fullDeck.toSeq.toSet.size should be(52)
     }
 
     /** ## The Draw, Shuffle and Cut
@@ -58,8 +55,7 @@ class CribbageSpec extends AnyWordSpec with Matchers:
         case Decided(draws, dealer, pone) => draws(dealer).rank should be < (draws(pone).rank)
 
       "first draw" in {
-        val game = Cribbage.newGame
-        val draw = Cribbage.makeDraw(game)
+        val draw = Cribbage.newGame
         validateDraw(draw)
       }
 
@@ -71,8 +67,7 @@ class CribbageSpec extends AnyWordSpec with Matchers:
       }
 
       "force redraw when first draws are same rank" in {
-        val game  = Cribbage.newGame
-        val draws = Iterator.continually(Cribbage.makeDraw(game))
+        val draws = Iterator.continually(Cribbage.newGame)
         val draw  = for draw <- draws if draw.isInstanceOf[Draw.Undecided]
         yield draw
         validateDraw(draw.next())

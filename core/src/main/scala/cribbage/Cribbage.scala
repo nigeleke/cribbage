@@ -37,17 +37,10 @@ import model.Rule.*
 
 import cribbage.scorer.Scorer.*
 
-final case class Cribbage(players: Set[Player], deck: Deck)
+type Cribbage[A] = A
 
 object Cribbage:
-  def newGame: Cribbage =
-    Cribbage(
-      Set(Player.newPlayer, Player.newPlayer),
-      Cards.fullDeck
-    )
-
-  def makeDraw: Cribbage => Draw =
-    case Cribbage(players, _) => drawForPlayers(players)
+  def newGame: Cribbage[Draw] = drawForPlayers(Set(Player.newPlayer, Player.newPlayer))
 
   private def drawForPlayers(players: Set[Player]) =
     val shuffled          = shuffledDeck

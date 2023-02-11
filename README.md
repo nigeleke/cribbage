@@ -22,5 +22,5 @@ Over time my interest in pure functional programs has been piqued, so I'll be lo
 
 * [Site](https://nigeleke.github.io/cribbage)
 * [GitHub](https://github.com/nigeleke/cribbage)
-* [API](https://nigeleke.github.io/cribbage/api/index.html)
+* [API - Core](https://nigeleke.github.io/cribbage/core/api/index.html)
 * [Coverage Report](https://nigeleke.github.io/cribbage/coverage/index.html)

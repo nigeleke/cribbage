@@ -3,7 +3,7 @@
 [![BSD 3 Clause License](https://img.shields.io/github/license/nigeleke/cribbage?style=plastic)](https://github.com/nigeleke/cribbage/blob/master/LICENSE)
 [![Language](https://img.shields.io/badge/language-Scala-blue.svg?style=plastic)](https://www.scala-lang.org)
 [![Build](https://img.shields.io/github/actions/workflow/status/nigeleke/cribbage/acceptance.yml?style=plastic)](https://github.com/nigeleke/cribbage/actions/workflows/acceptance.yml)
-[![Coverage](https://img.shields.io/badge/dynamic/xml?style=plastic&color=success&label=coverage&query=%28%2Fscoverage%2F%40statement-rate%20%2B%20%2Fscoverage%2F%40branch-rate%29%20div%202&suffix=%20%25&url=https%3A%2F%2Fnigeleke.github.io%2Fcribbage%2Fcoverage%2Fscoverage.xml)](https://nigeleke.github.io/cribbage/coverage)
+[![Coverage](https://img.shields.io/badge/dynamic/xml?style=plastic&color=success&label=coverage&query=round%28%28%2Fscoverage%2F%40statement-rate%20%2B%20%2Fscoverage%2F%40branch-rate%29%20div%202%29&suffix=%20%25&url=https%3A%2F%2Fnigeleke.github.io%2Fcribbage%2Fcoverage%2Fscoverage.xml)](https://nigeleke.github.io/cribbage/coverage)
 ![Version](https://img.shields.io/github/v/tag/nigeleke/cribbage?style=plastic)
 
 [Cribbage](https://en.wikipedia.org/wiki/Cribbage) is a popular card game, predominately played by two players.
@@ -22,5 +22,5 @@ Over time my interest in pure functional programs has been piqued, so I'll be lo
 
 * [Site](https://nigeleke.github.io/cribbage)
 * [GitHub](https://github.com/nigeleke/cribbage)
-* [API](https://nigeleke.github.io/cribbage/api/index.html)
+* [API - Core](https://nigeleke.github.io/cribbage/core/api/index.html)
 * [Coverage Report](https://nigeleke.github.io/cribbage/coverage/index.html)

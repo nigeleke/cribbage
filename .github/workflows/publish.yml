@@ -1,0 +1,51 @@
+# Run publish-cycle on main commits.
+#
+# Publish cycle comprises:
+# - publish site, coverage reports and API documentation to https://nigeleke.github.io
+#
+name: Publish Cycle
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install xmllint
+        run: sudo apt-get install -y libxml2-utils
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: "sbt"
+
+      - name: Build
+        run: | 
+          sbt clean headerCheck coverage test coverageAggregate doc
+          export COVERAGE=$(xmllint --xpath "round((/scoverage/@statement-rate + /scoverage/@branch-rate) div 2)" target/scala-2.12/scoverage-report/scoverage.xml)
+          mkdir docs
+          mkdir -p docs/core/api
+          mkdir -p docs/coverage
+          cp README.md docs/
+          cp -R core/target/scala-3.3.0-RC2/api/* docs/core/api
+          cp -R target/scala-3.3.0-RC2/scoverage-report/* docs/coverage
+
+      - name: Publish
+        run: |
+          git config --global user.email "nigeleke@users.noreply.github.com"
+          git config --global user.name "Nigel Eke"
+          git checkout gh-pages
+          git add .
+          git commit -m "Release"
+          git push

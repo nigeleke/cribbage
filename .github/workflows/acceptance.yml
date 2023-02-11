@@ -51,6 +51,9 @@ jobs:
             echo "::warning file=scoverage.xml::Insufficient coverage; required 75%, preferred 90% or more, got $COVERAGE"
           fi
 
+      - name: Publish to Codecov
+        uses: codecov/codecov-action@v3
+
       - name: Documentation
         run: sbt doc
 

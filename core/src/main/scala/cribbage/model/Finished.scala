@@ -33,6 +33,6 @@ package model
 
 /** The completed game with a definitive winner.
   * @param scores
-  *   The end scores; winning score may be greater than 121.
+  *   The end scores; winning score will be 121 or greater.
   */
 final case class Finished(scores: Map[Player, Score])

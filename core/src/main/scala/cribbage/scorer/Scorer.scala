@@ -40,7 +40,7 @@ import model.Score.*
   *   - After all Plays, when pone / dealer hands and crib are scored.
   *
   * All scores may result in a Finished game if the points scored make the players total score
-  * greater than 121.
+  * 121 oe greater.
   */
 object Scorer:
 

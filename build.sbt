@@ -5,7 +5,7 @@ organization     := "nigeleke"
 
 val bsd3License = Some(HeaderLicense.BSD3Clause("2022", "Nigel Eke"))
 
-val scalatestVersion = "3.2.14"
+val scalatestVersion = "3.2.15"
 
 lazy val root = project
   .in(file("."))

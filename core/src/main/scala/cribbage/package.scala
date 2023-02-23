@@ -28,7 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package object cribbage {
+package object cribbage:
 
   /** Cribbage can be a two, three or (at a push) four player game. This implementation is for two
     * players.
@@ -52,4 +52,3 @@ package object cribbage {
 
   /** Short games can play to 61, but it is normal to play to 121, as in this implementation. */
   val WinningScore = 121
-}

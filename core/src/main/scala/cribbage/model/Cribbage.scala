@@ -29,13 +29,12 @@
  */
 
 package cribbage
+package model
 
-import model.*
-import model.Cards.*
-import model.Draw.*
-import model.Rule.*
-
-import cribbage.scorer.Scorer.*
+import Cards.*
+import Draw.*
+import Rule.*
+import scorer.Scorer.*
 
 type Cribbage[A] = A
 

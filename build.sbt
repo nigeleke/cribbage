@@ -5,7 +5,10 @@ organization     := "nigeleke"
 
 val bsd3License = Some(HeaderLicense.BSD3Clause("2022", "Nigel Eke"))
 
-val scalatestVersion = "3.2.15"
+val catsEffectTestingVersion = "1.5.0"
+val http4sVersion            = "0.23.18" // Must match tapir dependency...
+val scalatestVersion         = "3.2.15"
+val tapirVersion             = "1.2.9"
 
 lazy val root = project
   .in(file("."))
@@ -14,7 +17,7 @@ lazy val root = project
     name           := "cribbage",
     publish / skip := true
   )
-  .aggregate(core)
+  .aggregate(core, api)
 
 lazy val core = project
   .in(file("core"))
@@ -28,3 +31,24 @@ lazy val core = project
       "org.scalatest" %% "scalatest" % scalatestVersion % "test"
     )
   )
+
+lazy val api = project
+  .in(file("api"))
+  .settings(
+    name           := "cribbage-api",
+    scalaVersion   := scala3Version,
+    headerLicense  := bsd3License,
+    publish / skip := true,
+    libraryDependencies ++= Seq(
+      "com.softwaremill.sttp.tapir" %% "tapir-core"                    % tapirVersion,
+      "com.softwaremill.sttp.tapir" %% "tapir-http4s-server"           % tapirVersion,
+      "com.softwaremill.sttp.tapir" %% "tapir-json-circe"              % tapirVersion,
+      "org.http4s"                  %% "http4s-circe"                  % http4sVersion,
+      "org.scalactic"               %% "scalactic"                     % scalatestVersion,
+      "com.softwaremill.sttp.tapir" %% "tapir-http4s-client"           % tapirVersion             % "test",
+      "com.softwaremill.sttp.tapir" %% "tapir-testing"                 % tapirVersion             % "test",
+      "org.scalatest"               %% "scalatest"                     % scalatestVersion         % "test",
+      "org.typelevel"               %% "cats-effect-testing-scalatest" % catsEffectTestingVersion % "test"
+    )
+  )
+  .dependsOn(core)

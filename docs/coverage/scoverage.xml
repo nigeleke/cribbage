@@ -1,5 +1,5 @@
 <scoverage 
-statement-count="504" statements-invoked="430" statement-rate="85.32" branch-rate="100.00" version="1.0" timestamp="1679400563498">
+statement-count="504" statements-invoked="430" statement-rate="85.32" branch-rate="100.00" version="1.0" timestamp="1679525782003">
     <packages>
         <package name="cribbage" statement-count="122" statements-invoked="107" statement-rate="87.70">
             <classes>

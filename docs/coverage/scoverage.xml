@@ -1,5 +1,5 @@
 <scoverage 
-statement-count="504" statements-invoked="430" statement-rate="85.32" branch-rate="100.00" version="1.0" timestamp="1681994712370">
+statement-count="504" statements-invoked="429" statement-rate="85.12" branch-rate="96.00" version="1.0" timestamp="1682640553176">
     <packages>
         <package name="cribbage" statement-count="122" statements-invoked="107" statement-rate="87.70">
             <classes>
@@ -1025,10 +1025,10 @@ statement-count="504" statements-invoked="430" statement-rate="85.32" branch-rat
 </class>
             </classes>
         </package>
-        <package name="cribbage.scorer" statement-count="155" statements-invoked="111" statement-rate="71.61">
+        <package name="cribbage.scorer" statement-count="155" statements-invoked="110" statement-rate="70.97">
             <classes>
                 <class 
-                name="cribbage.scorer.Scorer$" filename="cribbage/scorer/Scorer.scala" statement-count="155" statements-invoked="111" statement-rate="71.61" branch-rate="100.00">
+                name="cribbage.scorer.Scorer$" filename="cribbage/scorer/Scorer.scala" statement-count="155" statements-invoked="110" statement-rate="70.97" branch-rate="92.86">
                     <methods>
                         <method 
                         name="cribbage.scorer/Scorer$/isRun" statement-count="6" statements-invoked="5" statement-rate="83.33" branch-rate="100.00">
@@ -1054,7 +1054,7 @@ statement-count="504" statements-invoked="430" statement-rate="85.32" branch-rat
                             </statements>
 </method>
                         <method 
-                        name="cribbage.scorer/Scorer$/$anonfun" statement-count="144" statements-invoked="101" statement-rate="70.14" branch-rate="100.00">
+                        name="cribbage.scorer/Scorer$/$anonfun" statement-count="144" statements-invoked="100" statement-rate="69.44" branch-rate="92.86">
                             <statements>
                                 <statement 
                                 package="cribbage.scorer" class="Scorer$" class-type="Object" full-class-name="cribbage.scorer.Scorer$" source="/home/runner/work/cribbage/cribbage/core/src/main/scala/cribbage/scorer/Scorer.scala" method="$anonfun" start="3946" end="3966" line="86" branch="false" invocation-count="1" ignored="false">
@@ -1150,7 +1150,7 @@ statement-count="504" statements-invoked="430" statement-rate="85.32" branch-rat
                                 package="cribbage.scorer" class="Scorer$" class-type="Object" full-class-name="cribbage.scorer.Scorer$" source="/home/runner/work/cribbage/cribbage/core/src/main/scala/cribbage/scorer/Scorer.scala" method="$anonfun" start="5538" end="5589" line="121" branch="false" invocation-count="1" ignored="false">
 </statement>
                                 <statement 
-                                package="cribbage.scorer" class="Scorer$" class-type="Object" full-class-name="cribbage.scorer.Scorer$" source="/home/runner/work/cribbage/cribbage/core/src/main/scala/cribbage/scorer/Scorer.scala" method="$anonfun" start="2332" end="2339" line="51" branch="true" invocation-count="1" ignored="false">
+                                package="cribbage.scorer" class="Scorer$" class-type="Object" full-class-name="cribbage.scorer.Scorer$" source="/home/runner/work/cribbage/cribbage/core/src/main/scala/cribbage/scorer/Scorer.scala" method="$anonfun" start="2332" end="2339" line="51" branch="true" invocation-count="0" ignored="false">
 </statement>
                                 <statement 
                                 package="cribbage.scorer" class="Scorer$" class-type="Object" full-class-name="cribbage.scorer.Scorer$" source="/home/runner/work/cribbage/cribbage/core/src/main/scala/cribbage/scorer/Scorer.scala" method="$anonfun" start="6734" end="6831" line="158" branch="false" invocation-count="0" ignored="false">

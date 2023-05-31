@@ -8,7 +8,7 @@ val bsd3License = Some(HeaderLicense.BSD3Clause("2022", "Nigel Eke"))
 val catsEffectTestingVersion = "1.5.0"
 val http4sVersion            = "0.23.19" // Must match tapir dependency...
 val scalatestVersion         = "3.2.16"
-val tapirVersion             = "1.4.0"
+val tapirVersion             = "1.5.0"
 
 lazy val root = project
   .in(file("."))

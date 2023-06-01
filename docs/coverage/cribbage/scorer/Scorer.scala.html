@@ -73,7 +73,7 @@
 </span>49 <span style=''>    </span><span style='background: #AEF1AE'>case playing @ Playing(currentScores, _, dealer, _, _, cut, _)</span><span style=''> =&gt;
 </span>50 <span style=''>      if cut.face == Card.Face.Jack
 </span>51 <span style=''>      then </span><span style='background: #AEF1AE'>scoreFor(dealer, 2)(playing)</span><span style=''>
-</span>52 <span style=''>      else </span><span style='background: #F0ADAD'>playing</span><span style=''>
+</span>52 <span style=''>      else </span><span style='background: #AEF1AE'>playing</span><span style=''>
 </span>53 <span style=''>
 </span>54 <span style=''>  </span><span style='background: #AEF1AE'>private def scoreFor</span><span style=''>(player: Player, points: Int): Playing =&gt; Playing | Finished =
 </span>55 <span style=''>    </span><span style='background: #AEF1AE'>case playing @ Playing(scores, _, _, _, _, _, _)</span><span style=''> =&gt;
@@ -335,7 +335,7 @@
         <td>
           
         </td>
-        <td style="background: #F0ADAD">
+        <td style="background: #AEF1AE">
           playing
         </td>
       </tr><tr>

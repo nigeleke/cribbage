@@ -22,25 +22,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: "17"
-          distribution: "temurin"
-          cache: "sbt"
-
       - name: Build
         run: |
-          sbt clean headerCheck coverage test coverageAggregate doc
+          cargo doc --no-deps
+          cargo install cargo-tarpaulin
+          cargo tarpaulin --out html --output-dir target/coverage
           mkdir docs0
-          mkdir -p docs0/core/api
+          mkdir -p docs0/api
           mkdir -p docs0/coverage
           cp README.md docs0/
-          cp -R core/target/scala-3.3.0-RC3/api/* docs0/core/api
-          cp -R target/scala-2.12/scoverage-report/* docs0/coverage
+          cp -R target/doc/* docs0/api
+          cp -R target/coverage/tarpaulin-report.html docs0/coverage/index.html
+          cargo tarpaulin --out xml
 
       - name: Publish to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Publish
         run: |

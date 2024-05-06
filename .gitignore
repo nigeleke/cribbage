@@ -20,3 +20,5 @@ playwright/.cache/
 
 # Testing
 cribbage.db
+cobertura.xml
+

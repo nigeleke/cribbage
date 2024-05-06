@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["app","components","domain","error_template","pages","services","view"]};

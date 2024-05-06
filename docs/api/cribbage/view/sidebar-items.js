@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Game"],"struct":["OpponentCut","PlayerCut"],"type":["Card"]};

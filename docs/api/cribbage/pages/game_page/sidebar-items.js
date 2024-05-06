@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["GamePage"],"struct":["GamePageProps","GameParams"]};

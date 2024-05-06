@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS games
+(
+  id          VARCHAR NOT NULL PRIMARY KEY,
+  game        BLOB NOT NULL
+);

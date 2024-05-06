@@ -1,27 +1,32 @@
 # cribbage
 
 [![BSD 3 Clause License](https://img.shields.io/github/license/nigeleke/cribbage?style=plastic)](https://github.com/nigeleke/cribbage/blob/master/LICENSE)
-[![Language](https://img.shields.io/badge/language-Scala-blue.svg?style=plastic)](https://www.scala-lang.org)
+[![Language](https://img.shields.io/badge/language-Rust-blue.svg?style=plastic)](https://www.rust-lang.org/)
 [![Build](https://img.shields.io/github/actions/workflow/status/nigeleke/cribbage/acceptance.yml?style=plastic)](https://github.com/nigeleke/cribbage/actions/workflows/acceptance.yml)
-[![Coverage](https://img.shields.io/codecov/c/github/nigeleke/cribbage?style=plastic&token=9Z6VJKS0LK)](https://codecov.io/gh/nigeleke/cribbage)
+[![Coverage](https://img.shields.io/codecov/c/github/nigeleke/cribbage?style=plastic)](https://codecov.io/gh/nigeleke/cribbage)
 ![Version](https://img.shields.io/github/v/tag/nigeleke/cribbage?style=plastic)
-[![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=plastic&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
+
+  [Site](https://nigeleke.github.io/cribbage) \| [GitHub](https://github.com/nigeleke/cribbage) \| [API - Core](https://nigeleke.github.io/cribbage/api/index.html) \| [Coverage Report](https://nigeleke.github.io/cribbage/coverage/index.html)
 
 [Cribbage](https://en.wikipedia.org/wiki/Cribbage) is a popular card game, predominately played by two players.
 
-This project was developed as a learning exercise, using Cribbage as the example domain. The original aim was to bed down:
+## Background
 
-  - [Akka](https://akka.io/) and its related libraries
-  - [CQRS](https://martinfowler.com/bliki/CQRS.html) - Command Query Responsibility Segregation
-  - [Domain Driven Design](https://martinfowler.com/tags/domain%20driven%20design.html) 
-  - [Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html), and
-  - [Event Storming](https://www.eventstorming.com/)
+This project has had many flavours over time. It is being used as a learning platform, initially to implement a practical example using [Akka](https://akka.io/), [CQRS](https://martinfowler.com/bliki/CQRS.html), [Domain Driven Design](https://martinfowler.com/tags/domain%20driven%20design.html), [Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html), and [Event Storming](https://www.eventstorming.com/). Later I applied pure functional programming using the [Cats Effects](https://typelevel.org/cats-effect/) stack.
 
-Over time my interest in pure functional programs has been piqued, so I'll be looking into [Cats Effects](https://typelevel.org/cats-effect/) stack. As of Jan 2023, this is still under development.
+The project has now completely moved to [Rust](https://www.rust-lang.org/) using [Leptos](https://www.leptos.dev/) (server-side rendering).
 
-## Documentation
+The project is under active development as of May 2024.
 
-* [Site](https://nigeleke.github.io/cribbage)
-* [GitHub](https://github.com/nigeleke/cribbage)
-* [API - Core](https://nigeleke.github.io/cribbage/core/api/index.html)
-* [Coverage Report](https://nigeleke.github.io/cribbage/coverage/index.html)
+## Development
+
+```
+cargo test
+```
+
+## Run
+
+```
+cargo leptos watch
+```
+

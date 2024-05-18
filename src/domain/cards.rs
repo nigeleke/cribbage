@@ -25,7 +25,7 @@ impl Deck {
     pub(crate) fn deal(&self, players: &HashSet<Player>) -> (HashMap<Player, Hand>, Deck) {
         let cards = &self.0;
         let hands = players
-            .into_iter()
+            .iter()
             .enumerate()
             .map(|(i, p)| (*p, Hand(Vec::from(&cards[i*CARDS_DEALT_PER_HAND .. (i+1)*CARDS_DEALT_PER_HAND]))));
         let deck = Deck(Vec::from(&cards[NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND ..]));
@@ -35,13 +35,20 @@ impl Deck {
 
 impl Display for Deck {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Deck({:?})", self.0)
+        write!(f, "Deck({})", format_cards(&self.0))
     }
 }
 
 /// A player's hand.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Hand(Vec<Card>);
+
+impl Display for Hand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Hand({})", format_cards(&self.0))
+    }
+}
+
 
 /// The current Crib.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -51,6 +58,16 @@ impl Crib {
     pub(crate) fn new() -> Self {
         Self(vec![])
     }
+}
+
+impl Display for Crib {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Crib({})", format_cards(&self.0))
+    }
+}
+
+fn format_cards(cards: &[Card]) -> String {
+    cards.iter().map(|c| c.to_string()).collect::<Vec<_>>().join(", ")
 }
 
 #[cfg(test)]

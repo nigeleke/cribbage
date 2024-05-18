@@ -1,4 +1,5 @@
 use super::card::Card;
+use super::prelude::Context;
 
 use crate::services::prelude::{redraw, start};
 use crate::view::{Card, OpponentCut, PlayerCut};
@@ -51,30 +52,44 @@ pub fn Cuts(
     };
 
     let player_card: Card = player_cut.into();
+    let player_rank = player_card.rank();
+
     let opponent_card: Card = opponent_cut.into();
+    let opponent_rank = opponent_card.rank();
 
-    let start_status = 
-        if player_card.rank() < opponent_card.rank() {
-            "Your deal"
-        } else if player_card.rank() > opponent_card.rank() {
-            "Opponent deals"
-        } else {
-            "Redraw"
-        };
+    let start_status = match (player_rank, opponent_rank) {
+        (pr, or) if pr < or => "Your deal",
+        (pr, or) if pr > or => "Opponent deals",
+        _ => "Redraw",
+    };
 
-    let on_click = move |_| {
-        let id = use_context::<crate::pages::game_page::GameParams>().unwrap().id;
-        if player_card.rank() == opponent_card.rank() {
-            spawn_local(async {
-                let _ = redraw(id).await;
+    let context = use_context::<Context>().unwrap();
+
+    let on_redraw = {
+        let context = context.clone();
+        move |_| {
+            let id = context.id.clone();
+            let state = context.state;
+            spawn_local(async move {
+                if let Ok(game) = redraw(id).await {
+                    state.set(Some(game.clone()));
+                }
             });
-        } else {
-            spawn_local(async {
-                let _ = redraw(id).await;
-            });
-        };
+        }
+    };
 
-    };        
+    let on_start = {
+        let context = context.clone();
+        move |_| {
+            let id = context.id.clone();
+            let state = context.state;
+            spawn_local(async move {
+                if let Ok(game) = start(id).await {
+                    state.set(Some(game));
+                }
+            });
+        }
+    };
 
     view! {
         class = class,
@@ -83,7 +98,13 @@ pub fn Cuts(
                 <span><Card card=player_cut.into() label="Your cut".into() /></span>
                 <span><Card card=opponent_cut.into() label="Opponent".into() /></span>
             </div>
-            <button on:click=on_click>{start_status}</button>
+            { if player_rank == opponent_rank {
+                view! {<button on:click=on_redraw>"Redraw"</button>}
+              } else {
+                view! {<button on:click=on_start>{start_status}</button>}
+              }
+            }
+            
         </div>
     }
 }

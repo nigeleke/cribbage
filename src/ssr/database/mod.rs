@@ -2,7 +2,7 @@ mod game;
 
 pub mod prelude {
     pub use super::{get_database, init_database};
-    pub use super::game::{insert_game, select_game};
+    pub use super::game::{insert_game, select_game, update_game};
 }
 
 use sqlx::*;

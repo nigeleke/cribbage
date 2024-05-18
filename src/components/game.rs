@@ -45,7 +45,8 @@ fn PlayArea(
     match game {
         GameView::Starting(player_cut, opponent_cut) => view!{
             <Cuts player_cut=player_cut opponent_cut=opponent_cut />
-        },
+        }.into_view(),
+        GameView::Discarding(state) => view! { <p>{state}</p> }.into_view(),
     }
 }
 

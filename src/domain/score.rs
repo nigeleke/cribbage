@@ -14,3 +14,9 @@ impl Score {
         Self(BackPeg(0), FrontPeg(0))
     }
 }
+
+impl std::fmt::Display for Score {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}->{}", self.0.0, self.1.0)
+    }
+}

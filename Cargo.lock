@@ -660,6 +660,7 @@ dependencies = [
  "console_error_panic_hook",
  "dotenv",
  "enum-iterator",
+ "futures",
  "http 1.1.0",
  "leptos",
  "leptos_axum",
@@ -668,6 +669,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+ "server_fn",
  "sqlx",
  "style4rs",
  "thiserror",
@@ -677,6 +679,7 @@ dependencies = [
  "tracing",
  "uuid",
  "wasm-bindgen",
+ "yansi",
 ]
 
 [[package]]

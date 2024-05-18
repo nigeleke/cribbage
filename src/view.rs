@@ -15,9 +15,9 @@ impl From<Card> for OpponentCut {
     }
 }
 
-impl Into<Card> for OpponentCut {
-    fn into(self) -> Card {
-        self.0
+impl From<OpponentCut> for Card {
+    fn from(value: OpponentCut) -> Self {
+        value.0
     }
 }
 
@@ -30,9 +30,9 @@ impl From<Card> for PlayerCut {
     }
 }
 
-impl Into<Card> for PlayerCut {
-    fn into(self) -> Card {
-        self.0
+impl From<PlayerCut> for Card {
+    fn from(value: PlayerCut) -> Self {
+        value.0
     }
 }
 
@@ -175,9 +175,8 @@ impl Into<Card> for PlayerCut {
 /// The game state, waiting for opponent, discarding, playing, scoring, finished.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Game {
-     Starting(PlayerCut, OpponentCut),
-// //     Waiting,
-// //     Discarding(MyState, OpponentState, Crib),
+    Starting(PlayerCut, OpponentCut),
+    Discarding(String),
 // //     Playing(MyState, OpponentState, Play, Cut, Crib),
 // //     ScoringPoneCards(MyState, OpponentState, Cut, Crib),
 // //     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
@@ -190,9 +189,14 @@ impl From<(DomainGame, DomainPlayer)> for Game {
         match game {
             DomainGame::Starting(cuts, _) => {
                 let (player_cut, opponent_cut) = partition_for(player, &cuts);
-                Game::Starting(player_cut.clone().into(), opponent_cut.clone().into())
+                Game::Starting(player_cut.into(), opponent_cut.into())
             },
-            DomainGame::Discarding(_, _, _, _, _) => unimplemented!(),
+            DomainGame::Discarding(scores, dealer, hands, crib, deck) => {
+                let (player_score, opponent_score) = partition_for(player, &scores);
+                let (player_hand, opponent_hand) = partition_for(player, &hands);
+                let state = format!("Scores({} / {}), Hands({} / {}), Dealer({}), {}, {}", player_score, opponent_score, player_hand, opponent_hand, dealer, crib, deck);
+                Game::Discarding(state)
+            },
         }
     }
 }
@@ -200,7 +204,7 @@ impl From<(DomainGame, DomainPlayer)> for Game {
 fn partition_for<T: Clone>(player: DomainPlayer, map: &HashMap<DomainPlayer, T>) -> (T, T) {
     let (players, opponents): (HashMap<&DomainPlayer, &T>, HashMap<&DomainPlayer, &T>) =
         map.iter().partition(|(p, _)| **p == player);
-    let players_t = players.into_iter().map(|(_, v)| v).next().unwrap();
-    let opponents_t = opponents.into_iter().map(|(_, v)| v).take(1).next().unwrap();
+    let players_t = players.into_values().next().unwrap();
+    let opponents_t = opponents.into_values().take(1).next().unwrap();
     (players_t.clone(), opponents_t.clone())
 }

@@ -1,10 +1,11 @@
 use enum_iterator::{all, Sequence};
 use serde::{Deserialize, Serialize};
+use yansi::Paint;
 
 use std::fmt::Display;
 
 /// The rank of a Card. Ace(1) to King(13).
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Rank(usize);
 
 impl From<usize> for Rank {
@@ -14,7 +15,7 @@ impl From<usize> for Rank {
 }
 
 /// The value of a Card. 1 to 10.
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Value(usize);
 
 impl From<usize> for Value {
@@ -91,13 +92,11 @@ impl Display for Face {
 enum Suit { Hearts, Clubs, Diamonds, Spades }
 
 impl Suit {
-    fn ansi_coloured(&self, s: &str) -> String {
-        let colour = match self {
-            Suit::Hearts | Suit::Diamonds => "\0x33[91;",
-            &Suit::Clubs | &Suit::Spades => "\0x33[90;",
-        };
-        let reset = "\0x33[0;";
-        format!("{}{}{}", colour, s, reset)
+    fn yansi(&self, s: &str) -> String {
+        match self {
+            Suit::Hearts | Suit::Diamonds => format!("{}", Paint::red(s)),
+            Suit::Clubs | Suit::Spades => format!("{}", Paint::black(s)),
+        }
     }
 }
 
@@ -135,8 +134,10 @@ impl Card {
 
 impl Display for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let face_suit = format!("{}{}", self.face(), self.suit());
-        let face_suit = self.suit().ansi_coloured(&face_suit);
+        let face = self.face();
+        let suit = self.suit();
+        let face_suit = format!("{}{}", face, suit);
+        let face_suit = suit.yansi(&face_suit);
         write!(f, "{}", face_suit)
     }
 }

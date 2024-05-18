@@ -1,13 +1,13 @@
 use crate::view::Game as GameView;
 
 use leptos::*;
-use uuid::Uuid;
 
 #[server]
 pub async fn get_game(id: String) -> Result<GameView, ServerFnError> {
-    use crate::domain::prelude::{Card, Game, Player};
+    use crate::domain::prelude::Player;
     use crate::ssr::auth;
     use crate::ssr::database::prelude::*;
+    use uuid::Uuid;
 
     let player: Player = auth::authenticated_user().await?.into();
     let game_id = Uuid::try_parse(&id)?;
@@ -24,7 +24,5 @@ pub async fn get_game(id: String) -> Result<GameView, ServerFnError> {
         .await
         .map_err(ServerFnError::WrappedServerError)?;
 
-    let view: GameView = (game, player).into();
-
-    Ok(view)
+    Ok(GameView::from((game, player)))
 }

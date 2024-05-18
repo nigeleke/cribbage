@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["Game"]};
+window.SIDEBAR_ITEMS = {"fn":["Error","Game","Loading"]};

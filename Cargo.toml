@@ -13,6 +13,7 @@ leptos = { version = "0.6", features = ["nightly"] }
 leptos_axum = { version = "0.6", optional = true }
 leptos_meta = { version = "0.6", features = ["nightly"] }
 leptos_router = { version = "0.6", features = ["nightly"] }
+server_fn = { version = "0.6", optional = true }
 tokio = { version = "1", features = ["rt-multi-thread"], optional = true }
 tower = { version = "0.4", optional = true }
 tower-http = { version = "0.5", features = ["fs"], optional = true }
@@ -30,6 +31,8 @@ style4rs = { git = "https://github.com/nigeleke/style4rs.git" }
 dotenv = { version = "0.15", optional = true }
 axum_session = { version = "0.14", optional = true }
 axum-extra = { version = "0.9", optional = true }
+yansi = "1.0.1"
+futures = "0.3.30"
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
@@ -47,6 +50,7 @@ ssr = [
     "dep:dotenv",
     "dep:axum_session",
     "axum-extra/cookie",
+    "dep:server_fn",
 ]
 
 [build-dependencies]

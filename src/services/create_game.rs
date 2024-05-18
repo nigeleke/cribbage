@@ -1,12 +1,11 @@
 use leptos::*;
 
-use std::collections::HashSet;
-
 #[server]
 pub async fn create_game() -> Result<(), ServerFnError> {
     use crate::domain::prelude::*;
     use crate::ssr::auth;
     use crate::ssr::database::prelude::*;
+    use std::collections::HashSet;
 
     let user = auth::authenticated_user().await?;
     let opponent = Player::new();
@@ -26,7 +25,6 @@ pub async fn create_game() -> Result<(), ServerFnError> {
         .map_err(ServerFnError::WrappedServerError)?;
 
     leptos_axum::redirect(&format!("game/{}", game_id.to_string()));
-
 
     Ok(())
 }

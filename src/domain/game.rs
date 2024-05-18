@@ -1,6 +1,7 @@
 use crate::domain::prelude::*;
 use crate::domain::result::Result;
 
+use leptos::*;
 use serde::{Serialize, Deserialize};
 
 use std::collections::{HashMap, HashSet};
@@ -31,7 +32,7 @@ impl Game {
         };
 
         let deck = Deck::shuffled_pack();
-        let (cuts, deck) = players.into_iter().fold((HashMap::new(), deck), make_cut);
+        let (cuts, deck) = players.iter().fold((HashMap::new(), deck), make_cut);
 
         Ok(Game::Starting(cuts, deck))
     }
@@ -55,7 +56,7 @@ impl Game {
             Game::Starting(cuts, _) => {
                 let players = self.players();
                 verify::players(&players)?;
-                verify::different_cuts(&cuts)?;
+                verify::different_cuts(cuts)?;
                 let scores: HashMap<Player, Score> = HashMap::from_iter(players.iter().map(|&p| (p, Score::new())));
                 let mut cuts = cuts.iter();
                 let Some((player1, cut1)) = cuts.next() else { unreachable!() };
@@ -75,7 +76,7 @@ impl Game {
             Game::Starting(cuts, _) => {
                 let players = self.players();
                 verify::players(&players)?;
-                verify::same_cuts(&cuts)?;
+                verify::same_cuts(cuts)?;
                 Ok(Game::new(&self.players())?)
             },
             _ => Err(Error::InvalidAction("redraw".into()))
@@ -86,10 +87,14 @@ impl Game {
 impl Display for Game {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Game::Starting(cuts, deck) => write!(f, "Starting(cuts: {:?}, deck: {})", cuts, deck),
+            Game::Starting(cuts, deck) => write!(f, "Starting(Cuts({}), {})", format_hashmap(cuts), deck),
             _ => write!(f, "{:?}", self),
         }
     }
+}
+
+fn format_hashmap<T: Display>(map: &HashMap<Player, T>) -> String {
+    map.iter().map(|(k, v)| format!("{} -> {}", k, v)).collect::<Vec<_>>().join(", ")
 }
 
 mod verify {

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Game"],"struct":["OpponentCut","PlayerCut"],"type":["Card"]};
+window.SIDEBAR_ITEMS = {"enum":["CardSlot","Game","Role"],"type":["Card","Cut","Cuts","Score","Scores"]};

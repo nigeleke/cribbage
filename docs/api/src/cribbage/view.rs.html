@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/view.rs`."><title>view.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (1a7397988 2024-05-17)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/view.rs`."><title>view.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (d84b90375 2024-05-19)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -173,169 +173,57 @@
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::domain::prelude::{Game <span class="kw">as </span>DomainGame, Player <span class="kw">as </span>DomainPlayer};
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::domain::prelude::{
+    Game <span class="kw">as </span>DomainGame,
+    Player <span class="kw">as </span>DomainPlayer
+};
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span>std::collections::HashMap;
 
+<span class="attr">#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
+</span><span class="kw">pub enum </span>Role {
+    CurrentPlayer,
+    Opponent
+} 
+
+<span class="kw">type </span>Dealer = Role;
+
+<span class="kw">impl </span>From&lt;(DomainPlayer, DomainPlayer)&gt; <span class="kw">for </span>Dealer {
+    <span class="kw">fn </span>from((current, dealer): (DomainPlayer, DomainPlayer)) -&gt; <span class="self">Self </span>{
+        <span class="kw">if </span>current == dealer {
+            Role::CurrentPlayer
+        } <span class="kw">else </span>{
+            Role::Opponent
+        }
+    }
+}
+
 <span class="kw">pub type </span>Card = <span class="kw">crate</span>::domain::prelude::Card;
 
-<span class="attr">#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-</span><span class="kw">pub struct </span>OpponentCut(Card);
-
-<span class="kw">impl </span>From&lt;Card&gt; <span class="kw">for </span>OpponentCut {
-    <span class="kw">fn </span>from(value: Card) -&gt; <span class="self">Self </span>{
-        OpponentCut(value)
-    }
+<span class="attr">#[derive(Clone, Serialize, Deserialize, Debug)]
+</span><span class="kw">pub enum </span>CardSlot {
+    FaceUp(Card),
+    FaceDown,
+    Empty
 }
 
-<span class="kw">impl </span>From&lt;OpponentCut&gt; <span class="kw">for </span>Card {
-    <span class="kw">fn </span>from(value: OpponentCut) -&gt; <span class="self">Self </span>{
-        value.<span class="number">0
-    </span>}
-}
+<span class="kw">pub type </span>Cuts = HashMap&lt;Role, Card&gt;;
 
-<span class="attr">#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-</span><span class="kw">pub struct </span>PlayerCut(Card);
+<span class="kw">pub type </span>Cut = Card;
 
-<span class="kw">impl </span>From&lt;Card&gt; <span class="kw">for </span>PlayerCut {
-    <span class="kw">fn </span>from(value: Card) -&gt; <span class="self">Self </span>{
-        PlayerCut(value)
-    }
-}
+<span class="kw">type </span>Hand = Vec&lt;CardSlot&gt;;
 
-<span class="kw">impl </span>From&lt;PlayerCut&gt; <span class="kw">for </span>Card {
-    <span class="kw">fn </span>from(value: PlayerCut) -&gt; <span class="self">Self </span>{
-        value.<span class="number">0
-    </span>}
-}
+<span class="kw">type </span>Hands = HashMap&lt;Role, Hand&gt;;
 
-<span class="comment">// /// The view of an opponent's card.
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// pub enum OpponentCard {
-//     Empty,
-//     FaceDown,
-//     FaceUp(Card),
-// }
+<span class="kw">type </span>Crib = Vec&lt;CardSlot&gt;;
 
-// impl OpponentCard {
-//     pub fn rank(&amp;self) -&gt; usize {
-//         match self {
-//             OpponentCard::Empty =&gt; 0,
-//             OpponentCard::FaceDown =&gt; 0,
-//             OpponentCard::FaceUp(card) =&gt; card.rank(),
-//         }
-//     }
-// }
+<span class="kw">pub type </span>Score = <span class="kw">crate</span>::domain::prelude::Score;
 
-// /// The view of a player's card.
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// pub enum PlayerCard {
-//     Empty,
-//     FaceUp(Card),
-// }
+<span class="kw">pub type </span>Scores = HashMap&lt;Role, Score&gt;;
 
-// impl PlayerCard {
-//     pub fn rank(&amp;self) -&gt; usize {
-//         match self {
-//             PlayerCard::Empty =&gt; 0,
-//             PlayerCard::FaceUp(card) =&gt; card.rank(),
-//         }
-//     }
-// }
-
-// /// A collection of cards to show.
-// #[derive(Serialize, Deserialize, Debug)]
-// struct Cards(Vec&lt;CardView&gt;);
-
-// /// A player's hand.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct Hand(Cards);
-
-// /// The current crib.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct Crib(Cards);
-
-// /// The current cut.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct Cut(CardView);
-
-// /// A points value.
-// #[derive(Serialize, Deserialize, Debug)]
-// struct Points(i32);
-
-// /// A score comprises the back and front pegs.
-// #[derive(Serialize, Deserialize, Debug)]
-// struct Score {
-//     back_peg: Points,
-//     front_peg: Points,
-// }
-
-// /// My score.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct MyScore(Score);
-
-// /// The opponent's score.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct OpponentScore(Score);
-
-// #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
-// pub struct PlayerId(Ulid);
-
-// impl PlayerId {
-//     pub fn new() -&gt; Self { PlayerId(Ulid::new()) }
-// }
-
-// impl fmt::Display for PlayerId {
-//     fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {
-//         write!(f, "{}", self.0)
-//     }
-// }
-
-// /// A player is either the current session or not.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub enum Player {
-//     Me,
-//     Opponent,
-// }
-
-// /// A player state is their score, and the cards currently held in their hand.
+<span class="comment">// /// A player state is their score, and the cards currently held in their hand.
 // #[derive(Serialize, Deserialize, Debug)]
 // struct PlayerState {
 //     score: Score,
@@ -385,8 +273,8 @@
 </span><span class="doccomment">/// The game state, waiting for opponent, discarding, playing, scoring, finished.
 </span><span class="attr">#[derive(Clone, Debug, Serialize, Deserialize)]
 </span><span class="kw">pub enum </span>Game {
-    Starting(PlayerCut, OpponentCut),
-    Discarding(String),
+    Starting(Cuts),
+    Discarding(Scores, Hands, Crib, Dealer),
 <span class="comment">// //     Playing(MyState, OpponentState, Play, Cut, Crib),
 // //     ScoringPoneCards(MyState, OpponentState, Cut, Crib),
 // //     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
@@ -394,18 +282,45 @@
 // //     Finished(MyScore, OpponentScore),
 </span>}
 
+<span class="kw">impl </span>Game {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>scores(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Scores {
+        <span class="kw">match </span><span class="self">self </span>{
+            Game::Starting(<span class="kw">_</span>) =&gt; Scores::new(),
+            Game::Discarding(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores.clone(),
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>cut(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CardSlot {
+        <span class="kw">match </span><span class="self">self </span>{
+            Game::Starting(<span class="kw">_</span>) =&gt; CardSlot::Empty,
+            Game::Discarding(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; CardSlot::FaceDown,
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dealer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Role&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            Game::Starting(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+            Game::Discarding(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, dealer) =&gt; <span class="prelude-val">Some</span>(dealer.clone()),
+        }
+    }
+}
+
 <span class="kw">impl </span>From&lt;(DomainGame, DomainPlayer)&gt; <span class="kw">for </span>Game {
     <span class="kw">fn </span>from((game, player): (DomainGame, DomainPlayer)) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>game {
             DomainGame::Starting(cuts, <span class="kw">_</span>) =&gt; {
                 <span class="kw">let </span>(player_cut, opponent_cut) = partition_for(player, <span class="kw-2">&amp;</span>cuts);
-                Game::Starting(player_cut.into(), opponent_cut.into())
+                <span class="kw">let </span>cuts = merge(player_cut, opponent_cut);
+                Game::Starting(cuts)
             },
             DomainGame::Discarding(scores, dealer, hands, crib, deck) =&gt; {
                 <span class="kw">let </span>(player_score, opponent_score) = partition_for(player, <span class="kw-2">&amp;</span>scores);
+                <span class="kw">let </span>scores = merge(player_score, opponent_score);
                 <span class="kw">let </span>(player_hand, opponent_hand) = partition_for(player, <span class="kw-2">&amp;</span>hands);
-                <span class="kw">let </span>state = <span class="macro">format!</span>(<span class="string">"Scores({} / {}), Hands({} / {}), Dealer({}), {}, {}"</span>, player_score, opponent_score, player_hand, opponent_hand, dealer, crib, deck);
-                Game::Discarding(state)
+                <span class="kw">let </span>hands = merge(face_up(<span class="kw-2">&amp;</span>player_hand.cards()), face_down(<span class="kw-2">&amp;</span>opponent_hand.cards()));
+                <span class="kw">let </span>crib = face_down(<span class="kw-2">&amp;</span>crib.cards());
+                <span class="kw">let </span>dealer = Dealer::from((dealer, player));
+                Game::Discarding(scores, hands, crib, dealer)
             },
         }
     }
@@ -418,4 +333,18 @@
     <span class="kw">let </span>opponents_t = opponents.into_values().take(<span class="number">1</span>).next().unwrap();
     (players_t.clone(), opponents_t.clone())
 }
-</code></pre></div></section></main></body></html>
+
+<span class="kw">fn </span>merge&lt;T&gt;(players_t: T, opponents_t: T) -&gt; HashMap&lt;Role, T&gt; {
+    <span class="macro">vec!</span>[
+        (Role::CurrentPlayer, players_t),
+        (Role::Opponent, opponents_t),
+    ].into_iter().collect()
+}
+
+<span class="kw">fn </span>face_up(cards: <span class="kw-2">&amp;</span>[Card]) -&gt; Vec&lt;CardSlot&gt; {
+    Vec::from_iter(cards.iter().map(|<span class="kw-2">&amp;</span>c|CardSlot::FaceUp(c)))
+}
+
+<span class="kw">fn </span>face_down(cards: <span class="kw-2">&amp;</span>[Card]) -&gt; Vec&lt;CardSlot&gt; {
+    Vec::from_iter(cards.iter().map(|<span class="kw">_</span>| CardSlot::FaceDown))
+}</code></pre></div></section></main></body></html>

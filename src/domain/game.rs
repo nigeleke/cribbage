@@ -57,7 +57,7 @@ impl Game {
                 let players = self.players();
                 verify::players(&players)?;
                 verify::different_cuts(cuts)?;
-                let scores: HashMap<Player, Score> = HashMap::from_iter(players.iter().map(|&p| (p, Score::new())));
+                let scores: HashMap<Player, Score> = HashMap::from_iter(players.iter().map(|&p| (p, Score::default())));
                 let mut cuts = cuts.iter();
                 let Some((player1, cut1)) = cuts.next() else { unreachable!() };
                 let Some((player2, cut2)) = cuts.next() else { unreachable!() };

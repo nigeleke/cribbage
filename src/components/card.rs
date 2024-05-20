@@ -1,12 +1,12 @@
-use crate::domain::prelude::Card;
+use crate::view::CardSlot;
 
 use leptos::*;
 use style4rs::style;
 
 #[component]
 pub fn Card(
-    #[prop(optional)]
-    card: Option<Card>,
+    #[prop()]
+    card: CardSlot,
     #[prop(optional)]
     label: Option<String>,
 ) -> impl IntoView {
@@ -20,8 +20,9 @@ pub fn Card(
 
     let label = label.unwrap_or("".into());
     let card_view = match card {
-        Some(card) => view! { <card-t rank=card.face_name() suit=card.suit_name() /> },
-        None => view! { <card-t /> },
+        CardSlot::FaceUp(card) => view! { <card-t rank=card.face_name() suit=card.suit_name() /> }.into_view(),
+        CardSlot::FaceDown => view! { <card-t rank="0" backcolor="red" backtext="" /> }.into_view(),
+        CardSlot::Empty => view! { <></> }.into_view(),
     };
 
     view!{

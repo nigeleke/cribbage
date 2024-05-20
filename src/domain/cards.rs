@@ -43,12 +43,17 @@ impl Display for Deck {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Hand(Vec<Card>);
 
+impl Hand {
+    pub fn cards(&self) -> Vec<Card> {
+        self.0.clone()
+    }
+}
+
 impl Display for Hand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Hand({})", format_cards(&self.0))
     }
 }
-
 
 /// The current Crib.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -57,6 +62,10 @@ pub struct Crib(Vec<Card>);
 impl Crib {
     pub(crate) fn new() -> Self {
         Self(vec![])
+    }
+    
+    pub fn cards(&self) -> Vec<Card> {
+        self.0.clone()
     }
 }
 

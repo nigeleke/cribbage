@@ -1,4 +1,5 @@
 mod card;
+mod cards;
 mod cuts;
 mod error;
 mod game;

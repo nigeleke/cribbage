@@ -1,129 +1,52 @@
-use crate::domain::prelude::{Game as DomainGame, Player as DomainPlayer};
+use crate::domain::prelude::{
+    Game as DomainGame,
+    Player as DomainPlayer
+};
 
 use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
 
+#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
+pub enum Role {
+    CurrentPlayer,
+    Opponent
+} 
+
+type Dealer = Role;
+
+impl From<(DomainPlayer, DomainPlayer)> for Dealer {
+    fn from((current, dealer): (DomainPlayer, DomainPlayer)) -> Self {
+        if current == dealer {
+            Role::CurrentPlayer
+        } else {
+            Role::Opponent
+        }
+    }
+}
+
 pub type Card = crate::domain::prelude::Card;
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct OpponentCut(Card);
-
-impl From<Card> for OpponentCut {
-    fn from(value: Card) -> Self {
-        OpponentCut(value)
-    }
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub enum CardSlot {
+    FaceUp(Card),
+    FaceDown,
+    Empty
 }
 
-impl From<OpponentCut> for Card {
-    fn from(value: OpponentCut) -> Self {
-        value.0
-    }
-}
+pub type Cuts = HashMap<Role, Card>;
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct PlayerCut(Card);
+pub type Cut = Card;
 
-impl From<Card> for PlayerCut {
-    fn from(value: Card) -> Self {
-        PlayerCut(value)
-    }
-}
+type Hand = Vec<CardSlot>;
 
-impl From<PlayerCut> for Card {
-    fn from(value: PlayerCut) -> Self {
-        value.0
-    }
-}
+type Hands = HashMap<Role, Hand>;
 
-// /// The view of an opponent's card.
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// pub enum OpponentCard {
-//     Empty,
-//     FaceDown,
-//     FaceUp(Card),
-// }
+type Crib = Vec<CardSlot>;
 
-// impl OpponentCard {
-//     pub fn rank(&self) -> usize {
-//         match self {
-//             OpponentCard::Empty => 0,
-//             OpponentCard::FaceDown => 0,
-//             OpponentCard::FaceUp(card) => card.rank(),
-//         }
-//     }
-// }
+pub type Score = crate::domain::prelude::Score;
 
-// /// The view of a player's card.
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// pub enum PlayerCard {
-//     Empty,
-//     FaceUp(Card),
-// }
-
-// impl PlayerCard {
-//     pub fn rank(&self) -> usize {
-//         match self {
-//             PlayerCard::Empty => 0,
-//             PlayerCard::FaceUp(card) => card.rank(),
-//         }
-//     }
-// }
-
-// /// A collection of cards to show.
-// #[derive(Serialize, Deserialize, Debug)]
-// struct Cards(Vec<CardView>);
-
-// /// A player's hand.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct Hand(Cards);
-
-// /// The current crib.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct Crib(Cards);
-
-// /// The current cut.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct Cut(CardView);
-
-// /// A points value.
-// #[derive(Serialize, Deserialize, Debug)]
-// struct Points(i32);
-
-// /// A score comprises the back and front pegs.
-// #[derive(Serialize, Deserialize, Debug)]
-// struct Score {
-//     back_peg: Points,
-//     front_peg: Points,
-// }
-
-// /// My score.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct MyScore(Score);
-
-// /// The opponent's score.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct OpponentScore(Score);
-
-// #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
-// pub struct PlayerId(Ulid);
-
-// impl PlayerId {
-//     pub fn new() -> Self { PlayerId(Ulid::new()) }
-// }
-
-// impl fmt::Display for PlayerId {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(f, "{}", self.0)
-//     }
-// }
-
-// /// A player is either the current session or not.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub enum Player {
-//     Me,
-//     Opponent,
-// }
+pub type Scores = HashMap<Role, Score>;
 
 // /// A player state is their score, and the cards currently held in their hand.
 // #[derive(Serialize, Deserialize, Debug)]
@@ -175,8 +98,8 @@ impl From<PlayerCut> for Card {
 /// The game state, waiting for opponent, discarding, playing, scoring, finished.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Game {
-    Starting(PlayerCut, OpponentCut),
-    Discarding(String),
+    Starting(Cuts),
+    Discarding(Scores, Hands, Crib, Dealer),
 // //     Playing(MyState, OpponentState, Play, Cut, Crib),
 // //     ScoringPoneCards(MyState, OpponentState, Cut, Crib),
 // //     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
@@ -184,18 +107,45 @@ pub enum Game {
 // //     Finished(MyScore, OpponentScore),
 }
 
+impl Game {
+    pub(crate) fn scores(&self) -> Scores {
+        match self {
+            Game::Starting(_) => Scores::new(),
+            Game::Discarding(scores, _, _, _) => scores.clone(),
+        }
+    }
+
+    pub(crate) fn cut(&self) -> CardSlot {
+        match self {
+            Game::Starting(_) => CardSlot::Empty,
+            Game::Discarding(_, _, _, _) => CardSlot::FaceDown,
+        }
+    }
+
+    pub(crate) fn dealer(&self) -> Option<Role> {
+        match self {
+            Game::Starting(_) => None,
+            Game::Discarding(_, _, _, dealer) => Some(dealer.clone()),
+        }
+    }
+}
+
 impl From<(DomainGame, DomainPlayer)> for Game {
     fn from((game, player): (DomainGame, DomainPlayer)) -> Self {
         match game {
             DomainGame::Starting(cuts, _) => {
                 let (player_cut, opponent_cut) = partition_for(player, &cuts);
-                Game::Starting(player_cut.into(), opponent_cut.into())
+                let cuts = merge(player_cut, opponent_cut);
+                Game::Starting(cuts)
             },
             DomainGame::Discarding(scores, dealer, hands, crib, deck) => {
                 let (player_score, opponent_score) = partition_for(player, &scores);
+                let scores = merge(player_score, opponent_score);
                 let (player_hand, opponent_hand) = partition_for(player, &hands);
-                let state = format!("Scores({} / {}), Hands({} / {}), Dealer({}), {}, {}", player_score, opponent_score, player_hand, opponent_hand, dealer, crib, deck);
-                Game::Discarding(state)
+                let hands = merge(face_up(&player_hand.cards()), face_down(&opponent_hand.cards()));
+                let crib = face_down(&crib.cards());
+                let dealer = Dealer::from((dealer, player));
+                Game::Discarding(scores, hands, crib, dealer)
             },
         }
     }
@@ -207,4 +157,19 @@ fn partition_for<T: Clone>(player: DomainPlayer, map: &HashMap<DomainPlayer, T>)
     let players_t = players.into_values().next().unwrap();
     let opponents_t = opponents.into_values().take(1).next().unwrap();
     (players_t.clone(), opponents_t.clone())
+}
+
+fn merge<T>(players_t: T, opponents_t: T) -> HashMap<Role, T> {
+    vec![
+        (Role::CurrentPlayer, players_t),
+        (Role::Opponent, opponents_t),
+    ].into_iter().collect()
+}
+
+fn face_up(cards: &[Card]) -> Vec<CardSlot> {
+    Vec::from_iter(cards.iter().map(|&c|CardSlot::FaceUp(c)))
+}
+
+fn face_down(cards: &[Card]) -> Vec<CardSlot> {
+    Vec::from_iter(cards.iter().map(|_| CardSlot::FaceDown))
 }

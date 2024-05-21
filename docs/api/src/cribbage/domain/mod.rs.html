@@ -137,7 +137,15 @@
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
-</pre></div><pre class="rust"><code><span class="kw">mod </span>card;
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+</pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>builder;
+
+<span class="kw">mod </span>card;
 <span class="kw">mod </span>cards;
 <span class="kw">mod </span>game;
 <span class="kw">mod </span>player;
@@ -145,6 +153,8 @@
 <span class="kw">mod </span>score;
 
 <span class="kw">pub mod </span>prelude {
+    <span class="attr">#[cfg(test)]
+    </span><span class="kw">pub use </span><span class="kw">crate</span>::domain::builder::Builder;
     <span class="kw">pub use </span><span class="kw">crate</span>::domain::<span class="kw-2">*</span>;
     <span class="kw">pub use </span><span class="kw">crate</span>::domain::card::{Card, Rank, Value};
     <span class="kw">pub use </span><span class="kw">crate</span>::domain::cards::{Crib, Deck, Hand};

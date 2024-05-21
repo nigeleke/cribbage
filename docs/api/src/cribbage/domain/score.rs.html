@@ -17,6 +17,10 @@
 <a href="#17" id="17">17</a>
 <a href="#18" id="18">18</a>
 <a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Serialize, Deserialize};
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>BackPeg = usize;
@@ -29,6 +33,10 @@
 <span class="kw">impl </span>Score {
     <span class="kw">pub fn </span>front_peg(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FrontPeg { <span class="self">self</span>.<span class="number">1 </span>}
     <span class="kw">pub fn </span>back_peg(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BackPeg { <span class="self">self</span>.<span class="number">0 </span>}
+
+    <span class="kw">pub fn </span>add(<span class="kw-2">&amp;</span><span class="self">self</span>, score: usize) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>( <span class="self">self</span>.front_peg(), <span class="self">self</span>.front_peg() + score)
+    }
 }
 
 <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>Score {

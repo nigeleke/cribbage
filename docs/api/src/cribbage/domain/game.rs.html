@@ -1248,12 +1248,6 @@
 <a href="#1248" id="1248">1248</a>
 <a href="#1249" id="1249">1249</a>
 <a href="#1250" id="1250">1250</a>
-<a href="#1251" id="1251">1251</a>
-<a href="#1252" id="1252">1252</a>
-<a href="#1253" id="1253">1253</a>
-<a href="#1254" id="1254">1254</a>
-<a href="#1255" id="1255">1255</a>
-<a href="#1256" id="1256">1256</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::domain::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::domain::result::Result;
 
@@ -1398,21 +1392,21 @@
     ///
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>play_with_zero_one_or_two_players() {
-    <span class="kw">let </span>players: HashSet&lt;Player&gt; = HashSet::from_iter(<span class="macro">vec!</span>[Player::new(), Player::new()].into_iter());
-    <span class="kw">for </span>n <span class="kw">in </span><span class="number">0</span>..=<span class="number">2 </span>{
-        <span class="kw">let </span>players = HashSet::from_iter(players.clone().into_iter().take(n));
-        <span class="kw">let </span>game = Game::new(<span class="kw-2">&amp;</span>players).ok().unwrap();
-        <span class="macro">assert_eq!</span>(game.players().len(), n);
-        <span class="kw">for </span>player <span class="kw">in </span>players.into_iter() {
-            <span class="macro">assert!</span>(game.players().contains(<span class="kw-2">&amp;</span>player))
+        <span class="kw">for </span>n <span class="kw">in </span><span class="number">0</span>..=<span class="number">2 </span>{
+            <span class="kw">let </span>builder = Builder::default().with_players(n);
+            <span class="kw">let </span>players = builder.players.clone();
+            <span class="kw">let </span>game = builder.as_new().ok().unwrap();
+            <span class="macro">assert_eq!</span>(game.players().len(), n);
+            <span class="kw">for </span>player <span class="kw">in </span>players.into_iter() {
+                <span class="macro">assert!</span>(game.players().contains(<span class="kw-2">&amp;</span>player))
+            }
         }
-    }
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fail_to_play_with_more_than_two_players() {
-        <span class="kw">let </span>players: HashSet&lt;Player&gt; = HashSet::from_iter(<span class="macro">vec!</span>[Player::new(), Player::new(), Player::new()].into_iter());
-        <span class="kw">let </span>error = Game::new(<span class="kw-2">&amp;</span>players).err().unwrap();
+        <span class="kw">let </span>builder = Builder::default().with_players(<span class="number">3</span>);
+        <span class="kw">let </span>error = builder.as_new().err().unwrap();
         <span class="macro">assert_eq!</span>(error, Error::TooManyPlayers);
     }
 
@@ -1427,7 +1421,8 @@
     ///
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>use_a_standard_pack_of_cards() {
-        <span class="kw">let </span>game = Game::new(<span class="kw-2">&amp;</span>HashSet::new()).ok().unwrap();
+        <span class="kw">let </span>builder = Builder::default().with_players(<span class="number">2</span>);
+        <span class="kw">let </span>game = builder.as_new().ok().unwrap();
         <span class="kw">let </span>_deck = game.deck();
         <span class="macro">assert!</span>(<span class="bool-val">true</span>)
     }
@@ -1445,113 +1440,85 @@
     ///
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>start_game_with_lowest_cut_as_dealer() {
-        <span class="kw">let </span>player1 = Player::new();
-        <span class="kw">let </span>player2 = Player::new();
-        <span class="kw">let </span>players: HashSet&lt;Player&gt; = HashSet::from_iter(<span class="macro">vec!</span>[player1, player2].into_iter());
-
-        <span class="kw">loop </span>{
-            <span class="kw">let </span>game = Game::new(<span class="kw-2">&amp;</span>players).ok().unwrap();
-            <span class="kw">let </span>Game::Starting(<span class="kw-2">ref </span>cuts, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-            <span class="kw">let </span>card1 = cuts.get(<span class="kw-2">&amp;</span>player1).unwrap();
-            <span class="kw">let </span>card2 = cuts.get(<span class="kw-2">&amp;</span>player2).unwrap();
-
-            <span class="kw">if </span>card1.rank() != card2.rank() {
-                <span class="kw">let </span>game = game.start().ok().unwrap();
-                <span class="kw">let </span>Game::Discarding(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-                <span class="kw">if </span>card1.rank() &lt; card2.rank() {
-                    <span class="macro">assert_eq!</span>(dealer, player1)
-                } <span class="kw">else </span>{
-                    <span class="macro">assert_eq!</span>(dealer, player2)
-                }
-                <span class="kw">break</span>;
-            };
+        <span class="kw">let </span>player_cuts = <span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"ASKS"</span>), (<span class="number">1</span>, <span class="string">"KSAS"</span>)];
+        <span class="kw">for </span>(expected_dealer, cuts) <span class="kw">in </span>player_cuts {
+            <span class="kw">let </span>builder = Builder::default()
+                .with_players(<span class="number">2</span>)
+                .with_cuts(cuts);
+            <span class="kw">let </span>players = builder.players.clone();
+            <span class="kw">let </span>game = builder.as_starting();
+            <span class="kw">let </span>game = game.start().ok().unwrap();
+            <span class="kw">let </span>Game::Discarding(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+            <span class="macro">assert_eq!</span>(dealer, players[expected_dealer]);
         }
-
-        <span class="macro">assert!</span>(<span class="bool-val">true</span>)
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fail_to_start_game_if_cuts_are_the_same_value() {
-        <span class="kw">let </span>player1 = Player::new();
-        <span class="kw">let </span>player2 = Player::new();
-        <span class="kw">let </span>players: HashSet&lt;Player&gt; = HashSet::from_iter(<span class="macro">vec!</span>[player1, player2].into_iter());
-
-        <span class="kw">loop </span>{
-            <span class="kw">let </span>game = Game::new(<span class="kw-2">&amp;</span>players).ok().unwrap();
-            <span class="kw">let </span>Game::Starting(<span class="kw-2">ref </span>cuts, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-            <span class="kw">let </span>card1 = cuts.get(<span class="kw-2">&amp;</span>player1).unwrap();
-            <span class="kw">let </span>card2 = cuts.get(<span class="kw-2">&amp;</span>player2).unwrap();
-
-            <span class="kw">if </span>card1.rank() == card2.rank() {
-                <span class="kw">let </span>error = game.start().err().unwrap();
-                <span class="macro">assert_eq!</span>(error, Error::CutForStartUndecided);
-                <span class="kw">break</span>;
-            };
-        }
-
-        <span class="macro">assert!</span>(<span class="bool-val">true</span>)
+        <span class="kw">let </span>game = Builder::default()
+            .with_players(<span class="number">2</span>)
+            .with_cuts(<span class="string">"ASAC"</span>)
+            .as_starting();
+        <span class="kw">let </span>error = game.start().err().unwrap();
+        <span class="macro">assert_eq!</span>(error, Error::CutForStartUndecided);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fail_to_start_game_if_not_enough_players() {
-        <span class="kw">let </span>player1 = Player::new();
-        <span class="kw">let </span>players: HashSet&lt;Player&gt; = HashSet::from_iter(<span class="macro">vec!</span>[player1].into_iter());
-
-        <span class="kw">let </span>game = Game::new(<span class="kw-2">&amp;</span>players).ok().unwrap();
+        <span class="kw">let </span>game = Builder::default()
+            .with_players(<span class="number">1</span>)
+            .with_cuts(<span class="string">"AS"</span>)
+            .as_starting();
         <span class="kw">let </span>error = game.start().err().unwrap();
         <span class="macro">assert_eq!</span>(error, Error::NotEnoughPlayers);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>redraw_if_cuts_are_same_value() {
-        <span class="kw">let </span>player1 = Player::new();
-        <span class="kw">let </span>player2 = Player::new();
-        <span class="kw">let </span>players: HashSet&lt;Player&gt; = HashSet::from_iter(<span class="macro">vec!</span>[player1, player2].into_iter());
-
-        <span class="kw">loop </span>{
-            <span class="kw">let </span>game = Game::new(<span class="kw-2">&amp;</span>players).ok().unwrap();
-            <span class="kw">let </span>Game::Starting(<span class="kw-2">ref </span>cuts, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-            <span class="kw">let </span>card1 = cuts.get(<span class="kw-2">&amp;</span>player1).unwrap();
-            <span class="kw">let </span>card2 = cuts.get(<span class="kw-2">&amp;</span>player2).unwrap();
-
-            <span class="kw">if </span>card1.rank() == card2.rank() {
-                <span class="kw">let </span>game = game.redraw().ok().unwrap();
-                <span class="kw">let </span>Game::Starting(<span class="kw-2">ref </span>_cuts, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-                <span class="kw">break</span>;
-            };
-        }
-
+        <span class="kw">let </span>game = Builder::default()
+            .with_players(<span class="number">2</span>)
+            .with_cuts(<span class="string">"ASAC"</span>)
+            .as_starting();
+        <span class="kw">let </span>game = game.redraw().ok().unwrap();
+        <span class="kw">let </span>Game::Starting(<span class="kw-2">ref </span>_cuts, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
         <span class="macro">assert!</span>(<span class="bool-val">true</span>)
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fail_to_redraw_if_cuts_are_not_the_same_value() {
-        <span class="kw">let </span>player1 = Player::new();
-        <span class="kw">let </span>player2 = Player::new();
-        <span class="kw">let </span>players: HashSet&lt;Player&gt; = HashSet::from_iter(<span class="macro">vec!</span>[player1, player2].into_iter());
-
-        <span class="kw">loop </span>{
-            <span class="kw">let </span>game = Game::new(<span class="kw-2">&amp;</span>players).ok().unwrap();
-            <span class="kw">let </span>Game::Starting(<span class="kw-2">ref </span>cuts, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-            <span class="kw">let </span>card1 = cuts.get(<span class="kw-2">&amp;</span>player1).unwrap();
-            <span class="kw">let </span>card2 = cuts.get(<span class="kw-2">&amp;</span>player2).unwrap();
-
-            <span class="kw">if </span>card1.rank() != card2.rank() {
-                <span class="kw">let </span>error = game.redraw().err().unwrap();
-                <span class="macro">assert_eq!</span>(error, Error::CutForStartDecided);
-                <span class="kw">break</span>;
-            };
-        }
-
-        <span class="macro">assert!</span>(<span class="bool-val">true</span>)
+        <span class="kw">let </span>game = Builder::default()
+            .with_players(<span class="number">2</span>)
+            .with_cuts(<span class="string">"ASKS"</span>)
+            .as_starting();
+        <span class="kw">let </span>error = game.redraw().err().unwrap();
+        <span class="macro">assert_eq!</span>(error, Error::CutForStartDecided);
     }
 
-  <span class="comment">//   /** ## The Deal
-  //     *
-  //     * The dealer distributes six cards face down to his opponent and himself, beginning with the
-  //     * opponent.
-  //     */
-  //   def dummyDiscarding(
+    <span class="doccomment">/// ## The Deal
+    /// 
+    /// The dealer distributes six cards face down to his opponent and himself, beginning with the
+    /// opponent.
+    /// 
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>deal_six_cards_per_player() {
+        <span class="kw">let </span>game = Builder::default()
+            .with_players(<span class="number">2</span>)
+            .with_cuts(<span class="string">"ASKS"</span>)
+            .as_starting();
+
+        <span class="kw">let </span>game = game.start().ok().unwrap();
+        <span class="kw">let </span>players = game.players();
+        <span class="macro">assert_eq!</span>(players.len(), <span class="number">2</span>);
+
+        <span class="kw">let </span>Game::Discarding(<span class="kw">_</span>, <span class="kw">_</span>, hands, <span class="kw">_</span>, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
+        players
+            .iter()
+            .for_each(|p| <span class="macro">assert_eq!</span>(hands[p].cards().len(), CARDS_DEALT_PER_HAND));
+    }
+
+
+    <span class="comment">//   def dummyDiscarding(
   //       dealerScore: Score = Score.zero,
   //       poneScore: Score = Score.zero,
   //       maybeCut: Option[Card] = None
@@ -1610,20 +1577,41 @@
   //     }
   //   }
 
-  //   /** ## Object of the Game
-  //     *
-  //     * The goal is to be the first player to score 121 points. (Some games are to 61 points.)
-  //     * Players earn points during play and for making various card combinations.
-  //     */
+    </span><span class="doccomment">/// ## Object of the Game
+    /// 
+    /// The goal is to be the first player to score 121 points. (Some games are to 61 points.)
+    /// Players earn points during play and for making various card combinations.
+    ///
 
-  //   /** ## The Crib
-  //     *
-  //     * Each player looks at his six cards and "lays away" (discards) two of them face down to
-  //     * reduce the hand to four. The four cards laid away together constitute "the crib". The crib
-  //     * belongs to the dealer, but these cards are not exposed or used until after the hands have
-  //     * been played.
-  //     */
-  //   def doDiscardsReturning[A](player: Player, discards: Seq[Card])(discarding: Discarding): A =
+    /// ## The Crib
+    /// 
+    /// Each player looks at his six cards and "lays away" (discards) two of them face down to
+    /// reduce the hand to four. The four cards laid away together constitute "the crib". The crib
+    /// belongs to the dealer, but these cards are not exposed or used until after the hands have
+    /// been played.
+    ///
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>player_can_discard_held_cards_to_the_crib_1() {
+
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>player_can_discard_held_cards_to_the_crib_2() {
+
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>player_cannot_discard_more_then_two_held_cards_to_the_crib() {
+
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>player_cannot_discard_non_held_cards_to_the_crib() {
+
+    }
+
+
+    <span class="comment">//   def doDiscardsReturning[A](player: Player, discards: Seq[Card])(discarding: Discarding): A =
   //     Cribbage.discardToCrib(player, discards)(discarding).asInstanceOf[A]
 
   //   "accept discards" when {

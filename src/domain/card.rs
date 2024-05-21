@@ -87,6 +87,28 @@ impl Display for Face {
     }
 }
 
+#[cfg(test)]
+impl From<char> for Face {
+    fn from(value: char) -> Self {
+        match value {
+            'A' => Face::Ace,
+            '2' => Face::Two,
+            '3' => Face::Three,
+            '4' => Face::Four,
+            '5' => Face::Five,
+            '6' => Face::Six,
+            '7' => Face::Seven,
+            '8' => Face::Eight,
+            '9' => Face::Nine,
+            'T' => Face::Ten,
+            'J' => Face::Jack,
+            'Q' => Face::Queen,
+            'K' => Face::King,
+            _ => panic!("Unknown face"),
+        }
+    }
+}
+
 /// A Card suit.
 #[derive(Clone, Copy, Debug, Deserialize, Sequence, Serialize, PartialEq)]
 enum Suit { Hearts, Clubs, Diamonds, Spades }
@@ -112,9 +134,30 @@ impl Display for Suit {
     }
 }
 
+#[cfg(test)]
+impl From<char> for Suit {
+    fn from(value: char) -> Self {
+        match value {
+            'H' => Suit::Hearts,
+            'C' => Suit::Clubs,
+            'D' => Suit::Diamonds,
+            'S' => Suit::Spades,
+            _ => panic!("Unknown suit"),
+        }
+    }
+}
+
 /// A playing card.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Card(Face, Suit);
+
+#[cfg(test)]
+impl From<&str> for Card {
+    fn from(cid: &str) -> Self {
+        let mut chars = cid.chars();
+        Self(Face::from(chars.next().unwrap()), Suit::from(chars.next().unwrap()))
+    }
+}
 
 impl Card {
     pub fn all() -> Vec<Self> { 

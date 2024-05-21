@@ -31,11 +31,22 @@ impl Deck {
         let deck = Deck(Vec::from(&cards[NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND ..]));
         (HashMap::from_iter(hands), deck)
     }
+
+    pub fn cards(&self) -> Vec<Card> {
+        self.0.clone()
+    }
 }
 
 impl Display for Deck {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Deck({})", format_cards(&self.0))
+    }
+}
+
+#[cfg(test)]
+impl From<Vec<Card>> for Deck {
+    fn from(value: Vec<Card>) -> Self {
+        Self(value)
     }
 }
 
@@ -55,8 +66,15 @@ impl Display for Hand {
     }
 }
 
+#[cfg(test)]
+impl From<Vec<Card>> for Hand {
+    fn from(value: Vec<Card>) -> Self {
+        Self(value)
+    }
+}
+
 /// The current Crib.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct Crib(Vec<Card>);
 
 impl Crib {
@@ -77,6 +95,13 @@ impl Display for Crib {
 
 fn format_cards(cards: &[Card]) -> String {
     cards.iter().map(|c| c.to_string()).collect::<Vec<_>>().join(", ")
+}
+
+#[cfg(test)]
+impl From<Vec<Card>> for Crib {
+    fn from(value: Vec<Card>) -> Self {
+        Self(value)
+    }
 }
 
 #[cfg(test)]

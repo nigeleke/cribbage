@@ -1,4 +1,4 @@
-use crate::view::{Game as GameView, Role, Scores, Score};
+use crate::view::{Cuts, Game as GameView, Hands, Role, Scores, Score};
 
 use super::card::Card;
 use super::cards::Cards;
@@ -18,13 +18,7 @@ pub fn Game(
         div {
             display: flex;
             flex-direction: row;
-            gap: 1vw;
-        }
-        span:nth-child(odd) {
-            flex: 1;
-        }
-        span:nth-child(even) {
-            flex: 3;
+            justify-content: space-around;
         }
     };
 
@@ -36,9 +30,9 @@ pub fn Game(
     view! {
         class = class,
         <div>
-            <span><Scoreboard /></span>
-            <span><PlayArea /></span>
-            <span style=align><Deck /></span>
+            <div><Scoreboard /></div>
+            <div><PlayArea /></div>
+            <div style=align><CribAndCut /></div>
         </div>
     }
 }
@@ -181,26 +175,46 @@ fn Hole(
 fn PlayArea() -> impl IntoView {
     let game = use_context::<GameView>().unwrap();
 
-    let state = format!("{:?}", game);
     match game {
-        GameView::Starting(cuts) => view!{
-            <Cuts player_cut={cuts[&Role::CurrentPlayer]} opponent_cut={cuts[&Role::Opponent]} />
-        }.into_view(),
-        GameView::Discarding(_, hands, _, _) => {
-            let current_player_cards = hands[&Role::CurrentPlayer].clone();
-            let opponent_cards = hands[&Role::Opponent].clone();
-            view! {
-                <>
-                    <Cards cards=current_player_cards />
-                    <Cards cards=opponent_cards />
-                </>
-            }
-        }.into_view(),
+        GameView::Starting(cuts) => starting_play_area(&cuts).into_view(),
+        GameView::Discarding(_, hands, _, _) => discarding_play_area(&hands).into_view(),
+    }
+}
+
+fn starting_play_area(cuts: &Cuts) -> impl IntoView {
+    view!{
+        <Cuts player_cut={cuts[&Role::CurrentPlayer]} opponent_cut={cuts[&Role::Opponent]} />
+    }
+}
+
+fn discarding_play_area(hands: &Hands) -> impl IntoView {
+    let class = style!{
+        div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            align-content: stretch;
+        }
+        .empty {
+            flex-grow: 1;
+        }
+    };
+
+    let current_player_cards = hands[&Role::CurrentPlayer].clone();
+    let opponent_cards = hands[&Role::Opponent].clone();
+    
+    view! {
+        class = class,
+        <div>
+            <div><Cards cards=current_player_cards /></div>
+            <div class="empty" />
+            <div><Cards cards=opponent_cards /></div>
+        </div>
     }
 }
 
 #[component]
-fn Deck() -> impl IntoView {
+fn CribAndCut() -> impl IntoView {
     let game = use_context::<GameView>().unwrap();
     let cut = game.cut();
 

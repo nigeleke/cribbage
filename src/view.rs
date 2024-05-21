@@ -38,9 +38,9 @@ pub type Cuts = HashMap<Role, Card>;
 
 pub type Cut = Card;
 
-type Hand = Vec<CardSlot>;
+pub type Hand = Vec<CardSlot>;
 
-type Hands = HashMap<Role, Hand>;
+pub type Hands = HashMap<Role, Hand>;
 
 type Crib = Vec<CardSlot>;
 

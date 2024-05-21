@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["CardSlot","Game","Role"],"type":["Card","Cut","Cuts","Score","Scores"]};
+window.SIDEBAR_ITEMS = {"enum":["CardSlot","Game","Role"],"type":["Card","Crib","Cut","Cuts","Hand","Hands","Score","Scores"]};

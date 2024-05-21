@@ -1,7 +1,8 @@
-use crate::view::{Game as GameView, Role, Scores, Score};
+use crate::view::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
 
 use super::card::Card;
 use super::cards::Cards;
+use super::crib::Crib;
 use super::cuts::Cuts;
 
 use leptos::*;
@@ -18,39 +19,24 @@ pub fn Game(
         div {
             display: flex;
             flex-direction: row;
-            gap: 1vw;
-        }
-        span:nth-child(odd) {
-            flex: 1;
-        }
-        span:nth-child(even) {
-            flex: 3;
+            justify-content: space-around;
         }
     };
-
-    let align = if game.dealer() == Some(Role::CurrentPlayer) { "start" } else { "end" };
-    let align = format!("align-self: {}", align);
 
     provide_context(game);
     
     view! {
         class = class,
         <div>
-            <span><Scoreboard /></span>
-            <span><PlayArea /></span>
-            <span style=align><Deck /></span>
+            <Scoreboard />
+            <PlayArea />
+            <CribAndCut />
         </div>
     }
 }
 
 #[component]
 fn Scoreboard() -> impl IntoView {
-    let class = style! {
-        div {
-            text-align: right;
-        }
-    };
-
     let game = use_context::<GameView>().unwrap();
     let scores = game.scores();
     provide_context(scores.clone());
@@ -60,7 +46,6 @@ fn Scoreboard() -> impl IntoView {
     let opponent_score = scores.get(&Role::Opponent).unwrap_or(&default_score);
 
     view! {
-        class = class,
         <div>
             <svg height="90vh" viewBox="0 0 84 314">
                 <defs>
@@ -181,28 +166,65 @@ fn Hole(
 fn PlayArea() -> impl IntoView {
     let game = use_context::<GameView>().unwrap();
 
-    let state = format!("{:?}", game);
     match game {
-        GameView::Starting(cuts) => view!{
-            <Cuts player_cut={cuts[&Role::CurrentPlayer]} opponent_cut={cuts[&Role::Opponent]} />
-        }.into_view(),
-        GameView::Discarding(_, hands, _, _) => {
-            let current_player_cards = hands[&Role::CurrentPlayer].clone();
-            let opponent_cards = hands[&Role::Opponent].clone();
-            view! {
-                <>
-                    <Cards cards=current_player_cards />
-                    <Cards cards=opponent_cards />
-                </>
-            }
-        }.into_view(),
+        GameView::Starting(cuts) => starting_play_area(&cuts).into_view(),
+        GameView::Discarding(_, hands, _, _) => discarding_play_area(&hands).into_view(),
+    }
+}
+
+fn starting_play_area(cuts: &Cuts) -> impl IntoView {
+    view!{
+        <Cuts player_cut={cuts[&Role::CurrentPlayer]} opponent_cut={cuts[&Role::Opponent]} />
+    }
+}
+
+fn discarding_play_area(hands: &Hands) -> impl IntoView {
+    let class = style!{
+        div {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+    };
+
+    let current_player_cards = hands[&Role::CurrentPlayer].clone();
+    let opponent_cards = hands[&Role::Opponent].clone();
+    
+    view! {
+        class = class,
+        <div>
+            <div><Cards cards=current_player_cards /></div>
+            <div />
+            <div><Cards cards=opponent_cards /></div>
+        </div>
     }
 }
 
 #[component]
-fn Deck() -> impl IntoView {
+fn CribAndCut() -> impl IntoView {
+    let class = style!{
+        div {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+    };
+
     let game = use_context::<GameView>().unwrap();
+
+    let dealer = game.dealer().unwrap_or(Role::CurrentPlayer);
+    let crib = game.crib();
     let cut = game.cut();
 
-    view! { <Card card=cut /> }
+    let empty_view = view! { <Card card=CardSlot::Empty /> };
+    let crib_view = view! { <Crib crib=crib stacked=true /> };
+
+    view! {
+        class = class,
+        <div>
+            {if dealer == Role::CurrentPlayer { crib_view.clone() } else { empty_view.clone() }}
+            <Card card=cut />
+            {if dealer == Role::Opponent { crib_view } else { empty_view }}
+        </div>
+    }
 }

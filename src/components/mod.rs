@@ -1,5 +1,6 @@
 mod card;
 mod cards;
+mod crib;
 mod cuts;
 mod error;
 mod game;

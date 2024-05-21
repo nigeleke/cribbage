@@ -192,11 +192,7 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
         div {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            align-content: stretch;
-        }
-        .empty {
-            flex-grow: 1;
+            justify-content: space-around;
         }
     };
 
@@ -207,7 +203,7 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
         class = class,
         <div>
             <div><Cards cards=current_player_cards /></div>
-            <div class="empty" />
+            <div />
             <div><Cards cards=opponent_cards /></div>
         </div>
     }

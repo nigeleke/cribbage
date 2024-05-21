@@ -22,7 +22,7 @@ pub fn Card(
     let card_view = match card {
         CardSlot::FaceUp(card) => view! { <card-t rank=card.face_name() suit=card.suit_name() /> }.into_view(),
         CardSlot::FaceDown => view! { <card-t rank="0" backcolor="red" backtext="" /> }.into_view(),
-        CardSlot::Empty => view! { <></> }.into_view(),
+        CardSlot::Empty => view! { <div style="visibility: hidden"><card-t /></div> }.into_view(),
     };
 
     view!{

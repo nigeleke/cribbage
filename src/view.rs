@@ -42,7 +42,7 @@ pub type Hand = Vec<CardSlot>;
 
 pub type Hands = HashMap<Role, Hand>;
 
-type Crib = Vec<CardSlot>;
+pub type Crib = Vec<CardSlot>;
 
 pub type Score = crate::domain::prelude::Score;
 
@@ -126,6 +126,13 @@ impl Game {
         match self {
             Game::Starting(_) => None,
             Game::Discarding(_, _, _, dealer) => Some(dealer.clone()),
+        }
+    }
+
+    pub(crate) fn crib(&self) -> Crib {
+        match self {
+            Game::Starting(_) => Crib::new(),
+            Game::Discarding(_, _, crib, _) => crib.clone(),
         }
     }
 }

@@ -1,7 +1,8 @@
-use crate::view::{Cuts, Game as GameView, Hands, Role, Scores, Score};
+use crate::view::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
 
 use super::card::Card;
 use super::cards::Cards;
+use super::crib::Crib;
 use super::cuts::Cuts;
 
 use leptos::*;
@@ -22,29 +23,20 @@ pub fn Game(
         }
     };
 
-    let align = if game.dealer() == Some(Role::CurrentPlayer) { "start" } else { "end" };
-    let align = format!("align-self: {}", align);
-
     provide_context(game);
     
     view! {
         class = class,
         <div>
-            <div><Scoreboard /></div>
-            <div><PlayArea /></div>
-            <div style=align><CribAndCut /></div>
+            <Scoreboard />
+            <PlayArea />
+            <CribAndCut />
         </div>
     }
 }
 
 #[component]
 fn Scoreboard() -> impl IntoView {
-    let class = style! {
-        div {
-            text-align: right;
-        }
-    };
-
     let game = use_context::<GameView>().unwrap();
     let scores = game.scores();
     provide_context(scores.clone());
@@ -54,7 +46,6 @@ fn Scoreboard() -> impl IntoView {
     let opponent_score = scores.get(&Role::Opponent).unwrap_or(&default_score);
 
     view! {
-        class = class,
         <div>
             <svg height="90vh" viewBox="0 0 84 314">
                 <defs>
@@ -211,8 +202,29 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
 
 #[component]
 fn CribAndCut() -> impl IntoView {
+    let class = style!{
+        div {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+    };
+
     let game = use_context::<GameView>().unwrap();
+
+    let dealer = game.dealer().unwrap_or(Role::CurrentPlayer);
+    let crib = game.crib();
     let cut = game.cut();
 
-    view! { <Card card=cut /> }
+    let empty_view = view! { <Card card=CardSlot::Empty /> };
+    let crib_view = view! { <Crib crib=crib stacked=true /> };
+
+    view! {
+        class = class,
+        <div>
+            {if dealer == Role::CurrentPlayer { crib_view.clone() } else { empty_view.clone() }}
+            <Card card=cut />
+            {if dealer == Role::Opponent { crib_view } else { empty_view }}
+        </div>
+    }
 }

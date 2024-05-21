@@ -142,21 +142,21 @@ mod test {
     ///
     #[test]
     fn play_with_zero_one_or_two_players() {
-    let players: HashSet<Player> = HashSet::from_iter(vec![Player::new(), Player::new()].into_iter());
-    for n in 0..=2 {
-        let players = HashSet::from_iter(players.clone().into_iter().take(n));
-        let game = Game::new(&players).ok().unwrap();
-        assert_eq!(game.players().len(), n);
-        for player in players.into_iter() {
-            assert!(game.players().contains(&player))
+        for n in 0..=2 {
+            let builder = Builder::default().with_players(n);
+            let players = builder.players.clone();
+            let game = builder.as_new().ok().unwrap();
+            assert_eq!(game.players().len(), n);
+            for player in players.into_iter() {
+                assert!(game.players().contains(&player))
+            }
         }
-    }
     }
 
     #[test]
     fn fail_to_play_with_more_than_two_players() {
-        let players: HashSet<Player> = HashSet::from_iter(vec![Player::new(), Player::new(), Player::new()].into_iter());
-        let error = Game::new(&players).err().unwrap();
+        let builder = Builder::default().with_players(3);
+        let error = builder.as_new().err().unwrap();
         assert_eq!(error, Error::TooManyPlayers);
     }
 
@@ -171,7 +171,8 @@ mod test {
     ///
     #[test]
     fn use_a_standard_pack_of_cards() {
-        let game = Game::new(&HashSet::new()).ok().unwrap();
+        let builder = Builder::default().with_players(2);
+        let game = builder.as_new().ok().unwrap();
         let _deck = game.deck();
         assert!(true)
     }
@@ -189,113 +190,85 @@ mod test {
     ///
     #[test]
     fn start_game_with_lowest_cut_as_dealer() {
-        let player1 = Player::new();
-        let player2 = Player::new();
-        let players: HashSet<Player> = HashSet::from_iter(vec![player1, player2].into_iter());
-
-        loop {
-            let game = Game::new(&players).ok().unwrap();
-            let Game::Starting(ref cuts, _) = game else { panic!("Unexpected state") };
-            let card1 = cuts.get(&player1).unwrap();
-            let card2 = cuts.get(&player2).unwrap();
-
-            if card1.rank() != card2.rank() {
-                let game = game.start().ok().unwrap();
-                let Game::Discarding(_, dealer, _, _, _) = game else { panic!("Unexpected state") };
-                if card1.rank() < card2.rank() {
-                    assert_eq!(dealer, player1)
-                } else {
-                    assert_eq!(dealer, player2)
-                }
-                break;
-            };
+        let player_cuts = vec![(0, "ASKS"), (1, "KSAS")];
+        for (expected_dealer, cuts) in player_cuts {
+            let builder = Builder::default()
+                .with_players(2)
+                .with_cuts(cuts);
+            let players = builder.players.clone();
+            let game = builder.as_starting();
+            let game = game.start().ok().unwrap();
+            let Game::Discarding(_, dealer, _, _, _) = game else { panic!("Unexpected state") };
+            assert_eq!(dealer, players[expected_dealer]);
         }
-
-        assert!(true)
     }
 
     #[test]
     fn fail_to_start_game_if_cuts_are_the_same_value() {
-        let player1 = Player::new();
-        let player2 = Player::new();
-        let players: HashSet<Player> = HashSet::from_iter(vec![player1, player2].into_iter());
-
-        loop {
-            let game = Game::new(&players).ok().unwrap();
-            let Game::Starting(ref cuts, _) = game else { panic!("Unexpected state") };
-            let card1 = cuts.get(&player1).unwrap();
-            let card2 = cuts.get(&player2).unwrap();
-
-            if card1.rank() == card2.rank() {
-                let error = game.start().err().unwrap();
-                assert_eq!(error, Error::CutForStartUndecided);
-                break;
-            };
-        }
-
-        assert!(true)
+        let game = Builder::default()
+            .with_players(2)
+            .with_cuts("ASAC")
+            .as_starting();
+        let error = game.start().err().unwrap();
+        assert_eq!(error, Error::CutForStartUndecided);
     }
 
     #[test]
     fn fail_to_start_game_if_not_enough_players() {
-        let player1 = Player::new();
-        let players: HashSet<Player> = HashSet::from_iter(vec![player1].into_iter());
-
-        let game = Game::new(&players).ok().unwrap();
+        let game = Builder::default()
+            .with_players(1)
+            .with_cuts("AS")
+            .as_starting();
         let error = game.start().err().unwrap();
         assert_eq!(error, Error::NotEnoughPlayers);
     }
 
     #[test]
     fn redraw_if_cuts_are_same_value() {
-        let player1 = Player::new();
-        let player2 = Player::new();
-        let players: HashSet<Player> = HashSet::from_iter(vec![player1, player2].into_iter());
-
-        loop {
-            let game = Game::new(&players).ok().unwrap();
-            let Game::Starting(ref cuts, _) = game else { panic!("Unexpected state") };
-            let card1 = cuts.get(&player1).unwrap();
-            let card2 = cuts.get(&player2).unwrap();
-
-            if card1.rank() == card2.rank() {
-                let game = game.redraw().ok().unwrap();
-                let Game::Starting(ref _cuts, _) = game else { panic!("Unexpected state") };
-                break;
-            };
-        }
-
+        let game = Builder::default()
+            .with_players(2)
+            .with_cuts("ASAC")
+            .as_starting();
+        let game = game.redraw().ok().unwrap();
+        let Game::Starting(ref _cuts, _) = game else { panic!("Unexpected state") };
         assert!(true)
     }
 
     #[test]
     fn fail_to_redraw_if_cuts_are_not_the_same_value() {
-        let player1 = Player::new();
-        let player2 = Player::new();
-        let players: HashSet<Player> = HashSet::from_iter(vec![player1, player2].into_iter());
-
-        loop {
-            let game = Game::new(&players).ok().unwrap();
-            let Game::Starting(ref cuts, _) = game else { panic!("Unexpected state") };
-            let card1 = cuts.get(&player1).unwrap();
-            let card2 = cuts.get(&player2).unwrap();
-
-            if card1.rank() != card2.rank() {
-                let error = game.redraw().err().unwrap();
-                assert_eq!(error, Error::CutForStartDecided);
-                break;
-            };
-        }
-
-        assert!(true)
+        let game = Builder::default()
+            .with_players(2)
+            .with_cuts("ASKS")
+            .as_starting();
+        let error = game.redraw().err().unwrap();
+        assert_eq!(error, Error::CutForStartDecided);
     }
 
-  //   /** ## The Deal
-  //     *
-  //     * The dealer distributes six cards face down to his opponent and himself, beginning with the
-  //     * opponent.
-  //     */
-  //   def dummyDiscarding(
+    /// ## The Deal
+    /// 
+    /// The dealer distributes six cards face down to his opponent and himself, beginning with the
+    /// opponent.
+    /// 
+    #[test]
+    fn deal_six_cards_per_player() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_cuts("ASKS")
+            .as_starting();
+
+        let game = game.start().ok().unwrap();
+        let players = game.players();
+        assert_eq!(players.len(), 2);
+
+        let Game::Discarding(_, _, hands, _, _) = game else { panic!("Unexpected state") };
+
+        players
+            .iter()
+            .for_each(|p| assert_eq!(hands[p].cards().len(), CARDS_DEALT_PER_HAND));
+    }
+
+
+    //   def dummyDiscarding(
   //       dealerScore: Score = Score.zero,
   //       poneScore: Score = Score.zero,
   //       maybeCut: Option[Card] = None
@@ -354,20 +327,41 @@ mod test {
   //     }
   //   }
 
-  //   /** ## Object of the Game
-  //     *
-  //     * The goal is to be the first player to score 121 points. (Some games are to 61 points.)
-  //     * Players earn points during play and for making various card combinations.
-  //     */
+    /// ## Object of the Game
+    /// 
+    /// The goal is to be the first player to score 121 points. (Some games are to 61 points.)
+    /// Players earn points during play and for making various card combinations.
+    ///
 
-  //   /** ## The Crib
-  //     *
-  //     * Each player looks at his six cards and "lays away" (discards) two of them face down to
-  //     * reduce the hand to four. The four cards laid away together constitute "the crib". The crib
-  //     * belongs to the dealer, but these cards are not exposed or used until after the hands have
-  //     * been played.
-  //     */
-  //   def doDiscardsReturning[A](player: Player, discards: Seq[Card])(discarding: Discarding): A =
+    /// ## The Crib
+    /// 
+    /// Each player looks at his six cards and "lays away" (discards) two of them face down to
+    /// reduce the hand to four. The four cards laid away together constitute "the crib". The crib
+    /// belongs to the dealer, but these cards are not exposed or used until after the hands have
+    /// been played.
+    ///
+    #[test]
+    fn player_can_discard_held_cards_to_the_crib_1() {
+
+    }
+
+    #[test]
+    fn player_can_discard_held_cards_to_the_crib_2() {
+
+    }
+
+    #[test]
+    fn player_cannot_discard_more_then_two_held_cards_to_the_crib() {
+
+    }
+
+    #[test]
+    fn player_cannot_discard_non_held_cards_to_the_crib() {
+
+    }
+
+
+    //   def doDiscardsReturning[A](player: Player, discards: Seq[Card])(discarding: Discarding): A =
   //     Cribbage.discardToCrib(player, discards)(discarding).asInstanceOf[A]
 
   //   "accept discards" when {

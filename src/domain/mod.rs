@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod builder;
+
 mod card;
 mod cards;
 mod game;
@@ -6,6 +9,8 @@ mod result;
 mod score;
 
 pub mod prelude {
+    #[cfg(test)]
+    pub use crate::domain::builder::Builder;
     pub use crate::domain::*;
     pub use crate::domain::card::{Card, Rank, Value};
     pub use crate::domain::cards::{Crib, Deck, Hand};

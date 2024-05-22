@@ -12,7 +12,7 @@ pub struct Builder {
     hands: Vec<Hand>,
     crib: Crib,
     cut: Option<Card>,
-    deck: Vec<Card>,
+    deck: Deck,
 }
 
 impl Default for Builder {
@@ -25,7 +25,7 @@ impl Default for Builder {
             hands: Default::default(),
             crib: Default::default(),
             cut: Default::default(),
-            deck: Deck::shuffled_pack().cards(),
+            deck: Deck::shuffled_pack(),
         }
     }
 }
@@ -42,8 +42,8 @@ impl Builder {
     }
 
     pub fn with_cuts(mut self, cuts: &str) -> Self {
-        let mut cuts = str_to_cards(cuts);
-        self.remove_from_deck(&cuts);
+        let mut cuts = Builder::cards(cuts);
+        self.deck.remove_all(&cuts);
         self.cuts.append(&mut cuts);
         self
     }
@@ -55,24 +55,22 @@ impl Builder {
     }
 
     pub fn with_hand(mut self, hand: &str) -> Self {
-        let hand = str_to_cards(hand);
-        self.remove_from_deck(&hand);
-        let hand = Hand::from(hand);
-        self.hands.push(hand);
+        let hand = Builder::cards(hand);
+        self.deck.remove_all(&hand);
+        self.hands.push(hand.into());
         self
     }
 
     pub fn with_crib(mut self, crib: &str) -> Self {
-        let crib = str_to_cards(crib);
-        self.remove_from_deck(&crib);
-        let crib = Crib::from(crib);
-        self.crib = crib;
+        let crib = Builder::cards(crib);
+        self.deck.remove_all(&crib);
+        self.crib = crib.into();
         self
     }
 
     pub fn with_cut(mut self, cut: &str) -> Self {
-        let cut = str_to_card(cut);
-        self.remove_from_deck(&vec![cut]);
+        let cut = Builder::card(cut);
+        self.deck.remove(&cut);
         self.cut = Some(cut);
         self
     }
@@ -89,34 +87,37 @@ impl Builder {
         Game::Starting(cuts, Deck::from(deck))
     }
 
-    fn remove_from_deck(&mut self, cards: &[Card]) {
+    pub fn as_discarding(self) -> Game {
+        let players = self.players.clone();
+        let scores = self.scores.clone();
+        let scores = self.merged(scores);
+        let hands = self.hands.clone();
+        let hands = self.merged(hands);
+        let crib = self.crib.clone();
         let deck = self.deck.clone();
-        let deck = deck.into_iter().filter(|c| !cards.contains(c));
-        println!("Left in deck {:?}", deck);
-        self.deck = deck.collect();
+        Game::Discarding(scores, players[self.dealer], hands, crib, deck)
     }
 
-    fn merged<T>(self, items: Vec<T>) -> HashMap<Player, T> {
-        let zipped = self.players.into_iter().zip(items);
+    fn merged<T>(&self, items: Vec<T>) -> HashMap<Player, T> {
+        let players = self.players.clone();
+        let zipped = players.into_iter().zip(items);
         zipped.collect()
     }
 
-    // pub fn as_discarding(self) -> Game::Discarding {
-    //     Game::Discarding(self.players, players[self.dealer], self.hands, self.crib, self.cut)
-    // }
-}
-
-fn str_to_cards(cards: &str) -> Vec<Card> {
-    let cards = cards
-        .chars()
-        .collect::<Vec<_>>().chunks(2)
-        .map(|chunk| chunk.iter().collect::<String>())
-        .map(|cid| str_to_card(&cid))
-        .collect::<Vec<Card>>();
-    Vec::from_iter(cards)
-}
-
-fn str_to_card(cid: &str) -> Card {
-    Card::from(cid)
+    fn cards(cards: &str) -> Vec<Card> {
+        let cards = cards
+            .chars()
+            .collect::<Vec<_>>().chunks(2)
+            .map(|chunk| chunk.iter().collect::<String>())
+            .map(|cid| Builder::card(&cid))
+            .collect::<Vec<Card>>();
+        Vec::from_iter(cards)
+    }
+    
+    fn card(cid: &str) -> Card {
+        Card::from(cid)
+    }
+    
+    
 }
 

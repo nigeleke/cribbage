@@ -4,7 +4,7 @@ pub(crate) type BackPeg = usize;
 
 pub(crate) type FrontPeg = usize;
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct Score(BackPeg, FrontPeg);
 
 impl Score {

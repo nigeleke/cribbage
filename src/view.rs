@@ -154,6 +154,7 @@ impl From<(DomainGame, DomainPlayer)> for Game {
                 let dealer = Dealer::from((dealer, player));
                 Game::Discarding(scores, hands, crib, dealer)
             },
+            DomainGame::Playing => unimplemented!(),
         }
     }
 }

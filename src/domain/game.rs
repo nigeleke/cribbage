@@ -1,7 +1,6 @@
 use crate::domain::prelude::*;
 use crate::domain::result::Result;
 
-use leptos::*;
 use serde::{Serialize, Deserialize};
 
 use std::collections::{HashMap, HashSet};
@@ -12,6 +11,7 @@ use std::fmt::Display;
 pub enum Game {
     Starting(HashMap<Player, Card>, Deck),
     Discarding(HashMap<Player, Score>, Player, HashMap<Player, Hand>, Crib, Deck),
+    Playing
 //     Playing(MyState, OpponentState, Play, Cut, Crib),
 //     ScoringPoneCards(MyState, OpponentState, Cut, Crib),
 //     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
@@ -41,13 +41,21 @@ impl Game {
         match self {
             Game::Starting(cuts, _) => HashSet::from_iter(cuts.keys().cloned()),
             Game::Discarding(scores, _, _, _, _) => HashSet::from_iter(scores.keys().cloned()),
+            Game::Playing => unimplemented!(),
         }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn player_1_2(&self) -> (Player, Player) {
+        let players = Vec::from_iter(self.players().into_iter());
+        (players[0], players[1])
     }
 
     pub fn deck(&self) -> Deck {
         match self {
             Game::Starting(_, deck) => deck.clone(),
             Game::Discarding(_, _, _, _, deck) => deck.clone(),
+            Game::Playing => unimplemented!(),
         }
     }
 
@@ -64,7 +72,7 @@ impl Game {
                 let dealer = if cut1.rank() < cut2.rank() { player1 } else { player2 };
                 let deck = Deck::shuffled_pack();
                 let (hands, deck) = deck.deal(&players);
-                let crib = Crib::new();
+                let crib = Crib::default();
                 Ok(Game::Discarding(scores, dealer.clone(), hands, crib, deck))
             },
             _ => Err(Error::InvalidAction("start".into()))
@@ -80,6 +88,32 @@ impl Game {
                 Ok(Game::new(&self.players())?)
             },
             _ => Err(Error::InvalidAction("redraw".into()))
+        }
+    }
+
+    pub fn discard(&self, player: &Player, discards: &[Card]) -> Result<Self> {
+        match self {
+            Game::Discarding(scores, dealer, hands, crib, deck) => {
+                let players = self.players();
+                verify::player(player, &players)?;
+
+                let mut hands = hands.clone();
+                let mut hand = hands[player].clone();
+                verify::discards(discards, &hand);
+
+                hand.remove_all(discards);
+                hands.insert(*player, hand);
+
+                let mut crib = crib.clone();
+                crib.add(discards);
+
+                if crib.len() == CARDS_REQUIRED_IN_CRIB {
+                    Ok(Game::Playing)
+                } else {
+                    Ok(Game::Discarding(scores.clone(), dealer.clone(), hands, crib, deck.clone()))
+                }
+            },
+            _ => Err(Error::InvalidAction("discard".into()))
         }
     }
 }
@@ -108,6 +142,15 @@ mod verify {
         }
     }
 
+    pub(crate) fn player(player: &Player, players: &HashSet<Player>) -> Result<()> {
+        if !players.contains(player) {
+            Err(Error::InvalidPlayer(player.clone()))
+        } else {
+            Ok(())
+        }
+    }
+
+
     pub(crate) fn different_cuts(cuts: &HashMap<Player, Card>) -> Result<()> {
         let cuts: HashSet<Rank> = HashSet::from_iter(cuts.values().map(|c| c.rank()));
         if cuts.len() != NUMBER_OF_PLAYERS_IN_GAME {
@@ -121,6 +164,26 @@ mod verify {
         let cuts: HashSet<Rank> = HashSet::from_iter(cuts.values().map(|c| c.rank()));
         if cuts.len() == NUMBER_OF_PLAYERS_IN_GAME {
             Err(Error::CutForStartDecided)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub(crate) fn discards(discards: &[Card], hand: &Hand) -> Result<()> {
+        for discard in discards {
+            verify::card(discard, &hand.cards())?
+        }
+
+        if hand.len() - discards.len() < CARDS_KEPT_PER_HAND {
+            Err(Error::TooManyDiscards)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub(crate) fn card(card: &Card, cards: &[Card]) -> Result<()> {
+        if !cards.contains(card) {
+            Err(Error::InvalidCard(card.clone()))
         } else {
             Ok(())
         }
@@ -190,8 +253,7 @@ mod test {
     ///
     #[test]
     fn start_game_with_lowest_cut_as_dealer() {
-        let player_cuts = vec![(0, "ASKS"), (1, "KSAS")];
-        for (expected_dealer, cuts) in player_cuts {
+        for (expected_dealer, cuts) in vec![(0, "ASKS"), (1, "KSAS")] {
             let builder = Builder::default()
                 .with_players(2)
                 .with_cuts(cuts);
@@ -283,21 +345,35 @@ mod test {
   //     val updatedDeck   = maybeCut.map(c => Cards.deckOf(Seq(c))).getOrElse(discarding.deck)
   //     f(discarding.copy(deck = updatedDeck, scores = updatedScores))
 
-  //   "deal" when {
-  //     "draw decided" in dummyDiscarding() {
-  //       case discarding @ Discarding(deck, scores, hands, dealer, pone, crib) =>
-  //         val players = Set(dealer, pone)
-  //         deck.size should be(40)
-  //         scores.keySet should be(players)
-  //         scores.foreach(_._2 should be(Score.zero))
-  //         hands.keySet should be(players)
-  //         hands.foreach(_._2.size should be(CardsDealtPerHand))
-  //         crib.toSeq should be(empty)
-  //         deck.toSeq ++
-  //           hands(dealer).toSeq ++
-  //           hands(pone).toSeq should contain theSameElementsAs (Cards.fullDeck.toSeq)
-  //     }
+    #[test]
+    fn deal_when_draw_decided() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_cuts("ASKS")
+            .as_starting();
+        let game = game.start().ok().unwrap();
+        let players = game.players();
 
+        let Game::Discarding(scores, dealer, hands, crib, deck) = game  else { panic!("Unexpected state") };
+        
+        players.iter().for_each(|p| {
+            assert_eq!(scores[p].back_peg(), 0);
+            assert_eq!(scores[p].front_peg(), 0);
+        });
+        
+        players.iter().for_each(|p| {
+            assert_eq!(hands[p].cards().len(), CARDS_DEALT_PER_HAND);
+        });
+
+        assert_eq!(crib.cards().len(), 0);
+        assert_eq!(deck.cards().len(), 52 - (NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND));
+    }
+
+    #[test]
+    #[ignore]
+    fn deal_when_scored_crib() {
+
+    }
   //     "scored crib" in dummyPlaying(
   //       poneCards = Seq(Card(Ace, Hearts)),
   //       inPlays = Seq(0 -> Card(Jack, Hearts), 0 -> Card(Queen, Hearts)),
@@ -341,12 +417,28 @@ mod test {
     /// been played.
     ///
     #[test]
-    fn player_can_discard_held_cards_to_the_crib_1() {
+    fn player_can_discard_one_held_card_to_the_crib() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_scores(&vec![0, 0])
+            .with_hand("AH2H3H4H5H6H")
+            .with_hand("AC2C3C4C5C6C")
+            .as_discarding();
 
+        let (player, opponent) = game.player_1_2();
+
+        let Game::Discarding(scores, dealer, hands, crib, deck) = game.clone()  else { panic!("Unexpected state") };
+        let hand = hands[&player].clone();
+        let discard = hand.get(&[0]);
+
+        let game = game.discard(&player, &discard).ok().unwrap();
+        let Game::Discarding(scores2, dealer2, hands2, crib2, deck2) = game  else { panic!("Unexpected state") };
+
+        assert_eq!(scores2, scores);        
     }
 
     #[test]
-    fn player_can_discard_held_cards_to_the_crib_2() {
+    fn player_can_discard_two_held_cards_to_the_crib() {
 
     }
 

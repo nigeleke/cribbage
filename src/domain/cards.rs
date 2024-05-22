@@ -6,103 +6,103 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Cards<T> {
+    cards: Vec<Card>,
+    _marker: std::marker::PhantomData<T>
+}
+
+impl<T> Cards<T> {
+    pub(crate) fn remove(&mut self, card: &Card) {
+        self.cards.retain(|c| c != card)
+    }
+
+    pub(crate) fn remove_all(&mut self, cards: &[Card]) {
+        for card in cards {
+            self.remove(card)
+        }
+    }
+
+    pub(crate) fn add(&mut self, cards: &[Card]) {
+        for card in cards {
+            self.cards.push(*card)
+        }
+    }
+
+    pub(crate) fn cards(&self) -> Vec<Card> {
+        self.cards.clone()
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.cards.len()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn get(&self, indices: &[usize]) -> Vec<Card> {
+        Vec::from_iter(indices.into_iter().filter_map(|i| Some(self.cards[*i])))
+    }
+}
+
+impl<T> Default for Cards<T> {
+    fn default() -> Self {
+        Self { cards: Default::default(), _marker: Default::default() }
+    }
+}
+
+impl<T> Display for Cards<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let formatted = self.cards
+            .iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<_>>()
+            .join(", "); 
+        write!(f, "{}", formatted)
+    }
+}
+
+impl<T> From<Vec<Card>> for Cards<T> {
+    fn from(value: Vec<Card>) -> Self {
+        Self { cards: value, _marker: Default::default() }
+    }
+}
+
 /// A deck of cards.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct Deck(Vec<Card>);
+#[derive(Clone, Debug)]
+pub struct DeckType;
+pub type Deck = Cards<DeckType>;
 
 impl Deck {
     pub(crate) fn shuffled_pack() -> Deck {
         let mut cards = Card::all();
         cards.shuffle(&mut thread_rng());
-        Deck(cards)
+        cards.into()
     }
 
     pub(crate) fn cut(&self) -> (Card, Deck) {
-        let Some((card, remainder)) = self.0.split_first() else { unreachable!() };
-        (*card, Deck(remainder.into()))
+        let Some((card, remainder)) = self.cards.split_first() else { unreachable!() };
+        (*card, Deck::from(Vec::from(remainder)))
     }
 
     pub(crate) fn deal(&self, players: &HashSet<Player>) -> (HashMap<Player, Hand>, Deck) {
-        let cards = &self.0;
+        let cards = &self.cards;
         let hands = players
             .iter()
             .enumerate()
-            .map(|(i, p)| (*p, Hand(Vec::from(&cards[i*CARDS_DEALT_PER_HAND .. (i+1)*CARDS_DEALT_PER_HAND]))));
-        let deck = Deck(Vec::from(&cards[NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND ..]));
+            .map(|(i, p)| (*p, Hand::from(Vec::from(&cards[i*CARDS_DEALT_PER_HAND .. (i+1)*CARDS_DEALT_PER_HAND]))));
+        let deck = Deck::from(Vec::from(&cards[NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND ..]));
         (HashMap::from_iter(hands), deck)
-    }
-
-    pub fn cards(&self) -> Vec<Card> {
-        self.0.clone()
-    }
-}
-
-impl Display for Deck {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Deck({})", format_cards(&self.0))
-    }
-}
-
-#[cfg(test)]
-impl From<Vec<Card>> for Deck {
-    fn from(value: Vec<Card>) -> Self {
-        Self(value)
     }
 }
 
 /// A player's hand.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct Hand(Vec<Card>);
-
-impl Hand {
-    pub fn cards(&self) -> Vec<Card> {
-        self.0.clone()
-    }
-}
-
-impl Display for Hand {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Hand({})", format_cards(&self.0))
-    }
-}
-
-#[cfg(test)]
-impl From<Vec<Card>> for Hand {
-    fn from(value: Vec<Card>) -> Self {
-        Self(value)
-    }
-}
+#[derive(Clone, Debug)]
+pub struct HandType;
+pub type Hand = Cards<HandType>;
 
 /// The current Crib.
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
-pub struct Crib(Vec<Card>);
-
-impl Crib {
-    pub(crate) fn new() -> Self {
-        Self(vec![])
-    }
-    
-    pub fn cards(&self) -> Vec<Card> {
-        self.0.clone()
-    }
-}
-
-impl Display for Crib {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Crib({})", format_cards(&self.0))
-    }
-}
-
-fn format_cards(cards: &[Card]) -> String {
-    cards.iter().map(|c| c.to_string()).collect::<Vec<_>>().join(", ")
-}
-
-#[cfg(test)]
-impl From<Vec<Card>> for Crib {
-    fn from(value: Vec<Card>) -> Self {
-        Self(value)
-    }
-}
+#[derive(Clone, Debug)]
+pub struct CribType;
+pub type Crib = Cards<CribType>;
 
 #[cfg(test)]
 mod test {
@@ -111,7 +111,7 @@ mod test {
     #[test]
     fn contains_52_cards() {
         let deck = Deck::shuffled_pack();
-        assert_eq!(deck.0.len(), 52);
+        assert_eq!(deck.cards.len(), 52);
     }
 
     #[test]
@@ -120,7 +120,7 @@ mod test {
         let cards = Card::all();
 
         for card in cards {
-            assert!(deck.0.contains(&card))
+            assert!(deck.cards.contains(&card))
         }
     }
 
@@ -128,11 +128,11 @@ mod test {
     fn allow_a_random_card_to_be_cut() {
         let deck = Deck::shuffled_pack();
         let (cut, remaining) = deck.cut();
-        assert!(deck.0.contains(&cut));
-        assert!(!remaining.0.contains(&cut));
-        assert_eq!(remaining.0.len(), 51);
-        for card in deck.0 {
-            assert_eq!(remaining.0.contains(&card), card != cut)
+        assert!(deck.cards.contains(&cut));
+        assert!(!remaining.cards.contains(&cut));
+        assert_eq!(remaining.cards.len(), 51);
+        for card in deck.cards {
+            assert_eq!(remaining.cards.contains(&card), card != cut)
         }
     }
 

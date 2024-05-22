@@ -1,3 +1,6 @@
+use super::player::Player;
+use super::card::Card;
+
 #[derive(Debug, PartialEq)]
 pub enum Error {
     TooManyPlayers,
@@ -5,6 +8,9 @@ pub enum Error {
     CutForStartUndecided,
     CutForStartDecided,
     InvalidAction(String),
+    InvalidPlayer(Player),
+    InvalidCard(Card),
+    TooManyDiscards,
 }
 
 impl std::fmt::Display for Error {

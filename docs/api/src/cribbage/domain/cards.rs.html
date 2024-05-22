@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/cards.rs`."><title>cards.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (b92758a9a 2024-05-20)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/cards.rs`."><title>cards.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (791adf759 2024-05-21)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -145,103 +145,103 @@
 <span class="kw">use </span>std::collections::{HashMap, HashSet};
 <span class="kw">use </span>std::fmt::Display;
 
+<span class="attr">#[derive(Clone, Debug, Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>Cards&lt;T&gt; {
+    cards: Vec&lt;Card&gt;,
+    _marker: std::marker::PhantomData&lt;T&gt;
+}
+
+<span class="kw">impl</span>&lt;T&gt; Cards&lt;T&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>remove(<span class="kw-2">&amp;mut </span><span class="self">self</span>, card: <span class="kw-2">&amp;</span>Card) {
+        <span class="self">self</span>.cards.retain(|c| c != card)
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>remove_all(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cards: <span class="kw-2">&amp;</span>[Card]) {
+        <span class="kw">for </span>card <span class="kw">in </span>cards {
+            <span class="self">self</span>.remove(card)
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>add(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cards: <span class="kw-2">&amp;</span>[Card]) {
+        <span class="kw">for </span>card <span class="kw">in </span>cards {
+            <span class="self">self</span>.cards.push(<span class="kw-2">*</span>card)
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>cards(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Card&gt; {
+        <span class="self">self</span>.cards.clone()
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.cards.len()
+    }
+
+    <span class="attr">#[cfg(test)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, indices: <span class="kw-2">&amp;</span>[usize]) -&gt; Vec&lt;Card&gt; {
+        Vec::from_iter(indices.into_iter().filter_map(|i| <span class="prelude-val">Some</span>(<span class="self">self</span>.cards[<span class="kw-2">*</span>i])))
+    }
+}
+
+<span class="kw">impl</span>&lt;T&gt; Default <span class="kw">for </span>Cards&lt;T&gt; {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ cards: Default::default(), _marker: Default::default() }
+    }
+}
+
+<span class="kw">impl</span>&lt;T&gt; Display <span class="kw">for </span>Cards&lt;T&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+        <span class="kw">let </span>formatted = <span class="self">self</span>.cards
+            .iter()
+            .map(|c| c.to_string())
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+            .join(<span class="string">", "</span>); 
+        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, formatted)
+    }
+}
+
+<span class="kw">impl</span>&lt;T&gt; From&lt;Vec&lt;Card&gt;&gt; <span class="kw">for </span>Cards&lt;T&gt; {
+    <span class="kw">fn </span>from(value: Vec&lt;Card&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ cards: value, _marker: Default::default() }
+    }
+}
+
 <span class="doccomment">/// A deck of cards.
-</span><span class="attr">#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-</span><span class="kw">pub struct </span>Deck(Vec&lt;Card&gt;);
+</span><span class="attr">#[derive(Clone, Debug)]
+</span><span class="kw">pub struct </span>DeckType;
+<span class="kw">pub type </span>Deck = Cards&lt;DeckType&gt;;
 
 <span class="kw">impl </span>Deck {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>shuffled_pack() -&gt; Deck {
         <span class="kw">let </span><span class="kw-2">mut </span>cards = Card::all();
         cards.shuffle(<span class="kw-2">&amp;mut </span>thread_rng());
-        Deck(cards)
+        cards.into()
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>cut(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (Card, Deck) {
-        <span class="kw">let </span><span class="prelude-val">Some</span>((card, remainder)) = <span class="self">self</span>.<span class="number">0</span>.split_first() <span class="kw">else </span>{ <span class="macro">unreachable!</span>() };
-        (<span class="kw-2">*</span>card, Deck(remainder.into()))
+        <span class="kw">let </span><span class="prelude-val">Some</span>((card, remainder)) = <span class="self">self</span>.cards.split_first() <span class="kw">else </span>{ <span class="macro">unreachable!</span>() };
+        (<span class="kw-2">*</span>card, Deck::from(Vec::from(remainder)))
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>deal(<span class="kw-2">&amp;</span><span class="self">self</span>, players: <span class="kw-2">&amp;</span>HashSet&lt;Player&gt;) -&gt; (HashMap&lt;Player, Hand&gt;, Deck) {
-        <span class="kw">let </span>cards = <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>;
+        <span class="kw">let </span>cards = <span class="kw-2">&amp;</span><span class="self">self</span>.cards;
         <span class="kw">let </span>hands = players
             .iter()
             .enumerate()
-            .map(|(i, p)| (<span class="kw-2">*</span>p, Hand(Vec::from(<span class="kw-2">&amp;</span>cards[i<span class="kw-2">*</span>CARDS_DEALT_PER_HAND .. (i+<span class="number">1</span>)<span class="kw-2">*</span>CARDS_DEALT_PER_HAND]))));
-        <span class="kw">let </span>deck = Deck(Vec::from(<span class="kw-2">&amp;</span>cards[NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND ..]));
+            .map(|(i, p)| (<span class="kw-2">*</span>p, Hand::from(Vec::from(<span class="kw-2">&amp;</span>cards[i<span class="kw-2">*</span>CARDS_DEALT_PER_HAND .. (i+<span class="number">1</span>)<span class="kw-2">*</span>CARDS_DEALT_PER_HAND]))));
+        <span class="kw">let </span>deck = Deck::from(Vec::from(<span class="kw-2">&amp;</span>cards[NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND ..]));
         (HashMap::from_iter(hands), deck)
-    }
-
-    <span class="kw">pub fn </span>cards(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Card&gt; {
-        <span class="self">self</span>.<span class="number">0</span>.clone()
-    }
-}
-
-<span class="kw">impl </span>Display <span class="kw">for </span>Deck {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">"Deck({})"</span>, format_cards(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>))
-    }
-}
-
-<span class="attr">#[cfg(test)]
-</span><span class="kw">impl </span>From&lt;Vec&lt;Card&gt;&gt; <span class="kw">for </span>Deck {
-    <span class="kw">fn </span>from(value: Vec&lt;Card&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(value)
     }
 }
 
 <span class="doccomment">/// A player's hand.
-</span><span class="attr">#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-</span><span class="kw">pub struct </span>Hand(Vec&lt;Card&gt;);
-
-<span class="kw">impl </span>Hand {
-    <span class="kw">pub fn </span>cards(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Card&gt; {
-        <span class="self">self</span>.<span class="number">0</span>.clone()
-    }
-}
-
-<span class="kw">impl </span>Display <span class="kw">for </span>Hand {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">"Hand({})"</span>, format_cards(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>))
-    }
-}
-
-<span class="attr">#[cfg(test)]
-</span><span class="kw">impl </span>From&lt;Vec&lt;Card&gt;&gt; <span class="kw">for </span>Hand {
-    <span class="kw">fn </span>from(value: Vec&lt;Card&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(value)
-    }
-}
+</span><span class="attr">#[derive(Clone, Debug)]
+</span><span class="kw">pub struct </span>HandType;
+<span class="kw">pub type </span>Hand = Cards&lt;HandType&gt;;
 
 <span class="doccomment">/// The current Crib.
-</span><span class="attr">#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
-</span><span class="kw">pub struct </span>Crib(Vec&lt;Card&gt;);
-
-<span class="kw">impl </span>Crib {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(<span class="macro">vec!</span>[])
-    }
-    
-    <span class="kw">pub fn </span>cards(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Card&gt; {
-        <span class="self">self</span>.<span class="number">0</span>.clone()
-    }
-}
-
-<span class="kw">impl </span>Display <span class="kw">for </span>Crib {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">"Crib({})"</span>, format_cards(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>))
-    }
-}
-
-<span class="kw">fn </span>format_cards(cards: <span class="kw-2">&amp;</span>[Card]) -&gt; String {
-    cards.iter().map(|c| c.to_string()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;().join(<span class="string">", "</span>)
-}
-
-<span class="attr">#[cfg(test)]
-</span><span class="kw">impl </span>From&lt;Vec&lt;Card&gt;&gt; <span class="kw">for </span>Crib {
-    <span class="kw">fn </span>from(value: Vec&lt;Card&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(value)
-    }
-}
+</span><span class="attr">#[derive(Clone, Debug)]
+</span><span class="kw">pub struct </span>CribType;
+<span class="kw">pub type </span>Crib = Cards&lt;CribType&gt;;
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
@@ -250,7 +250,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>contains_52_cards() {
         <span class="kw">let </span>deck = Deck::shuffled_pack();
-        <span class="macro">assert_eq!</span>(deck.<span class="number">0</span>.len(), <span class="number">52</span>);
+        <span class="macro">assert_eq!</span>(deck.cards.len(), <span class="number">52</span>);
     }
 
     <span class="attr">#[test]
@@ -259,7 +259,7 @@
         <span class="kw">let </span>cards = Card::all();
 
         <span class="kw">for </span>card <span class="kw">in </span>cards {
-            <span class="macro">assert!</span>(deck.<span class="number">0</span>.contains(<span class="kw-2">&amp;</span>card))
+            <span class="macro">assert!</span>(deck.cards.contains(<span class="kw-2">&amp;</span>card))
         }
     }
 
@@ -267,11 +267,11 @@
     </span><span class="kw">fn </span>allow_a_random_card_to_be_cut() {
         <span class="kw">let </span>deck = Deck::shuffled_pack();
         <span class="kw">let </span>(cut, remaining) = deck.cut();
-        <span class="macro">assert!</span>(deck.<span class="number">0</span>.contains(<span class="kw-2">&amp;</span>cut));
-        <span class="macro">assert!</span>(!remaining.<span class="number">0</span>.contains(<span class="kw-2">&amp;</span>cut));
-        <span class="macro">assert_eq!</span>(remaining.<span class="number">0</span>.len(), <span class="number">51</span>);
-        <span class="kw">for </span>card <span class="kw">in </span>deck.<span class="number">0 </span>{
-            <span class="macro">assert_eq!</span>(remaining.<span class="number">0</span>.contains(<span class="kw-2">&amp;</span>card), card != cut)
+        <span class="macro">assert!</span>(deck.cards.contains(<span class="kw-2">&amp;</span>cut));
+        <span class="macro">assert!</span>(!remaining.cards.contains(<span class="kw-2">&amp;</span>cut));
+        <span class="macro">assert_eq!</span>(remaining.cards.len(), <span class="number">51</span>);
+        <span class="kw">for </span>card <span class="kw">in </span>deck.cards {
+            <span class="macro">assert_eq!</span>(remaining.cards.contains(<span class="kw-2">&amp;</span>card), card != cut)
         }
     }
 

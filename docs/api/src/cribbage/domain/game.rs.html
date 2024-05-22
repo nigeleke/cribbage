@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (b92758a9a 2024-05-20)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (791adf759 2024-05-21)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1248,10 +1248,101 @@
 <a href="#1248" id="1248">1248</a>
 <a href="#1249" id="1249">1249</a>
 <a href="#1250" id="1250">1250</a>
+<a href="#1251" id="1251">1251</a>
+<a href="#1252" id="1252">1252</a>
+<a href="#1253" id="1253">1253</a>
+<a href="#1254" id="1254">1254</a>
+<a href="#1255" id="1255">1255</a>
+<a href="#1256" id="1256">1256</a>
+<a href="#1257" id="1257">1257</a>
+<a href="#1258" id="1258">1258</a>
+<a href="#1259" id="1259">1259</a>
+<a href="#1260" id="1260">1260</a>
+<a href="#1261" id="1261">1261</a>
+<a href="#1262" id="1262">1262</a>
+<a href="#1263" id="1263">1263</a>
+<a href="#1264" id="1264">1264</a>
+<a href="#1265" id="1265">1265</a>
+<a href="#1266" id="1266">1266</a>
+<a href="#1267" id="1267">1267</a>
+<a href="#1268" id="1268">1268</a>
+<a href="#1269" id="1269">1269</a>
+<a href="#1270" id="1270">1270</a>
+<a href="#1271" id="1271">1271</a>
+<a href="#1272" id="1272">1272</a>
+<a href="#1273" id="1273">1273</a>
+<a href="#1274" id="1274">1274</a>
+<a href="#1275" id="1275">1275</a>
+<a href="#1276" id="1276">1276</a>
+<a href="#1277" id="1277">1277</a>
+<a href="#1278" id="1278">1278</a>
+<a href="#1279" id="1279">1279</a>
+<a href="#1280" id="1280">1280</a>
+<a href="#1281" id="1281">1281</a>
+<a href="#1282" id="1282">1282</a>
+<a href="#1283" id="1283">1283</a>
+<a href="#1284" id="1284">1284</a>
+<a href="#1285" id="1285">1285</a>
+<a href="#1286" id="1286">1286</a>
+<a href="#1287" id="1287">1287</a>
+<a href="#1288" id="1288">1288</a>
+<a href="#1289" id="1289">1289</a>
+<a href="#1290" id="1290">1290</a>
+<a href="#1291" id="1291">1291</a>
+<a href="#1292" id="1292">1292</a>
+<a href="#1293" id="1293">1293</a>
+<a href="#1294" id="1294">1294</a>
+<a href="#1295" id="1295">1295</a>
+<a href="#1296" id="1296">1296</a>
+<a href="#1297" id="1297">1297</a>
+<a href="#1298" id="1298">1298</a>
+<a href="#1299" id="1299">1299</a>
+<a href="#1300" id="1300">1300</a>
+<a href="#1301" id="1301">1301</a>
+<a href="#1302" id="1302">1302</a>
+<a href="#1303" id="1303">1303</a>
+<a href="#1304" id="1304">1304</a>
+<a href="#1305" id="1305">1305</a>
+<a href="#1306" id="1306">1306</a>
+<a href="#1307" id="1307">1307</a>
+<a href="#1308" id="1308">1308</a>
+<a href="#1309" id="1309">1309</a>
+<a href="#1310" id="1310">1310</a>
+<a href="#1311" id="1311">1311</a>
+<a href="#1312" id="1312">1312</a>
+<a href="#1313" id="1313">1313</a>
+<a href="#1314" id="1314">1314</a>
+<a href="#1315" id="1315">1315</a>
+<a href="#1316" id="1316">1316</a>
+<a href="#1317" id="1317">1317</a>
+<a href="#1318" id="1318">1318</a>
+<a href="#1319" id="1319">1319</a>
+<a href="#1320" id="1320">1320</a>
+<a href="#1321" id="1321">1321</a>
+<a href="#1322" id="1322">1322</a>
+<a href="#1323" id="1323">1323</a>
+<a href="#1324" id="1324">1324</a>
+<a href="#1325" id="1325">1325</a>
+<a href="#1326" id="1326">1326</a>
+<a href="#1327" id="1327">1327</a>
+<a href="#1328" id="1328">1328</a>
+<a href="#1329" id="1329">1329</a>
+<a href="#1330" id="1330">1330</a>
+<a href="#1331" id="1331">1331</a>
+<a href="#1332" id="1332">1332</a>
+<a href="#1333" id="1333">1333</a>
+<a href="#1334" id="1334">1334</a>
+<a href="#1335" id="1335">1335</a>
+<a href="#1336" id="1336">1336</a>
+<a href="#1337" id="1337">1337</a>
+<a href="#1338" id="1338">1338</a>
+<a href="#1339" id="1339">1339</a>
+<a href="#1340" id="1340">1340</a>
+<a href="#1341" id="1341">1341</a>
+<a href="#1342" id="1342">1342</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::domain::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::domain::result::Result;
 
-<span class="kw">use </span>leptos::<span class="kw-2">*</span>;
 <span class="kw">use </span>serde::{Serialize, Deserialize};
 
 <span class="kw">use </span>std::collections::{HashMap, HashSet};
@@ -1262,6 +1353,7 @@
 </span><span class="kw">pub enum </span>Game {
     Starting(HashMap&lt;Player, Card&gt;, Deck),
     Discarding(HashMap&lt;Player, Score&gt;, Player, HashMap&lt;Player, Hand&gt;, Crib, Deck),
+    Playing
 <span class="comment">//     Playing(MyState, OpponentState, Play, Cut, Crib),
 //     ScoringPoneCards(MyState, OpponentState, Cut, Crib),
 //     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
@@ -1291,13 +1383,21 @@
         <span class="kw">match </span><span class="self">self </span>{
             Game::Starting(cuts, <span class="kw">_</span>) =&gt; HashSet::from_iter(cuts.keys().cloned()),
             Game::Discarding(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; HashSet::from_iter(scores.keys().cloned()),
+            Game::Playing =&gt; <span class="macro">unimplemented!</span>(),
         }
+    }
+
+    <span class="attr">#[cfg(test)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>player_1_2(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (Player, Player) {
+        <span class="kw">let </span>players = Vec::from_iter(<span class="self">self</span>.players().into_iter());
+        (players[<span class="number">0</span>], players[<span class="number">1</span>])
     }
 
     <span class="kw">pub fn </span>deck(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Deck {
         <span class="kw">match </span><span class="self">self </span>{
             Game::Starting(<span class="kw">_</span>, deck) =&gt; deck.clone(),
             Game::Discarding(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, deck) =&gt; deck.clone(),
+            Game::Playing =&gt; <span class="macro">unimplemented!</span>(),
         }
     }
 
@@ -1314,7 +1414,7 @@
                 <span class="kw">let </span>dealer = <span class="kw">if </span>cut1.rank() &lt; cut2.rank() { player1 } <span class="kw">else </span>{ player2 };
                 <span class="kw">let </span>deck = Deck::shuffled_pack();
                 <span class="kw">let </span>(hands, deck) = deck.deal(<span class="kw-2">&amp;</span>players);
-                <span class="kw">let </span>crib = Crib::new();
+                <span class="kw">let </span>crib = Crib::default();
                 <span class="prelude-val">Ok</span>(Game::Discarding(scores, dealer.clone(), hands, crib, deck))
             },
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::InvalidAction(<span class="string">"start"</span>.into()))
@@ -1330,6 +1430,32 @@
                 <span class="prelude-val">Ok</span>(Game::new(<span class="kw-2">&amp;</span><span class="self">self</span>.players())<span class="question-mark">?</span>)
             },
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::InvalidAction(<span class="string">"redraw"</span>.into()))
+        }
+    }
+
+    <span class="kw">pub fn </span>discard(<span class="kw-2">&amp;</span><span class="self">self</span>, player: <span class="kw-2">&amp;</span>Player, discards: <span class="kw-2">&amp;</span>[Card]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            Game::Discarding(scores, dealer, hands, crib, deck) =&gt; {
+                <span class="kw">let </span>players = <span class="self">self</span>.players();
+                verify::player(player, <span class="kw-2">&amp;</span>players)<span class="question-mark">?</span>;
+
+                <span class="kw">let </span><span class="kw-2">mut </span>hands = hands.clone();
+                <span class="kw">let </span><span class="kw-2">mut </span>hand = hands[player].clone();
+                verify::discards(discards, <span class="kw-2">&amp;</span>hand);
+
+                hand.remove_all(discards);
+                hands.insert(<span class="kw-2">*</span>player, hand);
+
+                <span class="kw">let </span><span class="kw-2">mut </span>crib = crib.clone();
+                crib.add(discards);
+
+                <span class="kw">if </span>crib.len() == CARDS_REQUIRED_IN_CRIB {
+                    <span class="prelude-val">Ok</span>(Game::Playing)
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">Ok</span>(Game::Discarding(scores.clone(), dealer.clone(), hands, crib, deck.clone()))
+                }
+            },
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::InvalidAction(<span class="string">"discard"</span>.into()))
         }
     }
 }
@@ -1358,6 +1484,15 @@
         }
     }
 
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>player(player: <span class="kw-2">&amp;</span>Player, players: <span class="kw-2">&amp;</span>HashSet&lt;Player&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">if </span>!players.contains(player) {
+            <span class="prelude-val">Err</span>(Error::InvalidPlayer(player.clone()))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Ok</span>(())
+        }
+    }
+
+
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>different_cuts(cuts: <span class="kw-2">&amp;</span>HashMap&lt;Player, Card&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>cuts: HashSet&lt;Rank&gt; = HashSet::from_iter(cuts.values().map(|c| c.rank()));
         <span class="kw">if </span>cuts.len() != NUMBER_OF_PLAYERS_IN_GAME {
@@ -1371,6 +1506,26 @@
         <span class="kw">let </span>cuts: HashSet&lt;Rank&gt; = HashSet::from_iter(cuts.values().map(|c| c.rank()));
         <span class="kw">if </span>cuts.len() == NUMBER_OF_PLAYERS_IN_GAME {
             <span class="prelude-val">Err</span>(Error::CutForStartDecided)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Ok</span>(())
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>discards(discards: <span class="kw-2">&amp;</span>[Card], hand: <span class="kw-2">&amp;</span>Hand) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">for </span>discard <span class="kw">in </span>discards {
+            verify::card(discard, <span class="kw-2">&amp;</span>hand.cards())<span class="question-mark">?
+        </span>}
+
+        <span class="kw">if </span>hand.len() - discards.len() &lt; CARDS_KEPT_PER_HAND {
+            <span class="prelude-val">Err</span>(Error::TooManyDiscards)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Ok</span>(())
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>card(card: <span class="kw-2">&amp;</span>Card, cards: <span class="kw-2">&amp;</span>[Card]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">if </span>!cards.contains(card) {
+            <span class="prelude-val">Err</span>(Error::InvalidCard(card.clone()))
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(())
         }
@@ -1440,8 +1595,7 @@
     ///
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>start_game_with_lowest_cut_as_dealer() {
-        <span class="kw">let </span>player_cuts = <span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"ASKS"</span>), (<span class="number">1</span>, <span class="string">"KSAS"</span>)];
-        <span class="kw">for </span>(expected_dealer, cuts) <span class="kw">in </span>player_cuts {
+        <span class="kw">for </span>(expected_dealer, cuts) <span class="kw">in </span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"ASKS"</span>), (<span class="number">1</span>, <span class="string">"KSAS"</span>)] {
             <span class="kw">let </span>builder = Builder::default()
                 .with_players(<span class="number">2</span>)
                 .with_cuts(cuts);
@@ -1533,22 +1687,36 @@
   //     val updatedDeck   = maybeCut.map(c =&gt; Cards.deckOf(Seq(c))).getOrElse(discarding.deck)
   //     f(discarding.copy(deck = updatedDeck, scores = updatedScores))
 
-  //   "deal" when {
-  //     "draw decided" in dummyDiscarding() {
-  //       case discarding @ Discarding(deck, scores, hands, dealer, pone, crib) =&gt;
-  //         val players = Set(dealer, pone)
-  //         deck.size should be(40)
-  //         scores.keySet should be(players)
-  //         scores.foreach(_._2 should be(Score.zero))
-  //         hands.keySet should be(players)
-  //         hands.foreach(_._2.size should be(CardsDealtPerHand))
-  //         crib.toSeq should be(empty)
-  //         deck.toSeq ++
-  //           hands(dealer).toSeq ++
-  //           hands(pone).toSeq should contain theSameElementsAs (Cards.fullDeck.toSeq)
-  //     }
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>deal_when_draw_decided() {
+        <span class="kw">let </span>game = Builder::default()
+            .with_players(<span class="number">2</span>)
+            .with_cuts(<span class="string">"ASKS"</span>)
+            .as_starting();
+        <span class="kw">let </span>game = game.start().ok().unwrap();
+        <span class="kw">let </span>players = game.players();
 
-  //     "scored crib" in dummyPlaying(
+        <span class="kw">let </span>Game::Discarding(scores, dealer, hands, crib, deck) = game  <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        
+        players.iter().for_each(|p| {
+            <span class="macro">assert_eq!</span>(scores[p].back_peg(), <span class="number">0</span>);
+            <span class="macro">assert_eq!</span>(scores[p].front_peg(), <span class="number">0</span>);
+        });
+        
+        players.iter().for_each(|p| {
+            <span class="macro">assert_eq!</span>(hands[p].cards().len(), CARDS_DEALT_PER_HAND);
+        });
+
+        <span class="macro">assert_eq!</span>(crib.cards().len(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(deck.cards().len(), <span class="number">52 </span>- (NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND));
+    }
+
+    <span class="attr">#[test]
+    #[ignore]
+    </span><span class="kw">fn </span>deal_when_scored_crib() {
+
+    }
+  <span class="comment">//     "scored crib" in dummyPlaying(
   //       poneCards = Seq(Card(Ace, Hearts)),
   //       inPlays = Seq(0 -&gt; Card(Jack, Hearts), 0 -&gt; Card(Queen, Hearts)),
   //       playeds = Seq(
@@ -1591,12 +1759,28 @@
     /// been played.
     ///
     </span><span class="attr">#[test]
-    </span><span class="kw">fn </span>player_can_discard_held_cards_to_the_crib_1() {
+    </span><span class="kw">fn </span>player_can_discard_one_held_card_to_the_crib() {
+        <span class="kw">let </span>game = Builder::default()
+            .with_players(<span class="number">2</span>)
+            .with_scores(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>])
+            .with_hand(<span class="string">"AH2H3H4H5H6H"</span>)
+            .with_hand(<span class="string">"AC2C3C4C5C6C"</span>)
+            .as_discarding();
 
+        <span class="kw">let </span>(player, opponent) = game.player_1_2();
+
+        <span class="kw">let </span>Game::Discarding(scores, dealer, hands, crib, deck) = game.clone()  <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>hand = hands[<span class="kw-2">&amp;</span>player].clone();
+        <span class="kw">let </span>discard = hand.get(<span class="kw-2">&amp;</span>[<span class="number">0</span>]);
+
+        <span class="kw">let </span>game = game.discard(<span class="kw-2">&amp;</span>player, <span class="kw-2">&amp;</span>discard).ok().unwrap();
+        <span class="kw">let </span>Game::Discarding(scores2, dealer2, hands2, crib2, deck2) = game  <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
+        <span class="macro">assert_eq!</span>(scores2, scores);        
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>player_can_discard_held_cards_to_the_crib_2() {
+    </span><span class="kw">fn </span>player_can_discard_two_held_cards_to_the_crib() {
 
     }
 

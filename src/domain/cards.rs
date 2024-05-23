@@ -43,8 +43,13 @@ impl<T> Cards<T> {
     }
 
     #[cfg(test)]
+    pub(crate) fn contains(&self, card: &Card) -> bool {
+        self.cards.contains(card)
+    }
+
+    #[cfg(test)]
     pub(crate) fn contains_all(&self, cards: &[Card]) -> bool {
-        cards.iter().all(|c| self.cards.contains(c))
+        cards.iter().all(|c| self.contains(c))
     }
 
     #[cfg(test)]

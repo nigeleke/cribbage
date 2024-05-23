@@ -1,7 +1,7 @@
 use crate::domain::prelude::*;
 use crate::domain::result::Result;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
@@ -11,8 +11,7 @@ use std::fmt::Display;
 pub enum Game {
     Starting(HashMap<Player, Card>, Deck),
     Discarding(HashMap<Player, Score>, Player, HashMap<Player, Hand>, Crib, Deck),
-    Playing
-//     Playing(MyState, OpponentState, Play, Cut, Crib),
+    Playing(HashMap<Player, Score>, Player, HashMap<Player, Hand>, PlayState, Card, Crib),
 //     ScoringPoneCards(MyState, OpponentState, Cut, Crib),
 //     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
 //     ScoringCrib(MyState, OpponentState, Cut, Crib),
@@ -41,11 +40,10 @@ impl Game {
         match self {
             Game::Starting(cuts, _) => HashSet::from_iter(cuts.keys().cloned()),
             Game::Discarding(scores, _, _, _, _) => HashSet::from_iter(scores.keys().cloned()),
-            Game::Playing => unimplemented!(),
+            Game::Playing(scores, _, _, _, _, _) => HashSet::from_iter(scores.keys().cloned()),
         }
     }
 
-    #[cfg(test)]
     pub(crate) fn player_1_2(&self) -> (Player, Player) {
         let players = Vec::from_iter(self.players().into_iter());
         (players[0], players[1])
@@ -55,7 +53,7 @@ impl Game {
         match self {
             Game::Starting(_, deck) => deck.clone(),
             Game::Discarding(_, _, _, _, deck) => deck.clone(),
-            Game::Playing => unimplemented!(),
+            _ => unreachable!(),
         }
     }
 
@@ -99,7 +97,7 @@ impl Game {
 
                 let mut hands = hands.clone();
                 let mut hand = hands[player].clone();
-                verify::discards(discards, &hand);
+                verify::discards(discards, &hand)?;
 
                 hand.remove_all(discards);
                 hands.insert(*player, hand);
@@ -108,12 +106,23 @@ impl Game {
                 crib.add(discards);
 
                 if crib.len() == CARDS_REQUIRED_IN_CRIB {
-                    Ok(Game::Playing)
+                    let (cut, _) = deck.cut();
+                    Ok(Game::Playing(scores.clone(), dealer.clone(), hands, PlayState::new(self.pone()), cut, crib))
                 } else {
                     Ok(Game::Discarding(scores.clone(), dealer.clone(), hands, crib, deck.clone()))
                 }
             },
             _ => Err(Error::InvalidAction("discard".into()))
+        }
+    }
+
+    pub fn pone(&self) -> Player {
+        let (player1, player2) = self.player_1_2();
+        let pone = |p: &Player| if *p == player1 { player2 } else { player1 };
+        match self {
+            Game::Starting(_, _) => unreachable!(),
+            Game::Discarding(_, dealer, _, _, _) => pone(dealer),
+            Game::Playing(_, dealer, _, _, _, _) => pone(dealer),
         }
     }
 }
@@ -195,6 +204,8 @@ mod verify {
 /// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
 #[cfg(test)]
 mod test {
+    use leptos::ev::play;
+
     use super::*;
 
     /// ## Number of Players
@@ -427,116 +438,161 @@ mod test {
 
         let (player, opponent) = game.player_1_2();
 
-        let Game::Discarding(scores, dealer, hands, crib, deck) = game.clone()  else { panic!("Unexpected state") };
-        let hand = hands[&player].clone();
-        let discard = hand.get(&[0]);
+        let Game::Discarding(scores0, dealer0, hands0, _, deck0) = game.clone()  else { panic!("Unexpected state") };
+        let player_hand0 = hands0[&player].clone();
+        let player_discard = player_hand0.get(&[0]);
 
-        let game = game.discard(&player, &discard).ok().unwrap();
-        let Game::Discarding(scores2, dealer2, hands2, crib2, deck2) = game  else { panic!("Unexpected state") };
+        let opponent_hand0 = hands0[&opponent].clone();
 
-        assert_eq!(scores2, scores);        
+        let game = game.discard(&player, &player_discard).ok().unwrap();
+        let Game::Discarding(scores1, dealer1, hands1, crib1, deck1) = game  else { panic!("Unexpected state") };
+
+        let player_hand1 = hands1[&player].clone();
+        let opponent_hand1 = hands1[&opponent].clone();
+
+        assert_eq!(scores1, scores0);
+        assert_eq!(dealer1, dealer0);
+        assert!(player_hand1.contains_none(&player_discard));
+        assert!(crib1.contains_all(&player_discard));
+        assert_eq!(opponent_hand1, opponent_hand0);
+        assert_eq!(deck1, deck0);
     }
 
     #[test]
     fn player_can_discard_two_held_cards_to_the_crib() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_scores(&vec![0, 0])
+            .with_hand("AH2H3H4H5H6H")
+            .with_hand("AC2C3C4C5C6C")
+            .as_discarding();
 
+        let (player, opponent) = game.player_1_2();
+
+        let Game::Discarding(scores0, dealer0, hands0, _, deck0) = game.clone()  else { panic!("Unexpected state") };
+        let player_hand0 = hands0[&player].clone();
+        let player_discard = player_hand0.get(&[0, 1]);
+
+        let opponent_hand0 = hands0[&opponent].clone();
+
+        let game = game.discard(&player, &player_discard).ok().unwrap();
+        let Game::Discarding(scores1, dealer1, hands1, crib1, deck1) = game  else { panic!("Unexpected state") };
+
+        let player_hand1 = hands1[&player].clone();
+        let opponent_hand1 = hands1[&opponent].clone();
+
+        assert_eq!(scores1, scores0);
+        assert_eq!(dealer1, dealer0);
+        assert!(player_hand1.contains_none(&player_discard));
+        assert!(crib1.contains_all(&player_discard));
+        assert_eq!(opponent_hand1, opponent_hand0);
+        assert_eq!(deck1, deck0);
     }
 
     #[test]
     fn player_cannot_discard_more_then_two_held_cards_to_the_crib() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_scores(&vec![0, 0])
+            .with_hand("AH2H3H4H5H6H")
+            .with_hand("AC2C3C4C5C6C")
+            .as_discarding();
 
+        let (player, _) = game.player_1_2();
+
+        let Game::Discarding(_, _, hands0, _, _) = game.clone()  else { panic!("Unexpected state") };
+        let hand0 = hands0[&player].clone();
+        let discard = hand0.get(&[0, 1, 2]);
+
+        let error = game.discard(&player, &discard).err().unwrap();
+        assert_eq!(error, Error::TooManyDiscards);
     }
 
     #[test]
     fn player_cannot_discard_non_held_cards_to_the_crib() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_scores(&vec![0, 0])
+            .with_hand("AH2H3H4H5H6H")
+            .with_hand("AC2C3C4C5C6C")
+            .as_discarding();
 
+        let (player, opponent) = game.player_1_2();
+
+        let Game::Discarding(_, _, hands0, _, _) = game.clone()  else { panic!("Unexpected state") };
+        let hand0 = hands0[&opponent].clone();
+        let discard = hand0.get(&[0, 1]);
+
+        let Error::InvalidCard(_) = game.discard(&player, &discard).err().unwrap() else { panic!("Unexpected error") };
     }
 
+    #[test]
+    fn cannot_discard_when_player_not_participating() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_scores(&vec![0, 0])
+            .with_hand("AH2H3H4H5H6H")
+            .with_hand("AC2C3C4C5C6C")
+            .as_discarding();
+        
+        let (player, _) = game.player_1_2();
 
-    //   def doDiscardsReturning[A](player: Player, discards: Seq[Card])(discarding: Discarding): A =
-  //     Cribbage.discardToCrib(player, discards)(discarding).asInstanceOf[A]
+        let Game::Discarding(_, _, hands0, _, _) = game.clone()  else { panic!("Unexpected state") };
+        let hand0 = hands0[&player].clone();
+        let discard = hand0.get(&[0, 1]);
 
-  //   "accept discards" when {
-  //     "player discards" in dummyDiscarding() {
-  //       case discarding0 @ Discarding(deck0, scores0, hands0, dealer0, pone0, crib0) =>
-  //         val dealerDiscards = hands0(dealer0).toSeq.take(2)
-  //         val discarding1    = doDiscardsReturning[Discarding](dealer0, dealerDiscards)(discarding0)
+        let non_player = Player::new();
+        let error = game.discard(&non_player, &discard).err().unwrap();
+        assert_eq!(error, Error::InvalidPlayer(non_player));
+    }
 
-  //         val Discarding(deck1, scores1, hands1, dealer1, pone1, crib1) = discarding1
-  //         deck1 should be(deck0)
-  //         scores1 should be(scores0)
-  //         dealer1 should be(dealer0)
-  //         pone1 should be(pone0)
-  //         hands1(dealer1).toSeq should not contain allElementsOf(dealerDiscards.toSeq)
-  //         hands1(pone1) should be(hands0(pone0))
-  //         crib1.toSeq should contain allElementsOf (dealerDiscards.toSeq)
-  //     }
-  //   }
+    /// ## Before the Play
+    /// 
+    /// After the crib is laid away, the non-dealer cuts the pack. The dealer turns up the top card
+    /// of the lower packet and places it face up on top of the pack. This card is the "starter." If
+    /// the starter is a jack, it is called "His Heels," and the dealer pegs (scores) 2 points at
+    /// once. The starter is not used in the play phase of Cribbage , but is used later for making
+    /// various card combinations that score points.
+    ///
+    #[test]
+    fn start_the_play_when_both_players_fully_discarded() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_scores(&vec![0, 0])
+            .with_hand("AH2H3H4H5H6H")
+            .with_hand("AC2C3C4C5C6C")
+            .as_discarding();
+        
+        let (player, opponent) = game.player_1_2();
 
-  //   "not accept discards" when {
-  //     "non-participating player" in dummyDiscarding() {
-  //       case discarding @ Discarding(_, _, hands, dealer, _, _) =>
-  //         val bogusPlayer    = Player.newPlayer
-  //         val dealerDiscards = hands(dealer).toSeq.take(2)
-  //         val caught         = intercept[IllegalArgumentException] {
-  //           doDiscardsReturning[Discarding](bogusPlayer, dealerDiscards)(discarding)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule   = NonParticipatingPlayer(bogusPlayer)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
+        let Game::Discarding(scores0, dealer0, hands0, _, deck0) = game.clone()  else { panic!("Unexpected state") };
+        let player_hand0 = hands0[&player].clone();
+        let player_discard = player_hand0.get(&[0, 1]);
 
-  //     "unheld card" in dummyDiscarding() {
-  //       case discarding @ Discarding(_, _, hands, dealer, pone, _) =>
-  //         val dealerDiscards = hands(pone).toSeq.take(2)
-  //         val caught         = intercept[IllegalArgumentException] {
-  //           doDiscardsReturning[Discarding](dealer, dealerDiscards)(discarding)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule   = UnheldCards(dealer, dealerDiscards)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
+        let opponent_hand0 = hands0[&opponent].clone();
+        let opponent_discard = opponent_hand0.get(&[0, 1]);
 
-  //     "exceeded discard" in dummyDiscarding() {
-  //       case discarding @ Discarding(_, _, hands, dealer, _, _) =>
-  //         val dealerDiscards = hands(dealer).toSeq.take(3)
-  //         val caught         = intercept[IllegalArgumentException] {
-  //           doDiscardsReturning[Discarding](dealer, dealerDiscards)(discarding)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule   = TooManyDiscards(dealer, dealerDiscards)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
-  //   }
+        let game = game.discard(&player, &player_discard).ok().unwrap();
+        let game = game.discard(&opponent, &opponent_discard).ok().unwrap();
+        let pone = game.pone().clone();
+        let Game::Playing(scores1, dealer1, hands1, play_state1, cut1, crib1) = game  else { panic!("Unexpected state") };
+        let hand1 = hands1[&player].clone();
+        let opponent_hand1 = hands1[&opponent].clone();
 
-  //   /** ## Before the Play
-  //     *
-  //     * After the crib is laid away, the non-dealer cuts the pack. The dealer turns up the top card
-  //     * of the lower packet and places it face up on top of the pack. This card is the "starter." If
-  //     * the starter is a jack, it is called "His Heels," and the dealer pegs (scores) 2 points at
-  //     * once. The starter is not used in the play phase of Cribbage , but is used later for making
-  //     * various card combinations that score points.
-  //     */
-  //   "start the play" when {
-  //     "both players fully discarded" in dummyDiscarding() {
-  //       case discarding0 @ Discarding(deck0, scores0, hands0, dealer0, pone0, _) =>
-  //         val dealerDiscards = hands0(dealer0).toSeq.take(2)
-  //         val poneDiscards   = hands0(pone0).toSeq.take(2)
+        assert_eq!(scores1, scores0);
+        assert_eq!(dealer1, dealer0);
+        assert!(hand1.contains_none(&player_discard));
+        assert!(crib1.contains_all(&player_discard));
+        assert!(opponent_hand1.contains_none(&opponent_discard));
+        assert!(crib1.contains_all(&opponent_discard));
+        assert!(deck0.contains(&cut1));
+        assert_eq!(crib1.len(), CARDS_REQUIRED_IN_CRIB);
+        assert_eq!(play_state1.next_to_play(), pone);
+        assert_eq!(play_state1.pass_count(), 0);
+        assert_eq!(play_state1.current_plays(), vec![]);
+        assert_eq!(play_state1.previous_plays(), vec![]);
+    }
 
-  //         val discarding1 = doDiscardsReturning[Discarding](dealer0, dealerDiscards)(discarding0)
-  //         val playing2    = doDiscardsReturning[Playing](pone0, poneDiscards)(discarding1)
-
-  //         val Playing(scores2, hands2, dealer2, pone2, crib2, cut2, plays2) = playing2
-  //         dealer2 should be(dealer0)
-  //         pone2 should be(pone0)
-  //         hands2(dealer2).toSeq should not contain allElementsOf(dealerDiscards.toSeq)
-  //         hands2(pone2).toSeq should not contain allElementsOf(poneDiscards.toSeq)
-  //         crib2.size should be(CardsRequiredInCrib)
-  //         crib2.toSeq should contain allElementsOf (dealerDiscards.toSeq ++ poneDiscards.toSeq)
-  //         hands2(dealer2).toSeq ++ hands2(pone2).toSeq ++ crib2.toSeq should not contain (cut2)
-  //         plays2.nextPlayer should be(pone2)
-  //     }
-  //   }
 
   //   "score his heels" when {
   //     "both players fully discarded - playing" in dummyDiscarding(

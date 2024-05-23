@@ -5,6 +5,7 @@ mod card;
 mod cards;
 mod game;
 mod player;
+mod plays;
 mod result;
 mod score;
 
@@ -16,6 +17,7 @@ pub mod prelude {
     pub use crate::domain::cards::{Crib, Deck, Hand};
     pub use crate::domain::game::Game;
     pub use crate::domain::player::Player;
+    pub use crate::domain::plays::*;
     pub use crate::domain::score::Score;
     pub use crate::domain::result::Error;
 }

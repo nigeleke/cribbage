@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Cards<T> {
     cards: Vec<Card>,
     _marker: std::marker::PhantomData<T>
@@ -41,6 +41,21 @@ impl<T> Cards<T> {
     pub(crate) fn get(&self, indices: &[usize]) -> Vec<Card> {
         Vec::from_iter(indices.into_iter().filter_map(|i| Some(self.cards[*i])))
     }
+
+    #[cfg(test)]
+    pub(crate) fn contains(&self, card: &Card) -> bool {
+        self.cards.contains(card)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn contains_all(&self, cards: &[Card]) -> bool {
+        cards.iter().all(|c| self.contains(c))
+    }
+
+    #[cfg(test)]
+    pub(crate) fn contains_none(&self, cards: &[Card]) -> bool {
+        cards.iter().all(|c| !self.cards.contains(c))
+    }
 }
 
 impl<T> Default for Cards<T> {
@@ -67,7 +82,7 @@ impl<T> From<Vec<Card>> for Cards<T> {
 }
 
 /// A deck of cards.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DeckType;
 pub type Deck = Cards<DeckType>;
 
@@ -95,7 +110,7 @@ impl Deck {
 }
 
 /// A player's hand.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct HandType;
 pub type Hand = Cards<HandType>;
 

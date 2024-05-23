@@ -337,7 +337,7 @@
                 <span class="kw">let </span>dealer = Dealer::from((dealer, player));
                 Game::Discarding(scores, hands, crib, dealer)
             },
-            DomainGame::Playing =&gt; <span class="macro">unimplemented!</span>(),
+            DomainGame::Playing(scores, dealer, hands, play_state, crib, deck) =&gt; <span class="macro">unimplemented!</span>(),
         }
     }
 }

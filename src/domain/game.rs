@@ -453,7 +453,7 @@ mod test {
         assert_eq!(scores1, scores0);
         assert_eq!(dealer1, dealer0);
         assert!(player_hand1.contains_none(&player_discard));
-        assert!(crib1.contains_all(&discard));
+        assert!(crib1.contains_all(&player_discard));
         assert_eq!(opponent_hand1, opponent_hand0);
         assert_eq!(deck1, deck0);
     }

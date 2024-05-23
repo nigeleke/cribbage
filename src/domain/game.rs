@@ -99,7 +99,7 @@ impl Game {
 
                 let mut hands = hands.clone();
                 let mut hand = hands[player].clone();
-                verify::discards(discards, &hand);
+                verify::discards(discards, &hand)?;
 
                 hand.remove_all(discards);
                 hands.insert(*player, hand);
@@ -427,87 +427,109 @@ mod test {
 
         let (player, opponent) = game.player_1_2();
 
-        let Game::Discarding(scores, dealer, hands, crib, deck) = game.clone()  else { panic!("Unexpected state") };
-        let hand = hands[&player].clone();
-        let discard = hand.get(&[0]);
+        let Game::Discarding(scores0, dealer0, hands0, crib0, deck0) = game.clone()  else { panic!("Unexpected state") };
+        let hand0 = hands0[&player].clone();
+        let oppponent_hand0 = hands0[&opponent].clone();
+        let discard = hand0.get(&[0]);
 
         let game = game.discard(&player, &discard).ok().unwrap();
-        let Game::Discarding(scores2, dealer2, hands2, crib2, deck2) = game  else { panic!("Unexpected state") };
+        let Game::Discarding(scores1, dealer1, hands1, crib1, deck1) = game  else { panic!("Unexpected state") };
+        let hand1 = hands1[&player].clone();
+        let oppponent_hand1 = hands1[&opponent].clone();
 
-        assert_eq!(scores2, scores);        
+        assert_eq!(scores1, scores0);
+        assert_eq!(dealer1, dealer0);
+        assert!(hand1.contains_none(&discard));
+        assert!(crib1.contains_all(&discard));
+        assert_eq!(oppponent_hand1, oppponent_hand0);
+        assert_eq!(deck1, deck0);
     }
 
     #[test]
     fn player_can_discard_two_held_cards_to_the_crib() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_scores(&vec![0, 0])
+            .with_hand("AH2H3H4H5H6H")
+            .with_hand("AC2C3C4C5C6C")
+            .as_discarding();
 
+        let (player, opponent) = game.player_1_2();
+
+        let Game::Discarding(scores0, dealer0, hands0, crib0, deck0) = game.clone()  else { panic!("Unexpected state") };
+        let hand0 = hands0[&player].clone();
+        let oppponent_hand0 = hands0[&opponent].clone();
+        let discard = hand0.get(&[0, 1]);
+
+        let game = game.discard(&player, &discard).ok().unwrap();
+        let Game::Discarding(scores1, dealer1, hands1, crib1, deck1) = game  else { panic!("Unexpected state") };
+        let hand1 = hands1[&player].clone();
+        let oppponent_hand1 = hands1[&opponent].clone();
+
+        assert_eq!(scores1, scores0);
+        assert_eq!(dealer1, dealer0);
+        assert!(hand1.contains_none(&discard));
+        assert!(crib1.contains_all(&discard));
+        assert_eq!(oppponent_hand1, oppponent_hand0);
+        assert_eq!(deck1, deck0);
     }
 
     #[test]
     fn player_cannot_discard_more_then_two_held_cards_to_the_crib() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_scores(&vec![0, 0])
+            .with_hand("AH2H3H4H5H6H")
+            .with_hand("AC2C3C4C5C6C")
+            .as_discarding();
 
+        let (player, _) = game.player_1_2();
+
+        let Game::Discarding(_, _, hands0, _, _) = game.clone()  else { panic!("Unexpected state") };
+        let hand0 = hands0[&player].clone();
+        let discard = hand0.get(&[0, 1, 2]);
+
+        let error = game.discard(&player, &discard).err().unwrap();
+        assert_eq!(error, Error::TooManyDiscards);
     }
 
     #[test]
     fn player_cannot_discard_non_held_cards_to_the_crib() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_scores(&vec![0, 0])
+            .with_hand("AH2H3H4H5H6H")
+            .with_hand("AC2C3C4C5C6C")
+            .as_discarding();
 
+        let (player, opponent) = game.player_1_2();
+
+        let Game::Discarding(_, _, hands0, _, _) = game.clone()  else { panic!("Unexpected state") };
+        let hand0 = hands0[&opponent].clone();
+        let discard = hand0.get(&[0, 1]);
+
+        let Error::InvalidCard(_) = game.discard(&player, &discard).err().unwrap() else { panic!("Unexpected error") };
     }
 
+    #[test]
+    fn cannot_discard_when_player_not_participating() {
+        let game = Builder::default()
+            .with_players(2)
+            .with_scores(&vec![0, 0])
+            .with_hand("AH2H3H4H5H6H")
+            .with_hand("AC2C3C4C5C6C")
+            .as_discarding();
+        
+        let (player, _) = game.player_1_2();
 
-    //   def doDiscardsReturning[A](player: Player, discards: Seq[Card])(discarding: Discarding): A =
-  //     Cribbage.discardToCrib(player, discards)(discarding).asInstanceOf[A]
+        let Game::Discarding(_, _, hands0, _, _) = game.clone()  else { panic!("Unexpected state") };
+        let hand0 = hands0[&player].clone();
+        let discard = hand0.get(&[0, 1]);
 
-  //   "accept discards" when {
-  //     "player discards" in dummyDiscarding() {
-  //       case discarding0 @ Discarding(deck0, scores0, hands0, dealer0, pone0, crib0) =>
-  //         val dealerDiscards = hands0(dealer0).toSeq.take(2)
-  //         val discarding1    = doDiscardsReturning[Discarding](dealer0, dealerDiscards)(discarding0)
-
-  //         val Discarding(deck1, scores1, hands1, dealer1, pone1, crib1) = discarding1
-  //         deck1 should be(deck0)
-  //         scores1 should be(scores0)
-  //         dealer1 should be(dealer0)
-  //         pone1 should be(pone0)
-  //         hands1(dealer1).toSeq should not contain allElementsOf(dealerDiscards.toSeq)
-  //         hands1(pone1) should be(hands0(pone0))
-  //         crib1.toSeq should contain allElementsOf (dealerDiscards.toSeq)
-  //     }
-  //   }
-
-  //   "not accept discards" when {
-  //     "non-participating player" in dummyDiscarding() {
-  //       case discarding @ Discarding(_, _, hands, dealer, _, _) =>
-  //         val bogusPlayer    = Player.newPlayer
-  //         val dealerDiscards = hands(dealer).toSeq.take(2)
-  //         val caught         = intercept[IllegalArgumentException] {
-  //           doDiscardsReturning[Discarding](bogusPlayer, dealerDiscards)(discarding)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule   = NonParticipatingPlayer(bogusPlayer)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
-
-  //     "unheld card" in dummyDiscarding() {
-  //       case discarding @ Discarding(_, _, hands, dealer, pone, _) =>
-  //         val dealerDiscards = hands(pone).toSeq.take(2)
-  //         val caught         = intercept[IllegalArgumentException] {
-  //           doDiscardsReturning[Discarding](dealer, dealerDiscards)(discarding)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule   = UnheldCards(dealer, dealerDiscards)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
-
-  //     "exceeded discard" in dummyDiscarding() {
-  //       case discarding @ Discarding(_, _, hands, dealer, _, _) =>
-  //         val dealerDiscards = hands(dealer).toSeq.take(3)
-  //         val caught         = intercept[IllegalArgumentException] {
-  //           doDiscardsReturning[Discarding](dealer, dealerDiscards)(discarding)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule   = TooManyDiscards(dealer, dealerDiscards)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
-  //   }
+        let non_player = Player::new();
+        let error = game.discard(&non_player, &discard).err().unwrap();
+        assert_eq!(error, Error::InvalidPlayer(non_player));
+    }
 
   //   /** ## Before the Play
   //     *

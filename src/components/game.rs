@@ -1,10 +1,12 @@
-use crate::domain::CARDS_DISCARDED_TO_CRIB;
-use crate::view::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
-
+use super::prelude::Context;
 use super::card::Card;
 use super::cards::Cards;
 use super::crib::Crib;
 use super::cuts::Cuts;
+
+use crate::domain::CARDS_DISCARDED_TO_CRIB;
+use crate::services::prelude::discard;
+use crate::view::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
 
 use leptos::*;
 use style4rs::style;
@@ -191,12 +193,41 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
 
     let current_player_cards = hands[&Role::CurrentPlayer].clone();
     let opponent_cards = hands[&Role::Opponent].clone();
-
-    // let (discards, set_discards) = create_signal::<Vec<CardSlot>>(vec![]);
+    let viewable_player_cards = current_player_cards.clone();
 
     let (selected, set_selected) = create_signal(Vec::<bool>::new());
     let selected_count = move || selected().iter().filter(|s| **s).count();
     let disabled = move || selected_count() != CARDS_DISCARDED_TO_CRIB;
+    let selected_cards = move || {
+        let cards = current_player_cards.clone();
+        selected()
+            .into_iter()
+            .zip(cards)
+            .filter_map(|(s, c)| {
+                if let CardSlot::FaceUp(card) = c {
+                    s.then_some(card)
+                } else {
+                    None
+                }
+        })
+        .collect::<Vec<_>>()
+    };
+
+    let context = use_context::<Context>().unwrap();
+
+    let on_discard = {
+        let context = context.clone();
+        move |_| {
+            let id = context.id.clone();
+            let state = context.state;
+            let cards = selected_cards().clone();
+            spawn_local(async move {
+                if let Ok(game) = discard(id, cards).await {
+                    state.set(Some(game.clone()));
+                }
+            });
+        }
+    };
 
     view! {
         class = class,
@@ -205,8 +236,8 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
 
             }
             <div>
-                <Cards cards=current_player_cards on_selected=set_selected />
-                <span><button disabled=disabled>"Discard"</button></span>
+                <Cards cards=viewable_player_cards on_selected=set_selected />
+                <span><button on:click=on_discard disabled=disabled>"Discard"</button></span>
             </div>
             <div />
             <div><Cards cards=opponent_cards /></div>

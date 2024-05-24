@@ -32,9 +32,10 @@ pub const CARDS_DEALT_PER_HAND: usize = 6;
   
 /** [Player]s discard two cards each into the [Crib] leaving four for [Score]ing and [Plays]. */
 pub const CARDS_KEPT_PER_HAND: usize = 4;
+pub const CARDS_DISCARDED_TO_CRIB: usize = CARDS_DEALT_PER_HAND - CARDS_KEPT_PER_HAND;
   
 /** Each [Player] discarding two [Card]s to the [Crib] will mean four [Card]s end up there. */
-pub const CARDS_REQUIRED_IN_CRIB: usize = (CARDS_DEALT_PER_HAND - CARDS_KEPT_PER_HAND) * NUMBER_OF_PLAYERS_IN_GAME;
+pub const CARDS_REQUIRED_IN_CRIB: usize = CARDS_DISCARDED_TO_CRIB * NUMBER_OF_PLAYERS_IN_GAME;
   
 //     /** Each [Plays.Play] cannot have a running total of more than 31. */
 //     val PlayTarget = 31

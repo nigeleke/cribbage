@@ -1,13 +1,17 @@
-use crate::view::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
-
+use super::prelude::Context;
 use super::card::Card;
 use super::cards::Cards;
 use super::crib::Crib;
 use super::cuts::Cuts;
 
+use crate::domain::CARDS_DISCARDED_TO_CRIB;
+use crate::services::prelude::discard;
+use crate::view::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
+
 use leptos::*;
 use style4rs::style;
 
+use std::collections::hash_map::IntoValues;
 use std::ops::Range;
 
 #[component]
@@ -184,16 +188,55 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
             display: flex;
             flex-direction: column;
             justify-content: space-around;
+            align-items: center;
         }
     };
 
     let current_player_cards = hands[&Role::CurrentPlayer].clone();
     let opponent_cards = hands[&Role::Opponent].clone();
-    
+    let viewable_player_cards = current_player_cards.clone();
+
+    let (selected, set_selected) = create_signal(Vec::<bool>::new());
+    let selected_count = move || selected().iter().filter(|s| **s).count();
+    let disabled = move || selected_count() != CARDS_DISCARDED_TO_CRIB;
+    let selected_cards = move || {
+        let cards = current_player_cards.clone();
+        selected()
+            .into_iter()
+            .zip(cards)
+            .filter_map(|(s, c)| {
+                if let CardSlot::FaceUp(card) = c {
+                    s.then_some(card)
+                } else {
+                    None
+                }
+        })
+        .collect::<Vec<_>>()
+    };
+
+    let context = use_context::<Context>().unwrap();
+
+    let on_discard = {
+        let context = context.clone();
+        move |_| {
+            let id = context.id.clone();
+            let state = context.state;
+            let cards = selected_cards().clone();
+            spawn_local(async move {
+                if let Ok(game) = discard(id, cards).await {
+                    state.set(Some(game.clone()));
+                }
+            });
+        }
+    };
+
     view! {
         class = class,
         <div>
-            <div><Cards cards=current_player_cards /></div>
+            <div>
+                <Cards cards=viewable_player_cards on_selected=set_selected />
+                <span><button on:click=on_discard disabled=disabled>"Discard"</button></span>
+            </div>
             <div />
             <div><Cards cards=opponent_cards /></div>
         </div>
@@ -202,6 +245,21 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
 
 #[component]
 fn CribAndCut() -> impl IntoView {
+
+    let game = use_context::<GameView>().unwrap();
+    let dealer = game.dealer();
+
+    match game {
+        GameView::Starting(_) => empty_view().into_view(),
+        GameView::Discarding(_, _, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
+    }
+}
+
+fn empty_view() -> impl IntoView {
+    view! { <div></div> }
+}
+
+fn crib_and_cut_view(crib: &[CardSlot], cut: CardSlot, dealer: Role) -> impl IntoView {
     let class = style!{
         div {
             display: flex;
@@ -210,14 +268,8 @@ fn CribAndCut() -> impl IntoView {
         }
     };
 
-    let game = use_context::<GameView>().unwrap();
-
-    let dealer = game.dealer().unwrap_or(Role::CurrentPlayer);
-    let crib = game.crib();
-    let cut = game.cut();
-
     let empty_view = view! { <Card card=CardSlot::Empty /> };
-    let crib_view = view! { <Crib crib=crib stacked=true /> };
+    let crib_view = view! { <Crib crib=Vec::from(crib) stacked=true /> };
 
     view! {
         class = class,
@@ -227,4 +279,5 @@ fn CribAndCut() -> impl IntoView {
             {if dealer == Role::Opponent { crib_view } else { empty_view }}
         </div>
     }
+
 }

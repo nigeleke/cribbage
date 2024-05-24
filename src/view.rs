@@ -31,7 +31,8 @@ pub type Card = crate::domain::prelude::Card;
 pub enum CardSlot {
     FaceUp(Card),
     FaceDown,
-    Empty
+    Empty,
+    Placeholder,
 }
 
 pub type Cuts = HashMap<Role, Card>;
@@ -126,13 +127,6 @@ impl Game {
         match self {
             Game::Starting(_) => None,
             Game::Discarding(_, _, _, dealer) => Some(dealer.clone()),
-        }
-    }
-
-    pub(crate) fn crib(&self) -> Crib {
-        match self {
-            Game::Starting(_) => Crib::new(),
-            Game::Discarding(_, _, crib, _) => crib.clone(),
         }
     }
 }

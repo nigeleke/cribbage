@@ -14,7 +14,6 @@ pub async fn authenticated_user() -> Result<User, ServerFnError> {
     };
 
     let user_id = Uuid::parse_str(cookie.value_trimmed())?;
-    logging::log!("user_id: {:?}", user_id);
 
     Ok(user_id.into())
 }

@@ -17,7 +17,7 @@ pub fn Crib(
 ) -> impl IntoView {
 
     if crib.is_empty() {
-        view! { <Card card=CardSlot::Empty /> }.into_view()
+        view! { <Card card=CardSlot::Placeholder /> }.into_view()
     } else {
         view! { <Cards cards=crib stacked=stacked /> }
     }

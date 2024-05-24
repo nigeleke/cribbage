@@ -11,6 +11,7 @@ use crate::view::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
 use leptos::*;
 use style4rs::style;
 
+use std::collections::hash_map::IntoValues;
 use std::ops::Range;
 
 #[component]
@@ -232,9 +233,6 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
     view! {
         class = class,
         <div>
-            {
-
-            }
             <div>
                 <Cards cards=viewable_player_cards on_selected=set_selected />
                 <span><button on:click=on_discard disabled=disabled>"Discard"</button></span>
@@ -247,6 +245,21 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
 
 #[component]
 fn CribAndCut() -> impl IntoView {
+
+    let game = use_context::<GameView>().unwrap();
+    let dealer = game.dealer();
+
+    match game {
+        GameView::Starting(_) => empty_view().into_view(),
+        GameView::Discarding(_, _, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
+    }
+}
+
+fn empty_view() -> impl IntoView {
+    view! { <div></div> }
+}
+
+fn crib_and_cut_view(crib: &[CardSlot], cut: CardSlot, dealer: Role) -> impl IntoView {
     let class = style!{
         div {
             display: flex;
@@ -255,14 +268,8 @@ fn CribAndCut() -> impl IntoView {
         }
     };
 
-    let game = use_context::<GameView>().unwrap();
-
-    let dealer = game.dealer().unwrap_or(Role::CurrentPlayer);
-    let crib = game.crib();
-    let cut = game.cut();
-
     let empty_view = view! { <Card card=CardSlot::Empty /> };
-    let crib_view = view! { <Crib crib=crib stacked=true /> };
+    let crib_view = view! { <Crib crib=Vec::from(crib) stacked=true /> };
 
     view! {
         class = class,
@@ -272,4 +279,5 @@ fn CribAndCut() -> impl IntoView {
             {if dealer == Role::Opponent { crib_view } else { empty_view }}
         </div>
     }
+
 }

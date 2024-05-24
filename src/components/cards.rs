@@ -19,7 +19,7 @@ pub fn Cards(
             gap: 24px;
         }
     };
-
+    
     let selections = (0..cards.len()).map(|_| create_rw_signal(false)).collect::<Vec<_>>();
     let wo_selections = selections.iter().map(|s| s.write_only()).collect::<Vec<_>>();
 
@@ -36,11 +36,13 @@ pub fn Cards(
                         on_selected.update(|s| *s = selections);
                     };
                 });
+
+                let n = if stacked { 1 } else { cards.len() };
             
                 if on_selected.is_none() {
-                    cards.iter().map(move |card| view!{ <Card card={card.clone()} /> }).collect::<Vec<_>>()
+                    cards.iter().take(n).map(move |card| view!{ <Card card={card.clone()} /> }).collect::<Vec<_>>()
                 } else {
-                    cards.iter().enumerate().map(move |(i, card)| view!{ <Card card={card.clone()} on_selected={wo_selections[i]} /> }).collect::<Vec<_>>()
+                    cards.iter().take(n).enumerate().map(move |(i, card)| view!{ <Card card={card.clone()} on_selected={wo_selections[i]} /> }).collect::<Vec<_>>()
                 }
             }
         </div>

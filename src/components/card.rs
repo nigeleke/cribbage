@@ -41,6 +41,7 @@ pub fn Card(
         }.into_view(),
         CardSlot::FaceDown => view! { <card-t rank="0" backcolor="red" backtext="" /> }.into_view(),
         CardSlot::Empty => view! { <div style="visibility: hidden"><card-t /></div> }.into_view(),
+        CardSlot::Placeholder => view! { <div style="border: 2px dashed ghostwhite"><div style="visibility: hidden"><card-t /></div></div> }.into_view(),
     };
 
     view!{

@@ -49,39 +49,25 @@ button {
     border: none;
     background-color: lighten($background, 50%);
     font-size: large;
+    padding-top: 6px;
     padding-left: 20px;
     padding-right: 20px;
     padding-bottom: 6px;
     border-radius: 10px;
 }
 
-button:hover {
+button:disabled {
+    background-color: lighten($background, 20%);
+}
+
+button:hover:enabled {
     background-color: lighten($background, 55%);
 }
 
-button:active {
+button:active:enabled {
     background-color: lighten($background, 75%);
 }
 
-select {
-    border: none;
-    background-color: lighten($background, 50%);
-    font-size: large;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 6px;
-    border-radius: 10px;
-}
-
-select:hover {
-    background-color: lighten($background, 55%);
-}
-
-select:active {
-    background-color: lighten($background, 75%);
-}
-
-
-select:has(option[value=""]:checked) {
-    color: grey;
+footer {
+    text-align: center;
 }

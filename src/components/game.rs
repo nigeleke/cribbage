@@ -1,3 +1,4 @@
+use crate::domain::CARDS_DISCARDED_TO_CRIB;
 use crate::view::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
 
 use super::card::Card;
@@ -184,16 +185,29 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
             display: flex;
             flex-direction: column;
             justify-content: space-around;
+            align-items: center;
         }
     };
 
     let current_player_cards = hands[&Role::CurrentPlayer].clone();
     let opponent_cards = hands[&Role::Opponent].clone();
-    
+
+    // let (discards, set_discards) = create_signal::<Vec<CardSlot>>(vec![]);
+
+    let (selected, set_selected) = create_signal(Vec::<bool>::new());
+    let selected_count = move || selected().iter().filter(|s| **s).count();
+    let disabled = move || selected_count() != CARDS_DISCARDED_TO_CRIB;
+
     view! {
         class = class,
         <div>
-            <div><Cards cards=current_player_cards /></div>
+            {
+
+            }
+            <div>
+                <Cards cards=current_player_cards on_selected=set_selected />
+                <span><button disabled=disabled>"Discard"</button></span>
+            </div>
             <div />
             <div><Cards cards=opponent_cards /></div>
         </div>

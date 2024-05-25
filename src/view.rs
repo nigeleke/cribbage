@@ -101,7 +101,7 @@ pub type Scores = HashMap<Role, Score>;
 pub enum Game {
     Starting(Cuts),
     Discarding(Scores, Hands, Crib, Dealer),
-// //     Playing(MyState, OpponentState, Play, Cut, Crib),
+    Playing(Scores, Hands, Cut, Crib, Dealer),
 // //     ScoringPoneCards(MyState, OpponentState, Cut, Crib),
 // //     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
 // //     ScoringCrib(MyState, OpponentState, Cut, Crib),
@@ -113,13 +113,7 @@ impl Game {
         match self {
             Game::Starting(_) => Scores::new(),
             Game::Discarding(scores, _, _, _) => scores.clone(),
-        }
-    }
-
-    pub(crate) fn cut(&self) -> CardSlot {
-        match self {
-            Game::Starting(_) => CardSlot::Empty,
-            Game::Discarding(_, _, _, _) => CardSlot::FaceDown,
+            Game::Playing(scores, _, _, _, _) => scores.clone(),
         }
     }
 
@@ -127,6 +121,7 @@ impl Game {
         match self {
             Game::Starting(_) => None,
             Game::Discarding(_, _, _, dealer) => Some(dealer.clone()),
+            Game::Playing(_, _, _, _, dealer) => Some(dealer.clone()),
         }
     }
 }
@@ -139,7 +134,7 @@ impl From<(DomainGame, DomainPlayer)> for Game {
                 let cuts = merge(player_cut, opponent_cut);
                 Game::Starting(cuts)
             },
-            DomainGame::Discarding(scores, dealer, hands, crib, deck) => {
+            DomainGame::Discarding(scores, dealer, hands, crib, _deck) => {
                 let (player_score, opponent_score) = partition_for(player, &scores);
                 let scores = merge(player_score, opponent_score);
                 let (player_hand, opponent_hand) = partition_for(player, &hands);
@@ -148,7 +143,15 @@ impl From<(DomainGame, DomainPlayer)> for Game {
                 let dealer = Dealer::from((dealer, player));
                 Game::Discarding(scores, hands, crib, dealer)
             },
-            DomainGame::Playing(scores, dealer, hands, play_state, crib, deck) => unimplemented!(),
+            DomainGame::Playing(scores, dealer, hands, play_state, cut, crib) => {
+                let (player_score, opponent_score) = partition_for(player, &scores);
+                let scores = merge(player_score, opponent_score);
+                let (player_hand, opponent_hand) = partition_for(player, &hands);
+                let hands = merge(face_up(&player_hand.cards()), face_down(&opponent_hand.cards()));
+                let crib = face_down(&crib.cards());
+                let dealer = Dealer::from((dealer, player));
+                Game::Playing(scores, hands, cut, crib, dealer)
+            },
         }
     }
 }

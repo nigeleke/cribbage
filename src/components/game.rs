@@ -11,7 +11,6 @@ use crate::view::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
 use leptos::*;
 use style4rs::style;
 
-use std::collections::hash_map::IntoValues;
 use std::ops::Range;
 
 #[component]
@@ -173,6 +172,7 @@ fn PlayArea() -> impl IntoView {
     match game {
         GameView::Starting(cuts) => starting_play_area(&cuts).into_view(),
         GameView::Discarding(_, hands, _, _) => discarding_play_area(&hands).into_view(),
+        GameView::Playing(_, hands, _, _, _) => playing_play_area(&hands).into_view(),
     }
 }
 
@@ -243,6 +243,12 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
     }
 }
 
+fn playing_play_area(_hands: &Hands) -> impl IntoView {
+    view! {
+        <p>"Playing..."</p>
+    }
+}
+
 #[component]
 fn CribAndCut() -> impl IntoView {
 
@@ -252,6 +258,7 @@ fn CribAndCut() -> impl IntoView {
     match game {
         GameView::Starting(_) => empty_view().into_view(),
         GameView::Discarding(_, _, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
+        GameView::Playing(_, _, cut, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
     }
 }
 

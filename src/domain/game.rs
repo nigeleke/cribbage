@@ -125,6 +125,12 @@ impl Game {
             Game::Playing(_, dealer, _, _, _, _) => pone(dealer),
         }
     }
+
+    pub fn opponent(&self, player: &Player) -> Player {
+        assert!(self.players().contains(player));
+        let (player1, player2) = self.player_1_2();
+        if *player == player1 { player2 } else { player1 }
+    }
 }
 
 impl Display for Game {
@@ -204,8 +210,6 @@ mod verify {
 /// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
 #[cfg(test)]
 mod test {
-    use leptos::ev::play;
-
     use super::*;
 
     /// ## Number of Players
@@ -365,7 +369,7 @@ mod test {
         let game = game.start().ok().unwrap();
         let players = game.players();
 
-        let Game::Discarding(scores, dealer, hands, crib, deck) = game  else { panic!("Unexpected state") };
+        let Game::Discarding(scores, _, hands, crib, deck) = game  else { panic!("Unexpected state") };
         
         players.iter().for_each(|p| {
             assert_eq!(scores[p].back_peg(), 0);

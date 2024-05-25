@@ -10,6 +10,7 @@ pub mod view;
 pub mod ssr {
     pub mod auth;
     pub mod database;
+    pub mod opponent;
     pub mod fileserv;
 
 }

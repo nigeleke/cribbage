@@ -13,9 +13,9 @@ pub mod prelude {
     pub use super::loading::Loading;
 }
 
-use leptos::*;
+use crate::view::prelude::Game as GameView;
 
-use crate::view::Game as GameView;
+use leptos::*;
 
 #[derive(Clone, Debug)]
 pub struct Context {

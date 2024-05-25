@@ -9,6 +9,7 @@ use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 
+/// The main cribbage application view.
 #[component]
 pub fn App() -> impl IntoView {
     provide_meta_context();

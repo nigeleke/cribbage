@@ -1,0 +1,56 @@
+use crate::domain::prelude::{
+    Game as DomainGame,
+    Player as DomainPlayer
+};
+
+use serde::{Deserialize, Serialize};
+
+use std::collections::HashMap;
+
+// /// A player state is their score, and the cards currently held in their hand.
+// #[derive(Serialize, Deserialize, Debug)]
+// struct PlayerState {
+//     score: Score,
+//     hand: Cards,
+// }
+
+// /// My current hand & score.
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct MyState(PlayerState);
+
+// /// Opponent's current hand & score.
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct OpponentState(PlayerState);
+
+// /// During play, a player lays a card. Passes are not shown.
+// #[derive(Serialize, Deserialize, Debug)]
+// struct Lay {
+//     player: Player,
+//     card: Card,
+// }
+
+// /// A collection of lays.
+// #[derive(Serialize, Deserialize, Debug)]
+// struct Lays(Vec<Lay>);
+
+// /// The play state is the next player to play, the current cards laid and historic cards laid.
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct Play {
+//     next_player: Player,
+//     current_play: Lays,
+//     historic_plays: Lays,
+// }
+
+// #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+// pub struct GameId(Ulid);
+
+// impl GameId {
+//     pub fn new() -> Self { GameId(Ulid::new()) }
+// }
+
+// impl fmt::Display for GameId {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "{}", self.0)
+//     }
+// }
+

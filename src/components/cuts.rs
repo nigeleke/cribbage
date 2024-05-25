@@ -2,11 +2,13 @@ use super::card::Card;
 use super::prelude::Context;
 
 use crate::services::prelude::{redraw, start};
-use crate::view::{CardSlot, Cut};
+use crate::view::prelude::{CardSlot, Cut};
 
 use leptos::*;
 use style4rs::style;
 
+/// The Cuts component shows the initial cuts at the start of the game.
+/// It enables the user to start or redraw as appropriate to the cuts' ranks.
 #[component]
 pub fn Cuts(
     #[prop()]
@@ -51,10 +53,10 @@ pub fn Cuts(
         }
     };
 
-    let player_card: Cut = player_cut.into();
+    let player_card: Cut = player_cut;
     let player_rank = player_card.rank();
 
-    let opponent_card: Cut = opponent_cut.into();
+    let opponent_card: Cut = opponent_cut;
     let opponent_rank = opponent_card.rank();
 
     let start_status = match (player_rank, opponent_rank) {
@@ -95,8 +97,8 @@ pub fn Cuts(
         class = class,
         <div>
             <div>
-                <span><Card card=CardSlot::FaceUp(player_cut.into()) label="Your cut".into() /></span>
-                <span><Card card=CardSlot::FaceUp(opponent_cut.into()) label="Opponent".into() /></span>
+                <span><Card card=CardSlot::FaceUp(player_cut) label="Your cut".into() /></span>
+                <span><Card card=CardSlot::FaceUp(opponent_cut) label="Opponent".into() /></span>
             </div>
             { if player_rank == opponent_rank {
                 view! {<button on:click=on_redraw>"Redraw"</button>}

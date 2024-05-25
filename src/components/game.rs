@@ -6,14 +6,14 @@ use super::cuts::Cuts;
 
 use crate::domain::CARDS_DISCARDED_TO_CRIB;
 use crate::services::prelude::discard;
-use crate::view::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
+use crate::view::prelude::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
 
 use leptos::*;
 use style4rs::style;
 
-use std::collections::hash_map::IntoValues;
 use std::ops::Range;
 
+/// The Game component shows the current game state.
 #[component]
 pub fn Game(
     #[prop()]
@@ -39,6 +39,8 @@ pub fn Game(
     }
 }
 
+/// Show the scoreboard.
+/// TODO: In a small screen just show the scores.
 #[component]
 fn Scoreboard() -> impl IntoView {
     let game = use_context::<GameView>().unwrap();
@@ -70,6 +72,7 @@ fn Scoreboard() -> impl IntoView {
     }
 }
 
+/// Show a graphical scoring track in the scoreboard.
 #[component]
 fn Track(
     #[prop()]
@@ -99,6 +102,7 @@ fn Track(
     }
 }
 
+/// Show a common block of a track in the scoreboard.
 #[component]
 fn Block(
     #[prop()]
@@ -132,6 +136,7 @@ fn Block(
         </g>}
 }
 
+/// Show a single hole in the scoreboard.
 #[component]
 fn Hole(
     #[prop()]
@@ -166,6 +171,7 @@ fn Hole(
     }
 }
 
+/// Show the main area for the game, depending on context.
 #[component]
 fn PlayArea() -> impl IntoView {
     let game = use_context::<GameView>().unwrap();
@@ -173,6 +179,7 @@ fn PlayArea() -> impl IntoView {
     match game {
         GameView::Starting(cuts) => starting_play_area(&cuts).into_view(),
         GameView::Discarding(_, hands, _, _) => discarding_play_area(&hands).into_view(),
+        GameView::Playing(_, hands, _, _, _) => playing_play_area(&hands).into_view(),
     }
 }
 
@@ -243,6 +250,13 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
     }
 }
 
+fn playing_play_area(_hands: &Hands) -> impl IntoView {
+    view! {
+        <p>"Playing..."</p>
+    }
+}
+
+/// Show the current crib, in a position relevant to the dealer, and the current cut card.
 #[component]
 fn CribAndCut() -> impl IntoView {
 
@@ -252,6 +266,7 @@ fn CribAndCut() -> impl IntoView {
     match game {
         GameView::Starting(_) => empty_view().into_view(),
         GameView::Discarding(_, _, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
+        GameView::Playing(_, _, cut, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
     }
 }
 

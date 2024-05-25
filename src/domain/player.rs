@@ -8,6 +8,7 @@ use std::hash::{Hash, Hasher};
 pub struct Player(Uuid);
 
 impl Player {
+    #[cfg(any(feature = "ssr", test))]
     pub(crate) fn new() -> Self { Self::default() }
 }
 

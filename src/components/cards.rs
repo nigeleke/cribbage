@@ -1,10 +1,14 @@
-use crate::view::CardSlot;
+use crate::view::prelude::CardSlot;
 
 use super::card::Card;
 
 use leptos::*;
 use style4rs::style;
 
+/// The Cards component shows a set of cards (in the order provided).
+/// The optional stacked setting will show the cards on top of each other if true.
+/// If the on_selected is provided then it will be triggered when any
+/// of the card's selected state changes.
 #[component]
 pub fn Cards(
     #[prop()] cards: Vec<CardSlot>,

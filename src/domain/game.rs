@@ -45,7 +45,7 @@ impl Game {
     }
 
     pub(crate) fn player_1_2(&self) -> (Player, Player) {
-        let players = Vec::from_iter(self.players().into_iter());
+        let players = Vec::from_iter(self.players());
         (players[0], players[1])
     }
 
@@ -71,7 +71,7 @@ impl Game {
                 let deck = Deck::shuffled_pack();
                 let (hands, deck) = deck.deal(&players);
                 let crib = Crib::default();
-                Ok(Game::Discarding(scores, dealer.clone(), hands, crib, deck))
+                Ok(Game::Discarding(scores, *dealer, hands, crib, deck))
             },
             _ => Err(Error::InvalidAction("start".into()))
         }
@@ -107,9 +107,9 @@ impl Game {
 
                 if crib.len() == CARDS_REQUIRED_IN_CRIB {
                     let (cut, _) = deck.cut();
-                    Ok(Game::Playing(scores.clone(), dealer.clone(), hands, PlayState::new(self.pone()), cut, crib))
+                    Ok(Game::Playing(scores.clone(), *dealer, hands, PlayState::new(self.pone()), cut, crib))
                 } else {
-                    Ok(Game::Discarding(scores.clone(), dealer.clone(), hands, crib, deck.clone()))
+                    Ok(Game::Discarding(scores.clone(), *dealer, hands, crib, deck.clone()))
                 }
             },
             _ => Err(Error::InvalidAction("discard".into()))
@@ -124,6 +124,12 @@ impl Game {
             Game::Discarding(_, dealer, _, _, _) => pone(dealer),
             Game::Playing(_, dealer, _, _, _, _) => pone(dealer),
         }
+    }
+
+    pub fn opponent(&self, player: &Player) -> Player {
+        assert!(self.players().contains(player));
+        let (player1, player2) = self.player_1_2();
+        if *player == player1 { player2 } else { player1 }
     }
 }
 
@@ -153,7 +159,7 @@ mod verify {
 
     pub(crate) fn player(player: &Player, players: &HashSet<Player>) -> Result<()> {
         if !players.contains(player) {
-            Err(Error::InvalidPlayer(player.clone()))
+            Err(Error::InvalidPlayer(*player))
         } else {
             Ok(())
         }
@@ -192,7 +198,7 @@ mod verify {
 
     pub(crate) fn card(card: &Card, cards: &[Card]) -> Result<()> {
         if !cards.contains(card) {
-            Err(Error::InvalidCard(card.clone()))
+            Err(Error::InvalidCard(*card))
         } else {
             Ok(())
         }
@@ -204,8 +210,6 @@ mod verify {
 /// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
 #[cfg(test)]
 mod test {
-    use leptos::ev::play;
-
     use super::*;
 
     /// ## Number of Players
@@ -365,7 +369,7 @@ mod test {
         let game = game.start().ok().unwrap();
         let players = game.players();
 
-        let Game::Discarding(scores, dealer, hands, crib, deck) = game  else { panic!("Unexpected state") };
+        let Game::Discarding(scores, _, hands, crib, deck) = game  else { panic!("Unexpected state") };
         
         players.iter().for_each(|p| {
             assert_eq!(scores[p].back_peg(), 0);

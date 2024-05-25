@@ -1,8 +1,13 @@
-use crate::view::CardSlot;
+use crate::view::prelude::CardSlot;
 
 use leptos::*;
 use style4rs::style;
 
+/// The component to display a card. The card itself can be presented face-up, face-down,
+/// empty (which is a gap) or as a placeholder (which is a card sized dashed line).
+/// An optional label can be shown below the card.
+/// The card can be "selectable", if on_selected is provided, in which case it will be
+/// triggered when the card is selected / unselected.
 #[component]
 pub fn Card(
     #[prop()] card: CardSlot,

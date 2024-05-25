@@ -6,8 +6,9 @@ use uuid::Uuid;
 
 use std::ops::DerefMut;
 
-#[derive(Debug, FromRow)]
+#[derive(FromRow)]
 struct GameRow {
+    #[allow(dead_code)]
     id: String,
     game: String,
 }

@@ -1,4 +1,4 @@
-use crate::view::{Card, Game as GameView};
+use crate::view::prelude::{Card, Game as GameView};
 
 use leptos::*;
 
@@ -7,6 +7,7 @@ pub async fn discard(game_id: String, cards: Vec<Card>) -> Result<GameView, Serv
     use crate::domain::prelude::*;
     use crate::ssr::auth;
     use crate::ssr::database::prelude::*;
+    use crate::ssr::opponent::Opponent;
     use uuid::Uuid;
 
     let player: Player = auth::authenticated_user().await?.into();
@@ -19,6 +20,10 @@ pub async fn discard(game_id: String, cards: Vec<Card>) -> Result<GameView, Serv
 
     let game = select_game(&mut transaction, &game_id).await?;
     let game = game.discard(&player, &cards)?;
+
+    let opponent = game.opponent(&player);
+    let game = Opponent::discard(&opponent, &game);
+
     update_game(&mut transaction, &game_id, &game).await?;
 
     transaction

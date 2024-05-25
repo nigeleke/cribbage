@@ -1,4 +1,4 @@
-use crate::view::Game as GameView;
+use crate::view::prelude::Game as GameView;
 
 use leptos::*;
 

@@ -6,13 +6,14 @@ use super::cuts::Cuts;
 
 use crate::domain::CARDS_DISCARDED_TO_CRIB;
 use crate::services::prelude::discard;
-use crate::view::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
+use crate::view::prelude::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
 
 use leptos::*;
 use style4rs::style;
 
 use std::ops::Range;
 
+/// The Game component shows the current game state.
 #[component]
 pub fn Game(
     #[prop()]
@@ -38,6 +39,8 @@ pub fn Game(
     }
 }
 
+/// Show the scoreboard.
+/// TODO: In a small screen just show the scores.
 #[component]
 fn Scoreboard() -> impl IntoView {
     let game = use_context::<GameView>().unwrap();
@@ -69,6 +72,7 @@ fn Scoreboard() -> impl IntoView {
     }
 }
 
+/// Show a graphical scoring track in the scoreboard.
 #[component]
 fn Track(
     #[prop()]
@@ -98,6 +102,7 @@ fn Track(
     }
 }
 
+/// Show a common block of a track in the scoreboard.
 #[component]
 fn Block(
     #[prop()]
@@ -131,6 +136,7 @@ fn Block(
         </g>}
 }
 
+/// Show a single hole in the scoreboard.
 #[component]
 fn Hole(
     #[prop()]
@@ -165,6 +171,7 @@ fn Hole(
     }
 }
 
+/// Show the main area for the game, depending on context.
 #[component]
 fn PlayArea() -> impl IntoView {
     let game = use_context::<GameView>().unwrap();
@@ -249,6 +256,7 @@ fn playing_play_area(_hands: &Hands) -> impl IntoView {
     }
 }
 
+/// Show the current crib, in a position relevant to the dealer, and the current cut card.
 #[component]
 fn CribAndCut() -> impl IntoView {
 

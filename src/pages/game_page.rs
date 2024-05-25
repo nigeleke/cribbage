@@ -1,6 +1,6 @@
 use crate::components::prelude::*;
-use crate::view::Game;
 use crate::services::prelude::*;
+use crate::view::prelude::Game;
 
 use leptos::*;
 use leptos_router::*;
@@ -10,6 +10,8 @@ pub struct GameParams {
     pub id: String,
 }
 
+/// The main game page, enables loading of the current state of the game from the server.
+/// The game must exist, or an error is shown.
 #[component]
 pub fn GamePage() -> impl IntoView {
     let params = use_params::<GameParams>; 

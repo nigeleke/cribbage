@@ -47,7 +47,7 @@ impl Face {
         }.into()
     }
 
-    fn value(&self) -> Value {
+    fn _value(&self) -> Value {
         match self {
             Face::Ace => 1,
             Face::Two => 2,
@@ -172,7 +172,7 @@ impl Card {
     pub fn suit_name(&self) -> String { format!("{:?}", self.suit()).trim_matches('"').into() }
 
     pub(crate) fn rank(&self) -> Rank { self.face().rank() }
-    pub(crate) fn value(&self) -> Value { self.face().value() }
+    // TODO: pub(crate) fn value(&self) -> Value { self.face().value() }
 }
 
 impl Display for Card {

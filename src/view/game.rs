@@ -1,100 +1,13 @@
-use crate::domain::prelude::{
-    Game as DomainGame,
-    Player as DomainPlayer
-};
+use super::card::{Card, CardSlot, Cut};
+use super::cards::{Crib, Cuts, Hands};
+use super::player::{Dealer, Role};
+use super::score::Scores;
 
-use serde::{Deserialize, Serialize};
+use crate::domain::prelude::{Game as DomainGame, Player as DomainPlayer};
+
+use serde::{Serialize, Deserialize};
 
 use std::collections::HashMap;
-
-#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
-pub enum Role {
-    CurrentPlayer,
-    Opponent
-} 
-
-type Dealer = Role;
-
-impl From<(DomainPlayer, DomainPlayer)> for Dealer {
-    fn from((current, dealer): (DomainPlayer, DomainPlayer)) -> Self {
-        if current == dealer {
-            Role::CurrentPlayer
-        } else {
-            Role::Opponent
-        }
-    }
-}
-
-pub type Card = crate::domain::prelude::Card;
-
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub enum CardSlot {
-    FaceUp(Card),
-    FaceDown,
-    Empty,
-    Placeholder,
-}
-
-pub type Cuts = HashMap<Role, Card>;
-
-pub type Cut = Card;
-
-pub type Hand = Vec<CardSlot>;
-
-pub type Hands = HashMap<Role, Hand>;
-
-pub type Crib = Vec<CardSlot>;
-
-pub type Score = crate::domain::prelude::Score;
-
-pub type Scores = HashMap<Role, Score>;
-
-// /// A player state is their score, and the cards currently held in their hand.
-// #[derive(Serialize, Deserialize, Debug)]
-// struct PlayerState {
-//     score: Score,
-//     hand: Cards,
-// }
-
-// /// My current hand & score.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct MyState(PlayerState);
-
-// /// Opponent's current hand & score.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct OpponentState(PlayerState);
-
-// /// During play, a player lays a card. Passes are not shown.
-// #[derive(Serialize, Deserialize, Debug)]
-// struct Lay {
-//     player: Player,
-//     card: Card,
-// }
-
-// /// A collection of lays.
-// #[derive(Serialize, Deserialize, Debug)]
-// struct Lays(Vec<Lay>);
-
-// /// The play state is the next player to play, the current cards laid and historic cards laid.
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct Play {
-//     next_player: Player,
-//     current_play: Lays,
-//     historic_plays: Lays,
-// }
-
-// #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
-// pub struct GameId(Ulid);
-
-// impl GameId {
-//     pub fn new() -> Self { GameId(Ulid::new()) }
-// }
-
-// impl fmt::Display for GameId {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(f, "{}", self.0)
-//     }
-// }
 
 /// The game state, waiting for opponent, discarding, playing, scoring, finished.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -143,7 +56,7 @@ impl From<(DomainGame, DomainPlayer)> for Game {
                 let dealer = Dealer::from((dealer, player));
                 Game::Discarding(scores, hands, crib, dealer)
             },
-            DomainGame::Playing(scores, dealer, hands, play_state, cut, crib) => {
+            DomainGame::Playing(scores, dealer, hands, _play_state, cut, crib) => {
                 let (player_score, opponent_score) = partition_for(player, &scores);
                 let scores = merge(player_score, opponent_score);
                 let (player_hand, opponent_hand) = partition_for(player, &hands);

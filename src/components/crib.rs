@@ -1,10 +1,11 @@
-use crate::view::{CardSlot, Crib};
+use crate::view::prelude::{CardSlot, Crib};
 
 use super::card::Card;
 use super::cards::Cards;
 
 use leptos::*;
 
+/// The Crib component shows the cards in the crib, or a placeholder if the crib is empty.
 #[component]
 pub fn Crib(
 

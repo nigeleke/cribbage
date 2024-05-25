@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CardSlot","Game","Role"],"type":["Card","Crib","Cut","Cuts","Hands","Score","Scores"]};

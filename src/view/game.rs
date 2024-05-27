@@ -1,6 +1,7 @@
 use super::card::{Card, CardSlot, Cut};
 use super::cards::{Crib, Cuts, Hands};
-use super::player::{Dealer, Role};
+use super::plays::{Play, PlayState};
+use super::role::{Dealer, Role};
 use super::score::Scores;
 
 use crate::domain::prelude::{Game as DomainGame, Player as DomainPlayer};
@@ -14,7 +15,7 @@ use std::collections::HashMap;
 pub enum Game {
     Starting(Cuts),
     Discarding(Scores, Hands, Crib, Dealer),
-    Playing(Scores, Hands, Cut, Crib, Dealer),
+    Playing(Scores, Hands, PlayState, Cut, Crib, Dealer),
 // //     ScoringPoneCards(MyState, OpponentState, Cut, Crib),
 // //     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
 // //     ScoringCrib(MyState, OpponentState, Cut, Crib),
@@ -26,7 +27,7 @@ impl Game {
         match self {
             Game::Starting(_) => Scores::new(),
             Game::Discarding(scores, _, _, _) => scores.clone(),
-            Game::Playing(scores, _, _, _, _) => scores.clone(),
+            Game::Playing(scores, _, _, _, _, _) => scores.clone(),
         }
     }
 
@@ -34,7 +35,7 @@ impl Game {
         match self {
             Game::Starting(_) => None,
             Game::Discarding(_, _, _, dealer) => Some(dealer.clone()),
-            Game::Playing(_, _, _, _, dealer) => Some(dealer.clone()),
+            Game::Playing(_, _, _, _, _, dealer) => Some(dealer.clone()),
         }
     }
 }
@@ -56,14 +57,15 @@ impl From<(DomainGame, DomainPlayer)> for Game {
                 let dealer = Dealer::from((dealer, player));
                 Game::Discarding(scores, hands, crib, dealer)
             },
-            DomainGame::Playing(scores, dealer, hands, _play_state, cut, crib) => {
+            DomainGame::Playing(scores, dealer, hands, play_state, cut, crib) => {
                 let (player_score, opponent_score) = partition_for(player, &scores);
                 let scores = merge(player_score, opponent_score);
                 let (player_hand, opponent_hand) = partition_for(player, &hands);
                 let hands = merge(face_up(&player_hand.cards()), face_down(&opponent_hand.cards()));
+                let play_state = (play_state, player).into();
                 let crib = face_down(&crib.cards());
                 let dealer = Dealer::from((dealer, player));
-                Game::Playing(scores, hands, cut, crib, dealer)
+                Game::Playing(scores, hands, play_state, cut, crib, dealer)
             },
         }
     }

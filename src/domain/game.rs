@@ -1,5 +1,13 @@
-use crate::domain::prelude::*;
-use crate::domain::result::Result;
+use super::constants::*;
+use super::card::{Card, Cuts, Rank};
+use super::cards::{Crib, Deck, Hand, Hands};
+use super::player::Player;
+use super::plays::PlayState;
+use super::result::{Error, Result};
+use super::score::{Score, Scores};
+
+#[cfg(test)]
+use super::builder::Builder;
 
 use serde::{Deserialize, Serialize};
 
@@ -9,9 +17,9 @@ use std::fmt::Display;
 /// The game state, waiting for opponent, discarding, playing, scoring, finished.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Game {
-    Starting(HashMap<Player, Card>, Deck),
-    Discarding(HashMap<Player, Score>, Player, HashMap<Player, Hand>, Crib, Deck),
-    Playing(HashMap<Player, Score>, Player, HashMap<Player, Hand>, PlayState, Card, Crib),
+    Starting(Cuts, Deck),
+    Discarding(Scores, Player, Hands, Crib, Deck),
+    Playing(Scores, Player, Hands, PlayState, Card, Crib),
 //     ScoringPoneCards(MyState, OpponentState, Cut, Crib),
 //     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
 //     ScoringCrib(MyState, OpponentState, Cut, Crib),
@@ -20,7 +28,7 @@ pub enum Game {
 
 impl Game {
     pub fn new(players: &HashSet<Player>) -> Result<Game> {
-        if players.len() > super::NUMBER_OF_PLAYERS_IN_GAME {
+        if players.len() > NUMBER_OF_PLAYERS_IN_GAME {
             return Err(Error::TooManyPlayers)
         }
 
@@ -63,7 +71,7 @@ impl Game {
                 let players = self.players();
                 verify::players(&players)?;
                 verify::different_cuts(cuts)?;
-                let scores: HashMap<Player, Score> = HashMap::from_iter(players.iter().map(|&p| (p, Score::default())));
+                let scores: Scores = Scores::from_iter(players.iter().map(|&p| (p, Score::default())));
                 let mut cuts = cuts.iter();
                 let Some((player1, cut1)) = cuts.next() else { unreachable!() };
                 let Some((player2, cut2)) = cuts.next() else { unreachable!() };
@@ -107,7 +115,10 @@ impl Game {
 
                 if crib.len() == CARDS_REQUIRED_IN_CRIB {
                     let (cut, _) = deck.cut();
-                    Ok(Game::Playing(scores.clone(), *dealer, hands, PlayState::new(self.pone()), cut, crib))
+                    let pone = self.pone();
+                    let play_state = PlayState::default()
+                        .with_legal_plays_for_player_hand(&pone, hands.get(&pone).unwrap());
+                    Ok(Game::Playing(scores.clone(), *dealer, hands, play_state, cut, crib))
                 } else {
                     Ok(Game::Discarding(scores.clone(), *dealer, hands, crib, deck.clone()))
                 }
@@ -591,7 +602,7 @@ mod test {
         assert!(crib1.contains_all(&opponent_discard));
         assert!(deck0.contains(&cut1));
         assert_eq!(crib1.len(), CARDS_REQUIRED_IN_CRIB);
-        assert_eq!(play_state1.next_to_play(), pone);
+        assert_eq!(play_state1.legal_plays(&pone), hands1[&pone]);
         assert_eq!(play_state1.pass_count(), 0);
         assert_eq!(play_state1.current_plays(), vec![]);
         assert_eq!(play_state1.previous_plays(), vec![]);

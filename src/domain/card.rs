@@ -1,8 +1,13 @@
+use super::player::Player;
+
 use enum_iterator::{all, Sequence};
 use serde::{Deserialize, Serialize};
 use yansi::Paint;
 
+use std::collections::HashMap;
 use std::fmt::Display;
+use std::iter::Sum;
+use std::ops::Add;
 
 /// The rank of a Card. Ace(1) to King(13).
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -21,6 +26,20 @@ pub struct Value(usize);
 impl From<usize> for Value {
     fn from(value: usize) -> Self {
         Value(value)
+    }
+}
+
+impl Add for Value {
+    type Output = Value;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Value(self.0 + rhs.0)
+    }
+}
+
+impl Sum for Value {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(0.into(), |acc, x| acc + x)
     }
 }
 
@@ -47,7 +66,7 @@ impl Face {
         }.into()
     }
 
-    fn _value(&self) -> Value {
+    fn value(&self) -> Value {
         match self {
             Face::Ace => 1,
             Face::Two => 2,
@@ -151,6 +170,9 @@ impl From<char> for Suit {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Card(Face, Suit);
 
+pub type Cut = Card;
+pub type Cuts = HashMap<Player, Cut>;
+
 #[cfg(test)]
 impl From<&str> for Card {
     fn from(cid: &str) -> Self {
@@ -172,7 +194,7 @@ impl Card {
     pub fn suit_name(&self) -> String { format!("{:?}", self.suit()).trim_matches('"').into() }
 
     pub(crate) fn rank(&self) -> Rank { self.face().rank() }
-    // TODO: pub(crate) fn value(&self) -> Value { self.face().value() }
+    pub(crate) fn value(&self) -> Value { self.face().value() }
 }
 
 impl Display for Card {

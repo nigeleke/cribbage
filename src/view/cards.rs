@@ -1,5 +1,5 @@
 use super::card::{Card, CardSlot};
-use super::player::Role;
+use super::role::Role;
 
 use std::collections::HashMap;
 

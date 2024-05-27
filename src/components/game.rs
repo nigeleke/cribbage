@@ -1,12 +1,15 @@
-use super::prelude::Context;
+use super::Context;
 use super::card::Card;
 use super::cards::Cards;
 use super::crib::Crib;
 use super::cuts::Cuts;
 
-use crate::domain::CARDS_DISCARDED_TO_CRIB;
-use crate::services::prelude::discard;
-use crate::view::prelude::{CardSlot, Cuts, Game as GameView, Hands, Role, Scores, Score};
+use crate::domain::prelude::{
+    CARDS_DISCARDED_TO_CRIB,
+    Hand as DomainHand
+};
+use crate::services::prelude::{discard, play};
+use crate::view::prelude::{CardSlot, Cuts, Game as GameView, Hands, PlayState, Role, Scores, Score};
 
 use leptos::*;
 use style4rs::style;
@@ -179,7 +182,8 @@ fn PlayArea() -> impl IntoView {
     match game {
         GameView::Starting(cuts) => starting_play_area(&cuts).into_view(),
         GameView::Discarding(_, hands, _, _) => discarding_play_area(&hands).into_view(),
-        GameView::Playing(_, hands, _, _, _) => playing_play_area(&hands).into_view(),
+        GameView::Playing(_, hands, play_state, _, _, _) =>
+            playing_play_area(&hands, &play_state).into_view(),
     }
 }
 
@@ -199,18 +203,15 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
         }
     };
 
-    let current_player_cards = hands[&Role::CurrentPlayer].clone();
-    let opponent_cards = hands[&Role::Opponent].clone();
-    let viewable_player_cards = current_player_cards.clone();
+    let (current_player_cards, _) = create_signal(hands[&Role::CurrentPlayer].clone());
+    let (opponent_cards, _) = create_signal(hands[&Role::Opponent].clone());
 
     let (selected, set_selected) = create_signal(Vec::<bool>::new());
-    let selected_count = move || selected().iter().filter(|s| **s).count();
-    let disabled = move || selected_count() != CARDS_DISCARDED_TO_CRIB;
+    let selected_count = move || selected().into_iter().filter(|s| *s).count();
     let selected_cards = move || {
-        let cards = current_player_cards.clone();
         selected()
             .into_iter()
-            .zip(cards)
+            .zip(current_player_cards())
             .filter_map(|(s, c)| {
                 if let CardSlot::FaceUp(card) = c {
                     s.then_some(card)
@@ -220,6 +221,7 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
         })
         .collect::<Vec<_>>()
     };
+    let disabled = move || selected_count() != CARDS_DISCARDED_TO_CRIB;
 
     let context = use_context::<Context>().unwrap();
 
@@ -241,18 +243,101 @@ fn discarding_play_area(hands: &Hands) -> impl IntoView {
         class = class,
         <div>
             <div>
-                <Cards cards=viewable_player_cards on_selected=set_selected />
+                {move || {
+                    let current_player_cards = current_player_cards();
+                    view!{ <Cards cards=current_player_cards on_selected=set_selected /> }
+                }}
                 <span><button on:click=on_discard disabled=disabled>"Discard"</button></span>
             </div>
             <div />
-            <div><Cards cards=opponent_cards /></div>
+            <div>
+                {move || {
+                    let opponent_cards = opponent_cards();
+                    view!{ <Cards cards=opponent_cards /> }
+                }}
+            </div>            
         </div>
     }
 }
 
-fn playing_play_area(_hands: &Hands) -> impl IntoView {
+fn playing_play_area(hands: &Hands, play_state: &PlayState) -> impl IntoView {
+    let class = style!{
+        div {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+        }
+    };
+
+    let (current_player_cards, _) = create_signal(hands[&Role::CurrentPlayer].clone());
+    let (opponent_cards, _) = create_signal(hands[&Role::Opponent].clone());
+
+    let (legal_plays, _) = create_signal(play_state.legal_plays().clone());
+
+    let (selected, set_selected) = create_signal(Vec::<bool>::new());
+    let selected_cards = move || {
+        selected()
+            .into_iter()
+            .zip(current_player_cards())
+            .filter_map(|(s, c)| {
+                if let CardSlot::FaceUp(card) = c {
+                    s.then_some(card)
+                } else {
+                    None
+                }
+        })
+        .collect::<Vec<_>>()
+    };
+    let selected_play = move || {
+        let cards = selected_cards().into_iter().filter(|c| legal_plays().contains(c)).collect::<Vec<_>>();
+        (cards.len() == 1).then(|| cards[0])
+    };
+    let disabled = move || { selected_play().is_none() };
+
+    let context = use_context::<Context>().unwrap();
+
+    let on_play = {
+        let context = context.clone();
+        move |_| {
+            let id = context.id.clone();
+            let state = context.state;
+            let selected_play = selected_play();
+            let cards = selected_play.unwrap();
+            spawn_local(async move {
+                if let Ok(game) = play(id, cards).await {
+                    state.set(Some(game.clone()));
+                }
+            });
+        }
+    };
+
+    let play_state_str = format!("{:?}", play_state);
+
     view! {
-        <p>"Playing..."</p>
+        class = class,
+        <div>
+            <div>
+                {move || {
+                    let current_player_cards = current_player_cards();
+                    view!{ <Cards cards=current_player_cards on_selected=set_selected /> }
+                }}
+                <span>{
+                    if play_state.must_pass() {
+                        view! { <button>"Pass"</button> }
+                    } else {
+                        view! { <button on:click=on_play disabled=disabled>"Play"</button> }
+                    }
+                }</span>
+            </div>
+            <div><span>{play_state_str}</span></div>
+            <div>
+                {move || {
+                    let opponent_cards = opponent_cards();
+                    view!{ <Cards cards=opponent_cards /> }
+                }}
+            </div>
+        </div>
     }
 }
 
@@ -266,7 +351,7 @@ fn CribAndCut() -> impl IntoView {
     match game {
         GameView::Starting(_) => empty_view().into_view(),
         GameView::Discarding(_, _, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
-        GameView::Playing(_, _, cut, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
+        GameView::Playing(_, _, _, cut, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
     }
 }
 

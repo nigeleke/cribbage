@@ -37,12 +37,15 @@ impl<T> Cards<T> {
         self.cards.len()
     }
 
+    pub(crate) fn value(&self) -> Value {
+        self.cards.iter().map(|c| c.value()).sum()
+    }
+
     #[cfg(test)]
     pub(crate) fn get(&self, indices: &[usize]) -> Vec<Card> {
         Vec::from_iter(indices.into_iter().filter_map(|i| Some(self.cards[*i])))
     }
 
-    #[cfg(test)]
     pub(crate) fn contains(&self, card: &Card) -> bool {
         self.cards.contains(card)
     }
@@ -98,14 +101,14 @@ impl Deck {
         (*card, Deck::from(Vec::from(remainder)))
     }
 
-    pub(crate) fn deal(&self, players: &HashSet<Player>) -> (HashMap<Player, Hand>, Deck) {
+    pub(crate) fn deal(&self, players: &HashSet<Player>) -> (Hands, Deck) {
         let cards = &self.cards;
         let hands = players
             .iter()
             .enumerate()
             .map(|(i, p)| (*p, Hand::from(Vec::from(&cards[i*CARDS_DEALT_PER_HAND .. (i+1)*CARDS_DEALT_PER_HAND]))));
         let deck = Deck::from(Vec::from(&cards[NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND ..]));
-        (HashMap::from_iter(hands), deck)
+        (Hands::from_iter(hands), deck)
     }
 }
 
@@ -113,6 +116,7 @@ impl Deck {
 #[derive(Clone, Debug, PartialEq)]
 pub struct HandType;
 pub type Hand = Cards<HandType>;
+pub type Hands = HashMap<Player, Hand>;
 
 /// The current Crib.
 #[derive(Clone, Debug)]

@@ -1,7 +1,4 @@
-use super::{
-    card::Card,
-    cards::Hand
-};
+use super::card::Card;
 use super::role::Role;
 
 use crate::domain::prelude::{
@@ -46,7 +43,7 @@ impl PlayState {
 
 impl From<(DomainPlayState, DomainPlayer)> for PlayState {
     fn from((play_state, player): (DomainPlayState, DomainPlayer)) -> Self {
-        let legal_plays = play_state.legal_plays(&player).cards();
+        let legal_plays = play_state.legal_plays(player).ok().unwrap().cards();
         
         let current_plays = play_state
             .current_plays()

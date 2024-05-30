@@ -15,13 +15,13 @@
     
   /** Each [Plays.Play] cannot have a running total of more than 31. */
   pub const PLAY_TARGET: usize = 31;
-    
+  
+
   //     /** When all [Player]s have [Laid] all [Cards] the [Score]ing can be performed. */
   //     val AllLaidCardCount = CardsKeptPerHand * NumberOfPlayersInGame
     
-  //     /** Short games can play to 61, but it is normal to play to 121, as in this implementation. */
-  //     val WinningScore = 121
-  //   }
+  /** Short games can play to 61, but it is normal to play to 121, as in this implementation. */
+  pub const WINNING_SCORE: usize = 121;
   
   
   

@@ -21,8 +21,8 @@ pub async fn play(game_id: String, card: Card) -> Result<GameView, ServerFnError
     let game = select_game(&mut transaction, &game_id).await?;
     // TODO: let game = game.play(&player, &card)?;
 
-    let opponent = game.opponent(&player);
-    let game = Opponent::discard(&opponent, &game);
+    let opponent = game.opponent(player);
+    let game = Opponent::discard(opponent, &game);
 
     update_game(&mut transaction, &game_id, &game).await?;
 

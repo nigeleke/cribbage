@@ -19,10 +19,10 @@ pub async fn discard(game_id: String, cards: Vec<Card>) -> Result<GameView, Serv
     let mut transaction = connection.begin().await?;
 
     let game = select_game(&mut transaction, &game_id).await?;
-    let game = game.discard(&player, &cards)?;
+    let game = game.discard(player, &cards)?;
 
-    let opponent = game.opponent(&player);
-    let game = Opponent::discard(&opponent, &game);
+    let opponent = game.opponent(player);
+    let game = Opponent::discard(opponent, &game);
 
     update_game(&mut transaction, &game_id, &game).await?;
 

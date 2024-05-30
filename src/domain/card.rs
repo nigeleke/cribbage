@@ -29,6 +29,12 @@ impl From<usize> for Value {
     }
 }
 
+impl From<Value> for usize {
+    fn from(value: Value) -> Self {
+        value.0
+    }
+}
+
 impl Add for Value {
     type Output = Value;
 
@@ -130,7 +136,7 @@ impl From<char> for Face {
 
 /// A Card suit.
 #[derive(Clone, Copy, Debug, Deserialize, Sequence, Serialize, PartialEq)]
-enum Suit { Hearts, Clubs, Diamonds, Spades }
+pub enum Suit { Hearts, Clubs, Diamonds, Spades }
 
 impl Suit {
     fn yansi(&self, s: &str) -> String {
@@ -187,8 +193,8 @@ impl Card {
         all::<Suit>().flat_map(cards_for_suit).collect::<Vec<_>>()
     }
 
-    fn face(&self) -> Face { self.0 }
-    fn suit(&self) -> Suit { self.1 }
+    pub fn face(&self) -> Face { self.0 }
+    pub fn suit(&self) -> Suit { self.1 }
 
     pub fn face_name(&self) -> String { format!("{:?}", self.face()).trim_matches('"').into() }
     pub fn suit_name(&self) -> String { format!("{:?}", self.suit()).trim_matches('"').into() }

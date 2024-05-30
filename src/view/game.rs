@@ -1,6 +1,6 @@
 use super::card::{Card, CardSlot, Cut};
 use super::cards::{Crib, Cuts, Hands};
-use super::plays::{Play, PlayState};
+use super::plays::PlayState;
 use super::role::{Dealer, Role};
 use super::score::Scores;
 
@@ -67,6 +67,8 @@ impl From<(DomainGame, DomainPlayer)> for Game {
                 let dealer = Dealer::from((dealer, player));
                 Game::Playing(scores, hands, play_state, cut, crib, dealer)
             },
+            DomainGame::ScoringPone(_, _, _, _, _) => unimplemented!(),
+            DomainGame::Finished(_scores) => unimplemented!(),
         }
     }
 }

@@ -4,10 +4,7 @@ use super::cards::Cards;
 use super::crib::Crib;
 use super::cuts::Cuts;
 
-use crate::domain::prelude::{
-    CARDS_DISCARDED_TO_CRIB,
-    Hand as DomainHand
-};
+use crate::domain::prelude::CARDS_DISCARDED_TO_CRIB;
 use crate::services::prelude::{discard, play};
 use crate::view::prelude::{CardSlot, Cuts, Game as GameView, Hands, PlayState, Role, Scores, Score};
 

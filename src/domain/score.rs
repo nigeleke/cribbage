@@ -1,10 +1,14 @@
+use super::player::Player;
+
 use serde::{Serialize, Deserialize};
+
+use std::collections::HashMap;
 
 pub(crate) type BackPeg = usize;
 
 pub(crate) type FrontPeg = usize;
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct Score(BackPeg, FrontPeg);
 
 impl Score {
@@ -12,7 +16,15 @@ impl Score {
     pub fn back_peg(&self) -> BackPeg { self.0 }
 
     pub fn add(&self, score: usize) -> Self {
-        Self ( self.front_peg(), self.front_peg() + score)
+        if score == 0 {
+            *self
+        } else {
+            Self ( self.front_peg(), self.front_peg() + score)
+        }
+    }
+
+    pub fn value(&self) -> usize {
+        self.front_peg()
     }
 }
 
@@ -21,3 +33,5 @@ impl std::fmt::Display for Score {
         write!(f, "{}->{}", self.0, self.1)
     }
 }
+
+pub type Scores = HashMap<Player, Score>;

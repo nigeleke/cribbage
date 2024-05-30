@@ -44,9 +44,9 @@ pub fn Cards(
                 let n = if stacked { 1 } else { cards.len() };
             
                 if on_selected.is_none() {
-                    cards.iter().take(n).map(move |card| view!{ <Card card={card.clone()} /> }).collect::<Vec<_>>()
+                    cards.iter().take(n).map(move |card| view!{ <Card card={*card} /> }).collect::<Vec<_>>()
                 } else {
-                    cards.iter().take(n).enumerate().map(move |(i, card)| view!{ <Card card={card.clone()} on_selected={wo_selections[i]} /> }).collect::<Vec<_>>()
+                    cards.iter().take(n).enumerate().map(move |(i, card)| view!{ <Card card={*card} on_selected={wo_selections[i]} /> }).collect::<Vec<_>>()
                 }
             }
         </div>

@@ -11,8 +11,8 @@ pub enum Role {
 pub type Dealer = Role;
 
 impl From<(DomainPlayer, DomainPlayer)> for Dealer {
-    fn from((current, dealer): (DomainPlayer, DomainPlayer)) -> Self {
-        if current == dealer {
+    fn from((a_player, the_player): (DomainPlayer, DomainPlayer)) -> Self {
+        if a_player == the_player {
             Role::CurrentPlayer
         } else {
             Role::Opponent

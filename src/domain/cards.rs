@@ -1,3 +1,5 @@
+use super::format::format_vec;
+
 use crate::domain::prelude::*;
 
 use rand::{seq::SliceRandom, thread_rng};
@@ -13,13 +15,13 @@ pub struct Cards<T> {
 }
 
 impl<T> Cards<T> {
-    pub(crate) fn remove(&mut self, card: &Card) {
-        self.cards.retain(|c| c != card)
+    pub(crate) fn remove(&mut self, card: Card) {
+        self.cards.retain(|c| *c != card)
     }
 
     pub(crate) fn remove_all(&mut self, cards: &[Card]) {
         for card in cards {
-            self.remove(card)
+            self.remove(*card)
         }
     }
 
@@ -37,12 +39,19 @@ impl<T> Cards<T> {
         self.cards.len()
     }
 
+    pub(crate) fn value(&self) -> Value {
+        self.cards.iter().map(|c| c.value()).sum()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.cards.is_empty()
+    }
+
     #[cfg(test)]
     pub(crate) fn get(&self, indices: &[usize]) -> Vec<Card> {
         Vec::from_iter(indices.into_iter().filter_map(|i| Some(self.cards[*i])))
     }
 
-    #[cfg(test)]
     pub(crate) fn contains(&self, card: &Card) -> bool {
         self.cards.contains(card)
     }
@@ -66,18 +75,19 @@ impl<T> Default for Cards<T> {
 
 impl<T> Display for Cards<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let formatted = self.cards
-            .iter()
-            .map(|c| c.to_string())
-            .collect::<Vec<_>>()
-            .join(", "); 
-        write!(f, "{}", formatted)
+        write!(f, "{}", format_vec(&self.cards))
     }
 }
 
 impl<T> From<Vec<Card>> for Cards<T> {
     fn from(value: Vec<Card>) -> Self {
         Self { cards: value, _marker: Default::default() }
+    }
+}
+
+impl<U> FromIterator<Card> for Cards<U> {
+    fn from_iter<T: IntoIterator<Item = Card>>(iter: T) -> Self {
+        Self { cards: Vec::from_iter(iter), _marker: Default::default() }
     }
 }
 
@@ -98,14 +108,14 @@ impl Deck {
         (*card, Deck::from(Vec::from(remainder)))
     }
 
-    pub(crate) fn deal(&self, players: &HashSet<Player>) -> (HashMap<Player, Hand>, Deck) {
+    pub(crate) fn deal(&self, players: &HashSet<Player>) -> (Hands, Deck) {
         let cards = &self.cards;
         let hands = players
             .iter()
             .enumerate()
             .map(|(i, p)| (*p, Hand::from(Vec::from(&cards[i*CARDS_DEALT_PER_HAND .. (i+1)*CARDS_DEALT_PER_HAND]))));
         let deck = Deck::from(Vec::from(&cards[NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND ..]));
-        (HashMap::from_iter(hands), deck)
+        (Hands::from_iter(hands), deck)
     }
 }
 
@@ -113,9 +123,10 @@ impl Deck {
 #[derive(Clone, Debug, PartialEq)]
 pub struct HandType;
 pub type Hand = Cards<HandType>;
+pub type Hands = HashMap<Player, Hand>;
 
 /// The current Crib.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CribType;
 pub type Crib = Cards<CribType>;
 

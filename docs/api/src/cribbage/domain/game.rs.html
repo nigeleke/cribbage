@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (36153f1a4 2024-05-24)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (debd22da6 2024-05-29)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1400,10 +1400,113 @@
 <a href="#1400" id="1400">1400</a>
 <a href="#1401" id="1401">1401</a>
 <a href="#1402" id="1402">1402</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::domain::prelude::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">crate</span>::domain::result::Result;
+<a href="#1403" id="1403">1403</a>
+<a href="#1404" id="1404">1404</a>
+<a href="#1405" id="1405">1405</a>
+<a href="#1406" id="1406">1406</a>
+<a href="#1407" id="1407">1407</a>
+<a href="#1408" id="1408">1408</a>
+<a href="#1409" id="1409">1409</a>
+<a href="#1410" id="1410">1410</a>
+<a href="#1411" id="1411">1411</a>
+<a href="#1412" id="1412">1412</a>
+<a href="#1413" id="1413">1413</a>
+<a href="#1414" id="1414">1414</a>
+<a href="#1415" id="1415">1415</a>
+<a href="#1416" id="1416">1416</a>
+<a href="#1417" id="1417">1417</a>
+<a href="#1418" id="1418">1418</a>
+<a href="#1419" id="1419">1419</a>
+<a href="#1420" id="1420">1420</a>
+<a href="#1421" id="1421">1421</a>
+<a href="#1422" id="1422">1422</a>
+<a href="#1423" id="1423">1423</a>
+<a href="#1424" id="1424">1424</a>
+<a href="#1425" id="1425">1425</a>
+<a href="#1426" id="1426">1426</a>
+<a href="#1427" id="1427">1427</a>
+<a href="#1428" id="1428">1428</a>
+<a href="#1429" id="1429">1429</a>
+<a href="#1430" id="1430">1430</a>
+<a href="#1431" id="1431">1431</a>
+<a href="#1432" id="1432">1432</a>
+<a href="#1433" id="1433">1433</a>
+<a href="#1434" id="1434">1434</a>
+<a href="#1435" id="1435">1435</a>
+<a href="#1436" id="1436">1436</a>
+<a href="#1437" id="1437">1437</a>
+<a href="#1438" id="1438">1438</a>
+<a href="#1439" id="1439">1439</a>
+<a href="#1440" id="1440">1440</a>
+<a href="#1441" id="1441">1441</a>
+<a href="#1442" id="1442">1442</a>
+<a href="#1443" id="1443">1443</a>
+<a href="#1444" id="1444">1444</a>
+<a href="#1445" id="1445">1445</a>
+<a href="#1446" id="1446">1446</a>
+<a href="#1447" id="1447">1447</a>
+<a href="#1448" id="1448">1448</a>
+<a href="#1449" id="1449">1449</a>
+<a href="#1450" id="1450">1450</a>
+<a href="#1451" id="1451">1451</a>
+<a href="#1452" id="1452">1452</a>
+<a href="#1453" id="1453">1453</a>
+<a href="#1454" id="1454">1454</a>
+<a href="#1455" id="1455">1455</a>
+<a href="#1456" id="1456">1456</a>
+<a href="#1457" id="1457">1457</a>
+<a href="#1458" id="1458">1458</a>
+<a href="#1459" id="1459">1459</a>
+<a href="#1460" id="1460">1460</a>
+<a href="#1461" id="1461">1461</a>
+<a href="#1462" id="1462">1462</a>
+<a href="#1463" id="1463">1463</a>
+<a href="#1464" id="1464">1464</a>
+<a href="#1465" id="1465">1465</a>
+<a href="#1466" id="1466">1466</a>
+<a href="#1467" id="1467">1467</a>
+<a href="#1468" id="1468">1468</a>
+<a href="#1469" id="1469">1469</a>
+<a href="#1470" id="1470">1470</a>
+<a href="#1471" id="1471">1471</a>
+<a href="#1472" id="1472">1472</a>
+<a href="#1473" id="1473">1473</a>
+<a href="#1474" id="1474">1474</a>
+<a href="#1475" id="1475">1475</a>
+<a href="#1476" id="1476">1476</a>
+<a href="#1477" id="1477">1477</a>
+<a href="#1478" id="1478">1478</a>
+<a href="#1479" id="1479">1479</a>
+<a href="#1480" id="1480">1480</a>
+<a href="#1481" id="1481">1481</a>
+<a href="#1482" id="1482">1482</a>
+<a href="#1483" id="1483">1483</a>
+<a href="#1484" id="1484">1484</a>
+<a href="#1485" id="1485">1485</a>
+<a href="#1486" id="1486">1486</a>
+<a href="#1487" id="1487">1487</a>
+<a href="#1488" id="1488">1488</a>
+<a href="#1489" id="1489">1489</a>
+<a href="#1490" id="1490">1490</a>
+<a href="#1491" id="1491">1491</a>
+<a href="#1492" id="1492">1492</a>
+<a href="#1493" id="1493">1493</a>
+<a href="#1494" id="1494">1494</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::constants::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">super</span>::card::{Card, Cuts, Rank};
+<span class="kw">use </span><span class="kw">super</span>::cards::{Crib, Deck, Hand, Hands};
+<span class="kw">use </span><span class="kw">super</span>::format::format_hashmap;
+<span class="kw">use </span><span class="kw">super</span>::player::Player;
+<span class="kw">use </span><span class="kw">super</span>::plays::PlayState;
+<span class="kw">use </span><span class="kw">super</span>::result::{Error, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">super</span>::score::{Score, Scores};
+<span class="kw">use </span><span class="kw">super</span>::game_scorer::<span class="kw-2">*</span>;
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">use </span><span class="kw">super</span>::builder::Builder;
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>yansi::Paint;
 
 <span class="kw">use </span>std::collections::{HashMap, HashSet};
 <span class="kw">use </span>std::fmt::Display;
@@ -1411,18 +1514,18 @@
 <span class="doccomment">/// The game state, waiting for opponent, discarding, playing, scoring, finished.
 </span><span class="attr">#[derive(Clone, Debug, Serialize, Deserialize)]
 </span><span class="kw">pub enum </span>Game {
-    Starting(HashMap&lt;Player, Card&gt;, Deck),
-    Discarding(HashMap&lt;Player, Score&gt;, Player, HashMap&lt;Player, Hand&gt;, Crib, Deck),
-    Playing(HashMap&lt;Player, Score&gt;, Player, HashMap&lt;Player, Hand&gt;, PlayState, Card, Crib),
-<span class="comment">//     ScoringPoneCards(MyState, OpponentState, Cut, Crib),
-//     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
+    Starting(Cuts, Deck),
+    Discarding(Scores, Player, Hands, Crib, Deck),
+    Playing(Scores, Player, Hands, PlayState, Card, Crib),
+    ScoringPone(Scores, Player, Hands, Card, Crib),
+<span class="comment">//     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
 //     ScoringCrib(MyState, OpponentState, Cut, Crib),
-//     Finished(MyScore, OpponentScore),
-</span>}
+    </span>Finished(Scores),
+}
 
 <span class="kw">impl </span>Game {
     <span class="kw">pub fn </span>new(players: <span class="kw-2">&amp;</span>HashSet&lt;Player&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Game&gt; {
-        <span class="kw">if </span>players.len() &gt; <span class="kw">super</span>::NUMBER_OF_PLAYERS_IN_GAME {
+        <span class="kw">if </span>players.len() &gt; NUMBER_OF_PLAYERS_IN_GAME {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Error::TooManyPlayers)
         }
 
@@ -1443,6 +1546,9 @@
             Game::Starting(cuts, <span class="kw">_</span>) =&gt; HashSet::from_iter(cuts.keys().cloned()),
             Game::Discarding(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; HashSet::from_iter(scores.keys().cloned()),
             Game::Playing(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; HashSet::from_iter(scores.keys().cloned()),
+            Game::ScoringPone(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; HashSet::from_iter(scores.keys().cloned()),
+            Game::Finished(scores) =&gt; HashSet::from_iter(scores.keys().cloned()),
+
         }
     }
 
@@ -1459,13 +1565,31 @@
         }
     }
 
+    <span class="kw">pub fn </span>scores(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Scores {
+        <span class="kw">match </span><span class="self">self </span>{
+            Game::Starting(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+            Game::Discarding(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores,
+            Game::Playing(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores,
+            Game::ScoringPone(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores,
+            Game::Finished(scores) =&gt; scores,
+        }.clone()
+    }
+
+    <span class="kw">fn </span>has_winner(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">let </span>scores = <span class="self">self</span>.scores();
+        scores.values()
+            .filter(|s| s.value() &gt;= WINNING_SCORE)
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+            .len() != <span class="number">0
+    </span>}
+
     <span class="kw">pub fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             Game::Starting(cuts, <span class="kw">_</span>) =&gt; {
                 <span class="kw">let </span>players = <span class="self">self</span>.players();
                 verify::players(<span class="kw-2">&amp;</span>players)<span class="question-mark">?</span>;
                 verify::different_cuts(cuts)<span class="question-mark">?</span>;
-                <span class="kw">let </span>scores: HashMap&lt;Player, Score&gt; = HashMap::from_iter(players.iter().map(|<span class="kw-2">&amp;</span>p| (p, Score::default())));
+                <span class="kw">let </span>scores: Scores = Scores::from_iter(players.iter().map(|<span class="kw-2">&amp;</span>p| (p, Score::default())));
                 <span class="kw">let </span><span class="kw-2">mut </span>cuts = cuts.iter();
                 <span class="kw">let </span><span class="prelude-val">Some</span>((player1, cut1)) = cuts.next() <span class="kw">else </span>{ <span class="macro">unreachable!</span>() };
                 <span class="kw">let </span><span class="prelude-val">Some</span>((player2, cut2)) = cuts.next() <span class="kw">else </span>{ <span class="macro">unreachable!</span>() };
@@ -1491,25 +1615,30 @@
         }
     }
 
-    <span class="kw">pub fn </span>discard(<span class="kw-2">&amp;</span><span class="self">self</span>, player: <span class="kw-2">&amp;</span>Player, discards: <span class="kw-2">&amp;</span>[Card]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    <span class="kw">pub fn </span>discard(<span class="kw-2">&amp;</span><span class="self">self</span>, player: Player, discards: <span class="kw-2">&amp;</span>[Card]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             Game::Discarding(scores, dealer, hands, crib, deck) =&gt; {
                 <span class="kw">let </span>players = <span class="self">self</span>.players();
                 verify::player(player, <span class="kw-2">&amp;</span>players)<span class="question-mark">?</span>;
 
                 <span class="kw">let </span><span class="kw-2">mut </span>hands = hands.clone();
-                <span class="kw">let </span><span class="kw-2">mut </span>hand = hands[player].clone();
+                <span class="kw">let </span><span class="kw-2">mut </span>hand = hands[<span class="kw-2">&amp;</span>player].clone();
                 verify::discards(discards, <span class="kw-2">&amp;</span>hand)<span class="question-mark">?</span>;
 
                 hand.remove_all(discards);
-                hands.insert(<span class="kw-2">*</span>player, hand);
+                hands.insert(player, hand);
 
                 <span class="kw">let </span><span class="kw-2">mut </span>crib = crib.clone();
                 crib.add(discards);
 
                 <span class="kw">if </span>crib.len() == CARDS_REQUIRED_IN_CRIB {
                     <span class="kw">let </span>(cut, <span class="kw">_</span>) = deck.cut();
-                    <span class="prelude-val">Ok</span>(Game::Playing(scores.clone(), <span class="kw-2">*</span>dealer, hands, PlayState::new(<span class="self">self</span>.pone()), cut, crib))
+                    <span class="kw">let </span>pone = <span class="self">self</span>.pone();
+                    <span class="kw">let </span>play_state = PlayState::default()
+                        .with_legal_plays_for_player_hand(pone, <span class="kw-2">&amp;</span>hands[<span class="kw-2">&amp;</span>pone]);
+                    <span class="kw">let </span>game = Game::Playing(scores.clone(), <span class="kw-2">*</span>dealer, hands, play_state, cut, crib);
+                    <span class="kw">let </span>score = GameScorer::his_heels_on_cut_pre_play(<span class="kw-2">&amp;</span>game);
+                    game.score_points(<span class="kw-2">*</span>dealer, score)
                 } <span class="kw">else </span>{
                     <span class="prelude-val">Ok</span>(Game::Discarding(scores.clone(), <span class="kw-2">*</span>dealer, hands, crib, deck.clone()))
                 }
@@ -1518,34 +1647,113 @@
         }
     }
 
-    <span class="kw">pub fn </span>pone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Player {
-        <span class="kw">let </span>(player1, player2) = <span class="self">self</span>.player_1_2();
-        <span class="kw">let </span>pone = |p: <span class="kw-2">&amp;</span>Player| <span class="kw">if </span><span class="kw-2">*</span>p == player1 { player2 } <span class="kw">else </span>{ player1 };
+    <span class="kw">pub fn </span>dealer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Player {
         <span class="kw">match </span><span class="self">self </span>{
             Game::Starting(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
-            Game::Discarding(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; pone(dealer),
-            Game::Playing(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; pone(dealer),
+            Game::Discarding(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="kw-2">*</span>dealer,
+            Game::Playing(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="kw-2">*</span>dealer,
+            Game::ScoringPone(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="kw-2">*</span>dealer,
+            Game::Finished(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
         }
     }
 
-    <span class="kw">pub fn </span>opponent(<span class="kw-2">&amp;</span><span class="self">self</span>, player: <span class="kw-2">&amp;</span>Player) -&gt; Player {
-        <span class="macro">assert!</span>(<span class="self">self</span>.players().contains(player));
+    <span class="kw">pub fn </span>pone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Player {
         <span class="kw">let </span>(player1, player2) = <span class="self">self</span>.player_1_2();
-        <span class="kw">if </span><span class="kw-2">*</span>player == player1 { player2 } <span class="kw">else </span>{ player1 }
+        <span class="kw">if </span><span class="self">self</span>.dealer() == player1 { player2 } <span class="kw">else </span>{ player1 }
     }
+
+    <span class="kw">pub fn </span>opponent(<span class="kw-2">&amp;</span><span class="self">self</span>, player: Player) -&gt; Player {
+        <span class="macro">assert!</span>(<span class="self">self</span>.players().contains(<span class="kw-2">&amp;</span>player));
+        <span class="kw">let </span>(player1, player2) = <span class="self">self</span>.player_1_2();
+        <span class="kw">if </span>player == player1 { player2 } <span class="kw">else </span>{ player1 }
+    }
+
+    <span class="kw">fn </span>score_points(<span class="self">self</span>, player: Player, score: usize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span>update = |<span class="kw-2">mut </span>scores: Scores| {
+            scores.insert(player, scores[<span class="kw-2">&amp;</span>player].add(score));
+            scores
+        };
+
+        <span class="kw">let </span><span class="kw-2">mut </span>game = <span class="kw">match </span><span class="self">self </span>{
+            Game::Starting(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+
+            Game::Discarding(scores, dealer, hands, crib, deck) =&gt; 
+                Game::Discarding(update(scores), dealer, hands, crib, deck),
+
+            Game::Playing(scores, dealer, hands, play_state, cut, crib) =&gt;
+                Game::Playing(update(scores), dealer, hands, play_state, cut, crib),
+
+            Game::ScoringPone(scores, dealer, hands, cut, crib) =&gt;
+                Game::ScoringPone(update(scores), dealer, hands, cut, crib),
+
+            Game::Finished(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+        };
+
+        <span class="kw">if </span>game.has_winner() {
+            <span class="kw">let </span>scores = game.scores();
+            game = Game::Finished(scores)
+        }
+
+        <span class="prelude-val">Ok</span>(game)
+    }
+
+    <span class="kw">fn </span>play(<span class="kw-2">&amp;</span><span class="self">self</span>, player: Player, card: Card) -&gt; <span class="prelude-ty">Result</span>&lt;Game&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            Game::Playing(scores, dealer, hands, play_state, cut, crib) =&gt; {
+                <span class="kw">let </span>players = <span class="self">self</span>.players();
+                verify::player(player, <span class="kw-2">&amp;</span>players)<span class="question-mark">?</span>;
+                <span class="kw">let </span>opponent = <span class="self">self</span>.opponent(player);
+
+                <span class="kw">let </span><span class="kw-2">mut </span>hands = hands.clone();
+                <span class="kw">let </span><span class="kw-2">mut </span>hand = hands[<span class="kw-2">&amp;</span>player].clone();
+                verify::card(card, <span class="kw-2">&amp;</span>hand.cards())<span class="question-mark">?</span>;
+                verify::card(card, <span class="kw-2">&amp;</span>play_state.legal_plays(player)<span class="question-mark">?</span>.cards()).map_err(|<span class="kw">_</span>| Error::PlayExceedsMaximumTarget)<span class="question-mark">?</span>;
+
+                <span class="kw">let </span><span class="kw-2">mut </span>play_state = play_state.clone();
+                hand.remove(card);
+                hands.insert(player, hand);
+                play_state.play(card);
+                <span class="kw">let </span>play_state = play_state.with_legal_plays_for_player_hand(opponent, <span class="kw-2">&amp;</span>hands[<span class="kw-2">&amp;</span>opponent]);
+
+                <span class="kw">let </span><span class="kw-2">mut </span>game = Game::Playing(scores.clone(), <span class="kw-2">*</span>dealer, hands.clone(), play_state, <span class="kw-2">*</span>cut, crib.clone());
+                <span class="kw">let </span>score = GameScorer::current_play(<span class="kw-2">&amp;</span>game);
+
+                <span class="kw">let </span>plays_completed = hands.values().filter(|hand| hand.is_empty()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;().len() == NUMBER_OF_PLAYERS_IN_GAME;
+
+                <span class="kw">if </span>plays_completed {
+                    game = Game::ScoringPone(scores.clone(), <span class="kw-2">*</span>dealer, hands.clone(), <span class="kw-2">*</span>cut, crib.clone())
+                }
+
+                game.score_points(player, score)
+            },
+            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+        }
+    }
+
 }
 
 <span class="kw">impl </span>Display <span class="kw">for </span>Game {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
         <span class="kw">match </span><span class="self">self </span>{
-            Game::Starting(cuts, deck) =&gt; <span class="macro">write!</span>(f, <span class="string">"Starting(Cuts({}), {})"</span>, format_hashmap(cuts), deck),
-            <span class="kw">_ </span>=&gt; <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, <span class="self">self</span>),
+            Game::Starting(cuts, deck) =&gt;
+                <span class="macro">write!</span>(f, <span class="string">"Starting(Cuts({}), Deck({}))"</span>, format_hashmap(cuts), deck),
+
+            Game::Discarding(scores, dealer, hands, crib, deck) =&gt;
+                <span class="macro">write!</span>(f, <span class="string">"Discarding(Scores({}), Dealer({}), Hands({}), Crib({}), Deck({}))"</span>,
+                    format_hashmap(scores), dealer, format_hashmap(hands), crib, deck),
+
+            Game::Playing(scores, dealer, hands, play_state, cut, crib) =&gt;
+                <span class="macro">write!</span>(f, <span class="string">"Playing(Scores({}), Dealer({}), Hands({}), PlayState({}), Cut({})), Crib({}))"</span>,
+                    format_hashmap(scores), dealer, format_hashmap(hands), play_state, cut, crib),
+
+            Game::ScoringPone(scores, dealer, hands, cut, crib) =&gt;
+                <span class="macro">write!</span>(f, <span class="string">"ScoringPone(Scores({}), Dealer({}), Hands({}), Cut({})), Crib({}))"</span>,
+                    format_hashmap(scores), dealer, format_hashmap(hands), cut, crib),
+
+            Game::Finished(scores) =&gt;
+                <span class="macro">write!</span>(f, <span class="string">"Finished(Scores({}))"</span>, format_hashmap(scores)),
         }
     }
-}
-
-<span class="kw">fn </span>format_hashmap&lt;T: Display&gt;(map: <span class="kw-2">&amp;</span>HashMap&lt;Player, T&gt;) -&gt; String {
-    map.iter().map(|(k, v)| <span class="macro">format!</span>(<span class="string">"{} -&gt; {}"</span>, k, v)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;().join(<span class="string">", "</span>)
 }
 
 <span class="kw">mod </span>verify {
@@ -1559,14 +1767,13 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>player(player: <span class="kw-2">&amp;</span>Player, players: <span class="kw-2">&amp;</span>HashSet&lt;Player&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">if </span>!players.contains(player) {
-            <span class="prelude-val">Err</span>(Error::InvalidPlayer(<span class="kw-2">*</span>player))
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>player(player: Player, players: <span class="kw-2">&amp;</span>HashSet&lt;Player&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">if </span>!players.contains(<span class="kw-2">&amp;</span>player) {
+            <span class="prelude-val">Err</span>(Error::InvalidPlayer(player))
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(())
         }
     }
-
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>different_cuts(cuts: <span class="kw-2">&amp;</span>HashMap&lt;Player, Card&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>cuts: HashSet&lt;Rank&gt; = HashSet::from_iter(cuts.values().map(|c| c.rank()));
@@ -1588,7 +1795,7 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>discards(discards: <span class="kw-2">&amp;</span>[Card], hand: <span class="kw-2">&amp;</span>Hand) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">for </span>discard <span class="kw">in </span>discards {
-            verify::card(discard, <span class="kw-2">&amp;</span>hand.cards())<span class="question-mark">?
+            verify::card(<span class="kw-2">*</span>discard, <span class="kw-2">&amp;</span>hand.cards())<span class="question-mark">?
         </span>}
 
         <span class="kw">if </span>hand.len() - discards.len() &lt; CARDS_KEPT_PER_HAND {
@@ -1598,9 +1805,9 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>card(card: <span class="kw-2">&amp;</span>Card, cards: <span class="kw-2">&amp;</span>[Card]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">if </span>!cards.contains(card) {
-            <span class="prelude-val">Err</span>(Error::InvalidCard(<span class="kw-2">*</span>card))
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>card(card: Card, cards: <span class="kw-2">&amp;</span>[Card]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">if </span>!cards.contains(<span class="kw-2">&amp;</span>card) {
+            <span class="prelude-val">Err</span>(Error::InvalidCard(card))
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(())
         }
@@ -1613,6 +1820,7 @@
 </span><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::domain::card::{Cut, Face};
 
     <span class="doccomment">/// ## Number of Players
     ///
@@ -1623,7 +1831,7 @@
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>play_with_zero_one_or_two_players() {
         <span class="kw">for </span>n <span class="kw">in </span><span class="number">0</span>..=<span class="number">2 </span>{
-            <span class="kw">let </span>builder = Builder::default().with_players(n);
+            <span class="kw">let </span>builder = (<span class="number">0</span>..n).fold(Builder::default(), |acc, <span class="kw">_</span>| acc.with_player());
             <span class="kw">let </span>players = builder.players.clone();
             <span class="kw">let </span>game = builder.as_new().ok().unwrap();
             <span class="macro">assert_eq!</span>(game.players().len(), n);
@@ -1635,11 +1843,13 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fail_to_play_with_more_than_two_players() {
-        <span class="kw">let </span>builder = Builder::default().with_players(<span class="number">3</span>);
+        <span class="kw">let </span>builder = Builder::default()
+            .with_player()
+            .with_player()
+            .with_player();
         <span class="kw">let </span>error = builder.as_new().err().unwrap();
         <span class="macro">assert_eq!</span>(error, Error::TooManyPlayers);
     }
-
 
     <span class="doccomment">/// ## The Pack
     ///
@@ -1651,7 +1861,9 @@
     ///
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>use_a_standard_pack_of_cards() {
-        <span class="kw">let </span>builder = Builder::default().with_players(<span class="number">2</span>);
+        <span class="kw">let </span>builder = Builder::default()
+            .with_player()
+            .with_player();
         <span class="kw">let </span>game = builder.as_new().ok().unwrap();
         <span class="kw">let </span>_deck = game.deck();
         <span class="macro">assert!</span>(<span class="bool-val">true</span>)
@@ -1672,7 +1884,8 @@
     </span><span class="kw">fn </span>start_game_with_lowest_cut_as_dealer() {
         <span class="kw">for </span>(expected_dealer, cuts) <span class="kw">in </span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"ASKS"</span>), (<span class="number">1</span>, <span class="string">"KSAS"</span>)] {
             <span class="kw">let </span>builder = Builder::default()
-                .with_players(<span class="number">2</span>)
+                .with_player()
+                .with_player()
                 .with_cuts(cuts);
             <span class="kw">let </span>players = builder.players.clone();
             <span class="kw">let </span>game = builder.as_starting();
@@ -1685,7 +1898,6 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fail_to_start_game_if_cuts_are_the_same_value() {
         <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">2</span>)
             .with_cuts(<span class="string">"ASAC"</span>)
             .as_starting();
         <span class="kw">let </span>error = game.start().err().unwrap();
@@ -1695,7 +1907,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fail_to_start_game_if_not_enough_players() {
         <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">1</span>)
+            .with_player()
             .with_cuts(<span class="string">"AS"</span>)
             .as_starting();
         <span class="kw">let </span>error = game.start().err().unwrap();
@@ -1705,7 +1917,6 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>redraw_if_cuts_are_same_value() {
         <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">2</span>)
             .with_cuts(<span class="string">"ASAC"</span>)
             .as_starting();
         <span class="kw">let </span>game = game.redraw().ok().unwrap();
@@ -1716,7 +1927,6 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fail_to_redraw_if_cuts_are_not_the_same_value() {
         <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">2</span>)
             .with_cuts(<span class="string">"ASKS"</span>)
             .as_starting();
         <span class="kw">let </span>error = game.redraw().err().unwrap();
@@ -1731,7 +1941,6 @@
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>deal_six_cards_per_player() {
         <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">2</span>)
             .with_cuts(<span class="string">"ASKS"</span>)
             .as_starting();
 
@@ -1765,7 +1974,6 @@
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>deal_when_draw_decided() {
         <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">2</span>)
             .with_cuts(<span class="string">"ASKS"</span>)
             .as_starting();
         <span class="kw">let </span>game = game.start().ok().unwrap();
@@ -1836,10 +2044,8 @@
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>player_can_discard_one_held_card_to_the_crib() {
         <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">2</span>)
-            .with_scores(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>])
-            .with_hand(<span class="string">"AH2H3H4H5H6H"</span>)
-            .with_hand(<span class="string">"AC2C3C4C5C6C"</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"AH2H3H4H5H6H"</span>, <span class="string">"AC2C3C4C5C6C"</span>)
             .as_discarding();
 
         <span class="kw">let </span>(player, opponent) = game.player_1_2();
@@ -1850,7 +2056,7 @@
 
         <span class="kw">let </span>opponent_hand0 = hands0[<span class="kw-2">&amp;</span>opponent].clone();
 
-        <span class="kw">let </span>game = game.discard(<span class="kw-2">&amp;</span>player, <span class="kw-2">&amp;</span>player_discard).ok().unwrap();
+        <span class="kw">let </span>game = game.discard(player, <span class="kw-2">&amp;</span>player_discard).ok().unwrap();
         <span class="kw">let </span>Game::Discarding(scores1, dealer1, hands1, crib1, deck1) = game  <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
         <span class="kw">let </span>player_hand1 = hands1[<span class="kw-2">&amp;</span>player].clone();
@@ -1867,10 +2073,8 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>player_can_discard_two_held_cards_to_the_crib() {
         <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">2</span>)
-            .with_scores(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>])
-            .with_hand(<span class="string">"AH2H3H4H5H6H"</span>)
-            .with_hand(<span class="string">"AC2C3C4C5C6C"</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"AH2H3H4H5H6H"</span>, <span class="string">"AC2C3C4C5C6C"</span>)
             .as_discarding();
 
         <span class="kw">let </span>(player, opponent) = game.player_1_2();
@@ -1881,7 +2085,7 @@
 
         <span class="kw">let </span>opponent_hand0 = hands0[<span class="kw-2">&amp;</span>opponent].clone();
 
-        <span class="kw">let </span>game = game.discard(<span class="kw-2">&amp;</span>player, <span class="kw-2">&amp;</span>player_discard).ok().unwrap();
+        <span class="kw">let </span>game = game.discard(player, <span class="kw-2">&amp;</span>player_discard).ok().unwrap();
         <span class="kw">let </span>Game::Discarding(scores1, dealer1, hands1, crib1, deck1) = game  <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
         <span class="kw">let </span>player_hand1 = hands1[<span class="kw-2">&amp;</span>player].clone();
@@ -1898,10 +2102,8 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>player_cannot_discard_more_then_two_held_cards_to_the_crib() {
         <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">2</span>)
-            .with_scores(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>])
-            .with_hand(<span class="string">"AH2H3H4H5H6H"</span>)
-            .with_hand(<span class="string">"AC2C3C4C5C6C"</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"AH2H3H4H5H6H"</span>, <span class="string">"AC2C3C4C5C6C"</span>)
             .as_discarding();
 
         <span class="kw">let </span>(player, <span class="kw">_</span>) = game.player_1_2();
@@ -1910,17 +2112,15 @@
         <span class="kw">let </span>hand0 = hands0[<span class="kw-2">&amp;</span>player].clone();
         <span class="kw">let </span>discard = hand0.get(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>]);
 
-        <span class="kw">let </span>error = game.discard(<span class="kw-2">&amp;</span>player, <span class="kw-2">&amp;</span>discard).err().unwrap();
+        <span class="kw">let </span>error = game.discard(player, <span class="kw-2">&amp;</span>discard).err().unwrap();
         <span class="macro">assert_eq!</span>(error, Error::TooManyDiscards);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>player_cannot_discard_non_held_cards_to_the_crib() {
         <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">2</span>)
-            .with_scores(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>])
-            .with_hand(<span class="string">"AH2H3H4H5H6H"</span>)
-            .with_hand(<span class="string">"AC2C3C4C5C6C"</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"AH2H3H4H5H6H"</span>, <span class="string">"AC2C3C4C5C6C"</span>)
             .as_discarding();
 
         <span class="kw">let </span>(player, opponent) = game.player_1_2();
@@ -1929,16 +2129,14 @@
         <span class="kw">let </span>hand0 = hands0[<span class="kw-2">&amp;</span>opponent].clone();
         <span class="kw">let </span>discard = hand0.get(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>]);
 
-        <span class="kw">let </span>Error::InvalidCard(<span class="kw">_</span>) = game.discard(<span class="kw-2">&amp;</span>player, <span class="kw-2">&amp;</span>discard).err().unwrap() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected error"</span>) };
+        <span class="kw">let </span>Error::InvalidCard(<span class="kw">_</span>) = game.discard(player, <span class="kw-2">&amp;</span>discard).err().unwrap() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected error"</span>) };
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>cannot_discard_when_player_not_participating() {
         <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">2</span>)
-            .with_scores(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>])
-            .with_hand(<span class="string">"AH2H3H4H5H6H"</span>)
-            .with_hand(<span class="string">"AC2C3C4C5C6C"</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"AH2H3H4H5H6H"</span>, <span class="string">"AC2C3C4C5C6C"</span>)
             .as_discarding();
         
         <span class="kw">let </span>(player, <span class="kw">_</span>) = game.player_1_2();
@@ -1948,7 +2146,7 @@
         <span class="kw">let </span>discard = hand0.get(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>]);
 
         <span class="kw">let </span>non_player = Player::new();
-        <span class="kw">let </span>error = game.discard(<span class="kw-2">&amp;</span>non_player, <span class="kw-2">&amp;</span>discard).err().unwrap();
+        <span class="kw">let </span>error = game.discard(non_player, <span class="kw-2">&amp;</span>discard).err().unwrap();
         <span class="macro">assert_eq!</span>(error, Error::InvalidPlayer(non_player));
     }
 
@@ -1960,32 +2158,30 @@
     /// once. The starter is not used in the play phase of Cribbage , but is used later for making
     /// various card combinations that score points.
     ///
-    </span><span class="attr">#[test]
-    </span><span class="kw">fn </span>start_the_play_when_both_players_fully_discarded() {
-        <span class="kw">let </span>game = Builder::default()
-            .with_players(<span class="number">2</span>)
-            .with_scores(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>])
-            .with_hand(<span class="string">"AH2H3H4H5H6H"</span>)
-            .with_hand(<span class="string">"AC2C3C4C5C6C"</span>)
+    </span><span class="kw">fn </span>after_discards_common_tests() -&gt; (Scores, Scores, Cut, Player, Player) {
+        <span class="kw">let </span>game0 = Builder::default()
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"AH2H3H4H5H6H"</span>, <span class="string">"AC2C3C4C5C6C"</span>)
             .as_discarding();
         
-        <span class="kw">let </span>(player, opponent) = game.player_1_2();
+        <span class="kw">let </span>(player, opponent) = game0.player_1_2();
 
-        <span class="kw">let </span>Game::Discarding(scores0, dealer0, hands0, <span class="kw">_</span>, deck0) = game.clone()  <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>Game::Discarding(scores0, dealer0, hands0, <span class="kw">_</span>, deck0) = game0.clone()  <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>pone = game0.pone().clone();
+
         <span class="kw">let </span>player_hand0 = hands0[<span class="kw-2">&amp;</span>player].clone();
         <span class="kw">let </span>player_discard = player_hand0.get(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>]);
 
         <span class="kw">let </span>opponent_hand0 = hands0[<span class="kw-2">&amp;</span>opponent].clone();
         <span class="kw">let </span>opponent_discard = opponent_hand0.get(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>]);
 
-        <span class="kw">let </span>game = game.discard(<span class="kw-2">&amp;</span>player, <span class="kw-2">&amp;</span>player_discard).ok().unwrap();
-        <span class="kw">let </span>game = game.discard(<span class="kw-2">&amp;</span>opponent, <span class="kw-2">&amp;</span>opponent_discard).ok().unwrap();
-        <span class="kw">let </span>pone = game.pone().clone();
-        <span class="kw">let </span>Game::Playing(scores1, dealer1, hands1, play_state1, cut1, crib1) = game  <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>game1 = game0.discard(player, <span class="kw-2">&amp;</span>player_discard).ok().unwrap();
+        <span class="kw">let </span>game1 = game1.discard(opponent, <span class="kw-2">&amp;</span>opponent_discard).ok().unwrap();
+        <span class="kw">let </span>Game::Playing(scores1, dealer1, hands1, play_state1, cut1, crib1) = game1 <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
         <span class="kw">let </span>hand1 = hands1[<span class="kw-2">&amp;</span>player].clone();
         <span class="kw">let </span>opponent_hand1 = hands1[<span class="kw-2">&amp;</span>opponent].clone();
 
-        <span class="macro">assert_eq!</span>(scores1, scores0);
         <span class="macro">assert_eq!</span>(dealer1, dealer0);
         <span class="macro">assert!</span>(hand1.contains_none(<span class="kw-2">&amp;</span>player_discard));
         <span class="macro">assert!</span>(crib1.contains_all(<span class="kw-2">&amp;</span>player_discard));
@@ -1993,207 +2189,195 @@
         <span class="macro">assert!</span>(crib1.contains_all(<span class="kw-2">&amp;</span>opponent_discard));
         <span class="macro">assert!</span>(deck0.contains(<span class="kw-2">&amp;</span>cut1));
         <span class="macro">assert_eq!</span>(crib1.len(), CARDS_REQUIRED_IN_CRIB);
-        <span class="macro">assert_eq!</span>(play_state1.next_to_play(), pone);
+        <span class="macro">assert_eq!</span>(play_state1.legal_plays(pone).ok().unwrap(), hands1[<span class="kw-2">&amp;</span>pone]);
+        <span class="macro">assert_eq!</span>(play_state1.legal_plays(dealer0).err().unwrap(), Error::NotYourPlay);
         <span class="macro">assert_eq!</span>(play_state1.pass_count(), <span class="number">0</span>);
         <span class="macro">assert_eq!</span>(play_state1.current_plays(), <span class="macro">vec!</span>[]);
         <span class="macro">assert_eq!</span>(play_state1.previous_plays(), <span class="macro">vec!</span>[]);
+
+        (scores0, scores1, cut1, dealer1, pone)
     }
 
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>start_the_play_after_discards() {
+        <span class="kw">let </span>(scores0, scores1, cut, dealer, pone) = after_discards_common_tests();
+        <span class="kw">if </span>cut.face() == Face::Jack {
+            <span class="macro">assert_eq!</span>(scores0[<span class="kw-2">&amp;</span>dealer].add(<span class="number">2</span>), scores1[<span class="kw-2">&amp;</span>dealer]);
+            <span class="macro">assert_eq!</span>(scores0[<span class="kw-2">&amp;</span>pone], scores1[<span class="kw-2">&amp;</span>pone]);
+        } <span class="kw">else </span>{
+            <span class="macro">assert_eq!</span>(scores0, scores1)
+        }
+    }
 
-  <span class="comment">//   "score his heels" when {
-  //     "both players fully discarded - playing" in dummyDiscarding(
-  //       maybeCut = Some(Card(Jack, Hearts))
-  //     ) { case discarding0 @ Discarding(_, scores0, hands0, dealer0, pone0, crib0) =&gt;
-  //       val dealerDiscards = hands0(dealer0).toSeq.take(2)
-  //       val poneDiscards   = hands0(pone0).toSeq.take(2)
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>score_his_heels_when_jack_cut_after_discards() {
+        <span class="kw">loop </span>{
+            <span class="kw">let </span>(scores0, scores1, cut, dealer, pone) = after_discards_common_tests();
+            <span class="kw">if </span>cut.face() == Face::Jack {
+                <span class="macro">assert_eq!</span>(scores0[<span class="kw-2">&amp;</span>dealer].add(<span class="number">2</span>), scores1[<span class="kw-2">&amp;</span>dealer]);
+                <span class="macro">assert_eq!</span>(scores0[<span class="kw-2">&amp;</span>pone], scores1[<span class="kw-2">&amp;</span>pone]);
+                <span class="kw">break</span>;
+            }
+        }
+        <span class="macro">assert!</span>(<span class="bool-val">true</span>)
+    }
 
-  //       val discarding1 = doDiscardsReturning[Discarding](dealer0, dealerDiscards)(discarding0)
-  //       val playing2    = doDiscardsReturning[Playing](pone0, poneDiscards)(discarding1)
+    <span class="doccomment">/// ## The Play
+    ///
+    /// After the starter is turned, the non-dealer lays one of his cards face up on the table. The
+    /// dealer similarly exposes a card, then non-dealer again, and so on - the hands are exposed
+    /// card by card, alternately except for a "Go," (Pass) as noted below. Each player keeps his
+    /// cards separate from those of his opponent.
+    /// 
+    /// As each person plays, he announces a running total of pips reached by the addition of the
+    /// last card to all those previously played. (Example: The non-dealer begins with a four,
+    /// saying "Four." The dealer plays a nine, saying "Thirteen".) The kings, queens and jacks
+    /// count 10 each; every other card counts its pip value (the ace counts one).
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>accept_valid_play() {
+        <span class="kw">let </span>game0 = Builder::default()
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"9S"</span>, <span class="string">"4S"</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone0 = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, dealer0, hands0, play_state0, cut0, crib0) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>dealer_hand0 = hands0[<span class="kw-2">&amp;</span>dealer0].clone();
 
-  //       val Playing(scores2, hands2, dealer2, pone2, _, _, _) = playing2
-  //       dealer2 should be(dealer0)
-  //       pone2 should be(pone0)
-  //       scores2(dealer2) should be(Score(0, 2))
-  //       scores2(pone2) should be(Score.zero)
-  //     }
+        <span class="macro">assert_eq!</span>(play_state0.legal_plays(dealer0).err().unwrap(), Error::NotYourPlay);
+        <span class="macro">assert_eq!</span>(play_state0.legal_plays(pone0).ok().unwrap().cards(), Builder::cards(<span class="string">"4S"</span>));
 
-  //     "both players fully discarded - finished" in dummyDiscarding(
-  //       dealerScore = Score(0, 120),
-  //       maybeCut = Some(Card(Jack, Hearts))
-  //     ) { case discarding0 @ Discarding(_, _, hands0, dealer0, pone0, _) =&gt;
-  //       val dealerDiscards = hands0(dealer0).toSeq.take(2)
-  //       val poneDiscards   = hands0(pone0).toSeq.take(2)
+        <span class="kw">let </span>game1 = game0.play(pone0, Builder::card(<span class="string">"4S"</span>)).ok().unwrap();
+        <span class="kw">let </span>pone1 = game1.pone();
+        <span class="kw">let </span>Game::Playing(scores1, dealer1, hands1, play_state1, cut1, crib1) = game1 <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>dealer_hand1 = hands1[<span class="kw-2">&amp;</span>dealer1].clone();
+        <span class="kw">let </span>pone_hand1 = hands1[<span class="kw-2">&amp;</span>pone1].clone();
 
-  //       val discarding1 = doDiscardsReturning[Discarding](dealer0, dealerDiscards)(discarding0)
-  //       val finished2   = doDiscardsReturning[Finished](pone0, poneDiscards)(discarding1)
+        <span class="macro">assert_eq!</span>(scores0, scores1); <span class="comment">// TODO: Invalid test !
+        </span><span class="macro">assert_eq!</span>(dealer0, dealer1);
+        <span class="macro">assert_eq!</span>(dealer_hand0, dealer_hand1);
+        <span class="macro">assert_eq!</span>(pone_hand1, Hand::default());
+        <span class="macro">assert_eq!</span>(play_state1.legal_plays(dealer1).ok().unwrap(), dealer_hand1);
+        <span class="macro">assert_eq!</span>(cut0, cut1);
+        <span class="macro">assert_eq!</span>(crib0, crib1);
+    }
 
-  //       val Finished(scores2) = finished2
-  //       scores2(dealer0) should be(Score(120, 122))
-  //       scores2(pone0) should be(Score.zero)
-  //     }
-  //   }
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>cannot_play_when_player_not_participating() {
+        <span class="kw">let </span>game0 = Builder::default()
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"9S"</span>, <span class="string">"4S"</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .as_playing(<span class="number">1</span>);
 
-  //   /** ## The Play
-  //     *
-  //     * After the starter is turned, the non-dealer lays one of his cards face up on the table. The
-  //     * dealer similarly exposes a card, then non-dealer again, and so on - the hands are exposed
-  //     * card by card, alternately except for a "Go," (Pass) as noted below. Each player keeps his
-  //     * cards separate from those of his opponent.
-  //     */
-  //   def dummyPlaying(
-  //       dealerScore: Score = Score.zero,
-  //       poneScore: Score = Score.zero,
-  //       dealerCards: Seq[Card] = Seq.empty,
-  //       poneCards: Seq[Card] = Seq.empty,
-  //       cribCards: Seq[Card] = Seq.empty,
-  //       maybeCut: Option[Card] = None,
-  //       inPlays: Seq[(Int, Card)] = Seq.empty,
-  //       playeds: Seq[(Int, Card)] = Seq.empty
-  //   )(f: Playing =&gt; Unit) =
-  //     val dealer = Player.newPlayer
-  //     val pone   = Player.newPlayer
+        <span class="kw">let </span>non_player = Player::new();
+        <span class="kw">let </span>error = game0.play(non_player, Builder::card(<span class="string">"4S"</span>)).err().unwrap();
+        <span class="macro">assert_eq!</span>(error, Error::InvalidPlayer(non_player));
+    }
 
-  //     def intToPlayer(i: Int) = if i == 0 then dealer else pone
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>cannot_play_when_unheld_card() {
+        <span class="kw">let </span>game0 = Builder::default()
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"9S"</span>, <span class="string">"4S"</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone0 = game0.pone();
+        <span class="kw">let </span>card = Builder::card(<span class="string">"9S"</span>);
+        <span class="kw">let </span>error = game0.play(pone0, card).err().unwrap();
+        <span class="macro">assert_eq!</span>(error, Error::InvalidCard(card));
+    }
 
-  //     def mapToPlays(ics: Seq[(Int, Card)]) = ics.map((i, c) =&gt; Laid(intToPlayer(i), c))
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>cannot_play_when_not_their_turn() {
+        <span class="kw">let </span>game0 = Builder::default()
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"9S"</span>, <span class="string">"4S"</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>dealer0 = game0.dealer();
+        <span class="kw">let </span>card = Builder::card(<span class="string">"9S"</span>);
+        <span class="kw">let </span>error = game0.play(dealer0, card).err().unwrap();
+        <span class="macro">assert_eq!</span>(error, Error::NotYourPlay);
+    }
 
-  //     val scores = Map(dealer -&gt; dealerScore, pone -&gt; poneScore)
-  //     val hands  = Map(dealer -&gt; Cards.handOf(dealerCards), pone -&gt; Cards.handOf(poneCards))
-  //     val crib   = Cards.cribOf(cribCards)
-  //     val cut    = maybeCut.getOrElse(Card(Ace, Spades))
-  //     val plays  = Plays(pone).copy(inPlay = mapToPlays(inPlays), played = mapToPlays(playeds))
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>cannot_play_when_play_exceeds_target() {
+        <span class="kw">let </span>game0 = Builder::default()
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"9S"</span>, <span class="string">"4S"</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"KH"</span>), (<span class="number">0</span>, <span class="string">"KC"</span>), (<span class="number">0</span>, <span class="string">"KD"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone0 = game0.pone();
+        <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state0, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-  //     f(Playing(scores, hands, dealer, pone, crib, cut, plays))
+        <span class="macro">assert_eq!</span>(play_state0.legal_plays(pone0).ok().unwrap().cards(), Builder::cards(<span class="string">""</span>));
 
-  //   def doPlayFor[A](player: Player, card: Card)(playing: Playing): A =
-  //     Cribbage.play(player, card)(playing).asInstanceOf[A]
+        <span class="kw">let </span>error = game0.play(pone0, Builder::card(<span class="string">"4S"</span>)).err().unwrap();
+        <span class="macro">assert_eq!</span>(error, Error::PlayExceedsMaximumTarget)
+    }
 
-  //   def doPassFor[A](player: Player)(playing: Playing): A =
-  //     Cribbage.pass(player)(playing).asInstanceOf[A]
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>score_play_when_target_not_reached_mid_play() {
+        <span class="kw">let </span>game0 = Builder::default()
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"5S"</span>, <span class="string">"5H"</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"TH"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>score0_pone = scores0[<span class="kw-2">&amp;</span>pone];
 
-  //   /** As each person plays, he announces a running total of pips reached by the addition of the
-  //     * last card to all those previously played. (Example: The non-dealer begins with a four,
-  //     * saying "Four." The dealer plays a nine, saying "Thirteen".) The kings, queens and jacks
-  //     * count 10 each; every other card counts its pip value (the ace counts one).
-  //     */
-  //   "accept play" in dummyPlaying(
-  //     dealerCards = Seq(Card(Nine, Spades)),
-  //     poneCards = Seq(Card(Four, Spades))
-  //   ) { case playing0 @ Playing(_, hands0, dealer0, pone0, _, _, plays0) =&gt;
-  //     val playing1 = doPlayFor[Playing](pone0, Card(Four, Spades))(playing0)
+        <span class="kw">let </span>game1 = game0.play(pone, Builder::card(<span class="string">"5H"</span>)).ok().unwrap();
+        <span class="kw">let </span>Game::Playing(scores1, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game1 <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>score1_pone = scores1[<span class="kw-2">&amp;</span>pone];
+    
+        <span class="macro">assert_eq!</span>(score1_pone, score0_pone.add(<span class="number">2</span>));
+    }
 
-  //     val Playing(_, hands1, dealer1, pone1, _, _, plays1) = playing1
-  //     dealer1 should be(dealer0)
-  //     pone1 should be(pone0)
-  //     hands1(dealer1) should be(hands0(dealer0))
-  //     hands1(pone1).toSeq should not contain (Card(Four, Spades))
-  //     plays1.nextPlayer should be(dealer1)
-  //     plays1.runningTotal should be(4)
-  //     plays1.inPlay should contain theSameElementsInOrderAs (Seq(Laid(pone1, Card(Four, Spades))))
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>score_play_when_target_not_reached_end_play() {
+        <span class="kw">let </span>game0 = Builder::default()
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">""</span>, <span class="string">"AH"</span>)
+            .with_cut(<span class="string">"QC"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"JH"</span>), (<span class="number">0</span>, <span class="string">"QH"</span>)])
+            .with_previous_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"9H"</span>), (<span class="number">0</span>, <span class="string">"7C"</span>), (<span class="number">1</span>, <span class="string">"6S"</span>), (<span class="number">1</span>, <span class="string">"2S"</span>), (<span class="number">1</span>, <span class="string">"KS"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>score0_pone = scores0[<span class="kw-2">&amp;</span>pone];
 
-  //     val playing2 = doPlayFor[Playing](playing1.dealer, Card(Nine, Spades))(playing1)
+        <span class="kw">let </span>game1 = game0.play(pone, Builder::card(<span class="string">"AH"</span>)).ok().unwrap();
+        <span class="kw">let </span>Game::ScoringPone(scores1, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>score1_pone = scores1[<span class="kw-2">&amp;</span>pone];
+    
+        <span class="macro">assert_eq!</span>(score1_pone, score0_pone.add(<span class="number">1</span>));
+    }
 
-  //     val Playing(_, hands2, dealer2, pone2, _, _, plays2) = playing2
-  //     dealer2 should be(dealer1)
-  //     pone2 should be(pone1)
-  //     hands2(dealer2).toSeq should not contain (Card(Nine, Spades))
-  //     hands2(pone2).toSeq should not contain (Card(Four, Spades))
-  //     plays2.nextPlayer should be(pone2)
-  //     plays2.runningTotal should be(13)
-  //     plays2.inPlay should contain theSameElementsInOrderAs (Seq(
-  //       Laid(pone2, Card(Four, Spades)),
-  //       Laid(dealer2, Card(Nine, Spades))
-  //     ))
-  //   }
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>score_play_when_target_not_reached_finished() {
+        <span class="kw">let </span>game0 = Builder::default()
+            .with_scores(<span class="number">0</span>, <span class="number">120</span>)
+            .with_hands(<span class="string">"AH"</span>, <span class="string">"5H"</span>)
+            .with_cut(<span class="string">"QC"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"JH"</span>)])
+            .with_previous_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"9H"</span>), (<span class="number">0</span>, <span class="string">"7C"</span>), (<span class="number">1</span>, <span class="string">"6S"</span>), (<span class="number">1</span>, <span class="string">"2S"</span>), (<span class="number">1</span>, <span class="string">"KS"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>score0_pone = scores0[<span class="kw-2">&amp;</span>pone];
 
-  //   "not accept play" when {
-  //     "non-participating player" in dummyPlaying(poneCards = Seq(Card(Two, Spades))) {
-  //       case playing @ Playing(_, hands, _, pone, _, _, _) =&gt;
-  //         val bogusPlayer  = Player.newPlayer
-  //         val poneCard     = hands(pone).toSeq.head
-  //         val caught       = intercept[IllegalArgumentException] {
-  //           doPlayFor[Playing](bogusPlayer, poneCard)(playing)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule = NonParticipatingPlayer(bogusPlayer)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
+        <span class="kw">let </span>game1 = game0.play(pone, Builder::card(<span class="string">"5H"</span>)).ok().unwrap();
+        <span class="kw">let </span>Game::Finished(scores1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>score1_pone = scores1[<span class="kw-2">&amp;</span>pone];
+    
+        <span class="macro">assert_eq!</span>(score1_pone, score0_pone.add(<span class="number">2</span>));
+    }
 
-  //     "unheld card" in dummyPlaying(poneCards = Seq(Card(Two, Spades))) {
-  //       case playing @ Playing(_, hands, _, pone, _, _, _) =&gt;
-  //         val poneCard     = Card(Two, Hearts)
-  //         val caught       = intercept[IllegalArgumentException] {
-  //           doPlayFor[Playing](pone, poneCard)(playing)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule = UnheldCard(pone, poneCard)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
-
-  //     "not their turn" in dummyPlaying(
-  //       dealerCards = Seq(Card(Two, Hearts)),
-  //       poneCards = Seq(Card(Two, Spades))
-  //     ) { case playing @ Playing(_, hands, dealer, _, _, _, _) =&gt;
-  //       val dealerCard   = hands(dealer).toSeq.head
-  //       val caught       = intercept[IllegalArgumentException] {
-  //         doPlayFor[Playing](dealer, dealerCard)(playing)
-  //       }
-  //       caught should be(a[IllegalArgumentException])
-  //       val expectedRule = NotYourTurn(dealer)
-  //       caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
-
-  //     "play exceeds target" in dummyPlaying(
-  //       poneCards = Seq(Card(Two, Hearts)),
-  //       inPlays = Seq(0 -&gt; Card(King, Hearts), 0 -&gt; Card(King, Clubs), 0 -&gt; Card(King, Diamonds))
-  //     ) { case playing @ Playing(_, hands, _, pone, _, _, _) =&gt;
-  //       val poneCard     = hands(pone).toSeq.head
-  //       val caught       = intercept[IllegalArgumentException] {
-  //         doPlayFor[Playing](pone, poneCard)(playing)
-  //       }
-  //       caught should be(a[IllegalArgumentException])
-  //       val expectedRule = PlayTargetExceeded(pone, poneCard)
-  //       caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
-  //   }
-
-  //   "score play - state" when {
-  //     "play target not reached - playing" in dummyPlaying(
-  //       poneCards = Seq(Card(Five, Hearts)),
-  //       inPlays = Seq(0 -&gt; Card(Ten, Hearts))
-  //     ) { case playing0: Playing =&gt;
-  //       val playing1 = doPlayFor[Playing](playing0.pone, Card(Five, Hearts))(playing0)
-
-  //       val Playing(scores1, _, _, pone1, _, _, _) = playing1
-  //       scores1(pone1) should be(Score(0, 2))
-  //     }
-
-  //     "play target not reached - discarding" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Hearts)),
-  //       inPlays = Seq(0 -&gt; Card(Jack, Hearts), 0 -&gt; Card(Queen, Hearts)),
-  //       playeds = Seq(
-  //         0 -&gt; Card(Nine, Hearts),
-  //         0 -&gt; Card(Seven, Clubs),
-  //         1 -&gt; Card(Six, Spades),
-  //         1 -&gt; Card(Two, Spades),
-  //         1 -&gt; Card(King, Spades)
-  //       ),
-  //       maybeCut = Some(Card(Queen, Clubs))
-  //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, _) =&gt;
-  //       val discarding1 = doPlayFor[Discarding](pone0, Card(Ace, Hearts))(playing0)
-
-  //       val Discarding(_, scores1, _, dealer1, _, _) = discarding1
-  //       scores1(dealer1) should be(Score(0, 1))
-  //     }
-
-  //     "play target not reached - finished" in dummyPlaying(
-  //       poneCards = Seq(Card(Five, Hearts)),
-  //       inPlays = Seq(0 -&gt; Card(Ten, Hearts)),
-  //       poneScore = Score(0, 120)
-  //     ) { case playing0: Playing =&gt;
-  //       val finished1 = doPlayFor[Finished](playing0.pone, Card(Five, Hearts))(playing0)
-  //       finished1.scores(playing0.pone) should be(Score(120, 122))
-  //     }
+    <span class="comment">//   "score play - state" when {
 
   //     "play target reached - playing" in dummyPlaying(
   //       poneCards = Seq(Card(Ace, Hearts)),

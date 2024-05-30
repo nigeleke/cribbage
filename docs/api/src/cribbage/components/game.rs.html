@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (36153f1a4 2024-05-24)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (debd22da6 2024-05-29)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -296,15 +296,97 @@
 <a href="#296" id="296">296</a>
 <a href="#297" id="297">297</a>
 <a href="#298" id="298">298</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::prelude::Context;
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Context;
 <span class="kw">use </span><span class="kw">super</span>::card::Card;
 <span class="kw">use </span><span class="kw">super</span>::cards::Cards;
 <span class="kw">use </span><span class="kw">super</span>::crib::Crib;
 <span class="kw">use </span><span class="kw">super</span>::cuts::Cuts;
 
-<span class="kw">use </span><span class="kw">crate</span>::domain::CARDS_DISCARDED_TO_CRIB;
-<span class="kw">use </span><span class="kw">crate</span>::services::prelude::discard;
-<span class="kw">use </span><span class="kw">crate</span>::view::prelude::{CardSlot, Cuts, Game <span class="kw">as </span>GameView, Hands, Role, Scores, Score};
+<span class="kw">use </span><span class="kw">crate</span>::domain::prelude::CARDS_DISCARDED_TO_CRIB;
+<span class="kw">use </span><span class="kw">crate</span>::services::prelude::{discard, play};
+<span class="kw">use </span><span class="kw">crate</span>::view::prelude::{CardSlot, Cuts, Game <span class="kw">as </span>GameView, Hands, PlayState, Role, Scores, Score};
 
 <span class="kw">use </span>leptos::<span class="kw-2">*</span>;
 <span class="kw">use </span>style4rs::style;
@@ -477,7 +559,8 @@
     <span class="kw">match </span>game {
         GameView::Starting(cuts) =&gt; starting_play_area(<span class="kw-2">&amp;</span>cuts).into_view(),
         GameView::Discarding(<span class="kw">_</span>, hands, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; discarding_play_area(<span class="kw-2">&amp;</span>hands).into_view(),
-        GameView::Playing(<span class="kw">_</span>, hands, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; playing_play_area(<span class="kw-2">&amp;</span>hands).into_view(),
+        GameView::Playing(<span class="kw">_</span>, hands, play_state, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt;
+            playing_play_area(<span class="kw-2">&amp;</span>hands, <span class="kw-2">&amp;</span>play_state).into_view(),
     }
 }
 
@@ -497,18 +580,15 @@
         }
     };
 
-    <span class="kw">let </span>current_player_cards = hands[<span class="kw-2">&amp;</span>Role::CurrentPlayer].clone();
-    <span class="kw">let </span>opponent_cards = hands[<span class="kw-2">&amp;</span>Role::Opponent].clone();
-    <span class="kw">let </span>viewable_player_cards = current_player_cards.clone();
+    <span class="kw">let </span>(current_player_cards, <span class="kw">_</span>) = create_signal(hands[<span class="kw-2">&amp;</span>Role::CurrentPlayer].clone());
+    <span class="kw">let </span>(opponent_cards, <span class="kw">_</span>) = create_signal(hands[<span class="kw-2">&amp;</span>Role::Opponent].clone());
 
     <span class="kw">let </span>(selected, set_selected) = create_signal(Vec::&lt;bool&gt;::new());
-    <span class="kw">let </span>selected_count = <span class="kw">move </span>|| selected().iter().filter(|s| <span class="kw-2">**</span>s).count();
-    <span class="kw">let </span>disabled = <span class="kw">move </span>|| selected_count() != CARDS_DISCARDED_TO_CRIB;
+    <span class="kw">let </span>selected_count = <span class="kw">move </span>|| selected().into_iter().filter(|s| <span class="kw-2">*</span>s).count();
     <span class="kw">let </span>selected_cards = <span class="kw">move </span>|| {
-        <span class="kw">let </span>cards = current_player_cards.clone();
         selected()
             .into_iter()
-            .zip(cards)
+            .zip(current_player_cards())
             .filter_map(|(s, c)| {
                 <span class="kw">if let </span>CardSlot::FaceUp(card) = c {
                     s.then_some(card)
@@ -518,6 +598,7 @@
         })
         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
     };
+    <span class="kw">let </span>disabled = <span class="kw">move </span>|| selected_count() != CARDS_DISCARDED_TO_CRIB;
 
     <span class="kw">let </span>context = use_context::&lt;Context&gt;().unwrap();
 
@@ -539,18 +620,101 @@
         class = class,
         &lt;div&gt;
             &lt;div&gt;
-                &lt;Cards cards=viewable_player_cards on_selected=set_selected /&gt;
+                {<span class="kw">move </span>|| {
+                    <span class="kw">let </span>current_player_cards = current_player_cards();
+                    <span class="macro">view!</span>{ &lt;Cards cards=current_player_cards on_selected=set_selected /&gt; }
+                }}
                 &lt;span&gt;&lt;button on:click=on_discard disabled=disabled&gt;<span class="string">"Discard"</span>&lt;/button&gt;&lt;/span&gt;
             &lt;/div&gt;
             &lt;div /&gt;
-            &lt;div&gt;&lt;Cards cards=opponent_cards /&gt;&lt;/div&gt;
+            &lt;div&gt;
+                {<span class="kw">move </span>|| {
+                    <span class="kw">let </span>opponent_cards = opponent_cards();
+                    <span class="macro">view!</span>{ &lt;Cards cards=opponent_cards /&gt; }
+                }}
+            &lt;/div&gt;            
         &lt;/div&gt;
     }
 }
 
-<span class="kw">fn </span>playing_play_area(_hands: <span class="kw-2">&amp;</span>Hands) -&gt; <span class="kw">impl </span>IntoView {
+<span class="kw">fn </span>playing_play_area(hands: <span class="kw-2">&amp;</span>Hands, play_state: <span class="kw-2">&amp;</span>PlayState) -&gt; <span class="kw">impl </span>IntoView {
+    <span class="kw">let </span>class = <span class="macro">style!</span>{
+        div {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+        }
+    };
+
+    <span class="kw">let </span>(current_player_cards, <span class="kw">_</span>) = create_signal(hands[<span class="kw-2">&amp;</span>Role::CurrentPlayer].clone());
+    <span class="kw">let </span>(opponent_cards, <span class="kw">_</span>) = create_signal(hands[<span class="kw-2">&amp;</span>Role::Opponent].clone());
+
+    <span class="kw">let </span>(legal_plays, <span class="kw">_</span>) = create_signal(play_state.legal_plays().clone());
+
+    <span class="kw">let </span>(selected, set_selected) = create_signal(Vec::&lt;bool&gt;::new());
+    <span class="kw">let </span>selected_cards = <span class="kw">move </span>|| {
+        selected()
+            .into_iter()
+            .zip(current_player_cards())
+            .filter_map(|(s, c)| {
+                <span class="kw">if let </span>CardSlot::FaceUp(card) = c {
+                    s.then_some(card)
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">None
+                </span>}
+        })
+        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+    };
+    <span class="kw">let </span>selected_play = <span class="kw">move </span>|| {
+        <span class="kw">let </span>cards = selected_cards().into_iter().filter(|c| legal_plays().contains(c)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        (cards.len() == <span class="number">1</span>).then(|| cards[<span class="number">0</span>])
+    };
+    <span class="kw">let </span>disabled = <span class="kw">move </span>|| { selected_play().is_none() };
+
+    <span class="kw">let </span>context = use_context::&lt;Context&gt;().unwrap();
+
+    <span class="kw">let </span>on_play = {
+        <span class="kw">let </span>context = context.clone();
+        <span class="kw">move </span>|<span class="kw">_</span>| {
+            <span class="kw">let </span>id = context.id.clone();
+            <span class="kw">let </span>state = context.state;
+            <span class="kw">let </span>selected_play = selected_play();
+            <span class="kw">let </span>cards = selected_play.unwrap();
+            spawn_local(<span class="kw">async move </span>{
+                <span class="kw">if let </span><span class="prelude-val">Ok</span>(game) = play(id, cards).<span class="kw">await </span>{
+                    state.set(<span class="prelude-val">Some</span>(game.clone()));
+                }
+            });
+        }
+    };
+
+    <span class="kw">let </span>play_state_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, play_state);
+
     <span class="macro">view!</span> {
-        &lt;p&gt;<span class="string">"Playing..."</span>&lt;/p&gt;
+        class = class,
+        &lt;div&gt;
+            &lt;div&gt;
+                {<span class="kw">move </span>|| {
+                    <span class="kw">let </span>current_player_cards = current_player_cards();
+                    <span class="macro">view!</span>{ &lt;Cards cards=current_player_cards on_selected=set_selected /&gt; }
+                }}
+                &lt;span&gt;{
+                    <span class="kw">if </span>play_state.must_pass() {
+                        <span class="macro">view!</span> { &lt;button&gt;<span class="string">"Pass"</span>&lt;/button&gt; }
+                    } <span class="kw">else </span>{
+                        <span class="macro">view!</span> { &lt;button on:click=on_play disabled=disabled&gt;<span class="string">"Play"</span>&lt;/button&gt; }
+                    }
+                }&lt;/span&gt;
+            &lt;/div&gt;
+            &lt;div&gt;&lt;span&gt;{play_state_str}&lt;/span&gt;&lt;/div&gt;
+            &lt;div&gt;
+                {<span class="kw">move </span>|| {
+                    <span class="kw">let </span>opponent_cards = opponent_cards();
+                    <span class="macro">view!</span>{ &lt;Cards cards=opponent_cards /&gt; }
+                }}
+            &lt;/div&gt;
+        &lt;/div&gt;
     }
 }
 
@@ -564,7 +728,7 @@
     <span class="kw">match </span>game {
         GameView::Starting(<span class="kw">_</span>) =&gt; empty_view().into_view(),
         GameView::Discarding(<span class="kw">_</span>, <span class="kw">_</span>, crib, <span class="kw">_</span>) =&gt; crib_and_cut_view(<span class="kw-2">&amp;</span>crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
-        GameView::Playing(<span class="kw">_</span>, <span class="kw">_</span>, cut, crib, <span class="kw">_</span>) =&gt; crib_and_cut_view(<span class="kw-2">&amp;</span>crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
+        GameView::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, cut, crib, <span class="kw">_</span>) =&gt; crib_and_cut_view(<span class="kw-2">&amp;</span>crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
     }
 }
 

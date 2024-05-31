@@ -233,6 +233,10 @@ impl Game {
         }
     }
 
+    pub(crate) fn pass(&self, _player: Player) -> Result<Game> {
+        unimplemented!()
+    }
+
 }
 
 impl Display for Game {

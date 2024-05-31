@@ -26,6 +26,7 @@ impl From<(DomainPlay, DomainPlayer)> for Play {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PlayState {
+    running_total: usize,
     legal_plays: Vec<Card>,
     current_plays: Vec<Play>,
     previous_plays: Vec<Play>,
@@ -43,6 +44,8 @@ impl PlayState {
 
 impl From<(DomainPlayState, DomainPlayer)> for PlayState {
     fn from((play_state, player): (DomainPlayState, DomainPlayer)) -> Self {
+        let running_total = play_state.running_total().into();
+
         let legal_plays = play_state.legal_plays(player).ok().unwrap().cards();
         
         let current_plays = play_state
@@ -57,7 +60,7 @@ impl From<(DomainPlayState, DomainPlayer)> for PlayState {
             .map(|p| (p, player).into())
             .collect::<Vec<_>>();
 
-        PlayState { legal_plays, current_plays, previous_plays }
+        PlayState { running_total, legal_plays, current_plays, previous_plays }
     }
 }
 

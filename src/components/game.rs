@@ -181,6 +181,7 @@ fn PlayArea() -> impl IntoView {
         GameView::Discarding(_, hands, _, _) => discarding_play_area(&hands).into_view(),
         GameView::Playing(_, hands, play_state, _, _, _) =>
             playing_play_area(&hands, &play_state).into_view(),
+        GameView::ScoringPone(_, _, _, _) => unimplemented!(),
     }
 }
 
@@ -349,6 +350,7 @@ fn CribAndCut() -> impl IntoView {
         GameView::Starting(_) => empty_view().into_view(),
         GameView::Discarding(_, _, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
         GameView::Playing(_, _, _, cut, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
+        GameView::ScoringPone(_, _, cut, crib) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
     }
 }
 

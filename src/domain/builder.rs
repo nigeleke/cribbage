@@ -134,7 +134,17 @@ impl Builder {
         let scores = self_checked.merged(scores);
         let hands = self_checked.hands.clone();
         let hands = self_checked.merged(hands);
-        let play_state = self_checked.play_state.with_legal_plays_for_player_hand(player, &self_checked.hands[next_to_play]);
+        let mut play_state = PlayState::new(player, &hands);
+        self_checked
+            .play_state
+            .current_plays()
+            .iter()
+            .for_each(|p| play_state.force_current_play(p.player(), p.card()));
+        self_checked
+            .play_state
+            .previous_plays()
+            .iter()
+            .for_each(|p| play_state.force_previous_play(p.player(), p.card()));
         let cut = self_checked.cut.unwrap();
         let crib = self_checked.crib.clone();
         Game::Playing(scores, players[self_checked.dealer], hands, play_state, cut, crib)

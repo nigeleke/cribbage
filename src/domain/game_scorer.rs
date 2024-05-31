@@ -1,6 +1,6 @@
-use super::card::{Face, Value};
+use super::card::{Cut, Face, Value};
 use super::constants::PLAY_TARGET;
-use super::game::Game;
+use super::plays::PlayState;
 
 pub(crate) struct GameScorer;
 
@@ -12,58 +12,36 @@ impl GameScorer {
     const SCORE_THIRTY_ONE: usize = 2;
     const SCORE_UNDER_THIRTY_ONE: usize = 1;
   
-    pub(crate) fn his_heels_on_cut_pre_play(game: &Game) -> usize {
-        match game {
-            Game::Playing(_, _, _, _, cut, _) => {
-                if cut.face() == Face::Jack {
-                    Self::SCORE_HIS_HEELS_ON_CUT
-                } else {
-                    Self::SCORE_ZERO           
-                }
-            },
-            _ => unreachable!(),
+    pub(crate) fn his_heels_on_cut_pre_play(cut: Cut) -> usize {
+        if cut.face() == Face::Jack {
+            Self::SCORE_HIS_HEELS_ON_CUT
+        } else {
+            Self::SCORE_ZERO           
         }
     }
 
-    pub(crate) fn current_play(game: &Game) -> usize {
-        Self::current_play_fifteen(game) +
-            Self::end_of_play(game)
+    pub(crate) fn current_play(play_state: &PlayState) -> usize {
+        Self::current_play_fifteen(play_state) +
+            Self::end_of_play(play_state)
     }
 
-    fn current_play_fifteen(game: &Game) -> usize {
-        match game {
-            Game::Playing(_, _, _, play_state, _, _) => {
-                if play_state.running_total() == Value::from(15) {
-                    Self::SCORE_FIFTEEN
-                } else {
-                    Self::SCORE_ZERO
-                }
-            },
-            _ => unreachable!(),
+    fn current_play_fifteen(play_state: &PlayState) -> usize {
+        if play_state.running_total() == Value::from(15) {
+            Self::SCORE_FIFTEEN
+        } else {
+            Self::SCORE_ZERO
         }
     }
 
-    fn end_of_play(game: &Game) -> usize {
-        match game {
-            Game::Playing(_, _, hands, play_state, _, _) => {
-                let total = play_state.running_total();
-                let valid_plays = hands
-                    .values()
-                    .map(|cs| cs.cards()
-                        .into_iter()
-                        .filter(|c| c.value() + total <= Value::from(PLAY_TARGET))
-                        .collect::<Vec<_>>())
-                    .map(|h| h.len())
-                    .sum::<usize>() > 0;
-        
-                if valid_plays {
-                    GameScorer::SCORE_ZERO
-                } else {
-                    if total == Value::from(PLAY_TARGET) { GameScorer::SCORE_THIRTY_ONE }
-                    else { GameScorer::SCORE_UNDER_THIRTY_ONE }
-                }
-            },
-            _ => unreachable!(),
+    fn end_of_play(play_state: &PlayState) -> usize {
+        let total = play_state.running_total();
+        let new_play_starting = play_state.is_new_play_starting();
+
+        if new_play_starting {
+            if total == Value::from(PLAY_TARGET) { GameScorer::SCORE_THIRTY_ONE }
+            else { GameScorer::SCORE_UNDER_THIRTY_ONE }
+        } else {
+            GameScorer::SCORE_ZERO
         }
     }
 }
@@ -71,7 +49,9 @@ impl GameScorer {
 #[cfg(test)]
 mod test {
     use super::*;
+
     use crate::domain::builder::Builder;
+    use crate::domain::game::Game;
 
     #[test]
     fn his_heels_on_cut_pre_play_scores_zero_for_non_jack() {
@@ -79,12 +59,7 @@ mod test {
         cards
             .iter()
             .for_each(|c| {
-                let game = Builder::default()
-                    .with_scores(0, 0)
-                    .with_hands("", "")
-                    .with_cut(&c)
-                    .as_playing(1);
-                assert_eq!(GameScorer::his_heels_on_cut_pre_play(&game), 0)
+                assert_eq!(GameScorer::his_heels_on_cut_pre_play(Builder::card(c)), 0)
             });
     }
 
@@ -94,12 +69,7 @@ mod test {
         cards
             .iter()
             .for_each(|c| {
-                let game = Builder::default()
-                    .with_scores(0, 0)
-                    .with_hands("", "")
-                    .with_cut(&c)
-                    .as_playing(1);
-                assert_eq!(GameScorer::his_heels_on_cut_pre_play(&game), 2)
+                assert_eq!(GameScorer::his_heels_on_cut_pre_play(Builder::card(c)), 2)
             });
     }
 
@@ -111,8 +81,8 @@ mod test {
             .with_current_plays(&vec![(0, "JD"), (0, "5H")])
             .with_cut("AH")
             .as_playing(1);
-        println!("play_fifteen_scores {}", game);
-        assert_eq!(GameScorer::current_play(&game), 2)
+        let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
+        assert_eq!(GameScorer::current_play(&play_state), 2)
     }
 
 }

@@ -19,9 +19,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # - name: License Header Check
-      #   run: sbt headerCheck
-
       - name: Test
         run: |
           cargo install cargo-tarpaulin
@@ -31,7 +28,7 @@ jobs:
         uses: codecov/codecov-action@v4
 
       - name: Documentation
-        run: cargo doc
+        run: cargo doc --no-deps
 
   release:
     needs: acceptance

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game_scorer.rs`."><title>game_scorer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (debd22da6 2024-05-29)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game_scorer.rs`."><title>game_scorer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (ada5e2c7b 2024-05-31)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -86,39 +86,9 @@
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::card::{Face, Value};
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::card::{Cut, Face, Value};
 <span class="kw">use </span><span class="kw">super</span>::constants::PLAY_TARGET;
-<span class="kw">use </span><span class="kw">super</span>::game::Game;
+<span class="kw">use </span><span class="kw">super</span>::plays::PlayState;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>GameScorer;
 
@@ -130,58 +100,36 @@
     <span class="kw">const </span>SCORE_THIRTY_ONE: usize = <span class="number">2</span>;
     <span class="kw">const </span>SCORE_UNDER_THIRTY_ONE: usize = <span class="number">1</span>;
   
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>his_heels_on_cut_pre_play(game: <span class="kw-2">&amp;</span>Game) -&gt; usize {
-        <span class="kw">match </span>game {
-            Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, cut, <span class="kw">_</span>) =&gt; {
-                <span class="kw">if </span>cut.face() == Face::Jack {
-                    <span class="self">Self</span>::SCORE_HIS_HEELS_ON_CUT
-                } <span class="kw">else </span>{
-                    <span class="self">Self</span>::SCORE_ZERO           
-                }
-            },
-            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>his_heels_on_cut_pre_play(cut: Cut) -&gt; usize {
+        <span class="kw">if </span>cut.face() == Face::Jack {
+            <span class="self">Self</span>::SCORE_HIS_HEELS_ON_CUT
+        } <span class="kw">else </span>{
+            <span class="self">Self</span>::SCORE_ZERO           
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>current_play(game: <span class="kw-2">&amp;</span>Game) -&gt; usize {
-        <span class="self">Self</span>::current_play_fifteen(game) +
-            <span class="self">Self</span>::end_of_play(game)
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>current_play(play_state: <span class="kw-2">&amp;</span>PlayState) -&gt; usize {
+        <span class="self">Self</span>::current_play_fifteen(play_state) +
+            <span class="self">Self</span>::end_of_play(play_state)
     }
 
-    <span class="kw">fn </span>current_play_fifteen(game: <span class="kw-2">&amp;</span>Game) -&gt; usize {
-        <span class="kw">match </span>game {
-            Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
-                <span class="kw">if </span>play_state.running_total() == Value::from(<span class="number">15</span>) {
-                    <span class="self">Self</span>::SCORE_FIFTEEN
-                } <span class="kw">else </span>{
-                    <span class="self">Self</span>::SCORE_ZERO
-                }
-            },
-            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+    <span class="kw">fn </span>current_play_fifteen(play_state: <span class="kw-2">&amp;</span>PlayState) -&gt; usize {
+        <span class="kw">if </span>play_state.running_total() == Value::from(<span class="number">15</span>) {
+            <span class="self">Self</span>::SCORE_FIFTEEN
+        } <span class="kw">else </span>{
+            <span class="self">Self</span>::SCORE_ZERO
         }
     }
 
-    <span class="kw">fn </span>end_of_play(game: <span class="kw-2">&amp;</span>Game) -&gt; usize {
-        <span class="kw">match </span>game {
-            Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, hands, play_state, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
-                <span class="kw">let </span>total = play_state.running_total();
-                <span class="kw">let </span>valid_plays = hands
-                    .values()
-                    .map(|cs| cs.cards()
-                        .into_iter()
-                        .filter(|c| c.value() + total &lt;= Value::from(PLAY_TARGET))
-                        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;())
-                    .map(|h| h.len())
-                    .sum::&lt;usize&gt;() &gt; <span class="number">0</span>;
-        
-                <span class="kw">if </span>valid_plays {
-                    GameScorer::SCORE_ZERO
-                } <span class="kw">else </span>{
-                    <span class="kw">if </span>total == Value::from(PLAY_TARGET) { GameScorer::SCORE_THIRTY_ONE }
-                    <span class="kw">else </span>{ GameScorer::SCORE_UNDER_THIRTY_ONE }
-                }
-            },
-            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+    <span class="kw">fn </span>end_of_play(play_state: <span class="kw-2">&amp;</span>PlayState) -&gt; usize {
+        <span class="kw">let </span>total = play_state.running_total();
+        <span class="kw">let </span>new_play_starting = play_state.is_new_play_starting();
+
+        <span class="kw">if </span>new_play_starting {
+            <span class="kw">if </span>total == Value::from(PLAY_TARGET) { GameScorer::SCORE_THIRTY_ONE }
+            <span class="kw">else </span>{ GameScorer::SCORE_UNDER_THIRTY_ONE }
+        } <span class="kw">else </span>{
+            GameScorer::SCORE_ZERO
         }
     }
 }
@@ -189,7 +137,9 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
     <span class="kw">use </span><span class="kw">crate</span>::domain::builder::Builder;
+    <span class="kw">use </span><span class="kw">crate</span>::domain::game::Game;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>his_heels_on_cut_pre_play_scores_zero_for_non_jack() {
@@ -197,12 +147,7 @@
         cards
             .iter()
             .for_each(|c| {
-                <span class="kw">let </span>game = Builder::default()
-                    .with_scores(<span class="number">0</span>, <span class="number">0</span>)
-                    .with_hands(<span class="string">""</span>, <span class="string">""</span>)
-                    .with_cut(<span class="kw-2">&amp;</span>c)
-                    .as_playing(<span class="number">1</span>);
-                <span class="macro">assert_eq!</span>(GameScorer::his_heels_on_cut_pre_play(<span class="kw-2">&amp;</span>game), <span class="number">0</span>)
+                <span class="macro">assert_eq!</span>(GameScorer::his_heels_on_cut_pre_play(Builder::card(c)), <span class="number">0</span>)
             });
     }
 
@@ -212,12 +157,7 @@
         cards
             .iter()
             .for_each(|c| {
-                <span class="kw">let </span>game = Builder::default()
-                    .with_scores(<span class="number">0</span>, <span class="number">0</span>)
-                    .with_hands(<span class="string">""</span>, <span class="string">""</span>)
-                    .with_cut(<span class="kw-2">&amp;</span>c)
-                    .as_playing(<span class="number">1</span>);
-                <span class="macro">assert_eq!</span>(GameScorer::his_heels_on_cut_pre_play(<span class="kw-2">&amp;</span>game), <span class="number">2</span>)
+                <span class="macro">assert_eq!</span>(GameScorer::his_heels_on_cut_pre_play(Builder::card(c)), <span class="number">2</span>)
             });
     }
 
@@ -229,8 +169,8 @@
             .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"JD"</span>), (<span class="number">0</span>, <span class="string">"5H"</span>)])
             .with_cut(<span class="string">"AH"</span>)
             .as_playing(<span class="number">1</span>);
-        <span class="macro">println!</span>(<span class="string">"play_fifteen_scores {}"</span>, game);
-        <span class="macro">assert_eq!</span>(GameScorer::current_play(<span class="kw-2">&amp;</span>game), <span class="number">2</span>)
+        <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state, <span class="kw">_</span>, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="macro">assert_eq!</span>(GameScorer::current_play(<span class="kw-2">&amp;</span>play_state), <span class="number">2</span>)
     }
 
 }</code></pre></div></section></main></body></html>

@@ -12,7 +12,6 @@ use super::game_scorer::*;
 use super::builder::Builder;
 
 use serde::{Deserialize, Serialize};
-use yansi::Paint;
 
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
@@ -54,7 +53,6 @@ impl Game {
             Game::Playing(scores, _, _, _, _, _) => HashSet::from_iter(scores.keys().cloned()),
             Game::ScoringPone(scores, _, _, _, _) => HashSet::from_iter(scores.keys().cloned()),
             Game::Finished(scores) => HashSet::from_iter(scores.keys().cloned()),
-
         }
     }
 
@@ -83,10 +81,10 @@ impl Game {
 
     fn has_winner(&self) -> bool {
         let scores = self.scores();
-        scores.values()
+        !scores.values()
             .filter(|s| s.value() >= WINNING_SCORE)
             .collect::<Vec<_>>()
-            .len() != 0
+            .is_empty()
     }
 
     pub fn start(&self) -> Result<Self> {
@@ -140,10 +138,9 @@ impl Game {
                 if crib.len() == CARDS_REQUIRED_IN_CRIB {
                     let (cut, _) = deck.cut();
                     let pone = self.pone();
-                    let play_state = PlayState::default()
-                        .with_legal_plays_for_player_hand(pone, &hands[&pone]);
+                    let play_state = PlayState::new(pone, &hands);
                     let game = Game::Playing(scores.clone(), *dealer, hands, play_state, cut, crib);
-                    let score = GameScorer::his_heels_on_cut_pre_play(&game);
+                    let score = GameScorer::his_heels_on_cut_pre_play(cut);
                     game.score_points(*dealer, score)
                 } else {
                     Ok(Game::Discarding(scores.clone(), *dealer, hands, crib, deck.clone()))
@@ -174,7 +171,7 @@ impl Game {
         if player == player1 { player2 } else { player1 }
     }
 
-    fn score_points(self, player: Player, score: usize) -> Result<Self> {
+    fn score_points(&self, player: Player, score: usize) -> Result<Self> {
         let update = |mut scores: Scores| {
             scores.insert(player, scores[&player].add(score));
             scores
@@ -184,13 +181,13 @@ impl Game {
             Game::Starting(_, _) => unreachable!(),
 
             Game::Discarding(scores, dealer, hands, crib, deck) => 
-                Game::Discarding(update(scores), dealer, hands, crib, deck),
+                Game::Discarding(update(scores.clone()), *dealer, hands.clone(), crib.clone(), deck.clone()),
 
             Game::Playing(scores, dealer, hands, play_state, cut, crib) =>
-                Game::Playing(update(scores), dealer, hands, play_state, cut, crib),
+                Game::Playing(update(scores.clone()), *dealer, hands.clone(), play_state.clone(), *cut, crib.clone()),
 
             Game::ScoringPone(scores, dealer, hands, cut, crib) =>
-                Game::ScoringPone(update(scores), dealer, hands, cut, crib),
+                Game::ScoringPone(update(scores.clone()), *dealer, hands.clone(), *cut, crib.clone()),
 
             Game::Finished(_) => unreachable!(),
         };
@@ -203,34 +200,34 @@ impl Game {
         Ok(game)
     }
 
-    fn play(&self, player: Player, card: Card) -> Result<Game> {
-        match self {
-            Game::Playing(scores, dealer, hands, play_state, cut, crib) => {
+    pub fn play(&self, player: Player, card: Card) -> Result<Game> {
+        let mut game = self.clone();
+        match game {
+            Game::Playing(scores, dealer, ref mut hands, ref mut play_state, cut, crib) => {
                 let players = self.players();
                 verify::player(player, &players)?;
-                let opponent = self.opponent(player);
 
-                let mut hands = hands.clone();
-                let mut hand = hands[&player].clone();
+                let hand = hands.get_mut(&player).unwrap();
+                let legal_plays = play_state.legal_plays(player)?;
                 verify::card(card, &hand.cards())?;
-                verify::card(card, &play_state.legal_plays(player)?.cards()).map_err(|_| Error::PlayExceedsMaximumTarget)?;
+                verify::card(card, &legal_plays.cards()).map_err(|_| Error::PlayExceedsMaximumTarget)?;
 
-                let mut play_state = play_state.clone();
                 hand.remove(card);
-                hands.insert(player, hand);
                 play_state.play(card);
-                let play_state = play_state.with_legal_plays_for_player_hand(opponent, &hands[&opponent]);
 
-                let mut game = Game::Playing(scores.clone(), *dealer, hands.clone(), play_state, *cut, crib.clone());
-                let score = GameScorer::current_play(&game);
-
-                let plays_completed = hands.values().filter(|hand| hand.is_empty()).collect::<Vec<_>>().len() == NUMBER_OF_PLAYERS_IN_GAME;
-
-                if plays_completed {
-                    game = Game::ScoringPone(scores.clone(), *dealer, hands.clone(), *cut, crib.clone())
+                let scoring_phase_starting = play_state.is_scoring_phase_starting();
+                if !scoring_phase_starting {
+                    let score = GameScorer::current_play(play_state);
+                    let new_play_starting = play_state.is_new_play_starting();
+                    if new_play_starting { play_state.start_new_play(); };
+                    game = Game::Playing(scores, dealer, hands.clone(), play_state.clone(), cut, crib);
+                    game.score_points(player, score)
+                } else {
+                    let score = GameScorer::current_play(play_state);
+                    game = Game::ScoringPone(scores, dealer, hands.clone(), cut, crib);
+                    game.score_points(player, score)
                 }
 
-                game.score_points(player, score)
             },
             _ => unreachable!(),
         }
@@ -883,49 +880,74 @@ mod test {
         assert_eq!(score1_pone, score0_pone.add(2));
     }
 
-    //   "score play - state" when {
+    #[test]
+    fn score_play_when_target_reached_mid_play() {
+        let card = Builder::card("AH");
+        let game0 = Builder::default()
+            .with_scores(0, 0)
+            .with_hands("9H", "AH")
+            .with_cut("KC")
+            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "QH")])
+            .with_previous_plays(&vec![(1, "2S"), (1, "QS"), (1, "6S")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
-  //     "play target reached - playing" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Hearts)),
-  //       inPlays = Seq(0 -> Card(Ten, Hearts), 0 -> Card(Jack, Hearts), 0 -> Card(Queen, Hearts))
-  //     ) { case playing0: Playing =>
-  //       val playing1 = doPlayFor[Playing](playing0.pone, Card(Ace, Hearts))(playing0)
+        let game1 = game0.play(pone, card).ok().unwrap();
+        let Game::Playing(scores1, dealer1, hands1, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
 
-  //       val Playing(scores1, _, _, pone1, _, _, _) = playing1
-  //       scores1(pone1) should be(Score(0, 2))
-  //     }
+        assert_eq!(scores1[&pone], scores0[&pone].add(2));
+        assert_eq!(dealer1, dealer0);
+        assert!(!hands1[&pone].contains(&card));
+        assert_eq!(play_state1.next_to_play(), dealer0);
+        assert!(play_state1.current_plays().is_empty());
+        for p in play_state0.current_plays().into_iter() {
+            assert!(play_state1.previous_plays().contains(&p))
+        }
+    }
 
-  //     "play target reached - discarding" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Hearts)),
-  //       inPlays = Seq(0 -> Card(Ten, Hearts), 0 -> Card(Jack, Hearts), 0 -> Card(Queen, Hearts)),
-  //       playeds = Seq(
-  //         0 -> Card(Nine, Hearts),
-  //         1 -> Card(Two, Spades),
-  //         1 -> Card(Queen, Spades),
-  //         1 -> Card(Six, Spades)
-  //       ),
-  //       maybeCut = Some(Card(King, Clubs))
-  //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, _) =>
-  //       val discarding1 = doPlayFor[Discarding](pone0, Card(Ace, Hearts))(playing0)
+    #[test]
+    fn score_play_when_target_reached_end_play() {
+        let card = Builder::card("AH");
+        let game0 = Builder::default()
+            .with_scores(0, 0)
+            .with_hands("", "AH")
+            .with_cut("KC")
+            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "QH")])
+            .with_previous_plays(&vec![(0, "9H"), (1, "2S"), (1, "QS"), (1, "6S")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, cut0, crib0) = game0.clone() else { panic!("Unexpected state") };
 
-  //       val Discarding(_, scores1, _, dealer1, pone1, _) = discarding1
-  //       scores1(dealer1) should be(Score(0, 2))
-  //     }
+        let game1 = game0.play(pone, card).ok().unwrap();
+        let Game::ScoringPone(scores1, dealer1, hands1, cut1, crib1) = game1.clone() else { panic!("Unexpected state") };
 
-  //     "play target reached - finished" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Hearts)),
-  //       poneScore = Score(0, 120),
-  //       inPlays = Seq(0 -> Card(Ten, Hearts), 0 -> Card(Jack, Hearts), 0 -> Card(Queen, Hearts)),
-  //       playeds = Seq(
-  //         0 -> Card(Nine, Hearts),
-  //         0 -> Card(Four, Spades),
-  //         0 -> Card(Five, Spades),
-  //         0 -> Card(Six, Spades)
-  //       )
-  //     ) { case playing0: Playing =>
-  //       val finished1 = doPlayFor[Finished](playing0.pone, Card(Ace, Hearts))(playing0)
-  //       finished1.scores(playing0.pone) should be(Score(120, 122))
-  //     }
+        assert_eq!(scores1[&pone], scores0[&pone].add(2));
+        assert_eq!(dealer1, dealer0);
+        assert!(!hands1[&pone].contains(&card));
+        assert_eq!(cut1, cut0);
+        assert_eq!(crib1, crib0);
+    }
+
+    #[test]
+    fn score_play_when_target_reached_finished() {
+        let card = Builder::card("AH");
+        let game0 = Builder::default()
+            .with_scores(0, 120)
+            .with_hands("", "AH")
+            .with_cut("KC")
+            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "QH")])
+            .with_previous_plays(&vec![(0, "9H"), (0, "4S"), (0, "5S"), (0, "6S")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.play(pone, card).ok().unwrap();
+        let Game::Finished(scores1) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(scores1[&pone], scores0[&pone].add(2));
+        assert_eq!(scores1[&dealer0], scores0[&dealer0]);
+    }
 
   //     "plays complete - scoring pone hand wins" in dummyPlaying(
   //       poneCards = Seq(Card(Ten, Hearts)),

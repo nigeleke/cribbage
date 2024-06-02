@@ -1,4 +1,4 @@
-use super::card::Card;
+use super::card::{Card, CardSlot};
 use super::role::Role;
 
 use crate::domain::prelude::{
@@ -13,13 +13,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Play {
     role: Role,
-    card: Card,
+    card: CardSlot,
+}
+
+impl Play {
+    pub(crate) fn card(&self) -> CardSlot {
+        self.card
+    }
 }
 
 impl From<(DomainPlay, DomainPlayer)> for Play {
     fn from((play, player): (DomainPlay, DomainPlayer)) -> Self {
         let role = (play.player(), player).into();
-        let card = play.card();
+        let card = CardSlot::FaceUp(play.card());
         Play { role, card }
     }
 }
@@ -39,6 +45,18 @@ impl PlayState {
 
     pub(crate) fn legal_plays(&self) -> DomainHand {
         DomainHand::from(self.legal_plays.clone())
+    }
+
+    pub(crate) fn running_total(&self) -> usize {
+        self.running_total
+    }
+
+    pub(crate) fn current_plays(&self) -> Vec<Play> {
+        self.current_plays.clone()
+    }
+
+    pub(crate) fn previous_plays(&self) -> Vec<Play> {
+        self.previous_plays.clone()
     }
 }
 

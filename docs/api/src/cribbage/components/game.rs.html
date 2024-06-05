@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (ada5e2c7b 2024-05-31)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (a330e4959 2024-06-04)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -378,6 +378,34 @@
 <a href="#378" id="378">378</a>
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Context;
 <span class="kw">use </span><span class="kw">super</span>::card::Card;
 <span class="kw">use </span><span class="kw">super</span>::cards::Cards;
@@ -561,6 +589,7 @@
         GameView::Discarding(<span class="kw">_</span>, hands, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; discarding_play_area(<span class="kw-2">&amp;</span>hands).into_view(),
         GameView::Playing(<span class="kw">_</span>, hands, play_state, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt;
             playing_play_area(<span class="kw-2">&amp;</span>hands, <span class="kw-2">&amp;</span>play_state).into_view(),
+        GameView::ScoringPone(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="macro">unimplemented!</span>(),
     }
 }
 
@@ -689,8 +718,6 @@
         }
     };
 
-    <span class="kw">let </span>play_state_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, play_state);
-
     <span class="macro">view!</span> {
         class = class,
         &lt;div&gt;
@@ -707,7 +734,7 @@
                     }
                 }&lt;/span&gt;
             &lt;/div&gt;
-            &lt;div&gt;&lt;span&gt;{play_state_str}&lt;/span&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;span&gt;&lt;PlayState play_state={play_state.clone()} /&gt;&lt;/span&gt;&lt;/div&gt;
             &lt;div&gt;
                 {<span class="kw">move </span>|| {
                     <span class="kw">let </span>opponent_cards = opponent_cards();
@@ -717,6 +744,34 @@
         &lt;/div&gt;
     }
 }
+
+<span class="attr">#[component]
+</span><span class="kw">fn </span>PlayState(
+    <span class="attr">#[prop()]
+    </span>play_state: PlayState,
+) -&gt; <span class="kw">impl </span>IntoView {
+    <span class="kw">let </span>class = <span class="macro">style!</span>{
+        div {
+            display: flex;
+            flex-direction: row;
+        }
+    };
+
+    <span class="kw">let </span>running_total = play_state.running_total();
+    <span class="kw">let </span>current_plays = play_state.current_plays().into_iter().map(|p| p.card()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+    <span class="kw">let </span>previous_plays = play_state.previous_plays().into_iter().map(|p| p.card()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+
+    <span class="macro">view!</span>{
+        class = class,
+        &lt;div&gt;
+            &lt;p&gt;{running_total}&lt;/p&gt;
+            &lt;Cards cards={current_plays} /&gt;
+            &lt;p&gt;<span class="string">"-"</span>&lt;/p&gt;
+            &lt;Cards cards={previous_plays} stacked=<span class="bool-val">true </span>/&gt;
+        &lt;/div&gt;
+    }
+}
+
 
 <span class="doccomment">/// Show the current crib, in a position relevant to the dealer, and the current cut card.
 </span><span class="attr">#[component]
@@ -729,6 +784,7 @@
         GameView::Starting(<span class="kw">_</span>) =&gt; empty_view().into_view(),
         GameView::Discarding(<span class="kw">_</span>, <span class="kw">_</span>, crib, <span class="kw">_</span>) =&gt; crib_and_cut_view(<span class="kw-2">&amp;</span>crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
         GameView::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, cut, crib, <span class="kw">_</span>) =&gt; crib_and_cut_view(<span class="kw-2">&amp;</span>crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
+        GameView::ScoringPone(<span class="kw">_</span>, <span class="kw">_</span>, cut, crib) =&gt; crib_and_cut_view(<span class="kw-2">&amp;</span>crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
     }
 }
 

@@ -1,6 +1,5 @@
 use super::card::{Card, Value};
 use super::cards::{Hand, Hands};
-use super::constants::{CARDS_KEPT_PER_HAND, NUMBER_OF_PLAYERS_IN_GAME};
 use super::format::{format_hashmap, format_vec};
 use super::player::Player;
 use super::prelude::PLAY_TARGET;
@@ -66,7 +65,7 @@ impl PlayState {
         if player == self.next_to_play {
             Ok(self.legal_plays_unchecked(player))
         } else {
-            Err(Error::NotYourPlay)
+            Err(Error::CannotPlay)
         }
     }
 
@@ -78,18 +77,65 @@ impl PlayState {
         legal_plays
     }
 
-    #[cfg(test)]
-    pub(crate) fn next_to_play(&self) -> Player {
-        self.next_to_play
-    }
-
-    #[cfg(test)]
     pub(crate) fn pass_count(&self) -> usize {
         self.pass_count
     }
 
     pub(crate) fn current_plays(&self) -> Vec<Play> {
         self.current_plays.clone()
+    }
+
+    pub(crate) fn previous_plays(&self) -> Vec<Play> {
+        self.previous_plays.clone()
+    }
+
+    pub(crate) fn play(&mut self, card: Card) {
+        let player = self.next_to_play;
+        if self.pass_count() == 0 {
+            self.make_opponent_next_player();
+        }
+
+        let legal_plays = &mut self.legal_plays;
+
+        let legal_cards = legal_plays.get_mut(&player).unwrap();
+        legal_cards.remove(card);
+
+        let play = Play::new(player, card);
+        self.current_plays.push(play);
+    }
+
+    pub(crate) fn pass(&mut self) {
+        self.make_opponent_next_player();
+        self.pass_count += 1;
+    }
+
+    fn make_opponent_next_player(&mut self) {
+        let legal_plays = &mut self.legal_plays;
+
+        let mut players = legal_plays.keys();
+        let (player1, player2) = (players.next().unwrap(), players.next().unwrap());
+
+        let player = self.next_to_play;
+        let opponent = if player == *player1 { *player2 } else { *player1 };
+        self.next_to_play = opponent;
+    }
+
+    pub(crate) fn start_new_play(&mut self) {
+        self.previous_plays.append(&mut self.current_plays);
+    }
+
+    pub(crate) fn target_reached(&self) -> bool {
+        self.running_total() == Value::from(PLAY_TARGET)
+    }
+
+    pub(crate) fn finished_plays(&self) -> bool {
+        let legal_plays = &self.legal_plays;
+        legal_plays.into_iter().all(|(_, hand)| hand.is_empty())
+    }
+
+    #[cfg(test)]
+    pub(crate) fn next_to_play(&self) -> Player {
+        self.next_to_play
     }
 
     #[cfg(test)]
@@ -102,40 +148,11 @@ impl PlayState {
         self.previous_plays.push(Play::new(player, card))
     }
 
-    pub(crate) fn previous_plays(&self) -> Vec<Play> {
-        self.previous_plays.clone()
+    #[cfg(test)]
+    pub(crate) fn force_pass_count(&mut self, n: usize) {
+        self.pass_count = n;
     }
 
-    pub(crate) fn play(&mut self, card: Card) {
-        let legal_plays = &mut self.legal_plays;
-
-        let mut players = legal_plays.keys();
-        let (player1, player2) = (players.next().unwrap(), players.next().unwrap());
-
-        let player = self.next_to_play;
-        self.next_to_play = if player == *player1 { *player2 } else { *player1 };
-
-        let legal_cards = legal_plays.get_mut(&player).unwrap();
-        legal_cards.remove(card);
-        let play = Play::new(player, card);
-        self.current_plays.push(play);
-    }
-
-    pub(crate) fn is_new_play_starting(&self) -> bool {
-        self.legal_plays
-            .keys()
-            .filter(|player| !self.legal_plays_unchecked(**player).is_empty())
-            .collect::<Vec<_>>()
-            .is_empty()
-    }
-
-    pub(crate) fn start_new_play(&mut self) {
-        self.previous_plays.append(&mut self.current_plays);
-    }
-
-    pub(crate) fn is_scoring_phase_starting(&self) -> bool {
-        self.current_plays.len() + self.previous_plays.len() == CARDS_KEPT_PER_HAND * NUMBER_OF_PLAYERS_IN_GAME
-    }
 }
 
 impl std::fmt::Display for PlayState {

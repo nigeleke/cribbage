@@ -16,10 +16,10 @@ pub struct Builder {
     deck: Deck,
 }
 
-impl Default for Builder {
-    fn default() -> Self {
+impl Builder {
+    pub fn new(player_count: usize) -> Self {
         Self {
-            players: Default::default(), 
+            players: Vec::from_iter((0..player_count).map(|_| Player::new())),
             dealer: Default::default(), 
             cuts: Default::default(),
             scores: Default::default(),
@@ -29,13 +29,6 @@ impl Default for Builder {
             cut: Default::default(),
             deck: Deck::shuffled_pack(),
         }
-    }
-}
-
-impl Builder {
-    pub fn with_player(mut self) -> Self {
-        self.players.push(Player::new());
-        self
     }
 
     pub fn with_dealer(mut self, dealer: usize) -> Self {
@@ -83,21 +76,19 @@ impl Builder {
         self
     }
 
-    pub fn with_current_plays(self, plays: &[(usize, &str)]) -> Self {
-        let mut self_checked = self.force_two_players();
-        let _ = plays.into_iter().for_each(|(p, c)| self_checked.play_state.force_current_play(self_checked.players[*p], Builder::card(*c)));
-        self_checked
+    pub fn with_current_plays(mut self, plays: &[(usize, &str)]) -> Self {
+        let _ = plays.into_iter().for_each(|(p, c)| self.play_state.force_current_play(self.players[*p], Builder::card(*c)));
+        self
     }
 
-    pub fn with_previous_plays(self, plays: &[(usize, &str)]) -> Self {
-        let mut self_checked = self.force_two_players();
-        let _ = plays.into_iter().for_each(|(p, c)| self_checked.play_state.force_previous_play(self_checked.players[*p], Builder::card(*c)));
-        self_checked
+    pub fn with_previous_plays(mut self, plays: &[(usize, &str)]) -> Self {
+        let _ = plays.into_iter().for_each(|(p, c)| self.play_state.force_previous_play(self.players[*p], Builder::card(*c)));
+        self
     }
 
-    fn force_two_players(mut self) -> Self {
-        let n = self.players.len();
-        (n..=2).for_each(|_| self.players.push(Player::new()));
+    pub fn with_pass(mut self) -> Self {
+        let new_pass_count = self.play_state.pass_count() + 1;
+        self.play_state.force_pass_count(new_pass_count);
         self
     }
 
@@ -107,47 +98,44 @@ impl Builder {
     }
 
     pub fn as_starting(self) -> Game {
-        let self_checked = self.force_two_players();
-        let deck = self_checked.deck.clone();
-        let cuts = self_checked.cuts.clone();
-        let cuts = self_checked.merged(cuts);
+        let deck = self.deck.clone();
+        let cuts = self.cuts.clone();
+        let cuts = self.merged(cuts);
         Game::Starting(cuts, Deck::from(deck))
     }
 
     pub fn as_discarding(self) -> Game {
-        let self_checked = self.force_two_players();
-        let players = self_checked.players.clone();
-        let scores = self_checked.scores.clone();
-        let scores = self_checked.merged(scores);
-        let hands = self_checked.hands.clone();
-        let hands = self_checked.merged(hands);
-        let crib = self_checked.crib.clone();
-        let deck = self_checked.deck.clone();
-        Game::Discarding(scores, players[self_checked.dealer], hands, crib, deck)
+        let players = self.players.clone();
+        let scores = self.scores.clone();
+        let scores = self.merged(scores);
+        let hands = self.hands.clone();
+        let hands = self.merged(hands);
+        let crib = self.crib.clone();
+        let deck = self.deck.clone();
+        Game::Discarding(scores, players[self.dealer], hands, crib, deck)
     }
 
     pub fn as_playing(self, next_to_play: usize) -> Game {
-        let self_checked = self.force_two_players();
-        let players = self_checked.players.clone();
+        let players = self.players.clone();
         let player = players[next_to_play];
-        let scores = self_checked.scores.clone();
-        let scores = self_checked.merged(scores);
-        let hands = self_checked.hands.clone();
-        let hands = self_checked.merged(hands);
+        let scores = self.scores.clone();
+        let scores = self.merged(scores);
+        let hands = self.hands.clone();
+        let hands = self.merged(hands);
         let mut play_state = PlayState::new(player, &hands);
-        self_checked
-            .play_state
+        play_state
+            .force_pass_count(self.play_state.pass_count());
+        self.play_state
             .current_plays()
             .iter()
             .for_each(|p| play_state.force_current_play(p.player(), p.card()));
-        self_checked
-            .play_state
+        self.play_state
             .previous_plays()
             .iter()
             .for_each(|p| play_state.force_previous_play(p.player(), p.card()));
-        let cut = self_checked.cut.unwrap();
-        let crib = self_checked.crib.clone();
-        Game::Playing(scores, players[self_checked.dealer], hands, play_state, cut, crib)
+        let cut = self.cut.unwrap();
+        let crib = self.crib.clone();
+        Game::Playing(scores, players[self.dealer], hands, play_state, cut, crib)
     }
 
     fn merged<T>(&self, items: Vec<T>) -> HashMap<Player, T> {

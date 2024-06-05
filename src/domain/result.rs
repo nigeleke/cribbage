@@ -11,8 +11,9 @@ pub enum Error {
     InvalidPlayer(Player),
     InvalidCard(Card),
     TooManyDiscards,
-    NotYourPlay,
-    PlayExceedsMaximumTarget,
+    CannotPlay,
+    CannotPlayCard,
+    CannotPass,
 }
 
 impl std::fmt::Display for Error {

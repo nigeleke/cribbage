@@ -18,7 +18,6 @@ impl Opponent {
     pub fn play(opponent: Player, game: &Game) -> Game {
         match game {
             Game::Playing(_, _dealer, _hands, play_state, _, _) => {
-                println!("Opponent::play: {}", game);
                 let legal_plays = play_state.legal_plays(opponent).ok().unwrap();
                 if legal_plays.is_empty() {
                     game.pass(opponent).ok().unwrap()

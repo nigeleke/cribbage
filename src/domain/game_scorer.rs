@@ -21,8 +21,7 @@ impl GameScorer {
     }
 
     pub(crate) fn current_play(play_state: &PlayState) -> usize {
-        Self::current_play_fifteen(play_state) +
-            Self::end_of_play(play_state)
+        Self::current_play_fifteen(play_state)
     }
 
     fn current_play_fifteen(play_state: &PlayState) -> usize {
@@ -33,15 +32,13 @@ impl GameScorer {
         }
     }
 
-    fn end_of_play(play_state: &PlayState) -> usize {
+    pub(crate) fn end_of_play(play_state: &PlayState) -> usize {
         let total = play_state.running_total();
-        let new_play_starting = play_state.is_new_play_starting();
 
-        if new_play_starting {
-            if total == Value::from(PLAY_TARGET) { GameScorer::SCORE_THIRTY_ONE }
-            else { GameScorer::SCORE_UNDER_THIRTY_ONE }
+        if total == Value::from(PLAY_TARGET) {
+            Self::SCORE_THIRTY_ONE
         } else {
-            GameScorer::SCORE_ZERO
+            Self::SCORE_UNDER_THIRTY_ONE
         }
     }
 }
@@ -75,7 +72,7 @@ mod test {
 
     #[test]
     fn play_fifteen_scores() {
-        let game = Builder::default()
+        let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("", "AS")
             .with_current_plays(&vec![(0, "JD"), (0, "5H")])

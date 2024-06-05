@@ -181,6 +181,7 @@ fn PlayArea() -> impl IntoView {
         GameView::Discarding(_, hands, _, _) => discarding_play_area(&hands).into_view(),
         GameView::Playing(_, hands, play_state, _, _, _) =>
             playing_play_area(&hands, &play_state).into_view(),
+        GameView::ScoringPone(_, _, _, _) => unimplemented!(),
     }
 }
 
@@ -309,8 +310,6 @@ fn playing_play_area(hands: &Hands, play_state: &PlayState) -> impl IntoView {
         }
     };
 
-    let play_state_str = format!("{:?}", play_state);
-
     view! {
         class = class,
         <div>
@@ -327,7 +326,7 @@ fn playing_play_area(hands: &Hands, play_state: &PlayState) -> impl IntoView {
                     }
                 }</span>
             </div>
-            <div><span>{play_state_str}</span></div>
+            <div><span><PlayState play_state={play_state.clone()} /></span></div>
             <div>
                 {move || {
                     let opponent_cards = opponent_cards();
@@ -337,6 +336,34 @@ fn playing_play_area(hands: &Hands, play_state: &PlayState) -> impl IntoView {
         </div>
     }
 }
+
+#[component]
+fn PlayState(
+    #[prop()]
+    play_state: PlayState,
+) -> impl IntoView {
+    let class = style!{
+        div {
+            display: flex;
+            flex-direction: row;
+        }
+    };
+
+    let running_total = play_state.running_total();
+    let current_plays = play_state.current_plays().into_iter().map(|p| p.card()).collect::<Vec<_>>();
+    let previous_plays = play_state.previous_plays().into_iter().map(|p| p.card()).collect::<Vec<_>>();
+
+    view!{
+        class = class,
+        <div>
+            <p>{running_total}</p>
+            <Cards cards={current_plays} />
+            <p>"-"</p>
+            <Cards cards={previous_plays} stacked=true />
+        </div>
+    }
+}
+
 
 /// Show the current crib, in a position relevant to the dealer, and the current cut card.
 #[component]
@@ -349,6 +376,7 @@ fn CribAndCut() -> impl IntoView {
         GameView::Starting(_) => empty_view().into_view(),
         GameView::Discarding(_, _, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
         GameView::Playing(_, _, _, cut, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
+        GameView::ScoringPone(_, _, cut, crib) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
     }
 }
 

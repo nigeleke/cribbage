@@ -22,7 +22,7 @@ pub async fn play(game_id: String, card: Card) -> Result<GameView, ServerFnError
     let game = game.play(player, card)?;
 
     let opponent = game.opponent(player);
-    let game = Opponent::discard(opponent, &game);
+    let game = Opponent::play(opponent, &game);
 
     update_game(&mut transaction, &game_id, &game).await?;
 

@@ -210,23 +210,55 @@ impl Game {
                 let hand = hands.get_mut(&player).unwrap();
                 let legal_plays = play_state.legal_plays(player)?;
                 verify::card(card, &hand.cards())?;
-                verify::card(card, &legal_plays.cards()).map_err(|_| Error::PlayExceedsMaximumTarget)?;
+                verify::card(card, &legal_plays.cards()).map_err(|_| Error::CannotPlayCard)?;
 
                 hand.remove(card);
                 play_state.play(card);
+ 
+                let mut score = GameScorer::current_play(play_state);
 
-                let scoring_phase_starting = play_state.is_scoring_phase_starting();
-                if !scoring_phase_starting {
-                    let score = GameScorer::current_play(play_state);
-                    let new_play_starting = play_state.is_new_play_starting();
-                    if new_play_starting { play_state.start_new_play(); };
-                    game = Game::Playing(scores, dealer, hands.clone(), play_state.clone(), cut, crib);
-                    game.score_points(player, score)
+                if play_state.target_reached() || play_state.finished_plays() {
+                    score += GameScorer::end_of_play(play_state);
+                    play_state.start_new_play();
+                };
+
+                game = if play_state.finished_plays() {
+                    Game::ScoringPone(scores, dealer, hands.clone(), cut, crib.clone())
                 } else {
-                    let score = GameScorer::current_play(play_state);
-                    game = Game::ScoringPone(scores, dealer, hands.clone(), cut, crib);
-                    game.score_points(player, score)
+                    Game::Playing(scores, dealer, hands.clone(), play_state.clone(), cut, crib)
+                };
+
+                game.score_points(player, score)
+            },
+            _ => unreachable!(),
+        }
+    }
+
+    pub(crate) fn pass(&self, player: Player) -> Result<Game> {
+        let mut game = self.clone();
+        match game {
+            Game::Playing(scores, dealer, ref mut hands, ref mut play_state, cut, crib) => {
+                let players = self.players();
+                verify::player(player, &players)?;
+
+                let legal_plays = play_state.legal_plays(player)?;
+                verify::no_legal_plays(&legal_plays.cards())?;
+
+                play_state.pass();
+
+                let mut score = GameScorer::current_play(play_state);
+
+                if play_state.pass_count() == NUMBER_OF_PLAYERS_IN_GAME {
+                    score += GameScorer::end_of_play(play_state);                    
+                    play_state.start_new_play();                    
                 }
+
+                game = if play_state.finished_plays() {
+                    Game::ScoringPone(scores, dealer, hands.clone(), cut, crib.clone())
+                } else {
+                    Game::Playing(scores, dealer, hands.clone(), play_state.clone(), cut, crib)
+                };
+                game.score_points(player, score)
 
             },
             _ => unreachable!(),
@@ -316,6 +348,14 @@ mod verify {
         }
     }
 
+    pub(crate) fn no_legal_plays(cards: &[Card]) -> Result<()> {
+        if cards.is_empty() {
+            Ok(())
+        } else {
+            Err(Error::CannotPass)
+        }
+    }
+
 }
 
 
@@ -334,7 +374,7 @@ mod test {
     #[test]
     fn play_with_zero_one_or_two_players() {
         for n in 0..=2 {
-            let builder = (0..n).fold(Builder::default(), |acc, _| acc.with_player());
+            let builder = Builder::new(n);
             let players = builder.players.clone();
             let game = builder.as_new().ok().unwrap();
             assert_eq!(game.players().len(), n);
@@ -346,10 +386,7 @@ mod test {
 
     #[test]
     fn fail_to_play_with_more_than_two_players() {
-        let builder = Builder::default()
-            .with_player()
-            .with_player()
-            .with_player();
+        let builder = Builder::new(3);
         let error = builder.as_new().err().unwrap();
         assert_eq!(error, Error::TooManyPlayers);
     }
@@ -364,9 +401,7 @@ mod test {
     ///
     #[test]
     fn use_a_standard_pack_of_cards() {
-        let builder = Builder::default()
-            .with_player()
-            .with_player();
+        let builder = Builder::new(2);
         let game = builder.as_new().ok().unwrap();
         let _deck = game.deck();
         assert!(true)
@@ -386,9 +421,7 @@ mod test {
     #[test]
     fn start_game_with_lowest_cut_as_dealer() {
         for (expected_dealer, cuts) in vec![(0, "ASKS"), (1, "KSAS")] {
-            let builder = Builder::default()
-                .with_player()
-                .with_player()
+            let builder = Builder::new(2)
                 .with_cuts(cuts);
             let players = builder.players.clone();
             let game = builder.as_starting();
@@ -400,7 +433,7 @@ mod test {
 
     #[test]
     fn fail_to_start_game_if_cuts_are_the_same_value() {
-        let game = Builder::default()
+        let game = Builder::new(2)
             .with_cuts("ASAC")
             .as_starting();
         let error = game.start().err().unwrap();
@@ -409,8 +442,7 @@ mod test {
 
     #[test]
     fn fail_to_start_game_if_not_enough_players() {
-        let game = Builder::default()
-            .with_player()
+        let game = Builder::new(2)
             .with_cuts("AS")
             .as_starting();
         let error = game.start().err().unwrap();
@@ -419,7 +451,7 @@ mod test {
 
     #[test]
     fn redraw_if_cuts_are_same_value() {
-        let game = Builder::default()
+        let game = Builder::new(2)
             .with_cuts("ASAC")
             .as_starting();
         let game = game.redraw().ok().unwrap();
@@ -429,7 +461,7 @@ mod test {
 
     #[test]
     fn fail_to_redraw_if_cuts_are_not_the_same_value() {
-        let game = Builder::default()
+        let game = Builder::new(2)
             .with_cuts("ASKS")
             .as_starting();
         let error = game.redraw().err().unwrap();
@@ -443,7 +475,7 @@ mod test {
     /// 
     #[test]
     fn deal_six_cards_per_player() {
-        let game = Builder::default()
+        let game = Builder::new(2)
             .with_cuts("ASKS")
             .as_starting();
 
@@ -476,7 +508,7 @@ mod test {
 
     #[test]
     fn deal_when_draw_decided() {
-        let game = Builder::default()
+        let game = Builder::new(2)
             .with_cuts("ASKS")
             .as_starting();
         let game = game.start().ok().unwrap();
@@ -546,7 +578,7 @@ mod test {
     ///
     #[test]
     fn player_can_discard_one_held_card_to_the_crib() {
-        let game = Builder::default()
+        let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
             .as_discarding();
@@ -575,7 +607,7 @@ mod test {
 
     #[test]
     fn player_can_discard_two_held_cards_to_the_crib() {
-        let game = Builder::default()
+        let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
             .as_discarding();
@@ -604,7 +636,7 @@ mod test {
 
     #[test]
     fn player_cannot_discard_more_then_two_held_cards_to_the_crib() {
-        let game = Builder::default()
+        let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
             .as_discarding();
@@ -621,7 +653,7 @@ mod test {
 
     #[test]
     fn player_cannot_discard_non_held_cards_to_the_crib() {
-        let game = Builder::default()
+        let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
             .as_discarding();
@@ -637,7 +669,7 @@ mod test {
 
     #[test]
     fn cannot_discard_when_player_not_participating() {
-        let game = Builder::default()
+        let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
             .as_discarding();
@@ -662,7 +694,7 @@ mod test {
     /// various card combinations that score points.
     ///
     fn after_discards_common_tests() -> (Scores, Scores, Cut, Player, Player) {
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
             .as_discarding();
@@ -693,7 +725,7 @@ mod test {
         assert!(deck0.contains(&cut1));
         assert_eq!(crib1.len(), CARDS_REQUIRED_IN_CRIB);
         assert_eq!(play_state1.legal_plays(pone).ok().unwrap(), hands1[&pone]);
-        assert_eq!(play_state1.legal_plays(dealer0).err().unwrap(), Error::NotYourPlay);
+        assert_eq!(play_state1.legal_plays(dealer0).err().unwrap(), Error::CannotPlay);
         assert_eq!(play_state1.pass_count(), 0);
         assert_eq!(play_state1.current_plays(), vec![]);
         assert_eq!(play_state1.previous_plays(), vec![]);
@@ -738,7 +770,7 @@ mod test {
     /// count 10 each; every other card counts its pip value (the ace counts one).
     #[test]
     fn accept_valid_play() {
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
@@ -747,7 +779,7 @@ mod test {
         let Game::Playing(scores0, dealer0, hands0, play_state0, cut0, crib0) = game0.clone() else { panic!("Unexpected state") };
         let dealer_hand0 = hands0[&dealer0].clone();
 
-        assert_eq!(play_state0.legal_plays(dealer0).err().unwrap(), Error::NotYourPlay);
+        assert_eq!(play_state0.legal_plays(dealer0).err().unwrap(), Error::CannotPlay);
         assert_eq!(play_state0.legal_plays(pone0).ok().unwrap().cards(), Builder::cards("4S"));
 
         let game1 = game0.play(pone0, Builder::card("4S")).ok().unwrap();
@@ -767,7 +799,7 @@ mod test {
 
     #[test]
     fn cannot_play_when_player_not_participating() {
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
@@ -780,7 +812,7 @@ mod test {
 
     #[test]
     fn cannot_play_when_unheld_card() {
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
@@ -793,7 +825,7 @@ mod test {
 
     #[test]
     fn cannot_play_when_not_their_turn() {
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
@@ -801,12 +833,12 @@ mod test {
         let dealer0 = game0.dealer();
         let card = Builder::card("9S");
         let error = game0.play(dealer0, card).err().unwrap();
-        assert_eq!(error, Error::NotYourPlay);
+        assert_eq!(error, Error::CannotPlay);
     }
 
     #[test]
     fn cannot_play_when_play_exceeds_target() {
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
@@ -818,12 +850,12 @@ mod test {
         assert_eq!(play_state0.legal_plays(pone0).ok().unwrap().cards(), Builder::cards(""));
 
         let error = game0.play(pone0, Builder::card("4S")).err().unwrap();
-        assert_eq!(error, Error::PlayExceedsMaximumTarget)
+        assert_eq!(error, Error::CannotPlayCard)
     }
 
     #[test]
     fn score_play_when_target_not_reached_mid_play() {
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("5S", "5H")
             .with_cut("AS")
@@ -842,27 +874,32 @@ mod test {
 
     #[test]
     fn score_play_when_target_not_reached_end_play() {
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("", "AH")
             .with_cut("QC")
             .with_current_plays(&vec![(0, "JH"), (0, "QH")])
             .with_previous_plays(&vec![(0, "9H"), (0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
+            .with_pass()
             .as_playing(1);
+
         let pone = game0.pone();
-        let Game::Playing(scores0, _, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
         let score0_pone = scores0[&pone];
+        let score0_dealer = scores0[&dealer0];
 
         let game1 = game0.play(pone, Builder::card("AH")).ok().unwrap();
-        let Game::ScoringPone(scores1, _, _, _, _) = game1.clone() else { panic!("Unexpected state") };
+        let Game::ScoringPone(scores1, dealer1, _, _, _) = game1.clone() else { panic!("Unexpected state") };
         let score1_pone = scores1[&pone];
+        let score1_dealer = scores1[&dealer1];
     
         assert_eq!(score1_pone, score0_pone.add(1));
+        assert_eq!(score1_dealer, score0_dealer);
     }
 
     #[test]
     fn score_play_when_target_not_reached_finished() {
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 120)
             .with_hands("AH", "5H")
             .with_cut("QC")
@@ -883,7 +920,7 @@ mod test {
     #[test]
     fn score_play_when_target_reached_mid_play() {
         let card = Builder::card("AH");
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("9H", "AH")
             .with_cut("KC")
@@ -909,7 +946,7 @@ mod test {
     #[test]
     fn score_play_when_target_reached_end_play() {
         let card = Builder::card("AH");
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("", "AH")
             .with_cut("KC")
@@ -932,7 +969,7 @@ mod test {
     #[test]
     fn score_play_when_target_reached_finished() {
         let card = Builder::card("AH");
-        let game0 = Builder::default()
+        let game0 = Builder::new(2)
             .with_scores(0, 120)
             .with_hands("", "AH")
             .with_cut("KC")
@@ -1014,36 +1051,75 @@ mod test {
   //     }
   //   }
 
-  //   /** ## The Go
-  //     *
-  //     * During play, the running total of cards may never be carried beyond 31. If a player cannot
-  //     * add another card without exceeding 31, he or she says "Go" and the opponent pegs 1. After
-  //     * gaining the Go, the opponent must first lay down any additional cards he can without
-  //     * exceeding 31. Besides the point for Go, he may then score any additional points that can be
-  //     * made through pairs and runs (described later). If a player reaches exactly 31, he pegs two
-  //     * instead of one for Go.
-  //     *
-  //     * The player who called Go leads for the next series of plays, with the count starting at
-  //     * zero. The lead may not be combined with any cards previously played to form a scoring
-  //     * combination; the Go has interrupted the sequence.
-  //     *
-  //     * The person who plays the last card pegs one for Go, plus one extra if the card brings the
-  //     * count to exactly 31. The dealer is sure to peg at least one point in every hand, for he will
-  //     * have a Go on the last card if not earlier.
-  //     */
-  //   "accept pass" when {
-  //     "pone has no valid card" in dummyPlaying() {
-  //       case playing0 @ Playing(_, _, _, pone0, _, _, plays0) =>
-  //         val playing1 = doPassFor[Playing](pone0)(playing0)
+    /// ## The Go
+    ///
+    /// During play, the running total of cards may never be carried beyond 31. If a player cannot
+    /// add another card without exceeding 31, he or she says "Go" and the opponent pegs 1. After
+    /// gaining the Go, the opponent must first lay down any additional cards he can without
+    /// exceeding 31. Besides the point for Go, he may then score any additional points that can be
+    /// made through pairs and runs (described later). If a player reaches exactly 31, he pegs two
+    /// instead of one for Go.
+    ///
+    /// The player who called Go leads for the next series of plays, with the count starting at
+    /// zero. The lead may not be combined with any cards previously played to form a scoring
+    /// combination; the Go has interrupted the sequence.
+    ///
+    /// The person who plays the last card pegs one for Go, plus one extra if the card brings the
+    /// count to exactly 31. The dealer is sure to peg at least one point in every hand, for he will
+    /// have a Go on the last card if not earlier.
+    
+    #[test]
+    fn accept_pass_when_pone_has_no_valid_card() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("AH", "KH")
+            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "QH")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, hands0, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
+        let game1 = game0.pass(pone);
+        let game1 = game1.ok().unwrap();
+        let Game::Playing(scores1, dealer1, hands1, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
 
-  //         val Playing(_, _, dealer1, _, _, _, plays1) = playing1
+        assert_eq!(scores1, scores0);
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(hands1, hands0);
+        assert_eq!(play_state1.next_to_play(), dealer0);
+        assert_eq!(play_state1.pass_count(), 1);
+        assert_eq!(play_state1.current_plays(), play_state0.current_plays());
+        assert_eq!(play_state1.previous_plays(), play_state0.previous_plays());
+    }
 
-  //         plays1.nextPlayer should be(dealer1)
-  //         plays1.runningTotal should be(plays0.runningTotal)
-  //         plays1.inPlay should contain theSameElementsInOrderAs (Seq(Pass(pone0)))
-  //     }
+    #[test]
+    fn accept_pass_when_dealer_has_no_valid_card() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("KH", "KS")
+            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, hands0, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
-  //     "dealer has no valid card" in dummyPlaying(
+        let game1 = game0.pass(pone).ok().unwrap();
+        let game2 = game1.pass(dealer0).ok().unwrap();
+
+        let Game::Playing(scores2, dealer2, hands2, play_state2, _, _) = game2.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(scores2[&pone], scores0[&pone]);
+        assert_eq!(scores2[&dealer2], scores0[&dealer0].add(1));
+        assert_eq!(dealer2, dealer0);
+        assert_eq!(hands2, hands0);
+        assert_eq!(play_state2.next_to_play(), pone);
+        assert_eq!(play_state2.pass_count(), 2);
+        assert!(play_state2.current_plays().is_empty());
+        for p in play_state0.current_plays().into_iter() {
+            assert!(play_state2.previous_plays().contains(&p))
+        }
+    }
+
+    //     "dealer has no valid card" in dummyPlaying(
   //       poneCards = Seq(Card(Ten, Spades))
   //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, plays0) =>
   //       val playing1 = doPlayFor[Playing](pone0, Card(Ten, Spades))(playing0)

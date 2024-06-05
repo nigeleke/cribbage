@@ -22,7 +22,11 @@ pub async fn discard(game_id: String, cards: Vec<Card>) -> Result<GameView, Serv
     let game = game.discard(player, &cards)?;
 
     let opponent = game.opponent(player);
-    let game = Opponent::discard(opponent, &game);
+    let mut game = Opponent::discard(opponent, &game);
+
+    if game.dealer() == player {
+        game = Opponent::play(opponent, &game);
+    }
 
     update_game(&mut transaction, &game_id, &game).await?;
 

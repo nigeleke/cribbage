@@ -14,4 +14,20 @@ impl Opponent {
             _ => unreachable!(),
         }
     }
+
+    pub fn play(opponent: Player, game: &Game) -> Game {
+        match game {
+            Game::Playing(_, _dealer, _hands, play_state, _, _) => {
+                let legal_plays = play_state.legal_plays(opponent).ok().unwrap();
+                if legal_plays.is_empty() {
+                    game.pass(opponent).ok().unwrap()
+                } else {
+                    // TODO: Analyse
+                    let card = legal_plays.cards().into_iter().next().unwrap();
+                    game.play(opponent, card).ok().unwrap()
+                }
+            },
+            _ => unreachable!(),
+        }
+    }
 }

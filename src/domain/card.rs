@@ -7,7 +7,7 @@ use yansi::Paint;
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::iter::Sum;
-use std::ops::Add;
+use std::ops::{Add, Sub};
 
 /// The rank of a Card. Ace(1) to King(13).
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -40,6 +40,14 @@ impl Add for Value {
 
     fn add(self, rhs: Self) -> Self::Output {
         Value(self.0 + rhs.0)
+    }
+}
+
+impl Sub for Value {
+    type Output = Value;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Value(self.0 - rhs.0)
     }
 }
 

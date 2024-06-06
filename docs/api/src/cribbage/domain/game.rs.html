@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (a330e4959 2024-06-04)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (72fdf913c 2024-06-05)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1590,6 +1590,65 @@
 <a href="#1590" id="1590">1590</a>
 <a href="#1591" id="1591">1591</a>
 <a href="#1592" id="1592">1592</a>
+<a href="#1593" id="1593">1593</a>
+<a href="#1594" id="1594">1594</a>
+<a href="#1595" id="1595">1595</a>
+<a href="#1596" id="1596">1596</a>
+<a href="#1597" id="1597">1597</a>
+<a href="#1598" id="1598">1598</a>
+<a href="#1599" id="1599">1599</a>
+<a href="#1600" id="1600">1600</a>
+<a href="#1601" id="1601">1601</a>
+<a href="#1602" id="1602">1602</a>
+<a href="#1603" id="1603">1603</a>
+<a href="#1604" id="1604">1604</a>
+<a href="#1605" id="1605">1605</a>
+<a href="#1606" id="1606">1606</a>
+<a href="#1607" id="1607">1607</a>
+<a href="#1608" id="1608">1608</a>
+<a href="#1609" id="1609">1609</a>
+<a href="#1610" id="1610">1610</a>
+<a href="#1611" id="1611">1611</a>
+<a href="#1612" id="1612">1612</a>
+<a href="#1613" id="1613">1613</a>
+<a href="#1614" id="1614">1614</a>
+<a href="#1615" id="1615">1615</a>
+<a href="#1616" id="1616">1616</a>
+<a href="#1617" id="1617">1617</a>
+<a href="#1618" id="1618">1618</a>
+<a href="#1619" id="1619">1619</a>
+<a href="#1620" id="1620">1620</a>
+<a href="#1621" id="1621">1621</a>
+<a href="#1622" id="1622">1622</a>
+<a href="#1623" id="1623">1623</a>
+<a href="#1624" id="1624">1624</a>
+<a href="#1625" id="1625">1625</a>
+<a href="#1626" id="1626">1626</a>
+<a href="#1627" id="1627">1627</a>
+<a href="#1628" id="1628">1628</a>
+<a href="#1629" id="1629">1629</a>
+<a href="#1630" id="1630">1630</a>
+<a href="#1631" id="1631">1631</a>
+<a href="#1632" id="1632">1632</a>
+<a href="#1633" id="1633">1633</a>
+<a href="#1634" id="1634">1634</a>
+<a href="#1635" id="1635">1635</a>
+<a href="#1636" id="1636">1636</a>
+<a href="#1637" id="1637">1637</a>
+<a href="#1638" id="1638">1638</a>
+<a href="#1639" id="1639">1639</a>
+<a href="#1640" id="1640">1640</a>
+<a href="#1641" id="1641">1641</a>
+<a href="#1642" id="1642">1642</a>
+<a href="#1643" id="1643">1643</a>
+<a href="#1644" id="1644">1644</a>
+<a href="#1645" id="1645">1645</a>
+<a href="#1646" id="1646">1646</a>
+<a href="#1647" id="1647">1647</a>
+<a href="#1648" id="1648">1648</a>
+<a href="#1649" id="1649">1649</a>
+<a href="#1650" id="1650">1650</a>
+<a href="#1651" id="1651">1651</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::constants::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">super</span>::card::{Card, Cuts, Rank};
 <span class="kw">use </span><span class="kw">super</span>::cards::{Crib, Deck, Hand, Hands};
@@ -1838,7 +1897,7 @@
 
                 play_state.pass();
 
-                <span class="kw">let </span><span class="kw-2">mut </span>score = GameScorer::current_play(play_state);
+                <span class="kw">let </span><span class="kw-2">mut </span>score = <span class="number">0</span>;
 
                 <span class="kw">if </span>play_state.pass_count() == NUMBER_OF_PLAYERS_IN_GAME {
                     score += GameScorer::end_of_play(play_state);                    
@@ -1954,6 +2013,8 @@
 <span class="doccomment">/// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
 </span><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
+    <span class="kw">use </span>leptos::html::Del;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::domain::card::{Cut, Face};
 
@@ -2082,23 +2143,7 @@
             .for_each(|p| <span class="macro">assert_eq!</span>(hands[p].cards().len(), CARDS_DEALT_PER_HAND));
     }
 
-
-    <span class="comment">//   def dummyDiscarding(
-  //       dealerScore: Score = Score.zero,
-  //       poneScore: Score = Score.zero,
-  //       maybeCut: Option[Card] = None
-  //   )(f: Discarding =&gt; Unit) =
-  //     val players       = (1 to 2).map(_ =&gt; Player.newPlayer).toSet
-  //     val draws         = players.map((_, Card(Jack, Hearts))).toMap
-  //     val draw          = Decided(draws, players.head, players.last)
-  //     val discarding    = Cribbage.dealFirstHand(draw)
-  //     val dealer        = discarding.dealer
-  //     val pone          = discarding.pone
-  //     val updatedScores = Map(dealer -&gt; dealerScore, pone -&gt; poneScore)
-  //     val updatedDeck   = maybeCut.map(c =&gt; Cards.deckOf(Seq(c))).getOrElse(discarding.deck)
-  //     f(discarding.copy(deck = updatedDeck, scores = updatedScores))
-
-    </span><span class="attr">#[test]
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>deal_when_draw_decided() {
         <span class="kw">let </span>game = Builder::new(<span class="number">2</span>)
             .with_cuts(<span class="string">"ASKS"</span>)
@@ -2711,167 +2756,240 @@
         }
     }
 
-    <span class="comment">//     "dealer has no valid card" in dummyPlaying(
-  //       poneCards = Seq(Card(Ten, Spades))
-  //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, plays0) =&gt;
-  //       val playing1 = doPlayFor[Playing](pone0, Card(Ten, Spades))(playing0)
-  //       val playing2 = doPassFor[Playing](dealer0)(playing1)
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>cannot_pass_when_player_not_participating() {
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_hands(<span class="string">"KH"</span>, <span class="string">"KS"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"TH"</span>), (<span class="number">0</span>, <span class="string">"JH"</span>), (<span class="number">1</span>, <span class="string">"QH"</span>)])
+            .as_playing(<span class="number">1</span>);
 
-  //       val Playing(_, _, dealer2, pone2, _, _, plays2) = playing2
+        <span class="kw">let </span>non_player = Player::new();
+        <span class="kw">let </span>error = game0.pass(non_player).err().unwrap();
+        <span class="macro">assert_eq!</span>(error, Error::InvalidPlayer(non_player));
+    }
 
-  //       plays2.nextPlayer should be(pone2)
-  //       plays2.runningTotal should be(Card(Ten, Spades).value)
-  //       plays2.inPlay should contain theSameElementsInOrderAs (Seq(
-  //         Laid(pone0, Card(Ten, Spades)),
-  //         Pass(dealer0)
-  //       ))
-  //     }
-  //   }
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>cannot_pass_when_valid_card_held() {
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_hands(<span class="string">"AH"</span>, <span class="string">"AS"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"TH"</span>), (<span class="number">0</span>, <span class="string">"JH"</span>), (<span class="number">0</span>, <span class="string">"8H"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
 
-  //   "not accept pass" when {
-  //     "non-participating player" in dummyPlaying(poneCards = Seq(Card(Two, Spades))) {
-  //       case playing @ Playing(_, hands, _, pone, _, _, _) =&gt;
-  //         val bogusPlayer  = Player.newPlayer
-  //         val caught       = intercept[IllegalArgumentException] {
-  //           doPassFor[Playing](bogusPlayer)(playing)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule = NonParticipatingPlayer(bogusPlayer)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
+        <span class="kw">let </span>error = game0.pass(pone).err().unwrap();
+        <span class="macro">assert_eq!</span>(error, Error::CannotPass);
+    }
 
-  //     "hold card that can be played" in dummyPlaying(poneCards = Seq(Card(Two, Spades))) {
-  //       case playing @ Playing(_, hands, _, pone, _, _, _) =&gt;
-  //         val caught       = intercept[IllegalArgumentException] {
-  //           doPassFor[Playing](pone)(playing)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule = PlayTargetAttainable(pone)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
-  //   }
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>score_pass_when_both_players_passed_playing() {
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_hands(<span class="string">"KH"</span>, <span class="string">"KS"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"TH"</span>), (<span class="number">0</span>, <span class="string">"JH"</span>), (<span class="number">1</span>, <span class="string">"QH"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, dealer0, hands0, play_state0, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-  //   "score pass" when {
-  //     "both players passed - playing" in dummyPlaying(
-  //       dealerCards = Seq(Card(Jack, Hearts)),
-  //       inPlays = Seq(0 -&gt; Card(Jack, Hearts), 0 -&gt; Card(Jack, Clubs), 0 -&gt; Card(Jack, Diamonds))
-  //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, _) =&gt;
-  //       val playing1 = doPassFor[Playing](pone0)(playing0)
-  //       val playing2 = doPassFor[Playing](dealer0)(playing1)
+        <span class="kw">let </span>game1 = game0.pass(pone).ok().unwrap();
+        <span class="kw">let </span>game2 = game1.pass(dealer0).ok().unwrap();
 
-  //       val Playing(scores2, _, dealer2, pone2, _, _, _) = playing2
-  //       dealer2 should be(dealer0)
-  //       pone2 should be(pone0)
-  //       scores2(dealer2) should be(Score(0, 1))
-  //     }
+        <span class="kw">let </span>Game::Playing(scores2, dealer2, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game2.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="macro">assert_eq!</span>(scores2[<span class="kw-2">&amp;</span>pone], scores0[<span class="kw-2">&amp;</span>pone]);
+        <span class="macro">assert_eq!</span>(scores2[<span class="kw-2">&amp;</span>dealer2], scores0[<span class="kw-2">&amp;</span>dealer0].add(<span class="number">1</span>));
+    }
 
-  //     "both players passed - finished" in dummyPlaying(
-  //       dealerScore = Score(0, 120)
-  //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, _) =&gt;
-  //       val playing1  = doPassFor[Playing](pone0)(playing0)
-  //       val finished2 = doPassFor[Finished](dealer0)(playing1)
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>score_pass_when_both_players_passed_finished() {
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">120</span>, <span class="number">0</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_hands(<span class="string">"KH"</span>, <span class="string">"KS"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"TH"</span>), (<span class="number">0</span>, <span class="string">"JH"</span>), (<span class="number">1</span>, <span class="string">"QH"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, dealer0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-  //       val Finished(scores2) = finished2
-  //       scores2(dealer0) should be(Score(120, 121))
-  //     }
+        <span class="kw">let </span>game1 = game0.pass(pone).ok().unwrap();
+        <span class="kw">let </span>game2 = game1.pass(dealer0).ok().unwrap();
 
-  //   }
+        <span class="kw">let </span>Game::Finished(scores2) = game2.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="macro">assert_eq!</span>(scores2[<span class="kw-2">&amp;</span>pone], scores0[<span class="kw-2">&amp;</span>pone]);
+        <span class="macro">assert_eq!</span>(scores2[<span class="kw-2">&amp;</span>dealer0], scores0[<span class="kw-2">&amp;</span>dealer0].add(<span class="number">1</span>));
+    }
 
-  //   /** ## Pegging
-  //     *
-  //     * The object in play is to score points by pegging. In addition to a Go, a player may score
-  //     * for the following combinations:
-  //     *
-  //     *   - Fifteen: For adding a card that makes the total 15 Peg 2
-  //     *   - Pair: For adding a card of the same rank as the card just played Peg 2 (Note that face
-  //     *     cards pair only by actual rank: jack with jack, but not jack with queen.)
-  //     *   - Triplet: For adding the third card of the same rank. Peg 6
-  //     *   - Four: (also called "Double Pair" or "Double Pair Royal") For adding the fourth card of
-  //     *     the same rank Peg 12
-  //     *   - Run (Sequence): For adding a card that forms, with those just played:
-  //     *     - For a sequence of three Peg 3
-  //     *     - For a sequence of four. Peg 4
-  //     *     - For a sequence of five. Peg 5
-  //     *     - (Peg one point more for each extra card of a sequence. Note that runs are independent
-  //     *       of suits, but go strictly by rank; to illustrate: 9, 10, J, or J, 9, 10 is a run but
-  //     *       9, 10, Q is not.)
-  //     */
-  //   "score play - points" when {
-  //     "fifteen" in dummyPlaying(
-  //       poneCards = Seq(Card(Eight, Diamonds)),
-  //       inPlays = Seq(0 -&gt; Card(Seven, Diamonds))
-  //     ) { case playing0 @ Playing(_, _, _, pone, _, _, _) =&gt;
-  //       val playing1 = doPlayFor[Playing](pone, Card(Eight, Diamonds))(playing0)
-  //       playing1.scores(pone) should be(Score(0, 2))
-  //     }
+    <span class="doccomment">/// ## Pegging
+    /// 
+    /// The object in play is to score points by pegging. In addition to a Go, a player may score
+    /// for the following combinations:
+    ///
+    ///   - Fifteen: For adding a card that makes the total 15 Peg 2
+    ///   - Pair: For adding a card of the same rank as the card just played Peg 2 (Note that face
+    ///     cards pair only by actual rank: jack with jack, but not jack with queen.)
+    ///   - Triplet: For adding the third card of the same rank. Peg 6
+    ///   - Four: (also called "Double Pair" or "Double Pair Royal") For adding the fourth card of
+    ///     the same rank Peg 12
+    ///   - Run (Sequence): For adding a card that forms, with those just played:
+    ///     - For a sequence of three Peg 3
+    ///     - For a sequence of four. Peg 4
+    ///     - For a sequence of five. Peg 5
+    ///     - (Peg one point more for each extra card of a sequence. Note that runs are independent
+    ///       of suits, but go strictly by rank; to illustrate: 9, 10, J, or J, 9, 10 is a run but
+    ///       9, 10, Q is not)
+    
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>score_play_points_for_fifteens() {
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_hands(<span class="string">"KH"</span>, <span class="string">"8D"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"7D"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, dealer0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-  //     "pair" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Spades)),
-  //       inPlays = Seq(0 -&gt; Card(Ace, Diamonds))
-  //     ) { case playing0 @ Playing(_, _, _, pone, _, _, _) =&gt;
-  //       val playing1 = doPlayFor[Playing](pone, Card(Ace, Spades))(playing0)
-  //       playing1.scores(pone) should be(Score(0, 2))
-  //     }
+        <span class="kw">let </span>game1 = game0.play(pone, Builder::card(<span class="string">"8D"</span>)).ok().unwrap();
+        <span class="kw">let </span>Game::Playing(scores1, dealer1, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-  //     "triplet" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Spades)),
-  //       inPlays = Seq(0 -&gt; Card(Ace, Diamonds), 0 -&gt; Card(Ace, Hearts))
-  //     ) { case playing0 @ Playing(_, _, _, pone, _, _, _) =&gt;
-  //       val playing1 = doPlayFor[Playing](pone, Card(Ace, Spades))(playing0)
-  //       playing1.scores(pone) should be(Score(0, 6))
-  //     }
+        <span class="macro">assert_eq!</span>(dealer1, dealer0);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>dealer1], scores0[<span class="kw-2">&amp;</span>dealer0]);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>pone], scores0[<span class="kw-2">&amp;</span>pone].add(<span class="number">2</span>));
+    }
 
-  //     "double pair" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Spades)),
-  //       inPlays = Seq(0 -&gt; Card(Ace, Diamonds), 0 -&gt; Card(Ace, Hearts), 0 -&gt; Card(Ace, Clubs))
-  //     ) { case playing0 @ Playing(_, _, _, pone, _, _, _) =&gt;
-  //       val playing1 = doPlayFor[Playing](pone, Card(Ace, Spades))(playing0)
-  //       playing1.scores(pone) should be(Score(0, 12))
-  //     }
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>score_play_points_for_pair() {
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_hands(<span class="string">"KH"</span>, <span class="string">"8D"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"8S"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, dealer0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-  //     "run" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Spades)),
-  //       inPlays = Seq(0 -&gt; Card(Two, Diamonds), 0 -&gt; Card(Three, Hearts))
-  //     ) { case playing0 @ Playing(_, _, _, pone, _, _, _) =&gt;
-  //       val playing1 = doPlayFor[Playing](pone, Card(Ace, Spades))(playing0)
-  //       playing1.scores(pone) should be(Score(0, 3))
-  //     }
+        <span class="kw">let </span>game1 = game0.play(pone, Builder::card(<span class="string">"8D"</span>)).ok().unwrap();
+        <span class="kw">let </span>Game::Playing(scores1, dealer1, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-  //     /** It is important to keep track of the order in which cards are played to determine whether
-  //       * what looks like a sequence or a run has been interrupted by a "foreign card." Example:
-  //       * Cards are played in this order: 8, 7, 7, 6. The dealer pegs 2 for 15, and the opponent
-  //       * pegs 2 for pair, but the dealer cannot peg for run because of the extra seven (foreign
-  //       * card) that has been played. Example: Cards are played in this order: 9, 6, 8, 7. The
-  //       * dealer pegs 2 for fifteen when he plays the six and pegs 4 for run when he plays the seven
-  //       * (the 6, 7, 8, 9 sequence). The cards were not played in sequential order, but they form a
-  //       * true run with no foreign card.
-  //       */
-  //     "run edge case 1" in dummyPlaying(
-  //       poneCards = Seq(Card(Eight, Spades), Card(Seven, Spades)),
-  //       dealerCards = Seq(Card(Seven, Hearts), Card(Six, Hearts))
-  //     ) { case playing0 @ Playing(_, _, dealer, pone, _, _, _) =&gt;
-  //       val playing1 = doPlayFor[Playing](pone, Card(Eight, Spades))(playing0)
-  //       val playing2 = doPlayFor[Playing](dealer, Card(Seven, Hearts))(playing1)
-  //       val playing3 = doPlayFor[Playing](pone, Card(Seven, Spades))(playing2)
-  //       val playing4 = doPlayFor[Playing](dealer, Card(Six, Hearts))(playing3)
-  //       playing4.scores(dealer) should be(Score(0, 2))
-  //       playing4.scores(pone) should be(Score(0, 2))
-  //     }
+        <span class="macro">assert_eq!</span>(dealer1, dealer0);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>dealer1], scores0[<span class="kw-2">&amp;</span>dealer0]);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>pone], scores0[<span class="kw-2">&amp;</span>pone].add(<span class="number">2</span>));
+    }
 
-  //     "run edge case 2" in dummyPlaying(
-  //       poneCards = Seq(Card(Nine, Spades), Card(Eight, Spades)),
-  //       dealerCards = Seq(Card(Seven, Hearts), Card(Six, Hearts))
-  //     ) { case playing0 @ Playing(_, _, dealer, pone, _, _, _) =&gt;
-  //       val playing1 = doPlayFor[Playing](pone, Card(Nine, Spades))(playing0)
-  //       val playing2 = doPlayFor[Playing](dealer, Card(Six, Hearts))(playing1)
-  //       val playing3 = doPlayFor[Playing](pone, Card(Eight, Spades))(playing2)
-  //       val playing4 = doPlayFor[Playing](dealer, Card(Seven, Hearts))(playing3)
-  //       playing4.scores(dealer) should be(Score(2, 6))
-  //       playing4.scores(pone) should be(Score(0, 0))
-  //     }
-  //   }
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>score_play_points_for_triplet() {
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_hands(<span class="string">"KH"</span>, <span class="string">"8D"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">1</span>, <span class="string">"8C"</span>), (<span class="number">0</span>, <span class="string">"8S"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, dealer0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-  //   /** ## Counting the Hands
+        <span class="kw">let </span>game1 = game0.play(pone, Builder::card(<span class="string">"8D"</span>)).ok().unwrap();
+        <span class="kw">let </span>Game::Playing(scores1, dealer1, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
+        <span class="macro">assert_eq!</span>(dealer1, dealer0);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>dealer1], scores0[<span class="kw-2">&amp;</span>dealer0]);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>pone], scores0[<span class="kw-2">&amp;</span>pone].add(<span class="number">6</span>));
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>score_play_points_for_quartet() {
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_hands(<span class="string">"KH"</span>, <span class="string">"7D"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">1</span>, <span class="string">"7C"</span>), (<span class="number">0</span>, <span class="string">"7S"</span>), (<span class="number">0</span>, <span class="string">"7H"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, dealer0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
+        <span class="kw">let </span>game1 = game0.play(pone, Builder::card(<span class="string">"7D"</span>)).ok().unwrap();
+        <span class="kw">let </span>Game::Playing(scores1, dealer1, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
+        <span class="macro">assert_eq!</span>(dealer1, dealer0);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>dealer1], scores0[<span class="kw-2">&amp;</span>dealer0]);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>pone], scores0[<span class="kw-2">&amp;</span>pone].add(<span class="number">12</span>));
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>score_play_points_for_run() {
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_hands(<span class="string">"KH"</span>, <span class="string">"AS"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">1</span>, <span class="string">"2D"</span>), (<span class="number">0</span>, <span class="string">"3H"</span>)])
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, dealer0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
+        <span class="kw">let </span>game1 = game0.play(pone, Builder::card(<span class="string">"AS"</span>)).ok().unwrap();
+        <span class="kw">let </span>Game::Playing(scores1, dealer1, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
+        <span class="macro">assert_eq!</span>(dealer1, dealer0);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>dealer1], scores0[<span class="kw-2">&amp;</span>dealer0]);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>pone], scores0[<span class="kw-2">&amp;</span>pone].add(<span class="number">3</span>));
+    }
+
+    <span class="doccomment">/// It is important to keep track of the order in which cards are played to determine whether
+    /// what looks like a sequence or a run has been interrupted by a "foreign card." Example:
+    /// Cards are played in this order: 8, 7, 7, 6. The dealer pegs 2 for 15, and the opponent
+    /// pegs 2 for pair, but the dealer cannot peg for run because of the extra seven (foreign
+    /// card) that has been played. Example: Cards are played in this order: 9, 6, 8, 7. The
+    /// dealer pegs 2 for fifteen when he plays the six and pegs 4 for run when he plays the seven
+    /// (the 6, 7, 8, 9 sequence). The cards were not played in sequential order, but they form a
+    /// true run with no foreign card.
+
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>score_play_points_for_run_edge_case_1() {
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_hands(<span class="string">"5H7H6H"</span>, <span class="string">"8S7S"</span>)
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, dealer0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
+        <span class="kw">let </span>game1 = game0.play(pone, Builder::card(<span class="string">"8S"</span>)).ok().unwrap();
+        <span class="kw">let </span>game1 = game1.play(dealer0, Builder::card(<span class="string">"7H"</span>)).ok().unwrap();
+        <span class="kw">let </span>game1 = game1.play(pone, Builder::card(<span class="string">"7S"</span>)).ok().unwrap();
+        <span class="kw">let </span>game1 = game1.play(dealer0, Builder::card(<span class="string">"6H"</span>)).ok().unwrap();
+
+        <span class="kw">let </span>Game::Playing(scores1, dealer1, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
+        <span class="macro">assert_eq!</span>(dealer1, dealer0);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>dealer1], scores0[<span class="kw-2">&amp;</span>dealer0].add(<span class="number">2</span>));
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>pone], scores0[<span class="kw-2">&amp;</span>pone].add(<span class="number">2</span>));
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>score_play_points_for_run_edge_case_2() {
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_cut(<span class="string">"AS"</span>)
+            .with_hands(<span class="string">"5H7H6H"</span>, <span class="string">"9S8S"</span>)
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>pone = game0.pone();
+        <span class="kw">let </span>Game::Playing(scores0, dealer0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
+        <span class="kw">let </span>game1 = game0.play(pone, Builder::card(<span class="string">"9S"</span>)).ok().unwrap();
+        <span class="kw">let </span>game1 = game1.play(dealer0, Builder::card(<span class="string">"6H"</span>)).ok().unwrap();
+        <span class="kw">let </span>game1 = game1.play(pone, Builder::card(<span class="string">"8S"</span>)).ok().unwrap();
+        <span class="kw">let </span>game1 = game1.play(dealer0, Builder::card(<span class="string">"7H"</span>)).ok().unwrap();
+
+        <span class="kw">let </span>Game::Playing(scores1, dealer1, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+
+        <span class="macro">assert_eq!</span>(dealer1, dealer0);
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>dealer1], scores0[<span class="kw-2">&amp;</span>dealer0].add(<span class="number">2</span>).add(<span class="number">4</span>));
+        <span class="macro">assert_eq!</span>(scores1[<span class="kw-2">&amp;</span>pone], scores0[<span class="kw-2">&amp;</span>pone]);
+    }
+
+  <span class="comment">//   /** ## Counting the Hands
   //     *
   //     * When play ends, the three hands are counted in order: non-dealer's hand (first), dealer's
   //     * hand (second), and then the crib (third). This order is important because, toward the end of

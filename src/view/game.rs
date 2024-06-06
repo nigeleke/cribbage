@@ -35,8 +35,8 @@ impl Game {
     pub(crate) fn dealer(&self) -> Option<Role> {
         match self {
             Game::Starting(_) => None,
-            Game::Discarding(_, _, _, dealer) => Some(dealer.clone()),
-            Game::Playing(_, _, _, _, _, dealer) => Some(dealer.clone()),
+            Game::Discarding(_, _, _, dealer) => Some(*dealer),
+            Game::Playing(_, _, _, _, _, dealer) => Some(*dealer),
             Game::ScoringPone(_, pone, _, _, _) => Some(pone.other()),
         }
     }
@@ -70,11 +70,11 @@ impl From<(DomainGame, DomainPlayer)> for Game {
                 let dealer = Dealer::from((dealer, player));
                 Game::Playing(scores, hands, play_state, cut, crib, dealer)
             },
-            DomainGame::ScoringPone(ref scores, dealer, ref hands, cut, ref crib) => {
+            DomainGame::ScoringPone(ref scores, _, ref hands, cut, ref crib) => {
                 let pone = Role::from((game.pone(), player));
-                let (player_score, opponent_score) = partition_for(player, &scores);
+                let (player_score, opponent_score) = partition_for(player, scores);
                 let scores = merge(player_score, opponent_score);
-                let (player_hand, opponent_hand) = partition_for(player, &hands);
+                let (player_hand, opponent_hand) = partition_for(player, hands);
                 let hands = merge(face_up(&player_hand.cards()), face_up(&opponent_hand.cards()));
                 let crib = face_down(&crib.cards());
                 Game::ScoringPone(scores, pone, hands, cut, crib)

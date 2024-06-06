@@ -246,7 +246,7 @@ impl Game {
 
                 play_state.pass();
 
-                let mut score = GameScorer::current_play(play_state);
+                let mut score = 0;
 
                 if play_state.pass_count() == NUMBER_OF_PLAYERS_IN_GAME {
                     score += GameScorer::end_of_play(play_state);                    
@@ -362,6 +362,8 @@ mod verify {
 /// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
 #[cfg(test)]
 mod test {
+    use leptos::html::Del;
+
     use super::*;
     use crate::domain::card::{Cut, Face};
 
@@ -489,22 +491,6 @@ mod test {
             .iter()
             .for_each(|p| assert_eq!(hands[p].cards().len(), CARDS_DEALT_PER_HAND));
     }
-
-
-    //   def dummyDiscarding(
-  //       dealerScore: Score = Score.zero,
-  //       poneScore: Score = Score.zero,
-  //       maybeCut: Option[Card] = None
-  //   )(f: Discarding => Unit) =
-  //     val players       = (1 to 2).map(_ => Player.newPlayer).toSet
-  //     val draws         = players.map((_, Card(Jack, Hearts))).toMap
-  //     val draw          = Decided(draws, players.head, players.last)
-  //     val discarding    = Cribbage.dealFirstHand(draw)
-  //     val dealer        = discarding.dealer
-  //     val pone          = discarding.pone
-  //     val updatedScores = Map(dealer -> dealerScore, pone -> poneScore)
-  //     val updatedDeck   = maybeCut.map(c => Cards.deckOf(Seq(c))).getOrElse(discarding.deck)
-  //     f(discarding.copy(deck = updatedDeck, scores = updatedScores))
 
     #[test]
     fn deal_when_draw_decided() {
@@ -1119,165 +1105,238 @@ mod test {
         }
     }
 
-    //     "dealer has no valid card" in dummyPlaying(
-  //       poneCards = Seq(Card(Ten, Spades))
-  //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, plays0) =>
-  //       val playing1 = doPlayFor[Playing](pone0, Card(Ten, Spades))(playing0)
-  //       val playing2 = doPassFor[Playing](dealer0)(playing1)
+    #[test]
+    fn cannot_pass_when_player_not_participating() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("KH", "KS")
+            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
+            .as_playing(1);
 
-  //       val Playing(_, _, dealer2, pone2, _, _, plays2) = playing2
+        let non_player = Player::new();
+        let error = game0.pass(non_player).err().unwrap();
+        assert_eq!(error, Error::InvalidPlayer(non_player));
+    }
 
-  //       plays2.nextPlayer should be(pone2)
-  //       plays2.runningTotal should be(Card(Ten, Spades).value)
-  //       plays2.inPlay should contain theSameElementsInOrderAs (Seq(
-  //         Laid(pone0, Card(Ten, Spades)),
-  //         Pass(dealer0)
-  //       ))
-  //     }
-  //   }
+    #[test]
+    fn cannot_pass_when_valid_card_held() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("AH", "AS")
+            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "8H")])
+            .as_playing(1);
+        let pone = game0.pone();
 
-  //   "not accept pass" when {
-  //     "non-participating player" in dummyPlaying(poneCards = Seq(Card(Two, Spades))) {
-  //       case playing @ Playing(_, hands, _, pone, _, _, _) =>
-  //         val bogusPlayer  = Player.newPlayer
-  //         val caught       = intercept[IllegalArgumentException] {
-  //           doPassFor[Playing](bogusPlayer)(playing)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule = NonParticipatingPlayer(bogusPlayer)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
+        let error = game0.pass(pone).err().unwrap();
+        assert_eq!(error, Error::CannotPass);
+    }
 
-  //     "hold card that can be played" in dummyPlaying(poneCards = Seq(Card(Two, Spades))) {
-  //       case playing @ Playing(_, hands, _, pone, _, _, _) =>
-  //         val caught       = intercept[IllegalArgumentException] {
-  //           doPassFor[Playing](pone)(playing)
-  //         }
-  //         caught should be(a[IllegalArgumentException])
-  //         val expectedRule = PlayTargetAttainable(pone)
-  //         caught.getMessage should be(s"requirement failed: $expectedRule")
-  //     }
-  //   }
+    #[test]
+    fn score_pass_when_both_players_passed_playing() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("KH", "KS")
+            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, hands0, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
-  //   "score pass" when {
-  //     "both players passed - playing" in dummyPlaying(
-  //       dealerCards = Seq(Card(Jack, Hearts)),
-  //       inPlays = Seq(0 -> Card(Jack, Hearts), 0 -> Card(Jack, Clubs), 0 -> Card(Jack, Diamonds))
-  //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, _) =>
-  //       val playing1 = doPassFor[Playing](pone0)(playing0)
-  //       val playing2 = doPassFor[Playing](dealer0)(playing1)
+        let game1 = game0.pass(pone).ok().unwrap();
+        let game2 = game1.pass(dealer0).ok().unwrap();
 
-  //       val Playing(scores2, _, dealer2, pone2, _, _, _) = playing2
-  //       dealer2 should be(dealer0)
-  //       pone2 should be(pone0)
-  //       scores2(dealer2) should be(Score(0, 1))
-  //     }
+        let Game::Playing(scores2, dealer2, _, _, _, _) = game2.clone() else { panic!("Unexpected state") };
+        assert_eq!(scores2[&pone], scores0[&pone]);
+        assert_eq!(scores2[&dealer2], scores0[&dealer0].add(1));
+    }
 
-  //     "both players passed - finished" in dummyPlaying(
-  //       dealerScore = Score(0, 120)
-  //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, _) =>
-  //       val playing1  = doPassFor[Playing](pone0)(playing0)
-  //       val finished2 = doPassFor[Finished](dealer0)(playing1)
+    #[test]
+    fn score_pass_when_both_players_passed_finished() {
+        let game0 = Builder::new(2)
+            .with_scores(120, 0)
+            .with_cut("AS")
+            .with_hands("KH", "KS")
+            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
-  //       val Finished(scores2) = finished2
-  //       scores2(dealer0) should be(Score(120, 121))
-  //     }
+        let game1 = game0.pass(pone).ok().unwrap();
+        let game2 = game1.pass(dealer0).ok().unwrap();
 
-  //   }
+        let Game::Finished(scores2) = game2.clone() else { panic!("Unexpected state") };
+        assert_eq!(scores2[&pone], scores0[&pone]);
+        assert_eq!(scores2[&dealer0], scores0[&dealer0].add(1));
+    }
 
-  //   /** ## Pegging
-  //     *
-  //     * The object in play is to score points by pegging. In addition to a Go, a player may score
-  //     * for the following combinations:
-  //     *
-  //     *   - Fifteen: For adding a card that makes the total 15 Peg 2
-  //     *   - Pair: For adding a card of the same rank as the card just played Peg 2 (Note that face
-  //     *     cards pair only by actual rank: jack with jack, but not jack with queen.)
-  //     *   - Triplet: For adding the third card of the same rank. Peg 6
-  //     *   - Four: (also called "Double Pair" or "Double Pair Royal") For adding the fourth card of
-  //     *     the same rank Peg 12
-  //     *   - Run (Sequence): For adding a card that forms, with those just played:
-  //     *     - For a sequence of three Peg 3
-  //     *     - For a sequence of four. Peg 4
-  //     *     - For a sequence of five. Peg 5
-  //     *     - (Peg one point more for each extra card of a sequence. Note that runs are independent
-  //     *       of suits, but go strictly by rank; to illustrate: 9, 10, J, or J, 9, 10 is a run but
-  //     *       9, 10, Q is not.)
-  //     */
-  //   "score play - points" when {
-  //     "fifteen" in dummyPlaying(
-  //       poneCards = Seq(Card(Eight, Diamonds)),
-  //       inPlays = Seq(0 -> Card(Seven, Diamonds))
-  //     ) { case playing0 @ Playing(_, _, _, pone, _, _, _) =>
-  //       val playing1 = doPlayFor[Playing](pone, Card(Eight, Diamonds))(playing0)
-  //       playing1.scores(pone) should be(Score(0, 2))
-  //     }
+    /// ## Pegging
+    /// 
+    /// The object in play is to score points by pegging. In addition to a Go, a player may score
+    /// for the following combinations:
+    ///
+    ///   - Fifteen: For adding a card that makes the total 15 Peg 2
+    ///   - Pair: For adding a card of the same rank as the card just played Peg 2 (Note that face
+    ///     cards pair only by actual rank: jack with jack, but not jack with queen.)
+    ///   - Triplet: For adding the third card of the same rank. Peg 6
+    ///   - Four: (also called "Double Pair" or "Double Pair Royal") For adding the fourth card of
+    ///     the same rank Peg 12
+    ///   - Run (Sequence): For adding a card that forms, with those just played:
+    ///     - For a sequence of three Peg 3
+    ///     - For a sequence of four. Peg 4
+    ///     - For a sequence of five. Peg 5
+    ///     - (Peg one point more for each extra card of a sequence. Note that runs are independent
+    ///       of suits, but go strictly by rank; to illustrate: 9, 10, J, or J, 9, 10 is a run but
+    ///       9, 10, Q is not)
+    
+    #[test]
+    fn score_play_points_for_fifteens() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("KH", "8D")
+            .with_current_plays(&vec![(0, "7D")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
-  //     "pair" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Spades)),
-  //       inPlays = Seq(0 -> Card(Ace, Diamonds))
-  //     ) { case playing0 @ Playing(_, _, _, pone, _, _, _) =>
-  //       val playing1 = doPlayFor[Playing](pone, Card(Ace, Spades))(playing0)
-  //       playing1.scores(pone) should be(Score(0, 2))
-  //     }
+        let game1 = game0.play(pone, Builder::card("8D")).ok().unwrap();
+        let Game::Playing(scores1, dealer1, _, _, _, _) = game1.clone() else { panic!("Unexpected state") };
 
-  //     "triplet" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Spades)),
-  //       inPlays = Seq(0 -> Card(Ace, Diamonds), 0 -> Card(Ace, Hearts))
-  //     ) { case playing0 @ Playing(_, _, _, pone, _, _, _) =>
-  //       val playing1 = doPlayFor[Playing](pone, Card(Ace, Spades))(playing0)
-  //       playing1.scores(pone) should be(Score(0, 6))
-  //     }
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(scores1[&dealer1], scores0[&dealer0]);
+        assert_eq!(scores1[&pone], scores0[&pone].add(2));
+    }
 
-  //     "double pair" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Spades)),
-  //       inPlays = Seq(0 -> Card(Ace, Diamonds), 0 -> Card(Ace, Hearts), 0 -> Card(Ace, Clubs))
-  //     ) { case playing0 @ Playing(_, _, _, pone, _, _, _) =>
-  //       val playing1 = doPlayFor[Playing](pone, Card(Ace, Spades))(playing0)
-  //       playing1.scores(pone) should be(Score(0, 12))
-  //     }
+    #[test]
+    fn score_play_points_for_pair() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("KH", "8D")
+            .with_current_plays(&vec![(0, "8S")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
-  //     "run" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Spades)),
-  //       inPlays = Seq(0 -> Card(Two, Diamonds), 0 -> Card(Three, Hearts))
-  //     ) { case playing0 @ Playing(_, _, _, pone, _, _, _) =>
-  //       val playing1 = doPlayFor[Playing](pone, Card(Ace, Spades))(playing0)
-  //       playing1.scores(pone) should be(Score(0, 3))
-  //     }
+        let game1 = game0.play(pone, Builder::card("8D")).ok().unwrap();
+        let Game::Playing(scores1, dealer1, _, _, _, _) = game1.clone() else { panic!("Unexpected state") };
 
-  //     /** It is important to keep track of the order in which cards are played to determine whether
-  //       * what looks like a sequence or a run has been interrupted by a "foreign card." Example:
-  //       * Cards are played in this order: 8, 7, 7, 6. The dealer pegs 2 for 15, and the opponent
-  //       * pegs 2 for pair, but the dealer cannot peg for run because of the extra seven (foreign
-  //       * card) that has been played. Example: Cards are played in this order: 9, 6, 8, 7. The
-  //       * dealer pegs 2 for fifteen when he plays the six and pegs 4 for run when he plays the seven
-  //       * (the 6, 7, 8, 9 sequence). The cards were not played in sequential order, but they form a
-  //       * true run with no foreign card.
-  //       */
-  //     "run edge case 1" in dummyPlaying(
-  //       poneCards = Seq(Card(Eight, Spades), Card(Seven, Spades)),
-  //       dealerCards = Seq(Card(Seven, Hearts), Card(Six, Hearts))
-  //     ) { case playing0 @ Playing(_, _, dealer, pone, _, _, _) =>
-  //       val playing1 = doPlayFor[Playing](pone, Card(Eight, Spades))(playing0)
-  //       val playing2 = doPlayFor[Playing](dealer, Card(Seven, Hearts))(playing1)
-  //       val playing3 = doPlayFor[Playing](pone, Card(Seven, Spades))(playing2)
-  //       val playing4 = doPlayFor[Playing](dealer, Card(Six, Hearts))(playing3)
-  //       playing4.scores(dealer) should be(Score(0, 2))
-  //       playing4.scores(pone) should be(Score(0, 2))
-  //     }
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(scores1[&dealer1], scores0[&dealer0]);
+        assert_eq!(scores1[&pone], scores0[&pone].add(2));
+    }
 
-  //     "run edge case 2" in dummyPlaying(
-  //       poneCards = Seq(Card(Nine, Spades), Card(Eight, Spades)),
-  //       dealerCards = Seq(Card(Seven, Hearts), Card(Six, Hearts))
-  //     ) { case playing0 @ Playing(_, _, dealer, pone, _, _, _) =>
-  //       val playing1 = doPlayFor[Playing](pone, Card(Nine, Spades))(playing0)
-  //       val playing2 = doPlayFor[Playing](dealer, Card(Six, Hearts))(playing1)
-  //       val playing3 = doPlayFor[Playing](pone, Card(Eight, Spades))(playing2)
-  //       val playing4 = doPlayFor[Playing](dealer, Card(Seven, Hearts))(playing3)
-  //       playing4.scores(dealer) should be(Score(2, 6))
-  //       playing4.scores(pone) should be(Score(0, 0))
-  //     }
-  //   }
+    #[test]
+    fn score_play_points_for_triplet() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("KH", "8D")
+            .with_current_plays(&vec![(1, "8C"), (0, "8S")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.play(pone, Builder::card("8D")).ok().unwrap();
+        let Game::Playing(scores1, dealer1, _, _, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(scores1[&dealer1], scores0[&dealer0]);
+        assert_eq!(scores1[&pone], scores0[&pone].add(6));
+    }
+
+    #[test]
+    fn score_play_points_for_quartet() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("KH", "7D")
+            .with_current_plays(&vec![(1, "7C"), (0, "7S"), (0, "7H")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.play(pone, Builder::card("7D")).ok().unwrap();
+        let Game::Playing(scores1, dealer1, _, _, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(scores1[&dealer1], scores0[&dealer0]);
+        assert_eq!(scores1[&pone], scores0[&pone].add(12));
+    }
+
+    #[test]
+    fn score_play_points_for_run() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("KH", "AS")
+            .with_current_plays(&vec![(1, "2D"), (0, "3H")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.play(pone, Builder::card("AS")).ok().unwrap();
+        let Game::Playing(scores1, dealer1, _, _, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(scores1[&dealer1], scores0[&dealer0]);
+        assert_eq!(scores1[&pone], scores0[&pone].add(3));
+    }
+
+    /// It is important to keep track of the order in which cards are played to determine whether
+    /// what looks like a sequence or a run has been interrupted by a "foreign card." Example:
+    /// Cards are played in this order: 8, 7, 7, 6. The dealer pegs 2 for 15, and the opponent
+    /// pegs 2 for pair, but the dealer cannot peg for run because of the extra seven (foreign
+    /// card) that has been played. Example: Cards are played in this order: 9, 6, 8, 7. The
+    /// dealer pegs 2 for fifteen when he plays the six and pegs 4 for run when he plays the seven
+    /// (the 6, 7, 8, 9 sequence). The cards were not played in sequential order, but they form a
+    /// true run with no foreign card.
+
+    #[test]
+    fn score_play_points_for_run_edge_case_1() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("5H7H6H", "8S7S")
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.play(pone, Builder::card("8S")).ok().unwrap();
+        let game1 = game1.play(dealer0, Builder::card("7H")).ok().unwrap();
+        let game1 = game1.play(pone, Builder::card("7S")).ok().unwrap();
+        let game1 = game1.play(dealer0, Builder::card("6H")).ok().unwrap();
+
+        let Game::Playing(scores1, dealer1, _, _, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(scores1[&dealer1], scores0[&dealer0].add(2));
+        assert_eq!(scores1[&pone], scores0[&pone].add(2));
+    }
+
+    #[test]
+    fn score_play_points_for_run_edge_case_2() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("5H7H6H", "9S8S")
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.play(pone, Builder::card("9S")).ok().unwrap();
+        let game1 = game1.play(dealer0, Builder::card("6H")).ok().unwrap();
+        let game1 = game1.play(pone, Builder::card("8S")).ok().unwrap();
+        let game1 = game1.play(dealer0, Builder::card("7H")).ok().unwrap();
+
+        let Game::Playing(scores1, dealer1, _, _, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(scores1[&dealer1], scores0[&dealer0].add(2).add(4));
+        assert_eq!(scores1[&pone], scores0[&pone]);
+    }
 
   //   /** ## Counting the Hands
   //     *

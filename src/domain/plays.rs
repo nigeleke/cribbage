@@ -25,6 +25,10 @@ impl Play {
     pub fn card(self) -> Card {
         self.card
     }
+
+    pub fn value(self) -> Value {
+        self.card.value()
+    }
 }
 
 impl std::fmt::Display for Play {
@@ -130,7 +134,7 @@ impl PlayState {
 
     pub(crate) fn finished_plays(&self) -> bool {
         let legal_plays = &self.legal_plays;
-        legal_plays.into_iter().all(|(_, hand)| hand.is_empty())
+        legal_plays.iter().all(|(_, hand)| hand.is_empty())
     }
 
     pub(crate) fn next_to_play(&self) -> Player {

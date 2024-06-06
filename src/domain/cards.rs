@@ -85,11 +85,37 @@ impl<T> From<Vec<Card>> for Cards<T> {
     }
 }
 
+#[cfg(test)]
+impl<T> From<&str> for Cards<T> {
+    fn from(value: &str) -> Self {
+        let card_chunks = |cards: &str| {
+            cards
+                .chars()
+                .collect::<Vec<_>>()
+                .chunks(2)
+                .map(|chunk| chunk.iter().collect::<String>())
+                .collect::<Vec<_>>()
+        };
+
+        let cards = card_chunks(value)
+            .iter()
+            .map(|cid| Card::from(cid.as_str()))
+            .collect::<Vec<Card>>();
+
+        Self { cards, _marker: Default::default() }
+    }
+}
+
 impl<U> FromIterator<Card> for Cards<U> {
     fn from_iter<T: IntoIterator<Item = Card>>(iter: T) -> Self {
         Self { cards: Vec::from_iter(iter), _marker: Default::default() }
     }
 }
+
+/// Cuts for start of game.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CutsType;
+pub type Cuts = Cards<CutsType>;
 
 /// A deck of cards.
 #[derive(Clone, Debug, PartialEq)]

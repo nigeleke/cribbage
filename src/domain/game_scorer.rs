@@ -95,25 +95,29 @@ mod test {
     use super::*;
 
     use crate::domain::builder::Builder;
+    use crate::domain::card::Card;
     use crate::domain::game::Game;
 
     #[test]
     fn his_heels_on_cut_pre_play_scores_zero_for_non_jack() {
-        let cards = Builder::card_chunks("AH2H3H4H5H6H7H8H9HTHQHKHAC2C3C4C5C6C7C8C9CTCQCKC");
+        let cards = vec![
+            "AH", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "TH", "QH", "KH",
+            "AC", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "TC", "QC", "KC",
+        ];
         cards
-            .iter()
+            .into_iter()
             .for_each(|c| {
-                assert_eq!(GameScorer::his_heels_on_cut_pre_play(Builder::card(c)), 0)
+                assert_eq!(GameScorer::his_heels_on_cut_pre_play(Card::from(c)), 0)
             });
     }
 
     #[test]
     fn his_heels_on_cut_pre_play_scores_for_jack() {
-        let cards = Builder::card_chunks("JHJCJDJS");
+        let cards = vec!["JH", "JC", "JD", "JS"];
         cards
-            .iter()
+            .into_iter()
             .for_each(|c| {
-                assert_eq!(GameScorer::his_heels_on_cut_pre_play(Builder::card(c)), 2)
+                assert_eq!(GameScorer::his_heels_on_cut_pre_play(Card::from(c)), 2)
             });
     }
 

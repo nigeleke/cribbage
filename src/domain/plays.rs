@@ -133,7 +133,6 @@ impl PlayState {
         legal_plays.into_iter().all(|(_, hand)| hand.is_empty())
     }
 
-    #[cfg(test)]
     pub(crate) fn next_to_play(&self) -> Player {
         self.next_to_play
     }

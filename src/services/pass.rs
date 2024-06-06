@@ -1,9 +1,9 @@
-use crate::view::prelude::{Card, Game as GameView};
+use crate::view::prelude::Game as GameView;
 
 use leptos::*;
 
 #[server]
-pub async fn play(game_id: String, card: Card) -> Result<GameView, ServerFnError> {
+pub async fn pass(game_id: String) -> Result<GameView, ServerFnError> {
     use crate::domain::prelude::*;
     use crate::ssr::auth;
     use crate::ssr::database::prelude::*;
@@ -19,7 +19,7 @@ pub async fn play(game_id: String, card: Card) -> Result<GameView, ServerFnError
     let mut transaction = connection.begin().await?;
 
     let mut game = select_game(&mut transaction, &game_id).await?;
-    game = game.play(player, card)?;
+    game = game.pass(player)?;
 
     if let Game::Playing(_, _, _, _, _, _) = game {
         let opponent = game.opponent(player);

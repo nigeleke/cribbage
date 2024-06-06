@@ -406,6 +406,53 @@
 <a href="#406" id="406">406</a>
 <a href="#407" id="407">407</a>
 <a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Context;
 <span class="kw">use </span><span class="kw">super</span>::card::Card;
 <span class="kw">use </span><span class="kw">super</span>::cards::Cards;
@@ -413,7 +460,7 @@
 <span class="kw">use </span><span class="kw">super</span>::cuts::Cuts;
 
 <span class="kw">use </span><span class="kw">crate</span>::domain::prelude::CARDS_DISCARDED_TO_CRIB;
-<span class="kw">use </span><span class="kw">crate</span>::services::prelude::{discard, play};
+<span class="kw">use </span><span class="kw">crate</span>::services::prelude::{discard, pass, play};
 <span class="kw">use </span><span class="kw">crate</span>::view::prelude::{CardSlot, Cuts, Game <span class="kw">as </span>GameView, Hands, PlayState, Role, Scores, Score};
 
 <span class="kw">use </span>leptos::<span class="kw-2">*</span>;
@@ -583,13 +630,14 @@
 </span><span class="attr">#[component]
 </span><span class="kw">fn </span>PlayArea() -&gt; <span class="kw">impl </span>IntoView {
     <span class="kw">let </span>game = use_context::&lt;GameView&gt;().unwrap();
-
+<span class="macro">logging::log!</span>(<span class="string">"playarea for: {:?}"</span>, game);
     <span class="kw">match </span>game {
         GameView::Starting(cuts) =&gt; starting_play_area(<span class="kw-2">&amp;</span>cuts).into_view(),
         GameView::Discarding(<span class="kw">_</span>, hands, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; discarding_play_area(<span class="kw-2">&amp;</span>hands).into_view(),
         GameView::Playing(<span class="kw">_</span>, hands, play_state, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt;
             playing_play_area(<span class="kw-2">&amp;</span>hands, <span class="kw-2">&amp;</span>play_state).into_view(),
-        GameView::ScoringPone(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="macro">unimplemented!</span>(),
+        GameView::ScoringPone(<span class="kw">_</span>, role, hands, <span class="kw">_</span>, <span class="kw">_</span>) =&gt;
+            scoring_play_area(role, <span class="kw-2">&amp;</span>hands).into_view(),
     }
 }
 
@@ -718,6 +766,19 @@
         }
     };
 
+    <span class="kw">let </span>on_pass = {
+        <span class="kw">let </span>context = context.clone();
+        <span class="kw">move </span>|<span class="kw">_</span>| {
+            <span class="kw">let </span>id = context.id.clone();
+            <span class="kw">let </span>state = context.state;
+            spawn_local(<span class="kw">async move </span>{
+                <span class="kw">if let </span><span class="prelude-val">Ok</span>(game) = pass(id).<span class="kw">await </span>{
+                    state.set(<span class="prelude-val">Some</span>(game.clone()));
+                }
+            });
+        }
+    };
+
     <span class="macro">view!</span> {
         class = class,
         &lt;div&gt;
@@ -728,7 +789,7 @@
                 }}
                 &lt;span&gt;{
                     <span class="kw">if </span>play_state.must_pass() {
-                        <span class="macro">view!</span> { &lt;button&gt;<span class="string">"Pass"</span>&lt;/button&gt; }
+                        <span class="macro">view!</span> { &lt;button on:click=on_pass&gt;<span class="string">"Pass"</span>&lt;/button&gt; }
                     } <span class="kw">else </span>{
                         <span class="macro">view!</span> { &lt;button on:click=on_play disabled=disabled&gt;<span class="string">"Play"</span>&lt;/button&gt; }
                     }
@@ -754,6 +815,12 @@
         div {
             display: flex;
             flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            gap: <span class="number">5vw</span>;
+        }
+        div p {
+            font-size: <span class="number">42px</span>;
         }
     };
 
@@ -763,15 +830,42 @@
 
     <span class="macro">view!</span>{
         class = class,
-        &lt;div&gt;
-            &lt;p&gt;{running_total}&lt;/p&gt;
-            &lt;Cards cards={current_plays} /&gt;
-            &lt;p&gt;<span class="string">"-"</span>&lt;/p&gt;
-            &lt;Cards cards={previous_plays} stacked=<span class="bool-val">true </span>/&gt;
-        &lt;/div&gt;
+            &lt;div&gt;
+                &lt;p&gt;{running_total}&lt;/p&gt;
+                &lt;Cards cards={current_plays} /&gt;
+                &lt;p /&gt;
+                &lt;Cards cards={previous_plays} stacked=<span class="bool-val">true </span>/&gt;
+            &lt;/div&gt;
     }
 }
 
+
+<span class="kw">fn </span>scoring_play_area(role: Role, hands: <span class="kw-2">&amp;</span>Hands) -&gt; <span class="kw">impl </span>IntoView {
+    <span class="kw">let </span>(current_player_cards, <span class="kw">_</span>) = create_signal(hands[<span class="kw-2">&amp;</span>Role::CurrentPlayer].clone());
+    <span class="kw">let </span>(opponent_cards, <span class="kw">_</span>) = create_signal(hands[<span class="kw-2">&amp;</span>Role::Opponent].clone());
+
+
+    <span class="comment">// TODO: Include Score Breakdown
+
+    </span><span class="macro">view!</span> {
+        &lt;div&gt;
+            &lt;div&gt;
+                {<span class="kw">move </span>|| {
+                    <span class="kw">let </span>current_player_cards = current_player_cards();
+                    <span class="macro">view!</span>{ &lt;Cards cards=current_player_cards /&gt; }
+                }}
+                &lt;span&gt;&lt;button&gt;<span class="string">"Next"</span>&lt;/button&gt;&lt;/span&gt;
+            &lt;/div&gt;
+            &lt;div /&gt;
+            &lt;div&gt;
+                {<span class="kw">move </span>|| {
+                    <span class="kw">let </span>opponent_cards = opponent_cards();
+                    <span class="macro">view!</span>{ &lt;Cards cards=opponent_cards /&gt; }
+                }}
+            &lt;/div&gt;
+        &lt;/div&gt;
+    }
+}
 
 <span class="doccomment">/// Show the current crib, in a position relevant to the dealer, and the current cut card.
 </span><span class="attr">#[component]
@@ -784,7 +878,7 @@
         GameView::Starting(<span class="kw">_</span>) =&gt; empty_view().into_view(),
         GameView::Discarding(<span class="kw">_</span>, <span class="kw">_</span>, crib, <span class="kw">_</span>) =&gt; crib_and_cut_view(<span class="kw-2">&amp;</span>crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
         GameView::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, cut, crib, <span class="kw">_</span>) =&gt; crib_and_cut_view(<span class="kw-2">&amp;</span>crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
-        GameView::ScoringPone(<span class="kw">_</span>, <span class="kw">_</span>, cut, crib) =&gt; crib_and_cut_view(<span class="kw-2">&amp;</span>crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
+        GameView::ScoringPone(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, cut, crib) =&gt; crib_and_cut_view(<span class="kw-2">&amp;</span>crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
     }
 }
 

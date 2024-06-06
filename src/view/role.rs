@@ -2,11 +2,17 @@ use crate::domain::prelude::Player as DomainPlayer;
 
 use serde::{Serialize, Deserialize};
 
-#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
 pub enum Role {
     CurrentPlayer,
     Opponent
 } 
+
+impl Role {
+    pub(crate) fn other(self) -> Self {
+        if self == Role::CurrentPlayer { Role::Opponent } else { Role::CurrentPlayer }
+    }
+}
 
 pub type Dealer = Role;
 

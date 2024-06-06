@@ -1,3 +1,5 @@
+use leptos::leptos_dom::logging;
+
 use crate::domain::prelude::*;
 
 pub struct Opponent;
@@ -18,16 +20,23 @@ impl Opponent {
     pub fn play(opponent: Player, game: &Game) -> Game {
         match game {
             Game::Playing(_, _dealer, _hands, play_state, _, _) => {
-                let legal_plays = play_state.legal_plays(opponent).ok().unwrap();
-                if legal_plays.is_empty() {
-                    game.pass(opponent).ok().unwrap()
+                if play_state.next_to_play() == opponent {
+                    let legal_plays = play_state.legal_plays(opponent).ok().unwrap();
+                    if legal_plays.is_empty() {
+                        game.pass(opponent).ok().unwrap()
+                    } else {
+                        // TODO: Analyse
+                        let card = legal_plays.cards().into_iter().next().unwrap();
+                        game.play(opponent, card).ok().unwrap()
+                    }
                 } else {
-                    // TODO: Analyse
-                    let card = legal_plays.cards().into_iter().next().unwrap();
-                    game.play(opponent, card).ok().unwrap()
+                    game.clone()
                 }
             },
-            _ => unreachable!(),
+            _ => {
+                eprint!("ssr::opponent::play {}", game);
+                unreachable!()
+            },
         }
     }
 }

@@ -5,7 +5,7 @@ use super::crib::Crib;
 use super::cuts::Cuts;
 
 use crate::domain::prelude::CARDS_DISCARDED_TO_CRIB;
-use crate::services::prelude::{discard, play};
+use crate::services::prelude::{discard, pass, play};
 use crate::view::prelude::{CardSlot, Cuts, Game as GameView, Hands, PlayState, Role, Scores, Score};
 
 use leptos::*;
@@ -175,13 +175,14 @@ fn Hole(
 #[component]
 fn PlayArea() -> impl IntoView {
     let game = use_context::<GameView>().unwrap();
-
+logging::log!("playarea for: {:?}", game);
     match game {
         GameView::Starting(cuts) => starting_play_area(&cuts).into_view(),
         GameView::Discarding(_, hands, _, _) => discarding_play_area(&hands).into_view(),
         GameView::Playing(_, hands, play_state, _, _, _) =>
             playing_play_area(&hands, &play_state).into_view(),
-        GameView::ScoringPone(_, _, _, _) => unimplemented!(),
+        GameView::ScoringPone(_, role, hands, _, _) =>
+            scoring_play_area(role, &hands).into_view(),
     }
 }
 
@@ -310,6 +311,19 @@ fn playing_play_area(hands: &Hands, play_state: &PlayState) -> impl IntoView {
         }
     };
 
+    let on_pass = {
+        let context = context.clone();
+        move |_| {
+            let id = context.id.clone();
+            let state = context.state;
+            spawn_local(async move {
+                if let Ok(game) = pass(id).await {
+                    state.set(Some(game.clone()));
+                }
+            });
+        }
+    };
+
     view! {
         class = class,
         <div>
@@ -320,7 +334,7 @@ fn playing_play_area(hands: &Hands, play_state: &PlayState) -> impl IntoView {
                 }}
                 <span>{
                     if play_state.must_pass() {
-                        view! { <button>"Pass"</button> }
+                        view! { <button on:click=on_pass>"Pass"</button> }
                     } else {
                         view! { <button on:click=on_play disabled=disabled>"Play"</button> }
                     }
@@ -346,6 +360,12 @@ fn PlayState(
         div {
             display: flex;
             flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            gap: 5vw;
+        }
+        div p {
+            font-size: 42px;
         }
     };
 
@@ -355,15 +375,42 @@ fn PlayState(
 
     view!{
         class = class,
-        <div>
-            <p>{running_total}</p>
-            <Cards cards={current_plays} />
-            <p>"-"</p>
-            <Cards cards={previous_plays} stacked=true />
-        </div>
+            <div>
+                <p>{running_total}</p>
+                <Cards cards={current_plays} />
+                <p />
+                <Cards cards={previous_plays} stacked=true />
+            </div>
     }
 }
 
+
+fn scoring_play_area(role: Role, hands: &Hands) -> impl IntoView {
+    let (current_player_cards, _) = create_signal(hands[&Role::CurrentPlayer].clone());
+    let (opponent_cards, _) = create_signal(hands[&Role::Opponent].clone());
+
+
+    // TODO: Include Score Breakdown
+
+    view! {
+        <div>
+            <div>
+                {move || {
+                    let current_player_cards = current_player_cards();
+                    view!{ <Cards cards=current_player_cards /> }
+                }}
+                <span><button>"Next"</button></span>
+            </div>
+            <div />
+            <div>
+                {move || {
+                    let opponent_cards = opponent_cards();
+                    view!{ <Cards cards=opponent_cards /> }
+                }}
+            </div>
+        </div>
+    }
+}
 
 /// Show the current crib, in a position relevant to the dealer, and the current cut card.
 #[component]
@@ -376,7 +423,7 @@ fn CribAndCut() -> impl IntoView {
         GameView::Starting(_) => empty_view().into_view(),
         GameView::Discarding(_, _, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
         GameView::Playing(_, _, _, cut, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
-        GameView::ScoringPone(_, _, cut, crib) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
+        GameView::ScoringPone(_, _, _, cut, crib) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
     }
 }
 

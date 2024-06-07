@@ -1,4 +1,4 @@
-use super::card::{Card, Value};
+use super::card::{Card, Rank, Value};
 use super::cards::{Hand, Hands};
 use super::format::{format_hashmap, format_vec};
 use super::player::Player;
@@ -28,6 +28,10 @@ impl Play {
 
     pub fn value(self) -> Value {
         self.card.value()
+    }
+
+    pub fn rank(self) -> Rank {
+        self.card.rank()
     }
 }
 

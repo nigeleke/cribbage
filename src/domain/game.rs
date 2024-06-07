@@ -202,6 +202,8 @@ impl Game {
 
     pub fn play(&self, player: Player, card: Card) -> Result<Game> {
         let mut game = self.clone();
+        let pone = game.pone();
+
         match game {
             Game::Playing(scores, dealer, ref mut hands, ref mut play_state, cut, crib) => {
                 let players = self.players();
@@ -223,6 +225,7 @@ impl Game {
                 };
 
                 game = if play_state.finished_plays() {
+                    score += GameScorer::hand(&hands[&pone], cut);
                     Game::ScoringPone(scores, dealer, hands.clone(), cut, crib.clone())
                 } else {
                     Game::Playing(scores, dealer, hands.clone(), play_state.clone(), cut, crib)
@@ -236,6 +239,8 @@ impl Game {
 
     pub(crate) fn pass(&self, player: Player) -> Result<Game> {
         let mut game = self.clone();
+        let pone = game.pone();
+
         match game {
             Game::Playing(scores, dealer, ref mut hands, ref mut play_state, cut, crib) => {
                 let players = self.players();
@@ -254,6 +259,7 @@ impl Game {
                 }
 
                 game = if play_state.finished_plays() {
+                    score += GameScorer::hand(&hands[&pone], cut);
                     Game::ScoringPone(scores, dealer, hands.clone(), cut, crib.clone())
                 } else {
                     Game::Playing(scores, dealer, hands.clone(), play_state.clone(), cut, crib)
@@ -1339,89 +1345,44 @@ mod test {
         assert_eq!(scores1[&pone], scores0[&pone]);
     }
 
-  //   /** ## Counting the Hands
-  //     *
-  //     * When play ends, the three hands are counted in order: non-dealer's hand (first), dealer's
-  //     * hand (second), and then the crib (third). This order is important because, toward the end of
-  //     * a game, the non-dealer may "count out" and win before the dealer has a chance to count, even
-  //     * though the dealer's total would have exceeded that of the opponent. The starter is
-  //     * considered to be a part of each hand, so that all hands in counting comprise five cards. The
-  //     * basic scoring formations are as follows:
-  //     *
-  //     * Combination Counts
-  //     *   - Fifteen. Each combination of cards that totals 15 2
-  //     *   - Pair. Each pair of cards of the same rank 2
-  //     *   - Run. Each combination of three or more 1 cards in sequence (for each card in the
-  //     *     sequence)
-  //     *   - Flush.
-  //     *     - Four cards of the same suit in hand 4 (excluding the crib, and the starter)
-  //     *     - Four cards in hand or crib of the same 5 suit as the starter. (There is no count for
-  //     *       four-flush in the crib that is not of same suit as the starter)
-  //     *   - His Nobs. Jack of the same suit as starter in hand or crib 1
-  //     */
-  //   "score cards" when {
-  //     "fifteens" in dummyPlaying(
-  //       poneCards = Seq(Card(Ten, Hearts)),
-  //       poneScore = Score(0, -1), // Adjust for final Play
-  //       playeds = Seq(
-  //         0 -> Card(Seven, Hearts),
-  //         0 -> Card(Eight, Clubs),
-  //         0 -> Card(Ace, Clubs),
-  //         0 -> Card(Two, Clubs),
-  //         1 -> Card(Jack, Clubs),
-  //         1 -> Card(King, Spades),
-  //         1 -> Card(Five, Hearts)
-  //       ),
-  //       maybeCut = Some(Card(Four, Hearts))
-  //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, _) =>
-  //       val discarding1 = doPlayFor[Discarding](pone0, Card(Ten, Hearts))(playing0)
+    /// ## Counting the Hands
+    ///
+    /// When play ends, the three hands are counted in order: non-dealer's hand (first), dealer's
+    /// hand (second), and then the crib (third). This order is important because, toward the end of
+    /// a game, the non-dealer may "count out" and win before the dealer has a chance to count, even
+    /// though the dealer's total would have exceeded that of the opponent. The starter is
+    /// considered to be a part of each hand, so that all hands in counting comprise five cards. The
+    /// basic scoring formations are as follows:
+    ///
+    /// Combination Counts - (See GameScorer::test)
+    ///   - Fifteen. Each combination of cards that totals 15 2
+    ///   - Pair. Each pair of cards of the same rank 2
+    ///   - Run. Each combination of three or more 1 cards in sequence (for each card in the
+    ///     sequence)
+    ///   - Flush.
+    ///     - Four cards of the same suit in hand 4 (excluding the crib, and the starter)
+    ///     - Four cards in hand or crib of the same 5 suit as the starter. (There is no count for
+    ///       four-flush in the crib that is not of same suit as the starter)
+    ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
 
-  //       val Discarding(_, scores, _, _, _, _) = discarding1
-  //       scores(pone0) should be(Score(0, 6))
-  //       scores(dealer0) should be(Score(0, 4))
-  //     }
+    #[test]
+    fn score_cards_points_for_fifteens() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("4H")
+            .with_hands("", "TH")
+            .with_previous_plays(&vec![(0, "7H"), (0, "8C"), (0, "AC"), (0, "2C"), (1, "JC"), (1, "KS"), (1, "5H")])
+            .as_playing(1);
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
-  //     "pairs" in dummyPlaying(
-  //       poneCards = Seq(Card(Ten, Hearts)),
-  //       poneScore = Score(0, -1), // Adjust for final Play
-  //       playeds = Seq(
-  //         0 -> Card(Two, Hearts),
-  //         0 -> Card(Four, Clubs),
-  //         0 -> Card(Five, Clubs),
-  //         0 -> Card(Two, Clubs),
-  //         1 -> Card(Ten, Clubs),
-  //         1 -> Card(Ace, Spades),
-  //         1 -> Card(Ace, Diamonds)
-  //       ),
-  //       maybeCut = Some(Card(Ace, Hearts))
-  //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, _) =>
-  //       val discarding1 = doPlayFor[Discarding](pone0, Card(Ten, Hearts))(playing0)
+        let game1 = game0.play(pone, Card::from("TH")).ok().unwrap();
+        let Game::ScoringPone(scores1, dealer1, _, _, _) = game1.clone() else { panic!("Unexpected state") };
 
-  //       val Discarding(_, scores, _, _, _, _) = discarding1
-  //       scores(pone0) should be(Score(0, 8))
-  //       scores(dealer0) should be(Score(0, 2))
-  //     }
-
-  //     "runs" in dummyPlaying(
-  //       poneCards = Seq(Card(Five, Hearts)),
-  //       poneScore = Score(0, -1), // Adjust for final Play
-  //       playeds = Seq(
-  //         0 -> Card(Jack, Diamonds),
-  //         0 -> Card(Queen, Clubs),
-  //         0 -> Card(King, Clubs),
-  //         0 -> Card(Two, Clubs),
-  //         1 -> Card(Three, Clubs),
-  //         1 -> Card(Three, Spades),
-  //         1 -> Card(Two, Diamonds)
-  //       ),
-  //       maybeCut = Some(Card(Ace, Hearts))
-  //     ) { case playing0 @ Playing(_, _, dealer0, pone0, _, _, _) =>
-  //       val discarding1 = doPlayFor[Discarding](pone0, Card(Five, Hearts))(playing0)
-
-  //       val Discarding(_, scores, _, _, _, _) = discarding1
-  //       scores(pone0) should be(Score(0, 8))
-  //       scores(dealer0) should be(Score(0, 3))
-  //     }
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(scores1[&dealer1], scores0[&dealer0].add(6));
+        assert_eq!(scores1[&pone], scores0[&pone].add(4));
+    }
 
   //     "flush - hand" in dummyPlaying(
   //       poneCards = Seq(Card(King, Hearts)),

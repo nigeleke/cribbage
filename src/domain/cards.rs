@@ -9,12 +9,14 @@ use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct Cards<T> {
+pub struct Cards<T>
+where T: Clone {
     cards: Vec<Card>,
     _marker: std::marker::PhantomData<T>
 }
 
-impl<T> Cards<T> {
+impl<T> Cards<T>
+where T: Clone {
     pub(crate) fn remove(&mut self, card: Card) {
         self.cards.retain(|c| *c != card)
     }
@@ -67,26 +69,30 @@ impl<T> Cards<T> {
     }
 }
 
-impl<T> Default for Cards<T> {
+impl<T> Default for Cards<T>
+where T: Clone {
     fn default() -> Self {
         Self { cards: Default::default(), _marker: Default::default() }
     }
 }
 
-impl<T> Display for Cards<T> {
+impl<T> Display for Cards<T>
+where T: Clone {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", format_vec(&self.cards))
     }
 }
 
-impl<T> From<Vec<Card>> for Cards<T> {
+impl<T> From<Vec<Card>> for Cards<T>
+where T: Clone {
     fn from(value: Vec<Card>) -> Self {
         Self { cards: value, _marker: Default::default() }
     }
 }
 
 #[cfg(test)]
-impl<T> From<&str> for Cards<T> {
+impl<T> From<&str> for Cards<T>
+where T: Clone {
     fn from(value: &str) -> Self {
         let card_chunks = |cards: &str| {
             cards
@@ -106,7 +112,8 @@ impl<T> From<&str> for Cards<T> {
     }
 }
 
-impl<U> FromIterator<Card> for Cards<U> {
+impl<U> FromIterator<Card> for Cards<U>
+where U: Clone {
     fn from_iter<T: IntoIterator<Item = Card>>(iter: T) -> Self {
         Self { cards: Vec::from_iter(iter), _marker: Default::default() }
     }

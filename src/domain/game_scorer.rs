@@ -31,6 +31,7 @@ impl GameScorer {
         Self::current_play_fifteen(play_state) +
             Self::current_play_pairs(play_state) +
             Self::current_play_runs(play_state)
+
     }
 
     fn current_play_fifteen(play_state: &PlayState) -> usize {
@@ -84,12 +85,15 @@ impl GameScorer {
     }
 
     pub(crate) fn end_of_play(play_state: &PlayState) -> usize {
-        let total = play_state.running_total();
-
-        if total == Value::from(PLAY_TARGET) {
-            Self::SCORE_THIRTY_ONE
+        println!("end_of_play:: is_current_play_finished {}, running_total {:?}", play_state.is_current_play_finished(), play_state.running_total());
+        if play_state.is_current_play_finished() {
+            if play_state.running_total() == Value::from(PLAY_TARGET) {
+                Self::SCORE_THIRTY_ONE
+            } else {
+                Self::SCORE_UNDER_THIRTY_ONE
+            }
         } else {
-            Self::SCORE_UNDER_THIRTY_ONE
+            Self::SCORE_ZERO
         }
     }
 
@@ -176,9 +180,7 @@ impl GameScorer {
                 }
             }
 
-            if total != 0 {
-                break;
-            }
+            if total != 0 { break; }
         }    
 
         total
@@ -245,7 +247,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "JD"), (0, "5H")])
             .with_cut("AH")
-            .as_playing(1);
+            .as_playing(None);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::current_play(&play_state), 2)
     }
@@ -257,7 +259,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "JD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(1);
+            .as_playing(None);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::current_play(&play_state), 2)
     }
@@ -269,7 +271,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(1);
+            .as_playing(None);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::current_play(&play_state), 6)
     }
@@ -281,7 +283,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(1);
+            .as_playing(None);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::current_play(&play_state), 12)
     }
@@ -298,7 +300,7 @@ mod test {
                 .with_hands("KS", "KD")
                 .with_current_plays(&current_plays)
                 .with_cut("KH")
-                .as_playing(1);
+                .as_playing(None);
             let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
             assert_eq!(GameScorer::current_play(&play_state), if len < 3 { 0 } else { len })
         }
@@ -311,7 +313,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(1);
+            .as_playing(None);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::end_of_play(&play_state), 1)
     }
@@ -323,7 +325,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "KC"), (0, "KD"), (0, "KH"), (0, "AS")])
             .with_cut("KS")
-            .as_playing(1);
+            .as_playing(None);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::end_of_play(&play_state), 2)
     }

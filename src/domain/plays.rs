@@ -1,11 +1,12 @@
 use super::card::{Card, Rank, Value};
 use super::cards::{Hand, Hands};
 use super::format::{format_hashmap, format_vec};
-use super::player::Player;
+use super::player::{self, Player};
 use super::prelude::PLAY_TARGET;
 use super::result::{Error, Result};
 
 use serde::{Serialize, Deserialize};
+use std::collections::HashSet;
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Play {
@@ -43,7 +44,7 @@ impl std::fmt::Display for Play {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct PlayState {
-    next_to_play: Player,
+    next_to_play: Option<Player>,
     legal_plays: Hands,
     pass_count: usize,
     current_plays: Vec<Play>,
@@ -51,7 +52,7 @@ pub struct PlayState {
 }
 
 impl PlayState {
-    pub(crate) fn new(next_to_play: Player, hands: &Hands) -> Self {
+    pub(crate) fn new(next_to_play: Option<Player>, hands: &Hands) -> Self {
         Self {
             next_to_play,
             legal_plays: hands.clone(),
@@ -70,7 +71,7 @@ impl PlayState {
     }
 
     pub(crate) fn legal_plays(&self, player: Player) -> Result<Hand> {
-        if player == self.next_to_play {
+        if Some(player) == self.next_to_play {
             Ok(self.legal_plays_unchecked(player))
         } else {
             Err(Error::CannotPlay)
@@ -98,7 +99,7 @@ impl PlayState {
     }
 
     pub(crate) fn play(&mut self, card: Card) {
-        let player = self.next_to_play;
+        let Some(player) = self.next_to_play else { panic!("play::failed on next_to_play"); };
         if self.pass_count() == 0 {
             self.make_opponent_next_player();
         }
@@ -123,9 +124,15 @@ impl PlayState {
         let mut players = legal_plays.keys();
         let (player1, player2) = (players.next().unwrap(), players.next().unwrap());
 
-        let player = self.next_to_play;
+        let Some(player) = self.next_to_play else { panic!("make_opponent_next_player::failed on next_to_play.") };
         let opponent = if player == *player1 { *player2 } else { *player1 };
-        self.next_to_play = opponent;
+        self.next_to_play = Some(opponent);
+    }
+
+    pub(crate) fn is_current_play_finished(&self) -> bool {
+        let running_total = self.running_total();
+        let legal_plays = &self.legal_plays;
+        legal_plays.iter().all(|(_, hand)| hand.cards().iter().all(|c| c.value() + running_total > PLAY_TARGET.into()))
     }
 
     pub(crate) fn start_new_play(&mut self) {
@@ -136,13 +143,31 @@ impl PlayState {
         self.running_total() == Value::from(PLAY_TARGET)
     }
 
-    pub(crate) fn finished_plays(&self) -> bool {
+    pub(crate) fn are_plays_finished(&self) -> bool {
         let legal_plays = &self.legal_plays;
         legal_plays.iter().all(|(_, hand)| hand.is_empty())
     }
 
-    pub(crate) fn next_to_play(&self) -> Player {
+    pub(crate) fn finish_plays(&mut self) -> Hands {
+        self.next_to_play = None;
+        self.regather_hands()
+    }
+
+    pub(crate) fn next_to_play(&self) -> Option<Player> {
         self.next_to_play
+    }
+
+    fn regather_hands(&self) -> Hands {
+        let mut previous_plays = self.previous_plays();
+        let mut plays = self.current_plays();
+        plays.append(&mut previous_plays);
+        
+        let players: HashSet<Player> = HashSet::from_iter(plays.iter().map(|p| p.player));
+        let player_cards = players.into_iter().map(|player| {
+            (player, plays.iter().filter_map(|p| (p.player == player).then_some(p.card)).collect::<Hand>())
+        });
+
+        Hands::from_iter(player_cards)
     }
 
     #[cfg(test)]
@@ -165,7 +190,7 @@ impl PlayState {
 impl std::fmt::Display for PlayState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Next({}), Legal({}), Passes({}), Current({}), Previous({})",
-            self.next_to_play,
+            if let Some(player) = self.next_to_play { player.to_string() } else { "-".to_string() },
             format_hashmap(&self.legal_plays),
             self.pass_count,
             format_vec(&self.current_plays),

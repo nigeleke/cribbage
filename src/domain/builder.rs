@@ -115,9 +115,9 @@ impl Builder {
         Game::Discarding(scores, players[self.dealer], hands, crib, deck)
     }
 
-    pub fn as_playing(self, next_to_play: usize) -> Game {
+    pub fn as_playing(self, next_to_play: Option<usize>) -> Game {
         let players = self.players.clone();
-        let player = players[next_to_play];
+        let player = next_to_play.map(|p| players[p]);
         let scores = self.scores.clone();
         let scores = self.merged(scores);
         let hands = self.hands.clone();
@@ -136,6 +136,18 @@ impl Builder {
         let cut = self.cut.unwrap();
         let crib = self.crib.clone();
         Game::Playing(scores, players[self.dealer], hands, play_state, cut, crib)
+    }
+
+    pub fn as_scoring_pone(self) -> Game {
+        let players = self.players.clone();
+        let scores = self.scores.clone();
+        let scores = self.merged(scores);
+        let hands = self.hands.clone();
+        let hands = self.merged(hands);
+        let cut = self.cut.unwrap();
+        let crib = self.crib.clone();
+        Game::ScoringPone(scores, players[self.dealer], hands, cut, crib)
+
     }
 
     fn merged<T>(&self, items: Vec<T>) -> HashMap<Player, T> {

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/plays.rs`."><title>plays.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (98489f248 2024-06-06)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/plays.rs`."><title>plays.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (a70b2ae57 2024-06-09)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -169,14 +169,44 @@
 <a href="#169" id="169">169</a>
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::card::{Card, Value};
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::card::{Card, Rank, Value};
 <span class="kw">use </span><span class="kw">super</span>::cards::{Hand, Hands};
 <span class="kw">use </span><span class="kw">super</span>::format::{format_hashmap, format_vec};
-<span class="kw">use </span><span class="kw">super</span>::player::Player;
+<span class="kw">use </span><span class="kw">super</span>::player::{<span class="self">self</span>, Player};
 <span class="kw">use </span><span class="kw">super</span>::prelude::PLAY_TARGET;
 <span class="kw">use </span><span class="kw">super</span>::result::{Error, <span class="prelude-ty">Result</span>};
 
 <span class="kw">use </span>serde::{Serialize, Deserialize};
+<span class="kw">use </span>std::collections::HashSet;
 
 <span class="attr">#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 </span><span class="kw">pub struct </span>Play {
@@ -200,6 +230,10 @@
     <span class="kw">pub fn </span>value(<span class="self">self</span>) -&gt; Value {
         <span class="self">self</span>.card.value()
     }
+
+    <span class="kw">pub fn </span>rank(<span class="self">self</span>) -&gt; Rank {
+        <span class="self">self</span>.card.rank()
+    }
 }
 
 <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>Play {
@@ -210,7 +244,7 @@
 
 <span class="attr">#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 </span><span class="kw">pub struct </span>PlayState {
-    next_to_play: Player,
+    next_to_play: <span class="prelude-ty">Option</span>&lt;Player&gt;,
     legal_plays: Hands,
     pass_count: usize,
     current_plays: Vec&lt;Play&gt;,
@@ -218,7 +252,7 @@
 }
 
 <span class="kw">impl </span>PlayState {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(next_to_play: Player, hands: <span class="kw-2">&amp;</span>Hands) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(next_to_play: <span class="prelude-ty">Option</span>&lt;Player&gt;, hands: <span class="kw-2">&amp;</span>Hands) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             next_to_play,
             legal_plays: hands.clone(),
@@ -237,7 +271,7 @@
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>legal_plays(<span class="kw-2">&amp;</span><span class="self">self</span>, player: Player) -&gt; <span class="prelude-ty">Result</span>&lt;Hand&gt; {
-        <span class="kw">if </span>player == <span class="self">self</span>.next_to_play {
+        <span class="kw">if </span><span class="prelude-val">Some</span>(player) == <span class="self">self</span>.next_to_play {
             <span class="prelude-val">Ok</span>(<span class="self">self</span>.legal_plays_unchecked(player))
         } <span class="kw">else </span>{
             <span class="prelude-val">Err</span>(Error::CannotPlay)
@@ -265,7 +299,7 @@
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>play(<span class="kw-2">&amp;mut </span><span class="self">self</span>, card: Card) {
-        <span class="kw">let </span>player = <span class="self">self</span>.next_to_play;
+        <span class="kw">let </span><span class="prelude-val">Some</span>(player) = <span class="self">self</span>.next_to_play <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"play::failed on next_to_play"</span>); };
         <span class="kw">if </span><span class="self">self</span>.pass_count() == <span class="number">0 </span>{
             <span class="self">self</span>.make_opponent_next_player();
         }
@@ -290,9 +324,15 @@
         <span class="kw">let </span><span class="kw-2">mut </span>players = legal_plays.keys();
         <span class="kw">let </span>(player1, player2) = (players.next().unwrap(), players.next().unwrap());
 
-        <span class="kw">let </span>player = <span class="self">self</span>.next_to_play;
+        <span class="kw">let </span><span class="prelude-val">Some</span>(player) = <span class="self">self</span>.next_to_play <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"make_opponent_next_player::failed on next_to_play."</span>) };
         <span class="kw">let </span>opponent = <span class="kw">if </span>player == <span class="kw-2">*</span>player1 { <span class="kw-2">*</span>player2 } <span class="kw">else </span>{ <span class="kw-2">*</span>player1 };
-        <span class="self">self</span>.next_to_play = opponent;
+        <span class="self">self</span>.next_to_play = <span class="prelude-val">Some</span>(opponent);
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_current_play_finished(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">let </span>running_total = <span class="self">self</span>.running_total();
+        <span class="kw">let </span>legal_plays = <span class="kw-2">&amp;</span><span class="self">self</span>.legal_plays;
+        legal_plays.iter().all(|(<span class="kw">_</span>, hand)| hand.cards().iter().all(|c| c.value() + running_total &gt; PLAY_TARGET.into()))
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>start_new_play(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
@@ -303,13 +343,31 @@
         <span class="self">self</span>.running_total() == Value::from(PLAY_TARGET)
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>finished_plays(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>are_plays_finished(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="kw">let </span>legal_plays = <span class="kw-2">&amp;</span><span class="self">self</span>.legal_plays;
         legal_plays.iter().all(|(<span class="kw">_</span>, hand)| hand.is_empty())
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>next_to_play(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Player {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>finish_plays(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Hands {
+        <span class="self">self</span>.next_to_play = <span class="prelude-val">None</span>;
+        <span class="self">self</span>.regather_hands()
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>next_to_play(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Player&gt; {
         <span class="self">self</span>.next_to_play
+    }
+
+    <span class="kw">fn </span>regather_hands(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Hands {
+        <span class="kw">let </span><span class="kw-2">mut </span>previous_plays = <span class="self">self</span>.previous_plays();
+        <span class="kw">let </span><span class="kw-2">mut </span>plays = <span class="self">self</span>.current_plays();
+        plays.append(<span class="kw-2">&amp;mut </span>previous_plays);
+        
+        <span class="kw">let </span>players: HashSet&lt;Player&gt; = HashSet::from_iter(plays.iter().map(|p| p.player));
+        <span class="kw">let </span>player_cards = players.into_iter().map(|player| {
+            (player, plays.iter().filter_map(|p| (p.player == player).then_some(p.card)).collect::&lt;Hand&gt;())
+        });
+
+        Hands::from_iter(player_cards)
     }
 
     <span class="attr">#[cfg(test)]
@@ -332,7 +390,7 @@
 <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>PlayState {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
         <span class="macro">write!</span>(f, <span class="string">"Next({}), Legal({}), Passes({}), Current({}), Previous({})"</span>,
-            <span class="self">self</span>.next_to_play,
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(player) = <span class="self">self</span>.next_to_play { player.to_string() } <span class="kw">else </span>{ <span class="string">"-"</span>.to_string() },
             format_hashmap(<span class="kw-2">&amp;</span><span class="self">self</span>.legal_plays),
             <span class="self">self</span>.pass_count,
             format_vec(<span class="kw-2">&amp;</span><span class="self">self</span>.current_plays),

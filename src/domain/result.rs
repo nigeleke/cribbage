@@ -14,6 +14,7 @@ pub enum Error {
     CannotPlay,
     CannotPlayCard,
     CannotPass,
+    CannotScorePone,
 }
 
 impl std::fmt::Display for Error {

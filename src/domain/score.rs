@@ -1,4 +1,4 @@
-use super::player::Player;
+use super::{constants::WINNING_SCORE, player::Player};
 
 use serde::{Serialize, Deserialize};
 
@@ -25,6 +25,10 @@ impl Score {
 
     pub fn value(&self) -> usize {
         self.front_peg()
+    }
+
+    pub fn is_winning_score(&self) -> bool {
+        self.value() >= WINNING_SCORE
     }
 }
 

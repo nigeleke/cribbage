@@ -19,6 +19,20 @@ impl From<usize> for Rank {
     }
 }
 
+impl Into<usize> for Rank {
+    fn into(self) -> usize {
+        self.0
+    }
+}
+
+impl Sub for Rank {
+    type Output = Rank;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Rank(self.0 - rhs.0)
+    }
+}
+
 /// The value of a Card. 1 to 10.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Value(usize);

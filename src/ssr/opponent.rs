@@ -20,7 +20,7 @@ impl Opponent {
     pub fn play(opponent: Player, game: &Game) -> Game {
         match game {
             Game::Playing(_, _dealer, _hands, play_state, _, _) => {
-                if play_state.next_to_play() == opponent {
+                if play_state.next_to_play() == Some(opponent) {
                     let legal_plays = play_state.legal_plays(opponent).ok().unwrap();
                     if legal_plays.is_empty() {
                         game.pass(opponent).ok().unwrap()

@@ -37,9 +37,9 @@ impl Builder {
     }
 
     pub fn with_cuts(mut self, cuts: &str) -> Self {
-        let mut cuts = Builder::cards(cuts);
-        self.deck.remove_all(&cuts);
-        self.cuts.append(&mut cuts);
+        let cuts = Cuts::from(cuts);
+        self.deck.remove_all(&cuts.cards());
+        self.cuts.append(&mut cuts.cards());
         self
     }
 
@@ -51,7 +51,7 @@ impl Builder {
 
     pub fn with_hands(mut self, hand0: &str, hand1: &str) -> Self {
         let mut add_hand = |hand: &str| {
-            let hand = Hand::from(Builder::cards(hand));
+            let hand = Hand::from(hand);
             self.deck.remove_all(&hand.cards());
             self.hands.push(hand);
         };
@@ -63,26 +63,26 @@ impl Builder {
     }
 
     pub fn with_crib(mut self, crib: &str) -> Self {
-        let crib = Builder::cards(crib);
-        self.deck.remove_all(&crib);
+        let crib = Crib::from(crib);
+        self.deck.remove_all(&crib.cards());
         self.crib = crib.into();
         self
     }
 
     pub fn with_cut(mut self, cut: &str) -> Self {
-        let cut = Builder::card(cut);
+        let cut = Card::from(cut);
         self.deck.remove(cut);
         self.cut = Some(cut);
         self
     }
 
     pub fn with_current_plays(mut self, plays: &[(usize, &str)]) -> Self {
-        let _ = plays.into_iter().for_each(|(p, c)| self.play_state.force_current_play(self.players[*p], Builder::card(*c)));
+        let _ = plays.into_iter().for_each(|(p, c)| self.play_state.force_current_play(self.players[*p], Card::from(*c)));
         self
     }
 
     pub fn with_previous_plays(mut self, plays: &[(usize, &str)]) -> Self {
-        let _ = plays.into_iter().for_each(|(p, c)| self.play_state.force_previous_play(self.players[*p], Builder::card(*c)));
+        let _ = plays.into_iter().for_each(|(p, c)| self.play_state.force_previous_play(self.players[*p], Card::from(*c)));
         self
     }
 
@@ -115,9 +115,9 @@ impl Builder {
         Game::Discarding(scores, players[self.dealer], hands, crib, deck)
     }
 
-    pub fn as_playing(self, next_to_play: usize) -> Game {
+    pub fn as_playing(self, next_to_play: Option<usize>) -> Game {
         let players = self.players.clone();
-        let player = players[next_to_play];
+        let player = next_to_play.map(|p| players[p]);
         let scores = self.scores.clone();
         let scores = self.merged(scores);
         let hands = self.hands.clone();
@@ -138,33 +138,23 @@ impl Builder {
         Game::Playing(scores, players[self.dealer], hands, play_state, cut, crib)
     }
 
+    pub fn as_scoring_pone(self) -> Game {
+        let players = self.players.clone();
+        let scores = self.scores.clone();
+        let scores = self.merged(scores);
+        let hands = self.hands.clone();
+        let hands = self.merged(hands);
+        let cut = self.cut.unwrap();
+        let crib = self.crib.clone();
+        Game::ScoringPone(scores, players[self.dealer], hands, cut, crib)
+
+    }
+
     fn merged<T>(&self, items: Vec<T>) -> HashMap<Player, T> {
         let players = self.players.clone();
         let zipped = players.into_iter().zip(items);
         zipped.collect()
     }
-
-    pub fn cards(cards: &str) -> Vec<Card> {
-        let cards = Self::card_chunks(cards)
-            .iter()
-            .map(|cid| Builder::card(&cid))
-            .collect::<Vec<Card>>();
-        Vec::from_iter(cards)
-    }
-
-    pub fn card_chunks(cards: &str) -> Vec<String> {
-        cards
-            .chars()
-            .collect::<Vec<_>>()
-            .chunks(2)
-            .map(|chunk| chunk.iter().collect::<String>())
-            .collect::<Vec<String>>()
-    }
-    
-    pub fn card(cid: &str) -> Card {
-        Card::from(cid)
-    }
-    
     
 }
 

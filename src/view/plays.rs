@@ -62,7 +62,11 @@ impl PlayState {
 
 impl From<(DomainPlayState, DomainPlayer)> for PlayState {
     fn from((play_state, player): (DomainPlayState, DomainPlayer)) -> Self {
+        
         let running_total = play_state.running_total().into();
+
+        println!("Fromming {} for {} with total {}", play_state, player, running_total);
+        println!("         Legal plays {:?}", play_state.legal_plays(player));
 
         let legal_plays = play_state.legal_plays(player).ok().unwrap().cards();
         

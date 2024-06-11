@@ -220,6 +220,7 @@ impl Game {
 
                 let all_plays_finished = play_state.are_plays_finished();
                 let end_of_play = play_state.target_reached() || all_plays_finished;
+
                 if end_of_play {
                     play_state.start_new_play();
                 }
@@ -314,8 +315,6 @@ impl Display for Game {
 }
 
 mod verify {
-    use crate::domain::prelude::Play;
-
     use super::*;
 
     pub(crate) fn players(players: &HashSet<Player>) -> Result<()> {
@@ -395,6 +394,7 @@ mod verify {
 mod test {
     use super::*;
     use crate::domain::card::{Cut, Face};
+    use crate::domain::plays::Play;
 
     /// ## Number of Players
     ///
@@ -783,6 +783,7 @@ mod test {
     /// last card to all those previously played. (Example: The non-dealer begins with a four,
     /// saying "Four." The dealer plays a nine, saying "Thirteen".) The kings, queens and jacks
     /// count 10 each; every other card counts its pip value (the ace counts one).
+    
     #[test]
     fn accept_valid_play() {
         let game0 = Builder::new(2)
@@ -813,6 +814,7 @@ mod test {
         assert_eq!(dealer1, dealer0);
         assert_eq!(dealer_hand1, dealer_hand0);
         assert_eq!(pone_hand1, Hand::default());
+        assert_eq!(play_state1.next_to_play(), Some(dealer1));
         assert_eq!(play_state1.legal_plays(dealer1).ok().unwrap(), dealer_hand1);
         assert_eq!(cut1, cut0);
         assert_eq!(crib1, crib0);
@@ -887,21 +889,21 @@ mod test {
         let score0_pone = scores0[&pone];
 
         let game1 = game0.play(pone, Card::from("5H")).ok().unwrap();
-        let Game::Playing(scores1, _, _, _, _, _) = game1 else { panic!("Unexpected state") };
+        let Game::Playing(scores1, dealer1, _, play_state1, _, _) = game1 else { panic!("Unexpected state") };
         let score1_pone = scores1[&pone];
     
         assert_eq!(score1_pone, score0_pone.add(2));
+        assert_eq!(play_state1.next_to_play(), Some(dealer1));
     }
 
     #[test]
     fn score_play_when_target_not_reached_end_play() {
         let game0 = Builder::new(2)
             .with_scores(0, 0)
-            .with_hands("", "AH")
+            .with_hands("QS", "2H")
             .with_cut("QC")
             .with_current_plays(&vec![(0, "JH"), (0, "QH")])
-            .with_previous_plays(&vec![(0, "9H"), (0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
-            .with_pass()
+            .with_previous_plays(&vec![(0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
             .as_playing(Some(1));
 
         let pone = game0.pone();
@@ -909,14 +911,14 @@ mod test {
         let score0_pone = scores0[&pone];
         let score0_dealer = scores0[&dealer0];
 
-        let game1 = game0.play(pone, Card::from("AH")).ok().unwrap();
+        let game1 = game0.play(pone, Card::from("2H")).ok().unwrap();
         let Game::Playing(scores1, dealer1, _, play_state, _, _) = game1.clone() else { panic!("Unexpected state") };
         let score1_pone = scores1[&pone];
         let score1_dealer = scores1[&dealer1];
 
-        assert_eq!(play_state.next_to_play(), None);
         assert_eq!(score1_pone, score0_pone.add(1));
         assert_eq!(score1_dealer, score0_dealer);
+        assert_eq!(play_state.next_to_play(), Some(dealer1));
     }
 
     #[test]
@@ -970,10 +972,10 @@ mod test {
         let card = Card::from("AH");
         let game0 = Builder::new(2)
             .with_scores(0, 0)
-            .with_hands("", "AH")
+            .with_hands("QC", "AH")
             .with_cut("KC")
             .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "QH")])
-            .with_previous_plays(&vec![(0, "9H"), (1, "2S"), (1, "QS"), (1, "6S")])
+            .with_previous_plays(&vec![(1, "2S"), (1, "QS"), (1, "6S")])
             .as_playing(Some(1));
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, cut0, crib0) = game0.clone() else { panic!("Unexpected state") };
@@ -981,9 +983,9 @@ mod test {
         let game1 = game0.play(pone, card).ok().unwrap();
         let Game::Playing(scores1, dealer1, hands1, play_state, cut1, crib1) = game1.clone() else { panic!("Unexpected state") };
         
-        assert_eq!(play_state.next_to_play(), None);
-        assert_eq!(scores1[&pone], scores0[&pone].add(2));
         assert_eq!(dealer1, dealer0);
+        assert_eq!(scores1[&pone], scores0[&pone].add(2));
+        assert_eq!(play_state.next_to_play(), Some(dealer1));
         assert_eq!(cut1, cut0);
         assert_eq!(crib1, crib0);
     }
@@ -992,10 +994,10 @@ mod test {
     fn score_play_when_target_reached_finished() {
         let game0 = Builder::new(2)
             .with_scores(0, 120)
-            .with_hands("", "AH")
+            .with_hands("QC", "AH")
             .with_cut("KC")
             .with_current_plays(&vec![(0, "TH"), (1, "JH"), (0, "QH")])
-            .with_previous_plays(&vec![(1, "9H"), (0, "4S"), (1, "5S"), (0, "6S")])
+            .with_previous_plays(&vec![(1, "9H"), (1, "5S"), (0, "6S")])
             .as_playing(Some(1));
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
@@ -1008,9 +1010,22 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn score_play_when_plays_finished_and_game_finished() {
-        assert!(false)
+        let game0 = Builder::new(2)
+            .with_scores(0, 120)
+            .with_hands("", "AH")
+            .with_cut("KC")
+            .with_current_plays(&vec![(0, "8H"), (1, "JH"), (0, "QH")])
+            .with_previous_plays(&vec![(1, "9H"), (0, "4S"), (1, "5S"), (0, "6S")])
+            .as_playing(Some(1));
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.play(pone, Card::from("AH")).ok().unwrap();
+        let Game::Finished(scores1) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(scores1[&pone], scores0[&pone].add(1));
+        assert_eq!(scores1[&dealer0], scores0[&dealer0]);
     }
 
   //     "plays complete - scoring pone hand wins" in dummyPlaying(
@@ -1139,7 +1154,7 @@ mod test {
         assert_eq!(dealer2, dealer0);
         assert_eq!(hands2, hands0);
         assert_eq!(play_state2.next_to_play(), Some(pone));
-        assert_eq!(play_state2.pass_count(), 2);
+        assert_eq!(play_state2.pass_count(), 0);
         assert!(play_state2.current_plays().is_empty());
         for p in play_state0.current_plays().into_iter() {
             assert!(play_state2.previous_plays().contains(&p))
@@ -1210,6 +1225,146 @@ mod test {
         let Game::Finished(scores2) = game2.clone() else { panic!("Unexpected state") };
         assert_eq!(scores2[&pone], scores0[&pone]);
         assert_eq!(scores2[&dealer0], scores0[&dealer0].add(1));
+    }
+
+    #[test]
+    fn swap_player_after_pone_play() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("7H8H8D9C", "4S5STHJH")
+            .as_playing(Some(1));
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.play(pone, Card::from("4S")).ok().unwrap();
+        let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(play_state1.next_to_play(), Some(dealer1));
+    }
+
+    #[test]
+    fn swap_player_after_dealer_play() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("7H8H8D9C", "5STHJH")
+            .with_current_plays(&vec![(1, "4S")])
+            .as_playing(Some(0));
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.play(dealer0, Card::from("9C")).ok().unwrap();
+        let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(play_state1.next_to_play(), Some(pone));
+    }
+
+    #[test]
+    fn swap_player_after_pone_pass() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("8H8D", "5SJH")
+            .with_current_plays(&vec![(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
+            .as_playing(Some(1));
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.pass(pone).ok().unwrap();
+        let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(play_state1.next_to_play(), Some(dealer1));
+    }
+
+    #[test]
+    fn swap_player_after_dealer_pass() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("7H8H8D", "4S5S")
+            .with_current_plays(&vec![(1, "JH"), (0, "9C"), (1, "TH")])
+            .as_playing(Some(0));
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.pass(dealer0).ok().unwrap();
+        let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(play_state1.next_to_play(), Some(pone));
+    }
+
+    #[test]
+    fn reset_play_after_pone_then_dealer_pass() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("8H8D", "5SJH")
+            .with_current_plays(&vec![(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
+            .as_playing(Some(1));
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.pass(pone).ok().unwrap();
+        let game1 = game1.pass(dealer0).ok().unwrap();
+        let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(play_state1.next_to_play(), Some(pone));
+        assert_eq!(play_state1.previous_plays(), play_state0.current_plays());
+        assert!(play_state1.current_plays().is_empty());
+        assert_eq!(play_state1.pass_count(), 0);
+    }
+
+    #[test]
+    fn reset_play_after_after_dealer_then_pone_pass() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("7H8H8D", "4S5S")
+            .with_current_plays(&vec![(1, "JH"), (0, "9C"), (1, "TH")])
+            .as_playing(Some(0));
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.pass(dealer0).ok().unwrap();
+        let game1 = game1.pass(pone).ok().unwrap();
+        let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(play_state1.next_to_play(), Some(dealer1));
+        assert_eq!(play_state1.previous_plays(), play_state0.current_plays());
+        assert!(play_state1.current_plays().is_empty());
+        assert_eq!(play_state1.pass_count(), 0);
+    }
+
+    #[test]
+    fn reset_play_after_exact_target_reached() {
+        let game0 = Builder::new(2)
+            .with_scores(0, 0)
+            .with_cut("AS")
+            .with_hands("7H8H8D", "5STH")
+            .with_current_plays(&vec![(1, "JH"), (0, "9C"), (1, "4S")])
+            .as_playing(Some(0));
+        let pone = game0.pone();
+        let Game::Playing(scores0, dealer0, _, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
+
+        let game1 = game0.play(dealer0, Card::from("8H")).ok().unwrap();
+        let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
+
+        let last_play = Play::new(dealer0, Card::from("8H"));
+        let mut expected_current_plays = play_state0.current_plays().clone();
+        expected_current_plays.push(last_play);
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(play_state1.next_to_play(), Some(pone));
+        assert_eq!(play_state1.previous_plays(), expected_current_plays);
+        assert!(play_state1.current_plays().is_empty());
+        assert_eq!(play_state1.pass_count(), 0);
     }
 
     /// ## Pegging
@@ -1388,7 +1543,7 @@ mod test {
     /// considered to be a part of each hand, so that all hands in counting comprise five cards. The
     /// basic scoring formations are as follows:
     ///
-    /// Combination Counts - (See GameScorer::test)
+    /// Combinations: See GameScorer::test
     ///   - Fifteen. Each combination of cards that totals 15 2
     ///   - Pair. Each pair of cards of the same rank 2
     ///   - Run. Each combination of three or more 1 cards in sequence (for each card in the
@@ -1430,73 +1585,42 @@ mod test {
         assert_eq!(error, Error::CannotScorePone);
     }
 
-  //   /* ## Combinations
-  //    *
-  //    * In the above table, the word combination is used in the strict technical sense. Each and
-  //    * every combination of two cards that make a pair, of two or more cards that make 15, or of
-  //    * three or more cards that make a run, count separately.
-  //    *
-  //    * Example: A hand (including the starter) comprised of 8, 7, 7, 6, 2 scores 8 points for four
-  //    * combinations that total 15: the 8 with one 7, and the 8 with the other 7; the 6, 2 with each
-  //    * of the two 7s. The same hand also scores 2 for a pair, and 6 for two runs of three (8, 7, 6
-  //    * using each of the two 7s). The total score is 16. An experienced player computes the hand
-  //    * thus: "Fifteen 2, fifteen 4, fifteen 6, fifteen 8, and 8 for double run is 16."
-  //    *
-  //    * Note that the ace is always low and cannot form a sequence with a king. Further, a flush
-  //    * cannot happen during the play of the cards; it occurs only when the hands and the crib are
-  //    * counted.
-  //    *
-  //    * Certain basic formulations should be learned to facilitate counting. For pairs and runs
-  //    * alone:
-  //    *
-  //    * A. A triplet counts 6. A. Four of a kind counts 12. A. A run of three, with one card
-  //    * duplicated (double run) counts 8. A. A run of four, with one card duplicated, counts 10. A.
-  //    * A run of three, with one card triplicated (triple run), counts 15. A. A run of three, with
-  //    * two different cards duplicated, counts 16.
-  //    *
-  //    * ### A PERFECT 29!
-  //    *
-  //    * The highest possible score for combinations in a single Cribbage deal is 29, and it may
-  //    * occur only once in a Cribbage fan's lifetime -in fact, experts say that a 29 is probably as
-  //    * rare as a hole-in-one in golf. To make this amazing score, a player must have a five as the
-  //    * starter (upcard) and the other three fives plus the jack of the same suit as the starter -
-  //    * His Nobs: 1 point - in his hand. The double pair royal (four 5s) peg another 12 points; the
-  //    * various fives used to hit 15 can be done four ways for 8 points; and the jack plus a 5 to
-  //    * hit 15 can also be done four ways for 8 points. Total = 29 points.
-  //    */
-  //   "score combinations" when {
-  //     "six sevens and eights" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Hearts)),
-  //       playeds = Seq(
-  //         0 -> Card(Eight, Hearts),
-  //         0 -> Card(Seven, Hearts),
-  //         0 -> Card(Seven, Clubs),
-  //         0 -> Card(Six, Clubs),
-  //         1 -> Card(Ten, Diamonds),
-  //         1 -> Card(Jack, Diamonds),
-  //         1 -> Card(King, Diamonds)
-  //       )
-  //     )
+    /// ## Combinations: See GameScorer::test
+    /// 
+    /// In the above table, the word combination is used in the strict technical sense. Each and
+    /// every combination of two cards that make a pair, of two or more cards that make 15, or of
+    /// three or more cards that make a run, count separately.
+    ///
+    /// Example: A hand (including the starter) comprised of 8, 7, 7, 6, 2 scores 8 points for four
+    /// combinations that total 15: the 8 with one 7, and the 8 with the other 7; the 6, 2 with each
+    /// of the two 7s. The same hand also scores 2 for a pair, and 6 for two runs of three (8, 7, 6
+    /// using each of the two 7s). The total score is 16. An experienced player computes the hand
+    /// thus: "Fifteen 2, fifteen 4, fifteen 6, fifteen 8, and 8 for double run is 16."
+    ///
+    /// Note that the ace is always low and cannot form a sequence with a king. Further, a flush
+    /// cannot happen during the play of the cards; it occurs only when the hands and the crib are
+    /// counted.
+    ///
+    /// Certain basic formulations should be learned to facilitate counting. For pairs and runs
+    /// alone:
+    ///
+    /// A. A triplet counts 6. A. Four of a kind counts 12. A. A run of three, with one card
+    /// duplicated (double run) counts 8. A. A run of four, with one card duplicated, counts 10. A.
+    /// A run of three, with one card triplicated (triple run), counts 15. A. A run of three, with
+    /// two different cards duplicated, counts 16.
+    ///
+    /// ### A PERFECT 29!
+    ///
+    /// The highest possible score for combinations in a single Cribbage deal is 29, and it may
+    /// occur only once in a Cribbage fan's lifetime -in fact, experts say that a 29 is probably as
+    /// rare as a hole-in-one in golf. To make this amazing score, a player must have a five as the
+    /// starter (upcard) and the other three fives plus the jack of the same suit as the starter -
+    /// His Nobs: 1 point - in his hand. The double pair royal (four 5s) peg another 12 points; the
+    /// various fives used to hit 15 can be done four ways for 8 points; and the jack plus a 5 to
+    /// hit 15 can also be done four ways for 8 points. Total = 29 points.
+    
+    fn see_game_scorer() { }
 
-  //     "perfect" in dummyPlaying(
-  //       poneCards = Seq(Card(Ace, Hearts)),
-  //       playeds = Seq(
-  //         0 -> Card(Jack, Hearts),
-  //         0 -> Card(Five, Clubs),
-  //         0 -> Card(Five, Diamonds),
-  //         0 -> Card(Five, Spades),
-  //         1 -> Card(Ten, Diamonds),
-  //         1 -> Card(Jack, Diamonds),
-  //         1 -> Card(King, Diamonds)
-  //       ),
-  //       maybeCut = Some(Card(Five, Hearts))
-  //     ) { case playing0 @ Playing(_, _, _, pone0, _, _, _) =>
-  //       val discarding1 = doPlayFor[Discarding](pone0, Card(Ace, Hearts))(playing0)
-
-  //       val Discarding(_, scores1, _, _, pone1, _) = discarding1
-  //       scores1(pone1) should be(Score(0, 29))
-  //     }
-  //   }
 
   //   /** ## Miscellaneous
   //     *

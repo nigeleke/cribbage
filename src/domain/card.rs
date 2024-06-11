@@ -19,9 +19,9 @@ impl From<usize> for Rank {
     }
 }
 
-impl Into<usize> for Rank {
-    fn into(self) -> usize {
-        self.0
+impl From<Rank> for usize {
+    fn from(value: Rank) -> usize {
+        value.0
     }
 }
 

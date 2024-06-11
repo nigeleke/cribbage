@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game_scorer.rs`."><title>game_scorer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (a70b2ae57 2024-06-09)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game_scorer.rs`."><title>game_scorer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (b5b13568f 2024-06-10)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -425,6 +425,102 @@
 <a href="#425" id="425">425</a>
 <a href="#426" id="426">426</a>
 <a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
+<a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::card::{Card, Cut, Face, Rank, Value};
 <span class="kw">use </span><span class="kw">super</span>::cards::{Cards, Crib, Hand};
 <span class="kw">use </span><span class="kw">super</span>::constants::PLAY_TARGET;
@@ -454,7 +550,22 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>current_play(play_state: <span class="kw-2">&amp;</span>PlayState) -&gt; usize {
+    <span class="doccomment">/// Play combinations:
+    ///   - Fifteen: For adding a card that makes the total 15 Peg 2
+    ///   - Pair: For adding a card of the same rank as the card just played Peg 2 (Note that face
+    ///     cards pair only by actual rank: jack with jack, but not jack with queen.)
+    ///   - Triplet: For adding the third card of the same rank. Peg 6
+    ///   - Four: (also called "Double Pair" or "Double Pair Royal") For adding the fourth card of
+    ///     the same rank Peg 12
+    ///   - Run (Sequence): For adding a card that forms, with those just played:
+    ///     - For a sequence of three Peg 3
+    ///     - For a sequence of four. Peg 4
+    ///     - For a sequence of five. Peg 5
+    ///     - (Peg one point more for each extra card of a sequence. Note that runs are independent
+    ///       of suits, but go strictly by rank; to illustrate: 9, 10, J, or J, 9, 10 is a run but
+    ///       9, 10, Q is not)
+
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>current_play(play_state: <span class="kw-2">&amp;</span>PlayState) -&gt; usize {
         <span class="self">Self</span>::current_play_fifteen(play_state) +
             <span class="self">Self</span>::current_play_pairs(play_state) +
             <span class="self">Self</span>::current_play_runs(play_state)
@@ -524,9 +635,20 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>hand(cards: <span class="kw-2">&amp;</span>Hand, cut: Cut) -&gt; usize {
+    <span class="doccomment">/// Combination:
+    ///   - Fifteen. Each combination of cards that totals 15 2
+    ///   - Pair. Each pair of cards of the same rank 2
+    ///   - Run. Each combination of three or more 1 cards in sequence (for each card in the
+    ///     sequence)
+    ///   - Flush.
+    ///     - Four cards of the same suit in hand 4 (excluding the crib, and the starter)
+    ///     - Four cards in hand or crib of the same 5 suit as the starter. (There is no count for
+    ///       four-flush in the crib that is not of same suit as the starter)
+    ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
+
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>hand(cards: <span class="kw-2">&amp;</span>Hand, cut: Cut) -&gt; usize {
         <span class="kw">let </span><span class="kw-2">mut </span>all_cards = cards.clone();
-        all_cards.add(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[cut]);
+        all_cards.add(<span class="kw-2">&amp;</span>[cut]);
 
         <span class="self">Self</span>::cards_fifteen(<span class="kw-2">&amp;</span>all_cards) +
             <span class="self">Self</span>::cards_pairs(<span class="kw-2">&amp;</span>all_cards) +
@@ -540,7 +662,7 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>crib(cards: <span class="kw-2">&amp;</span>Crib, cut: Cut) -&gt; usize {
         <span class="kw">let </span><span class="kw-2">mut </span>all_cards = cards.clone();
-        all_cards.add(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[cut]);
+        all_cards.add(<span class="kw-2">&amp;</span>[cut]);
 
         <span class="self">Self</span>::cards_fifteen(<span class="kw-2">&amp;</span>all_cards) +
             <span class="self">Self</span>::cards_pairs(<span class="kw-2">&amp;</span>all_cards) +
@@ -615,7 +737,7 @@
 
     <span class="kw">fn </span>cards_flush&lt;T&gt;(cards: <span class="kw-2">&amp;</span>Cards&lt;T&gt;) -&gt; usize
     <span class="kw">where </span>T: Clone {
-        <span class="kw">let </span>suit = cards.cards().iter().next().map(|c| c.suit()).unwrap();
+        <span class="kw">let </span>suit = cards.cards().first().map(|c| c.suit()).unwrap();
         <span class="kw">let </span>same_suit = cards.cards().iter().all(|c| c.suit() == suit);
         <span class="kw">if </span>same_suit {
             cards.len()
@@ -850,5 +972,75 @@
     </span><span class="kw">fn </span>crib_his_heels_scores() {
         <span class="macro">assert_eq!</span>(GameScorer::crib(<span class="kw-2">&amp;</span>Crib::from(<span class="string">"2D4H6HJH"</span>), Card::from(<span class="string">"TH"</span>)), <span class="number">1</span>);
         <span class="macro">assert_eq!</span>(GameScorer::crib(<span class="kw-2">&amp;</span>Crib::from(<span class="string">"2H4D6DJD"</span>), Card::from(<span class="string">"TH"</span>)), <span class="number">0</span>);
+    }
+
+    <span class="doccomment">/// ## Combinations: See GameScorer::test
+    /// 
+    /// In the above table, the word combination is used in the strict technical sense. Each and
+    /// every combination of two cards that make a pair, of two or more cards that make 15, or of
+    /// three or more cards that make a run, count separately.
+    ///
+    /// Example: A hand (including the starter) comprised of 8, 7, 7, 6, 2 scores 8 points for four
+    /// combinations that total 15: the 8 with one 7, and the 8 with the other 7; the 6, 2 with each
+    /// of the two 7s. The same hand also scores 2 for a pair, and 6 for two runs of three (8, 7, 6
+    /// using each of the two 7s). The total score is 16. An experienced player computes the hand
+    /// thus: "Fifteen 2, fifteen 4, fifteen 6, fifteen 8, and 8 for double run is 16."
+ 
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>rules_example_eights_sevens_sixes() {
+        <span class="macro">assert_eq!</span>(GameScorer::hand(<span class="kw-2">&amp;</span>Hand::from(<span class="string">"8H7C7D6S"</span>), Card::from(<span class="string">"2H"</span>)), <span class="number">16</span>);
+    }
+
+    <span class="doccomment">/// Note that the ace is always low and cannot form a sequence with a king. Further, a flush
+    /// cannot happen during the play of the cards; it occurs only when the hands and the crib are
+    /// counted.
+
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>rules_example_runs() {
+        <span class="macro">assert_eq!</span>(GameScorer::hand(<span class="kw-2">&amp;</span>Hand::from(<span class="string">"JHQCKDAS"</span>), Card::from(<span class="string">"2D"</span>)), <span class="number">3</span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>rules_example_flush() {
+        <span class="macro">assert_eq!</span>(GameScorer::hand(<span class="kw-2">&amp;</span>Hand::from(<span class="string">"THQHKHAH"</span>), Card::from(<span class="string">"2H"</span>)), <span class="number">5</span>);
+        <span class="macro">assert_eq!</span>(GameScorer::hand(<span class="kw-2">&amp;</span>Hand::from(<span class="string">"THQHKHAH"</span>), Card::from(<span class="string">"2S"</span>)), <span class="number">4</span>);
+        <span class="macro">assert_eq!</span>(GameScorer::hand(<span class="kw-2">&amp;</span>Hand::from(<span class="string">"THQHKHAS"</span>), Card::from(<span class="string">"2H"</span>)), <span class="number">0</span>);
+        
+        <span class="kw">let </span>game0 = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"AH"</span>, <span class="string">"KD"</span>)
+            .with_cut(<span class="string">"2H"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">1</span>, <span class="string">"TH"</span>), (<span class="number">0</span>, <span class="string">"9H"</span>), (<span class="number">1</span>, <span class="string">"QH"</span>)])
+            .as_playing(<span class="prelude-val">Some</span>(<span class="number">0</span>));
+        <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };;
+        <span class="macro">println!</span>(<span class="string">"g0 {}"</span>, game0);
+        <span class="kw">let </span>game1 = game0.play(dealer, Card::from(<span class="string">"AH"</span>));
+        <span class="macro">println!</span>(<span class="string">"Er4 {:?}"</span>, game1);
+        <span class="kw">let </span>game1 = game1.ok().unwrap();
+        <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state, <span class="kw">_</span>, <span class="kw">_</span>) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };;
+        <span class="macro">assert_eq!</span>(GameScorer::current_play(<span class="kw-2">&amp;</span>play_state), <span class="number">0</span>);
+    }
+
+    <span class="doccomment">/// Certain basic formulations should be learned to facilitate counting. For pairs and runs
+    /// alone:
+    ///
+    /// A. A triplet counts 6. A. Four of a kind counts 12. A. A run of three, with one card
+    /// duplicated (double run) counts 8. A. A run of four, with one card duplicated, counts 10. A.
+    /// A run of three, with one card triplicated (triple run), counts 15. A. A run of three, with
+    /// two different cards duplicated, counts 16.
+    ///
+    /// ### A PERFECT 29!
+    ///
+    /// The highest possible score for combinations in a single Cribbage deal is 29, and it may
+    /// occur only once in a Cribbage fan's lifetime -in fact, experts say that a 29 is probably as
+    /// rare as a hole-in-one in golf. To make this amazing score, a player must have a five as the
+    /// starter (upcard) and the other three fives plus the jack of the same suit as the starter -
+    /// His Nobs: 1 point - in his hand. The double pair royal (four 5s) peg another 12 points; the
+    /// various fives used to hit 15 can be done four ways for 8 points; and the jack plus a 5 to
+    /// hit 15 can also be done four ways for 8 points. Total = 29 points.
+
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>rules_example_perfect_29() {
+        <span class="macro">assert_eq!</span>(GameScorer::hand(<span class="kw-2">&amp;</span>Hand::from(<span class="string">"5H5C5DJS"</span>), Card::from(<span class="string">"5S"</span>)), <span class="number">29</span>);
     }
 }</code></pre></div></section></main></body></html>

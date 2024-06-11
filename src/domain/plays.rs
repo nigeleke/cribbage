@@ -1,7 +1,7 @@
 use super::card::{Card, Rank, Value};
 use super::cards::{Hand, Hands};
 use super::format::{format_hashmap, format_vec};
-use super::player::{self, Player};
+use super::player::Player;
 use super::prelude::PLAY_TARGET;
 use super::result::{Error, Result};
 
@@ -15,7 +15,7 @@ pub struct Play {
 }
 
 impl Play {
-    fn new(player: Player, card: Card) -> Self {
+    pub(crate) fn new(player: Player, card: Card) -> Self {
         Self { player, card }
     }
 
@@ -99,6 +99,7 @@ impl PlayState {
     }
 
     pub(crate) fn play(&mut self, card: Card) {
+        println!("play_state::play:pre {}", self);
         let Some(player) = self.next_to_play else { panic!("play::failed on next_to_play"); };
         if self.pass_count() == 0 {
             self.make_opponent_next_player();
@@ -137,6 +138,7 @@ impl PlayState {
 
     pub(crate) fn start_new_play(&mut self) {
         self.previous_plays.append(&mut self.current_plays);
+        self.pass_count = 0;
     }
 
     pub(crate) fn target_reached(&self) -> bool {

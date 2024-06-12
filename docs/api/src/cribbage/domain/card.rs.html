@@ -234,6 +234,27 @@
 <a href="#234" id="234">234</a>
 <a href="#235" id="235">235</a>
 <a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::player::Player;
 
 <span class="kw">use </span>enum_iterator::{all, Sequence};
@@ -290,14 +311,6 @@
 
     <span class="kw">fn </span>add(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>::Output {
         Value(<span class="self">self</span>.<span class="number">0 </span>+ rhs.<span class="number">0</span>)
-    }
-}
-
-<span class="kw">impl </span>Sub <span class="kw">for </span>Value {
-    <span class="kw">type </span>Output = Value;
-
-    <span class="kw">fn </span>sub(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>::Output {
-        Value(<span class="self">self</span>.<span class="number">0 </span>- rhs.<span class="number">0</span>)
     }
 }
 
@@ -470,4 +483,32 @@
         <span class="macro">write!</span>(f, <span class="string">"{}"</span>, face_suit)
     }
 }
-</code></pre></div></section></main></body></html>
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>faces_have_definitive_names() {
+        <span class="kw">let </span>faces = <span class="string">"A23456789TJQK"</span>;
+        <span class="kw">let </span>expected_name = <span class="macro">vec!</span>[<span class="string">"Ace"</span>, <span class="string">"Two"</span>, <span class="string">"Three"</span>, <span class="string">"Four"</span>, <span class="string">"Five"</span>, <span class="string">"Six"</span>, <span class="string">"Seven"</span>, <span class="string">"Eight"</span>, <span class="string">"Nine"</span>, <span class="string">"Ten"</span>, <span class="string">"Jack"</span>, <span class="string">"Queen"</span>, <span class="string">"King"</span>];
+
+        <span class="kw">for </span>(i, face) <span class="kw">in </span>faces.chars().enumerate() {
+            <span class="kw">let </span>cid = <span class="macro">format!</span>(<span class="string">"{}S"</span>, face);
+            <span class="kw">let </span>card = Card::from(cid.as_str());
+            <span class="macro">assert_eq!</span>(card.face_name(), expected_name[i])
+        }
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>suits_have_definitive_names() {
+        <span class="kw">let </span>suits = <span class="string">"HCDS"</span>;
+        <span class="kw">let </span>expected_name = <span class="macro">vec!</span>[<span class="string">"Hearts"</span>, <span class="string">"Clubs"</span>, <span class="string">"Diamonds"</span>, <span class="string">"Spades"</span>];
+
+        <span class="kw">for </span>(i, suit) <span class="kw">in </span>suits.chars().enumerate() {
+            <span class="kw">let </span>cid = <span class="macro">format!</span>(<span class="string">"A{}"</span>, suit);
+            <span class="kw">let </span>card = Card::from(cid.as_str());
+            <span class="macro">assert_eq!</span>(card.suit_name(), expected_name[i])
+        }
+    }
+}</code></pre></div></section></main></body></html>

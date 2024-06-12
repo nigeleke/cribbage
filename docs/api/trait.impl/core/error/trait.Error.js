@@ -1,3 +1,0 @@
-(function() {var implementors = {
-"cribbage":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"cribbage/domain/prelude/enum.Error.html\" title=\"enum cribbage::domain::prelude::Error\">Error</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"cribbage/error_template/enum.AppError.html\" title=\"enum cribbage::error_template::AppError\">AppError</a>"]]
-};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

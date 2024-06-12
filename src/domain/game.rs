@@ -47,7 +47,7 @@ impl Game {
     }
 
     pub fn players(&self) -> HashSet<Player> {
-            match self {
+        match self {
             Game::Starting(cuts, _) => HashSet::from_iter(cuts.keys().cloned()),
             Game::Discarding(scores, _, _, _, _) => HashSet::from_iter(scores.keys().cloned()),
             Game::Playing(scores, _, _, _, _, _) => HashSet::from_iter(scores.keys().cloned()),
@@ -107,7 +107,7 @@ impl Game {
                 let crib = Crib::default();
                 Ok(Game::Discarding(scores, *dealer, hands, crib, deck))
             },
-            _ => Err(Error::InvalidAction("start".into()))
+            _ => Err(Error::ActionNotPermitted)
         }
     }
 
@@ -119,7 +119,7 @@ impl Game {
                 verify::same_cuts(cuts)?;
                 Ok(Game::new(&self.players())?)
             },
-            _ => Err(Error::InvalidAction("redraw".into()))
+            _ => Err(Error::ActionNotPermitted)
         }
     }
 
@@ -150,7 +150,7 @@ impl Game {
                     Ok(Game::Discarding(scores.clone(), *dealer, hands, crib, deck.clone()))
                 }
             },
-            _ => Err(Error::InvalidAction("discard".into()))
+            _ => Err(Error::ActionNotPermitted)
         }
     }
 
@@ -204,9 +204,7 @@ impl Game {
             Game::Finished(_) => self.clone(),
         };
 
-        println!("Checking winner {} {} {}", game, player, score);
         if game.has_winner() {
-            println!("has winner");
             let scores = game.scores();
             game = Game::Finished(scores)
         }
@@ -248,7 +246,7 @@ impl Game {
 
                 game.score_points(player, score_current_play + score_end_of_play)
             },
-            _ => unreachable!(),
+            _ => Err(Error::ActionNotPermitted),
         }
     }
 
@@ -283,7 +281,7 @@ impl Game {
 
                 game.score_points(player, score)
             },
-            _ => unreachable!(),
+            _ => Err(Error::ActionNotPermitted),
         }
     }
 
@@ -298,7 +296,7 @@ impl Game {
                 let score = GameScorer::hand(&hands[&pone], cut);
                 game.score_points(pone, score)
             },
-            _ => Err(Error::CannotScorePone),
+            _ => Err(Error::ActionNotPermitted),
         }
     }
 
@@ -310,7 +308,7 @@ impl Game {
                 let score = GameScorer::hand(&hands[&dealer], cut);
                 game.score_points(dealer, score)
             },
-            _ => Err(Error::CannotScoreDealer),
+            _ => Err(Error::ActionNotPermitted),
         }
     }
 
@@ -322,7 +320,7 @@ impl Game {
                 let score = GameScorer::crib(&crib, cut);
                 game.score_points(dealer, score)
             },
-            _ => Err(Error::CannotScoreCrib),
+            _ => Err(Error::ActionNotPermitted),
         }
     }
 
@@ -335,7 +333,7 @@ impl Game {
                 let crib = Crib::default();
                 Ok(Game::Discarding(scores.clone(), self.pone(), hands, crib, deck))
             },
-            _ => Err(Error::InvalidAction("deal_next_hands".into())),
+            _ => Err(Error::ActionNotPermitted),
         }
     }
 }
@@ -636,7 +634,7 @@ mod test {
             .as_scoring_dealer();
 
         let error = game0.deal_next_hands().err().unwrap();
-        assert_eq!(error, Error::InvalidAction("deal_next_hands".into()));
+        assert_eq!(error, Error::ActionNotPermitted);
     }
 
     /// ## Object of the Game
@@ -1631,7 +1629,7 @@ mod test {
             .as_scoring_pone();
 
         let error = game0.score_pone().err().unwrap();
-        assert_eq!(error, Error::CannotScorePone);        
+        assert_eq!(error, Error::ActionNotPermitted);        
     }
 
     #[test]
@@ -1643,7 +1641,7 @@ mod test {
             .as_scoring_dealer();
 
         let error = game0.score_pone().err().unwrap();
-        assert_eq!(error, Error::CannotScorePone);        
+        assert_eq!(error, Error::ActionNotPermitted);        
     }
 
     #[test]
@@ -1655,7 +1653,7 @@ mod test {
             .as_scoring_crib();
 
         let error = game0.score_pone().err().unwrap();
-        assert_eq!(error, Error::CannotScorePone);           
+        assert_eq!(error, Error::ActionNotPermitted);           
     }
 
     #[test]
@@ -1667,7 +1665,7 @@ mod test {
             .as_playing(None);
 
         let error = game0.score_dealer().err().unwrap();
-        assert_eq!(error, Error::CannotScoreDealer);       
+        assert_eq!(error, Error::ActionNotPermitted);       
     }
 
     #[test]
@@ -1679,7 +1677,7 @@ mod test {
             .as_playing(None);
 
         let error = game0.score_crib().err().unwrap();
-        assert_eq!(error, Error::CannotScoreCrib);       
+        assert_eq!(error, Error::ActionNotPermitted);       
     }
 
     #[test]
@@ -1725,7 +1723,7 @@ mod test {
             .as_scoring_dealer();
 
         let error = game0.score_dealer().err().unwrap();
-        assert_eq!(error, Error::CannotScoreDealer);
+        assert_eq!(error, Error::ActionNotPermitted);
     }
 
     #[test]
@@ -1774,7 +1772,7 @@ mod test {
             .as_scoring_crib();
 
         let error = game0.score_crib().err().unwrap();
-        assert_eq!(error, Error::CannotScoreCrib);
+        assert_eq!(error, Error::ActionNotPermitted);
     }
 
     /// ## Combinations

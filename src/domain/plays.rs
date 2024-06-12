@@ -99,7 +99,6 @@ impl PlayState {
     }
 
     pub(crate) fn play(&mut self, card: Card) {
-        println!("play_state::play:pre {}", self);
         let Some(player) = self.next_to_play else { panic!("play::failed on next_to_play"); };
         if self.pass_count() == 0 {
             self.make_opponent_next_player();

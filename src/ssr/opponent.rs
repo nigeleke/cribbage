@@ -1,5 +1,3 @@
-use leptos::leptos_dom::logging;
-
 use crate::domain::prelude::*;
 
 pub struct Opponent;

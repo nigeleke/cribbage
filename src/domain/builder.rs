@@ -149,6 +149,27 @@ impl Builder {
         Game::ScoringPone(scores, players[self.dealer], hands, cut, crib)
 
     }
+    pub fn as_scoring_dealer(self) -> Game {
+        let players = self.players.clone();
+        let scores = self.scores.clone();
+        let scores = self.merged(scores);
+        let hands = self.hands.clone();
+        let hands = self.merged(hands);
+        let cut = self.cut.unwrap();
+        let crib = self.crib.clone();
+        Game::ScoringDealer(scores, players[self.dealer], hands, cut, crib)
+    }
+
+    pub fn as_scoring_crib(self) -> Game {
+        let players = self.players.clone();
+        let scores = self.scores.clone();
+        let scores = self.merged(scores);
+        let hands = self.hands.clone();
+        let hands = self.merged(hands);
+        let cut = self.cut.unwrap();
+        let crib = self.crib.clone();
+        Game::ScoringCrib(scores, players[self.dealer], hands, cut, crib)
+    }
 
     fn merged<T>(&self, items: Vec<T>) -> HashMap<Player, T> {
         let players = self.players.clone();

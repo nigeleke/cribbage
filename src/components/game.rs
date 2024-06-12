@@ -19,7 +19,7 @@ pub fn Game(
     #[prop()]
     game: GameView,
 ) -> impl IntoView {
-    let class = style!  {
+    let class = style! {
         div {
             display: flex;
             flex-direction: row;
@@ -175,13 +175,16 @@ fn Hole(
 #[component]
 fn PlayArea() -> impl IntoView {
     let game = use_context::<GameView>().unwrap();
-logging::log!("playarea for: {:?}", game);
     match game {
         GameView::Starting(cuts) => starting_play_area(&cuts).into_view(),
         GameView::Discarding(_, hands, _, _) => discarding_play_area(&hands).into_view(),
         GameView::Playing(_, hands, play_state, _, _, _) =>
             playing_play_area(&hands, &play_state).into_view(),
         GameView::ScoringPone(_, role, hands, _, _) =>
+            scoring_play_area(role, &hands).into_view(),
+        GameView::ScoringDealer(_, role, hands, _, _) =>
+            scoring_play_area(role, &hands).into_view(),
+        GameView::ScoringCrib(_, role, hands, _, _) =>
             scoring_play_area(role, &hands).into_view(),
     }
 }
@@ -324,6 +327,10 @@ fn playing_play_area(hands: &Hands, play_state: &PlayState) -> impl IntoView {
         }
     };
 
+    let on_score_pone = |_| {
+
+    };
+
     view! {
         class = class,
         <div>
@@ -333,10 +340,14 @@ fn playing_play_area(hands: &Hands, play_state: &PlayState) -> impl IntoView {
                     view!{ <Cards cards=current_player_cards on_selected=set_selected /> }
                 }}
                 <span>{
-                    if play_state.must_pass() {
-                        view! { <button on:click=on_pass>"Pass"</button> }
+                    if play_state.finished_plays() {
+                        view! { <button on:click=on_score_pone>"Score pone"</button> }
                     } else {
-                        view! { <button on:click=on_play disabled=disabled>"Play"</button> }
+                        if play_state.must_pass() {
+                            view! { <button on:click=on_pass>"Pass"</button> }
+                        } else {
+                            view! { <button on:click=on_play disabled=disabled>"Play"</button> }
+                        }
                     }
                 }</span>
             </div>
@@ -385,7 +396,7 @@ fn PlayState(
 }
 
 
-fn scoring_play_area(role: Role, hands: &Hands) -> impl IntoView {
+fn scoring_play_area(_role: Role, hands: &Hands) -> impl IntoView {
     let (current_player_cards, _) = create_signal(hands[&Role::CurrentPlayer].clone());
     let (opponent_cards, _) = create_signal(hands[&Role::Opponent].clone());
 
@@ -424,6 +435,8 @@ fn CribAndCut() -> impl IntoView {
         GameView::Discarding(_, _, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceDown, dealer.unwrap()).into_view(),
         GameView::Playing(_, _, _, cut, crib, _) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
         GameView::ScoringPone(_, _, _, cut, crib) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
+        GameView::ScoringDealer(_, _, _, cut, crib) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
+        GameView::ScoringCrib(_, _, _, cut, crib) => crib_and_cut_view(&crib, CardSlot::FaceUp(cut), dealer.unwrap()).into_view(),
     }
 }
 

@@ -8,12 +8,6 @@ pub enum Role {
     Opponent
 } 
 
-impl Role {
-    pub(crate) fn other(self) -> Self {
-        if self == Role::CurrentPlayer { Role::Opponent } else { Role::CurrentPlayer }
-    }
-}
-
 pub type Dealer = Role;
 
 impl From<(DomainPlayer, DomainPlayer)> for Dealer {

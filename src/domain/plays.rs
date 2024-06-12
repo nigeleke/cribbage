@@ -151,8 +151,11 @@ impl PlayState {
     }
 
     pub(crate) fn finish_plays(&mut self) -> Hands {
+        let hands = self.regather_hands();
         self.next_to_play = None;
-        self.regather_hands()
+        self.current_plays = Vec::default();
+        self.previous_plays = Vec::default();
+        hands
     }
 
     pub(crate) fn next_to_play(&self) -> Option<Player> {

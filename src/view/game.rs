@@ -17,8 +17,8 @@ pub enum Game {
     Discarding(Scores, Hands, Crib, Dealer),
     Playing(Scores, Hands, PlayState, Cut, Crib, Dealer),
     ScoringPone(Scores, Role, Hands, Cut, Crib),
-// //     ScoringDealerCards(MyState, OpponentState, Cut, Crib),
-// //     ScoringCrib(MyState, OpponentState, Cut, Crib),
+    ScoringDealer(Scores, Role, Hands, Cut, Crib),
+    ScoringCrib(Scores, Role, Hands, Cut, Crib),
 // //     Finished(MyScore, OpponentScore),
 }
 
@@ -29,6 +29,8 @@ impl Game {
             Game::Discarding(scores, _, _, _) => scores.clone(),
             Game::Playing(scores, _, _, _, _, _) => scores.clone(),
             Game::ScoringPone(scores, _, _, _, _) => scores.clone(),
+            Game::ScoringDealer(scores, _, _, _, _) => scores.clone(),
+            Game::ScoringCrib(scores, _, _, _, _) => scores.clone(),
         }
     }
 
@@ -37,7 +39,9 @@ impl Game {
             Game::Starting(_) => None,
             Game::Discarding(_, _, _, dealer) => Some(*dealer),
             Game::Playing(_, _, _, _, _, dealer) => Some(*dealer),
-            Game::ScoringPone(_, pone, _, _, _) => Some(pone.other()),
+            Game::ScoringPone(_, dealer, _, _, _) => Some(*dealer),
+            Game::ScoringDealer(_, dealer, _, _, _) => Some(*dealer),
+            Game::ScoringCrib(_, dealer, _, _, _) => Some(*dealer),
         }
     }
 }
@@ -78,6 +82,24 @@ impl From<(DomainGame, DomainPlayer)> for Game {
                 let hands = merge(face_up(&player_hand.cards()), face_up(&opponent_hand.cards()));
                 let crib = face_down(&crib.cards());
                 Game::ScoringPone(scores, pone, hands, cut, crib)
+            },
+            DomainGame::ScoringDealer(ref scores, _, ref hands, cut, ref crib) => {
+                let pone = Role::from((game.pone(), player));
+                let (player_score, opponent_score) = partition_for(player, scores);
+                let scores = merge(player_score, opponent_score);
+                let (player_hand, opponent_hand) = partition_for(player, hands);
+                let hands = merge(face_up(&player_hand.cards()), face_up(&opponent_hand.cards()));
+                let crib = face_down(&crib.cards());
+                Game::ScoringDealer(scores, pone, hands, cut, crib)
+            },
+            DomainGame::ScoringCrib(ref scores, _, ref hands, cut, ref crib) => {
+                let pone = Role::from((game.pone(), player));
+                let (player_score, opponent_score) = partition_for(player, scores);
+                let scores = merge(player_score, opponent_score);
+                let (player_hand, opponent_hand) = partition_for(player, hands);
+                let hands = merge(face_up(&player_hand.cards()), face_up(&opponent_hand.cards()));
+                let crib = face_down(&crib.cards());
+                Game::ScoringCrib(scores, pone, hands, cut, crib)
             },
             DomainGame::Finished(_scores) => unimplemented!(),
         }

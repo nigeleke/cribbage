@@ -489,12 +489,12 @@ mod test {
             .with_cut("2H")
             .with_current_plays(&vec![(1, "TH"), (0, "9H"), (1, "QH")])
             .as_playing(Some(0));
-        let Game::Playing(_, dealer, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };;
+        let Game::Playing(_, dealer, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
         println!("g0 {}", game0);
         let game1 = game0.play(dealer, Card::from("AH"));
         println!("Er4 {:?}", game1);
         let game1 = game1.ok().unwrap();
-        let Game::Playing(_, _, _, play_state, _, _) = game1.clone() else { panic!("Unexpected state") };;
+        let Game::Playing(_, _, _, play_state, _, _) = game1.clone() else { panic!("Unexpected state") };
         assert_eq!(GameScorer::current_play(&play_state), 0);
     }
 

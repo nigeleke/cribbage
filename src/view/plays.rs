@@ -33,12 +33,17 @@ impl From<(DomainPlay, DomainPlayer)> for Play {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PlayState {
     running_total: usize,
+    finished_plays: bool,
     legal_plays: Vec<Card>,
     current_plays: Vec<Play>,
     previous_plays: Vec<Play>,
 }
 
 impl PlayState {
+    pub(crate) fn finished_plays(&self) -> bool {
+        self.finished_plays
+    }
+
     pub(crate) fn must_pass(&self) -> bool {
         self.legal_plays.is_empty()
     }
@@ -65,10 +70,13 @@ impl From<(DomainPlayState, DomainPlayer)> for PlayState {
         
         let running_total = play_state.running_total().into();
 
-        println!("Fromming {} for {} with total {}", play_state, player, running_total);
-        println!("         Legal plays {:?}", play_state.legal_plays(player));
+        let finished_plays = play_state.next_to_play().is_none();
 
-        let legal_plays = play_state.legal_plays(player).ok().unwrap().cards();
+        let legal_plays = if !finished_plays {
+            play_state.legal_plays(player).ok().unwrap().cards()
+        } else {
+            vec![]
+        };
         
         let current_plays = play_state
             .current_plays()
@@ -82,7 +90,7 @@ impl From<(DomainPlayState, DomainPlayer)> for PlayState {
             .map(|p| (p, player).into())
             .collect::<Vec<_>>();
 
-        PlayState { running_total, legal_plays, current_plays, previous_plays }
+        PlayState { running_total, finished_plays, legal_plays, current_plays, previous_plays }
     }
 }
 

@@ -1891,8 +1891,6 @@
 <a href="#1891" id="1891">1891</a>
 <a href="#1892" id="1892">1892</a>
 <a href="#1893" id="1893">1893</a>
-<a href="#1894" id="1894">1894</a>
-<a href="#1895" id="1895">1895</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::constants::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">super</span>::card::{Card, Cuts, Rank};
 <span class="kw">use </span><span class="kw">super</span>::cards::{Crib, Deck, Hand, Hands};
@@ -1942,7 +1940,7 @@
     }
 
     <span class="kw">pub fn </span>players(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; HashSet&lt;Player&gt; {
-            <span class="kw">match </span><span class="self">self </span>{
+        <span class="kw">match </span><span class="self">self </span>{
             Game::Starting(cuts, <span class="kw">_</span>) =&gt; HashSet::from_iter(cuts.keys().cloned()),
             Game::Discarding(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; HashSet::from_iter(scores.keys().cloned()),
             Game::Playing(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; HashSet::from_iter(scores.keys().cloned()),
@@ -2002,7 +2000,7 @@
                 <span class="kw">let </span>crib = Crib::default();
                 <span class="prelude-val">Ok</span>(Game::Discarding(scores, <span class="kw-2">*</span>dealer, hands, crib, deck))
             },
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::InvalidAction(<span class="string">"start"</span>.into()))
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted)
         }
     }
 
@@ -2014,7 +2012,7 @@
                 verify::same_cuts(cuts)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Game::new(<span class="kw-2">&amp;</span><span class="self">self</span>.players())<span class="question-mark">?</span>)
             },
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::InvalidAction(<span class="string">"redraw"</span>.into()))
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted)
         }
     }
 
@@ -2045,7 +2043,7 @@
                     <span class="prelude-val">Ok</span>(Game::Discarding(scores.clone(), <span class="kw-2">*</span>dealer, hands, crib, deck.clone()))
                 }
             },
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::InvalidAction(<span class="string">"discard"</span>.into()))
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted)
         }
     }
 
@@ -2099,9 +2097,7 @@
             Game::Finished(<span class="kw">_</span>) =&gt; <span class="self">self</span>.clone(),
         };
 
-        <span class="macro">println!</span>(<span class="string">"Checking winner {} {} {}"</span>, game, player, score);
         <span class="kw">if </span>game.has_winner() {
-            <span class="macro">println!</span>(<span class="string">"has winner"</span>);
             <span class="kw">let </span>scores = game.scores();
             game = Game::Finished(scores)
         }
@@ -2143,7 +2139,7 @@
 
                 game.score_points(player, score_current_play + score_end_of_play)
             },
-            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted),
         }
     }
 
@@ -2178,7 +2174,7 @@
 
                 game.score_points(player, score)
             },
-            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted),
         }
     }
 
@@ -2193,7 +2189,7 @@
                 <span class="kw">let </span>score = GameScorer::hand(<span class="kw-2">&amp;</span>hands[<span class="kw-2">&amp;</span>pone], cut);
                 game.score_points(pone, score)
             },
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::CannotScorePone),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted),
         }
     }
 
@@ -2205,7 +2201,7 @@
                 <span class="kw">let </span>score = GameScorer::hand(<span class="kw-2">&amp;</span>hands[<span class="kw-2">&amp;</span>dealer], cut);
                 game.score_points(dealer, score)
             },
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::CannotScoreDealer),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted),
         }
     }
 
@@ -2217,7 +2213,7 @@
                 <span class="kw">let </span>score = GameScorer::crib(<span class="kw-2">&amp;</span>crib, cut);
                 game.score_points(dealer, score)
             },
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::CannotScoreCrib),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted),
         }
     }
 
@@ -2230,7 +2226,7 @@
                 <span class="kw">let </span>crib = Crib::default();
                 <span class="prelude-val">Ok</span>(Game::Discarding(scores.clone(), <span class="self">self</span>.pone(), hands, crib, deck))
             },
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::InvalidAction(<span class="string">"deal_next_hands"</span>.into())),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted),
         }
     }
 }
@@ -2531,7 +2527,7 @@
             .as_scoring_dealer();
 
         <span class="kw">let </span>error = game0.deal_next_hands().err().unwrap();
-        <span class="macro">assert_eq!</span>(error, Error::InvalidAction(<span class="string">"deal_next_hands"</span>.into()));
+        <span class="macro">assert_eq!</span>(error, Error::ActionNotPermitted);
     }
 
     <span class="doccomment">/// ## Object of the Game
@@ -3526,7 +3522,7 @@
             .as_scoring_pone();
 
         <span class="kw">let </span>error = game0.score_pone().err().unwrap();
-        <span class="macro">assert_eq!</span>(error, Error::CannotScorePone);        
+        <span class="macro">assert_eq!</span>(error, Error::ActionNotPermitted);        
     }
 
     <span class="attr">#[test]
@@ -3538,7 +3534,7 @@
             .as_scoring_dealer();
 
         <span class="kw">let </span>error = game0.score_pone().err().unwrap();
-        <span class="macro">assert_eq!</span>(error, Error::CannotScorePone);        
+        <span class="macro">assert_eq!</span>(error, Error::ActionNotPermitted);        
     }
 
     <span class="attr">#[test]
@@ -3550,7 +3546,7 @@
             .as_scoring_crib();
 
         <span class="kw">let </span>error = game0.score_pone().err().unwrap();
-        <span class="macro">assert_eq!</span>(error, Error::CannotScorePone);           
+        <span class="macro">assert_eq!</span>(error, Error::ActionNotPermitted);           
     }
 
     <span class="attr">#[test]
@@ -3562,7 +3558,7 @@
             .as_playing(<span class="prelude-val">None</span>);
 
         <span class="kw">let </span>error = game0.score_dealer().err().unwrap();
-        <span class="macro">assert_eq!</span>(error, Error::CannotScoreDealer);       
+        <span class="macro">assert_eq!</span>(error, Error::ActionNotPermitted);       
     }
 
     <span class="attr">#[test]
@@ -3574,7 +3570,7 @@
             .as_playing(<span class="prelude-val">None</span>);
 
         <span class="kw">let </span>error = game0.score_crib().err().unwrap();
-        <span class="macro">assert_eq!</span>(error, Error::CannotScoreCrib);       
+        <span class="macro">assert_eq!</span>(error, Error::ActionNotPermitted);       
     }
 
     <span class="attr">#[test]
@@ -3620,7 +3616,7 @@
             .as_scoring_dealer();
 
         <span class="kw">let </span>error = game0.score_dealer().err().unwrap();
-        <span class="macro">assert_eq!</span>(error, Error::CannotScoreDealer);
+        <span class="macro">assert_eq!</span>(error, Error::ActionNotPermitted);
     }
 
     <span class="attr">#[test]
@@ -3669,7 +3665,7 @@
             .as_scoring_crib();
 
         <span class="kw">let </span>error = game0.score_crib().err().unwrap();
-        <span class="macro">assert_eq!</span>(error, Error::CannotScoreCrib);
+        <span class="macro">assert_eq!</span>(error, Error::ActionNotPermitted);
     }
 
     <span class="doccomment">/// ## Combinations

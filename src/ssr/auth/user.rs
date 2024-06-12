@@ -13,6 +13,6 @@ impl From<Uuid> for User {
 
 impl Into<Player> for User {
     fn into(self) -> Player {
-        Player::from(self.0)
+        self.0.into()
     }
 }

@@ -27,21 +27,6 @@ impl GameScorer {
         }
     }
 
-    /// Play combinations:
-    ///   - Fifteen: For adding a card that makes the total 15 Peg 2
-    ///   - Pair: For adding a card of the same rank as the card just played Peg 2 (Note that face
-    ///     cards pair only by actual rank: jack with jack, but not jack with queen.)
-    ///   - Triplet: For adding the third card of the same rank. Peg 6
-    ///   - Four: (also called "Double Pair" or "Double Pair Royal") For adding the fourth card of
-    ///     the same rank Peg 12
-    ///   - Run (Sequence): For adding a card that forms, with those just played:
-    ///     - For a sequence of three Peg 3
-    ///     - For a sequence of four. Peg 4
-    ///     - For a sequence of five. Peg 5
-    ///     - (Peg one point more for each extra card of a sequence. Note that runs are independent
-    ///       of suits, but go strictly by rank; to illustrate: 9, 10, J, or J, 9, 10 is a run but
-    ///       9, 10, Q is not)
-
     pub(crate) fn current_play(play_state: &PlayState) -> usize {
         Self::current_play_fifteen(play_state) +
             Self::current_play_pairs(play_state) +
@@ -100,7 +85,6 @@ impl GameScorer {
     }
 
     pub(crate) fn end_of_play(play_state: &PlayState) -> usize {
-        println!("end_of_play:: is_current_play_finished {}, running_total {:?}", play_state.is_current_play_finished(), play_state.running_total());
         if play_state.is_current_play_finished() {
             if play_state.running_total() == Value::from(PLAY_TARGET) {
                 Self::SCORE_THIRTY_ONE
@@ -111,17 +95,6 @@ impl GameScorer {
             Self::SCORE_ZERO
         }
     }
-
-    /// Combination:
-    ///   - Fifteen. Each combination of cards that totals 15 2
-    ///   - Pair. Each pair of cards of the same rank 2
-    ///   - Run. Each combination of three or more 1 cards in sequence (for each card in the
-    ///     sequence)
-    ///   - Flush.
-    ///     - Four cards of the same suit in hand 4 (excluding the crib, and the starter)
-    ///     - Four cards in hand or crib of the same 5 suit as the starter. (There is no count for
-    ///       four-flush in the crib that is not of same suit as the starter)
-    ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
 
     pub(crate) fn hand(cards: &Hand, cut: Cut) -> usize {
         let mut all_cards = cards.clone();
@@ -356,17 +329,6 @@ mod test {
         assert_eq!(GameScorer::end_of_play(&play_state), 2)
     }
 
-    /// Combination Counts
-    ///   - Fifteen. Each combination of cards that totals 15 2
-    ///   - Pair. Each pair of cards of the same rank 2
-    ///   - Run. Each combination of three or more 1 cards in sequence (for each card in the
-    ///     sequence)
-    ///   - Flush.
-    ///     - Four cards of the same suit in hand 4 (excluding the crib, and the starter)
-    ///     - Four cards in hand or crib of the same 5 suit as the starter. (There is no count for
-    ///       four-flush in the crib that is not of same suit as the starter)
-    ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
-
     #[test]
     fn hand_fifteen_scores() {
         assert_eq!(GameScorer::hand(&Hand::from("7H8CAC2C"), Card::from("4H")), 4);
@@ -450,27 +412,11 @@ mod test {
         assert_eq!(GameScorer::crib(&Crib::from("2D4H6HJH"), Card::from("TH")), 1);
         assert_eq!(GameScorer::crib(&Crib::from("2H4D6DJD"), Card::from("TH")), 0);
     }
-
-    /// ## Combinations: See GameScorer::test
-    /// 
-    /// In the above table, the word combination is used in the strict technical sense. Each and
-    /// every combination of two cards that make a pair, of two or more cards that make 15, or of
-    /// three or more cards that make a run, count separately.
-    ///
-    /// Example: A hand (including the starter) comprised of 8, 7, 7, 6, 2 scores 8 points for four
-    /// combinations that total 15: the 8 with one 7, and the 8 with the other 7; the 6, 2 with each
-    /// of the two 7s. The same hand also scores 2 for a pair, and 6 for two runs of three (8, 7, 6
-    /// using each of the two 7s). The total score is 16. An experienced player computes the hand
-    /// thus: "Fifteen 2, fifteen 4, fifteen 6, fifteen 8, and 8 for double run is 16."
  
     #[test]
     fn rules_example_eights_sevens_sixes() {
         assert_eq!(GameScorer::hand(&Hand::from("8H7C7D6S"), Card::from("2H")), 16);
     }
-
-    /// Note that the ace is always low and cannot form a sequence with a king. Further, a flush
-    /// cannot happen during the play of the cards; it occurs only when the hands and the crib are
-    /// counted.
 
     #[test]
     fn rules_example_runs() {
@@ -490,31 +436,11 @@ mod test {
             .with_current_plays(&vec![(1, "TH"), (0, "9H"), (1, "QH")])
             .as_playing(Some(0));
         let Game::Playing(_, dealer, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
-        println!("g0 {}", game0);
-        let game1 = game0.play(dealer, Card::from("AH"));
-        println!("Er4 {:?}", game1);
-        let game1 = game1.ok().unwrap();
+
+        let game1 = game0.play(dealer, Card::from("AH")).ok().unwrap();
         let Game::Playing(_, _, _, play_state, _, _) = game1.clone() else { panic!("Unexpected state") };
         assert_eq!(GameScorer::current_play(&play_state), 0);
     }
-
-    /// Certain basic formulations should be learned to facilitate counting. For pairs and runs
-    /// alone:
-    ///
-    /// A. A triplet counts 6. A. Four of a kind counts 12. A. A run of three, with one card
-    /// duplicated (double run) counts 8. A. A run of four, with one card duplicated, counts 10. A.
-    /// A run of three, with one card triplicated (triple run), counts 15. A. A run of three, with
-    /// two different cards duplicated, counts 16.
-    ///
-    /// ### A PERFECT 29!
-    ///
-    /// The highest possible score for combinations in a single Cribbage deal is 29, and it may
-    /// occur only once in a Cribbage fan's lifetime -in fact, experts say that a 29 is probably as
-    /// rare as a hole-in-one in golf. To make this amazing score, a player must have a five as the
-    /// starter (upcard) and the other three fives plus the jack of the same suit as the starter -
-    /// His Nobs: 1 point - in his hand. The double pair royal (four 5s) peg another 12 points; the
-    /// various fives used to hit 15 can be done four ways for 8 points; and the jack plus a 5 to
-    /// hit 15 can also be done four ways for 8 points. Total = 29 points.
 
     #[test]
     fn rules_example_perfect_29() {

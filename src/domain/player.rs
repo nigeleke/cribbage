@@ -37,3 +37,16 @@ impl Display for Player {
         write!(f, "{:8.8}", self.0.to_string())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    
+    #[test]
+    fn convert_from_uuid_to_player() {
+        let uuid0 = Uuid::new_v4();
+        let player = Player::from(uuid0);
+        let Player(uuid1) = player;
+        assert_eq!(uuid1, uuid0);
+    }
+}

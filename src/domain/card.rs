@@ -57,14 +57,6 @@ impl Add for Value {
     }
 }
 
-impl Sub for Value {
-    type Output = Value;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        Value(self.0 - rhs.0)
-    }
-}
-
 impl Sum for Value {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(0.into(), |acc, x| acc + x)
@@ -232,5 +224,34 @@ impl Display for Card {
         let face_suit = format!("{}{}", face, suit);
         let face_suit = suit.yansi(&face_suit);
         write!(f, "{}", face_suit)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    
+    #[test]
+    fn faces_have_definitive_names() {
+        let faces = "A23456789TJQK";
+        let expected_name = vec!["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"];
+
+        for (i, face) in faces.chars().enumerate() {
+            let cid = format!("{}S", face);
+            let card = Card::from(cid.as_str());
+            assert_eq!(card.face_name(), expected_name[i])
+        }
+    }
+
+    #[test]
+    fn suits_have_definitive_names() {
+        let suits = "HCDS";
+        let expected_name = vec!["Hearts", "Clubs", "Diamonds", "Spades"];
+
+        for (i, suit) in suits.chars().enumerate() {
+            let cid = format!("A{}", suit);
+            let card = Card::from(cid.as_str());
+            assert_eq!(card.suit_name(), expected_name[i])
+        }
     }
 }

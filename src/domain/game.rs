@@ -66,7 +66,7 @@ impl Game {
     pub fn deck(&self) -> Deck {
         match self {
             Game::Starting(_, deck) => deck.clone(),
-            Game::Discarding(_, _, _, _, deck) => deck.clone(),
+            // Game::Discarding(_, _, _, _, deck) => deck.clone(),
             _ => unreachable!(),
         }
     }

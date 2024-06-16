@@ -19,7 +19,7 @@ pub enum Game {
     ScoringPone(Scores, Role, Hands, Cut, Crib),
     ScoringDealer(Scores, Role, Hands, Cut, Crib),
     ScoringCrib(Scores, Role, Hands, Cut, Crib),
-// //     Finished(MyScore, OpponentScore),
+    Finished(Scores),
 }
 
 impl Game {
@@ -31,6 +31,7 @@ impl Game {
             Game::ScoringPone(scores, _, _, _, _) => scores.clone(),
             Game::ScoringDealer(scores, _, _, _, _) => scores.clone(),
             Game::ScoringCrib(scores, _, _, _, _) => scores.clone(),
+            Game::Finished(scores) => scores.clone(),
         }
     }
 
@@ -42,6 +43,7 @@ impl Game {
             Game::ScoringPone(_, dealer, _, _, _) => Some(*dealer),
             Game::ScoringDealer(_, dealer, _, _, _) => Some(*dealer),
             Game::ScoringCrib(_, dealer, _, _, _) => Some(*dealer),
+            Game::Finished(_) => None,
         }
     }
 }
@@ -101,7 +103,11 @@ impl From<(DomainGame, DomainPlayer)> for Game {
                 let crib = face_down(&crib.cards());
                 Game::ScoringCrib(scores, pone, hands, cut, crib)
             },
-            DomainGame::Finished(_scores) => unimplemented!(),
+            DomainGame::Finished(ref scores) => {
+                let (player_score, opponent_score) = partition_for(player, scores);
+                let scores = merge(player_score, opponent_score);
+                Game::Finished(scores)
+            },
         }
     }
 }

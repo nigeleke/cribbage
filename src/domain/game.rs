@@ -1,4 +1,3 @@
-use super::constants::*;
 use super::card::{Card, Cuts, Rank};
 use super::cards::{Crib, Deck, Hand, Hands};
 use super::format::format_hashmap;
@@ -8,8 +7,7 @@ use super::result::{Error, Result};
 use super::score::{Score, Scores};
 use super::game_scorer::*;
 
-#[cfg(test)]
-use super::builder::Builder;
+use crate::constants::*;
 
 use serde::{Deserialize, Serialize};
 
@@ -29,7 +27,7 @@ pub enum Game {
 }
 
 impl Game {
-    pub fn new(players: &HashSet<Player>) -> Result<Game> {
+    pub(crate) fn new(players: &HashSet<Player>) -> Result<Game> {
         if players.len() > NUMBER_OF_PLAYERS_IN_GAME {
             return Err(Error::TooManyPlayers)
         }
@@ -91,7 +89,7 @@ impl Game {
             .is_empty()
     }
 
-    pub fn start(&self) -> Result<Self> {
+    pub(crate) fn start(&self) -> Result<Self> {
         match self {
             Game::Starting(cuts, _) => {
                 let players = self.players();
@@ -111,7 +109,7 @@ impl Game {
         }
     }
 
-    pub fn redraw(&self) -> Result<Self> {
+    pub(crate) fn redraw(&self) -> Result<Self> {
         match self {
             Game::Starting(cuts, _) => {
                 let players = self.players();
@@ -123,7 +121,7 @@ impl Game {
         }
     }
 
-    pub fn discard(&self, player: Player, discards: &[Card]) -> Result<Self> {
+    pub(crate) fn discard(&self, player: Player, discards: &[Card]) -> Result<Self> {
         match self {
             Game::Discarding(scores, dealer, hands, crib, deck) => {
                 let players = self.players();
@@ -212,7 +210,7 @@ impl Game {
         Ok(game)
     }
 
-    pub fn play(&self, player: Player, card: Card) -> Result<Game> {
+    pub(crate) fn play(&self, player: Player, card: Card) -> Result<Game> {
         let mut game = self.clone();
 
         let players = game.players();
@@ -326,7 +324,7 @@ impl Game {
 
     pub(crate) fn deal_next_hands(&self) -> Result<Game> {
         match self {
-            Game::ScoringCrib(scores, dealer, _, _, _) => {
+            Game::ScoringCrib(scores, _, _, _, _) => {
                 let players = self.players();
                 let deck = Deck::shuffled_pack();
                 let (hands, deck) = deck.deal(&players);
@@ -451,12 +449,14 @@ mod test {
     use crate::domain::card::{Cut, Face};
     use crate::domain::plays::Play;
 
+    use crate::test::prelude::*;
+
     #[test]
     fn play_with_zero_one_or_two_players() {
         for n in 0..=2 {
             let builder = Builder::new(n);
-            let players = builder.players.clone();
-            let game = builder.as_new().ok().unwrap();
+            let players = builder.players();
+            let game = builder.as_new();
             assert_eq!(game.players().len(), n);
             for player in players.into_iter() {
                 assert!(game.players().contains(&player))
@@ -465,16 +465,15 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
     fn fail_to_play_with_more_than_two_players() {
-        let builder = Builder::new(3);
-        let error = builder.as_new().err().unwrap();
-        assert_eq!(error, Error::TooManyPlayers);
+        let _ = Builder::new(3).as_new();
     }
 
     #[test]
     fn use_a_standard_pack_of_cards() {
         let builder = Builder::new(2);
-        let game = builder.as_new().ok().unwrap();
+        let game = builder.as_new();
         let _deck = game.deck();
         assert!(true)
     }
@@ -484,7 +483,7 @@ mod test {
         for (expected_dealer, cuts) in vec![(0, "ASKS"), (1, "KSAS")] {
             let builder = Builder::new(2)
                 .with_cuts(cuts);
-            let players = builder.players.clone();
+            let players = builder.players();
             let game = builder.as_starting();
             let game = game.start().ok().unwrap();
             let Game::Discarding(_, dealer, _, _, _) = game else { panic!("Unexpected state") };

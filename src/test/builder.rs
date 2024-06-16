@@ -1,11 +1,11 @@
-use super::prelude::*;
-use super::result::Result;
+use crate::domain::prelude::*;
+use crate::domain::test::*;
 
 use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 pub struct Builder {
-    pub(crate) players: Vec<Player>,
+    players: Vec<Player>,
     dealer: usize,
     cuts: Vec<Card>,
     scores: Vec<Score>,
@@ -31,12 +31,20 @@ impl Builder {
         }
     }
 
+    pub fn players(&self) -> Vec<Player> {
+        self.players.clone()
+    }
+
     pub fn with_dealer(mut self, dealer: usize) -> Self {
         self.dealer = dealer;
         self
     }
 
     pub fn with_cuts(mut self, cuts: &str) -> Self {
+        #[derive(Clone, Debug, PartialEq)]
+        pub struct CutsType;
+        pub type Cuts = Cards<CutsType>;
+
         let cuts = Cuts::from(cuts);
         self.deck.remove_all(&cuts.cards());
         self.cuts.append(&mut cuts.cards());
@@ -92,9 +100,9 @@ impl Builder {
         self
     }
 
-    pub fn as_new(self) -> Result<Game> {
+    pub fn as_new(self) -> Game {
         let players = HashSet::from_iter(self.players.into_iter());
-        Game::new(&players)
+        Game::new(&players).ok().unwrap()
     }
 
     pub fn as_starting(self) -> Game {

@@ -1,7 +1,8 @@
 use super::card::{Card, Cut, Face, Rank, Value};
 use super::cards::{Cards, Crib, Hand};
-use super::constants::PLAY_TARGET;
 use super::plays::PlayState;
+
+use crate::constants::*;
 
 use itertools::*;
 
@@ -213,7 +214,7 @@ impl GameScorer {
 mod test {
     use super::*;
 
-    use crate::domain::builder::Builder;
+    use crate::test::prelude::*;
     use crate::domain::game::Game;
 
     #[test]

@@ -2,10 +2,11 @@ use serde::{Serialize, Deserialize};
 
 pub type Card = crate::domain::prelude::Card;
 
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
+#[derive(Clone, Copy, Default, Serialize, Deserialize, Debug)]
 pub enum CardSlot {
     FaceUp(Card),
     FaceDown,
+    #[default]
     Empty,
     Placeholder,
 }

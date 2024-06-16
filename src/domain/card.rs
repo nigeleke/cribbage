@@ -232,26 +232,20 @@ mod test {
     use super::*;
     
     #[test]
-    fn faces_have_definitive_names() {
-        let faces = "A23456789TJQK";
-        let expected_name = vec!["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"];
-
-        for (i, face) in faces.chars().enumerate() {
-            let cid = format!("{}S", face);
-            let card = Card::from(cid.as_str());
-            assert_eq!(card.face_name(), expected_name[i])
-        }
-    }
-
-    #[test]
-    fn suits_have_definitive_names() {
+    fn cards_have_definitive_names() {
         let suits = "HCDS";
-        let expected_name = vec!["Hearts", "Clubs", "Diamonds", "Spades"];
+        let faces = "A23456789TJQK";
 
-        for (i, suit) in suits.chars().enumerate() {
-            let cid = format!("A{}", suit);
-            let card = Card::from(cid.as_str());
-            assert_eq!(card.suit_name(), expected_name[i])
+        let expected_suit_name = vec!["Hearts", "Clubs", "Diamonds", "Spades"];
+        let expected_face_name = vec!["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"];
+
+        for (si, suit) in suits.chars().enumerate() {
+            for (fi, face) in faces.chars().enumerate() {
+                let cid = format!("{}{}", face, suit);
+                let card = Card::from(cid.as_str());
+                assert_eq!(card.suit_name(), expected_suit_name[si]);
+                assert_eq!(card.face_name(), expected_face_name[fi])
+            }
         }
     }
 }

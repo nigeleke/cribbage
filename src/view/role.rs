@@ -8,6 +8,15 @@ pub enum Role {
     Opponent
 } 
 
+impl Role {
+    pub fn opponent(&self) -> Role {
+        match self {
+            Role::CurrentPlayer => Role::Opponent,
+            Role::Opponent => Role::CurrentPlayer,
+        }
+    }
+}
+
 pub type Dealer = Role;
 
 impl From<(DomainPlayer, DomainPlayer)> for Dealer {

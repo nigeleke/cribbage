@@ -1,8 +1,8 @@
-use super::card::Card;
-use super::prelude::Context;
+use crate::components::Context;
+use crate::components::card::Card;
 
 use crate::services::prelude::{redraw, start};
-use crate::view::prelude::{CardSlot, Cut};
+use crate::view::prelude::{CardSlot, Cut, Cuts, Role};
 
 use leptos::*;
 use style4rs::style;
@@ -10,11 +10,10 @@ use style4rs::style;
 /// The Cuts component shows the initial cuts at the start of the game.
 /// It enables the user to start or redraw as appropriate to the cuts' ranks.
 #[component]
-pub fn Cuts(
-    #[prop()]
-    player_cut: Cut,
-    #[prop()]
-    opponent_cut: Cut,
+pub(crate) fn CuttingForStart(
+
+    cuts: Cuts
+
 ) -> impl IntoView {
     let class = style!{
         div {
@@ -23,25 +22,30 @@ pub fn Cuts(
             align-items: center;
             gap: 5vh;
         }
-        div div {
+        .cuts {
             display: flex;
             flex-direction: row;
             gap: 5vw;
         }
-        span:first-child {
-            opacity: 0;
-            animation: spin-in 1s ease-in forwards;
+        .cut {
+            display: flex;
+            flex-direction: column;
+            gap: 5vh;
         }
-        span:last-child {
+        .playercut {
             opacity: 0;
-            animation: spin-in 1s ease-in forwards;
+            animation: spin-in 0.75s ease-in forwards;
+        }
+        .opponentcut {
+            opacity: 0;
+            animation: spin-in 0.75s ease-in forwards;
             animation-delay: 1s;
         }
         button {
             flex-shrink: 1;
             opacity: 0;
-            animation: fade-in 0.2s ease-in forwards;
-            animation-delay: 2s;
+            animation: fade-in 0.25s ease-in forwards;
+            animation-delay: 1.5s;
         }
         @keyframes spin-in {
             from { transform: rotate(0deg); opacity: 0 }
@@ -53,11 +57,11 @@ pub fn Cuts(
         }
     };
 
-    let player_card: Cut = player_cut;
-    let player_rank = player_card.rank();
+    let player_cut: Cut = cuts[&Role::CurrentPlayer];
+    let player_rank = player_cut.rank();
 
-    let opponent_card: Cut = opponent_cut;
-    let opponent_rank = opponent_card.rank();
+    let opponent_cut: Cut = cuts[&Role::Opponent];
+    let opponent_rank = opponent_cut.rank();
 
     let start_status = match (player_rank, opponent_rank) {
         (pr, or) if pr < or => "Your deal",
@@ -96,17 +100,22 @@ pub fn Cuts(
     view! {
         class = class,
         <div>
-            <div>
-                <span><Card card=CardSlot::FaceUp(player_cut) label="Your cut".into() /></span>
-                <span><Card card=CardSlot::FaceUp(opponent_cut) label="Opponent".into() /></span>
+            <div class="cuts">
+                <div class="cut">
+                    <div class="playercut"><Card card=CardSlot::FaceUp(player_cut) /></div>
+                    <div>"Your cut"</div>
+                </div>
+                <div class="cut">
+                    <div class="opponentcut"><Card card=CardSlot::FaceUp(opponent_cut) /></div>
+                    <div>"Opponent's cut"</div>
+                </div>
             </div>
             { if player_rank == opponent_rank {
-                view! {<button on:click=on_redraw>"Redraw"</button>}
-              } else {
-                view! {<button on:click=on_start>{start_status}</button>}
-              }
+                view! { class = class, <button on:click=on_redraw>{start_status}</button>}
+            } else {
+                view! { class = class, <button on:click=on_start>{start_status}</button>}
             }
-            
+            }
         </div>
     }
 }

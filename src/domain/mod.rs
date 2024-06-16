@@ -242,12 +242,8 @@
   play one of the many 10-cards and make 31 to gain two points.
 */
 
-#[cfg(test)]
-mod builder;
-
 mod card;
 mod cards;
-mod constants;
 mod format;
 mod game;
 mod player;
@@ -257,16 +253,15 @@ mod score;
 mod game_scorer;
 
 pub mod prelude {
-  pub use super::constants::*;
-
-  #[cfg(test)]
-  pub use crate::domain::builder::Builder;
-  pub use crate::domain::*;
-  pub use crate::domain::card::{Cut, Card, Rank, Value};
-  pub use crate::domain::cards::{Crib, Cuts, Deck, Hand};
+  pub use crate::domain::card::{Card, Value};
+  pub use crate::domain::cards::Hand;
   pub use crate::domain::game::Game;
   pub use crate::domain::player::Player;
-  pub use crate::domain::plays::*;
+  pub use crate::domain::plays::{Play, PlayState};
   pub use crate::domain::score::Score;
-  pub use crate::domain::result::Error;
+}
+
+#[cfg(test)]
+pub mod test {
+  pub use crate::domain::cards::{Cards, Crib, Deck};
 }

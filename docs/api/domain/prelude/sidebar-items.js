@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["CARDS_DEALT_PER_HAND","CARDS_DISCARDED_TO_CRIB","CARDS_KEPT_PER_HAND","CARDS_REQUIRED_IN_CRIB","NUMBER_OF_PLAYERS_IN_GAME","PLAY_TARGET","WINNING_SCORE"],"enum":["Error","Game"],"struct":["Card","Play","PlayState","Player","Rank","Score","Value"],"type":["Crib","Cut","Cuts","Deck","Hand"]};

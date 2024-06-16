@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["create_game","discard","get_game","pass","play","redraw","start"]};

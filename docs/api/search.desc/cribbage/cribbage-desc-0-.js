@@ -1,0 +1,1 @@
+searchState.loadedDescShard("cribbage", 0, "The main cribbage application view.")

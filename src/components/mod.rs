@@ -1,12 +1,16 @@
 mod card;
 mod cards;
 mod crib;
-mod cuts;
+mod cutting_for_start;
+mod discarding;
 mod error;
 mod game;
 mod loading;
+mod playing;
+mod plays;
+mod scoreboard;
 
-pub mod prelude {
+pub(crate) mod prelude {
     pub use super::Context;
     pub use super::error::Error;
     pub use super::game::Game;

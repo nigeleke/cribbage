@@ -2,7 +2,7 @@ use super::player::Player;
 use super::card::Card;
 
 #[derive(Debug, PartialEq)]
-pub enum Error {
+pub(crate) enum Error {
     ActionNotPermitted,
     CannotPass,
     CannotPlay,
@@ -40,6 +40,7 @@ impl std::error::Error for Error {}
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 
+#[cfg(test)]
 mod test {
     use super::*;
 

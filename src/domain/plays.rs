@@ -2,8 +2,9 @@ use super::card::{Card, Rank, Value};
 use super::cards::{Hand, Hands};
 use super::format::{format_hashmap, format_vec};
 use super::player::Player;
-use super::prelude::PLAY_TARGET;
 use super::result::{Error, Result};
+
+use crate::constants::*;
 
 use serde::{Serialize, Deserialize};
 use std::collections::HashSet;

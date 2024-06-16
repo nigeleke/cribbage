@@ -3,7 +3,9 @@ use super::role::Role;
 
 use std::collections::HashMap;
 
-pub type Cuts = HashMap<Role, Card>;
+pub type Cut = Card;
+
+pub type Cuts = HashMap<Role, Cut>;
 
 pub type Hand = Vec<CardSlot>;
 

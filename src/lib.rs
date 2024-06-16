@@ -1,18 +1,28 @@
-pub mod app;
-pub mod components;
-pub mod domain;
-pub mod error_template;
-pub mod pages;
-pub mod services;
-pub mod view;
+#![feature(impl_trait_in_fn_trait_return)]
+
+mod app;
+mod constants;
+mod components;
+mod domain;
+mod error_template;
+mod pages;
+mod services;
+mod view;
+
+pub mod prelude {
+    pub use crate::app::App;
+} 
+
+
+#[cfg(test)]
+mod test;
 
 #[cfg(feature = "ssr")]
 pub mod ssr {
-    pub mod auth;
+    pub(crate) mod auth;
     pub mod database;
-    pub mod opponent;
     pub mod fileserv;
-
+    pub(crate) mod opponent;
 }
 
 #[cfg(feature = "hydrate")]

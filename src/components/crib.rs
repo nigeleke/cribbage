@@ -9,18 +9,14 @@ use leptos::*;
 #[component]
 pub fn Crib(
 
-    #[prop()]
     crib: Crib,
-
-    #[prop(optional)]
-    stacked: bool
 
 ) -> impl IntoView {
 
     if crib.is_empty() {
         view! { <Card card=CardSlot::Placeholder /> }.into_view()
     } else {
-        view! { <Cards cards=crib stacked=stacked /> }
+        view! { <Cards cards=crib stacked=true /> }.into_view()
     }
 
 }

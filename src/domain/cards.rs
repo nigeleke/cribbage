@@ -1,5 +1,6 @@
 use super::format::format_vec;
 
+use crate::constants::*;
 use crate::domain::prelude::*;
 
 use rand::{seq::SliceRandom, thread_rng};
@@ -118,11 +119,6 @@ where U: Clone {
         Self { cards: Vec::from_iter(iter), _marker: Default::default() }
     }
 }
-
-/// Cuts for start of game.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CutsType;
-pub type Cuts = Cards<CutsType>;
 
 /// A deck of cards.
 #[derive(Clone, Debug, PartialEq)]

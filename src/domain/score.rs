@@ -1,4 +1,6 @@
-use super::{constants::WINNING_SCORE, player::Player};
+use super::player::Player;
+
+use crate::constants::WINNING_SCORE;
 
 use serde::{Serialize, Deserialize};
 

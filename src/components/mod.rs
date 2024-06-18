@@ -9,6 +9,7 @@ mod loading;
 mod playing;
 mod plays;
 mod scoreboard;
+mod scoring;
 
 pub(crate) mod prelude {
     pub use super::Context;

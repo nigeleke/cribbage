@@ -15,6 +15,8 @@ pub(crate) fn CuttingForStart(
     cuts: Cuts
 
 ) -> impl IntoView {
+    logging::log!("component::CuttingForStart");
+
     let class = style!{
         div {
             display: flex;

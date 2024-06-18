@@ -105,12 +105,13 @@ fn Hole(
     representation: usize
 
 ) -> impl IntoView {
+    
     let role = use_context::<Role>().unwrap();
     let scores = use_context::<Scores>().unwrap();
     let default_score = Score::default();
     let score = scores.get(&role).unwrap_or(&default_score);
 
-    let colour = (if role == Role::CurrentPlayer { "green" } else { "red" }).to_string();
+    let colour = (if role == Role::CurrentPlayer { "lime" } else { "red" }).to_string();
     let fill = match representation {
         0 => colour,
         n if score.front_peg() % 60 == n => colour,

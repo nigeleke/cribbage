@@ -140,7 +140,7 @@ impl Game {
                 if crib.len() == CARDS_REQUIRED_IN_CRIB {
                     let (cut, _) = deck.cut();
                     let pone = self.pone();
-                    let play_state = PlayState::new(Some(pone), &hands);
+                    let play_state = PlayState::new(pone, &hands);
                     let game = Game::Playing(scores.clone(), *dealer, hands, play_state, cut, crib);
                     let score = GameScorer::his_heels_on_cut_pre_play(cut);
                     game.score_points(*dealer, score)
@@ -228,21 +228,15 @@ impl Game {
                 let score_current_play = GameScorer::current_play(play_state);
                 let score_end_of_play = GameScorer::end_of_play(play_state);
 
-                let all_plays_finished = play_state.are_plays_finished();
-                let end_of_play = play_state.target_reached() || all_plays_finished;
+                let all_cards_are_played = play_state.all_are_cards_played();
+                let end_of_play = play_state.target_reached() || all_cards_are_played;
 
                 if end_of_play {
                     play_state.start_new_play();
                 }
                 
-                game = if all_plays_finished {
-                    let hands = play_state.finish_plays();
-                    Game::Playing(scores.clone(), dealer, hands.clone(), play_state.clone(), cut, crib.clone())
-                } else {
-                    Game::Playing(scores.clone(), dealer, hands.clone(), play_state.clone(), cut, crib.clone())
-                };
-
-                game.score_points(player, score_current_play + score_end_of_play)
+                Game::Playing(scores.clone(), dealer, hands.clone(), play_state.clone(), cut, crib.clone())
+                    .score_points(player, score_current_play + score_end_of_play)
             },
             _ => Err(Error::ActionNotPermitted),
         }
@@ -269,15 +263,8 @@ impl Game {
                     play_state.start_new_play();                    
                 }
 
-                game = if play_state.are_plays_finished() {
-                    let hands = play_state.finish_plays();
-                    score += GameScorer::hand(&hands[&pone], cut);
-                    Game::Playing(scores.clone(), dealer, hands, play_state.clone(), cut, crib.clone())
-                } else {
-                    Game::Playing(scores.clone(), dealer, hands.clone(), play_state.clone(), cut, crib.clone())
-                };
-
-                game.score_points(player, score)
+                Game::Playing(scores.clone(), dealer, hands.clone(), play_state.clone(), cut, crib.clone())
+                    .score_points(player, score)
             },
             _ => Err(Error::ActionNotPermitted),
         }
@@ -288,8 +275,10 @@ impl Game {
         let pone = game.pone();
         
         match game {
-            Game::Playing(ref mut scores, dealer, hands, play_state, cut, crib) => {
-                verify::ready_to_score_pone(&play_state)?;
+            Game::Playing(ref mut scores, dealer, hands, ref mut play_state, cut, crib) => {
+                verify::ready_to_score_pone(play_state)?;
+
+                let hands = play_state.finish_plays();
                 game = Game::ScoringPone(scores.clone(), dealer, hands.clone(), cut, crib.clone());
                 let score = GameScorer::hand(&hands[&pone], cut);
                 game.score_points(pone, score)
@@ -434,7 +423,7 @@ mod verify {
     }
 
     pub(crate) fn ready_to_score_pone(play_state: &PlayState) -> Result<()> {
-        if play_state.next_to_play().is_none() {
+        if play_state.all_are_cards_played() {
             Ok(())
         } else {
             Err(Error::CannotScorePone)
@@ -784,7 +773,7 @@ mod test {
             .with_scores(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone0 = game0.pone();
         let Game::Playing(scores0, dealer0, hands0, play_state0, cut0, crib0) = game0.clone() else { panic!("Unexpected state") };
         let dealer_hand0 = hands0[&dealer0].clone();
@@ -808,7 +797,7 @@ mod test {
         assert_eq!(dealer1, dealer0);
         assert_eq!(dealer_hand1, dealer_hand0);
         assert_eq!(pone_hand1, Hand::default());
-        assert_eq!(play_state1.next_to_play(), Some(dealer1));
+        assert_eq!(play_state1.next_to_play(), dealer1);
         assert_eq!(play_state1.legal_plays(dealer1).ok().unwrap(), dealer_hand1);
         assert_eq!(cut1, cut0);
         assert_eq!(crib1, crib0);
@@ -820,7 +809,7 @@ mod test {
             .with_scores(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
-            .as_playing(Some(1));
+            .as_playing(1);
 
         let non_player = Player::new();
         let error = game0.play(non_player, Card::from("4S")).err().unwrap();
@@ -833,7 +822,7 @@ mod test {
             .with_scores(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone0 = game0.pone();
         let card = Card::from("9S");
         let error = game0.play(pone0, card).err().unwrap();
@@ -846,7 +835,7 @@ mod test {
             .with_scores(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
-            .as_playing(Some(1));
+            .as_playing(1);
         let dealer0 = game0.dealer();
         let card = Card::from("9S");
         let error = game0.play(dealer0, card).err().unwrap();
@@ -860,7 +849,7 @@ mod test {
             .with_hands("9S", "4S")
             .with_cut("AS")
             .with_current_plays(&vec![(0, "KH"), (0, "KC"), (0, "KD")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone0 = game0.pone();
         let Game::Playing(_, _, _, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -877,7 +866,7 @@ mod test {
             .with_hands("5S", "5H")
             .with_cut("AS")
             .with_current_plays(&vec![(0, "TH")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, _, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
         let score0_pone = scores0[&pone];
@@ -887,7 +876,7 @@ mod test {
         let score1_pone = scores1[&pone];
     
         assert_eq!(score1_pone, score0_pone.add(2));
-        assert_eq!(play_state1.next_to_play(), Some(dealer1));
+        assert_eq!(play_state1.next_to_play(), dealer1);
     }
 
     #[test]
@@ -898,7 +887,7 @@ mod test {
             .with_cut("QC")
             .with_current_plays(&vec![(0, "JH"), (0, "QH")])
             .with_previous_plays(&vec![(0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
-            .as_playing(Some(1));
+            .as_playing(1);
 
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
@@ -912,7 +901,7 @@ mod test {
 
         assert_eq!(score1_pone, score0_pone.add(1));
         assert_eq!(score1_dealer, score0_dealer);
-        assert_eq!(play_state.next_to_play(), Some(dealer1));
+        assert_eq!(play_state.next_to_play(), dealer1);
     }
 
     #[test]
@@ -923,7 +912,7 @@ mod test {
             .with_cut("QC")
             .with_current_plays(&vec![(0, "JH")])
             .with_previous_plays(&vec![(0, "9H"), (0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, _, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
         let score0_pone = scores0[&pone];
@@ -944,7 +933,7 @@ mod test {
             .with_cut("KC")
             .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "QH")])
             .with_previous_plays(&vec![(1, "2S"), (1, "QS"), (1, "6S")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -954,7 +943,7 @@ mod test {
         assert_eq!(scores1[&pone], scores0[&pone].add(2));
         assert_eq!(dealer1, dealer0);
         assert!(!hands1[&pone].contains(&card));
-        assert_eq!(play_state1.next_to_play(), Some(dealer0));
+        assert_eq!(play_state1.next_to_play(), dealer0);
         assert!(play_state1.current_plays().is_empty());
         for p in play_state0.current_plays().into_iter() {
             assert!(play_state1.previous_plays().contains(&p))
@@ -970,7 +959,7 @@ mod test {
             .with_cut("KC")
             .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "QH")])
             .with_previous_plays(&vec![(1, "2S"), (1, "QS"), (1, "6S")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, cut0, crib0) = game0.clone() else { panic!("Unexpected state") };
 
@@ -979,7 +968,7 @@ mod test {
         
         assert_eq!(dealer1, dealer0);
         assert_eq!(scores1[&pone], scores0[&pone].add(2));
-        assert_eq!(play_state.next_to_play(), Some(dealer1));
+        assert_eq!(play_state.next_to_play(), dealer1);
         assert_eq!(cut1, cut0);
         assert_eq!(crib1, crib0);
     }
@@ -992,7 +981,7 @@ mod test {
             .with_cut("KC")
             .with_current_plays(&vec![(0, "TH"), (1, "JH"), (0, "QH")])
             .with_previous_plays(&vec![(1, "9H"), (1, "5S"), (0, "6S")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1011,7 +1000,7 @@ mod test {
             .with_cut("KC")
             .with_current_plays(&vec![(0, "8H"), (1, "JH"), (0, "QH")])
             .with_previous_plays(&vec![(1, "9H"), (0, "4S"), (1, "5S"), (0, "6S")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1029,7 +1018,7 @@ mod test {
             .with_cut("AS")
             .with_hands("AH", "KH")
             .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "QH")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, hands0, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
         let game1 = game0.pass(pone);
@@ -1039,7 +1028,7 @@ mod test {
         assert_eq!(scores1, scores0);
         assert_eq!(dealer1, dealer0);
         assert_eq!(hands1, hands0);
-        assert_eq!(play_state1.next_to_play(), Some(dealer0));
+        assert_eq!(play_state1.next_to_play(), dealer0);
         assert_eq!(play_state1.pass_count(), 1);
         assert_eq!(play_state1.current_plays(), play_state0.current_plays());
         assert_eq!(play_state1.previous_plays(), play_state0.previous_plays());
@@ -1052,7 +1041,7 @@ mod test {
             .with_cut("AS")
             .with_hands("KH", "KS")
             .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, hands0, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1065,7 +1054,7 @@ mod test {
         assert_eq!(scores2[&dealer2], scores0[&dealer0].add(1));
         assert_eq!(dealer2, dealer0);
         assert_eq!(hands2, hands0);
-        assert_eq!(play_state2.next_to_play(), Some(pone));
+        assert_eq!(play_state2.next_to_play(), pone);
         assert_eq!(play_state2.pass_count(), 0);
         assert!(play_state2.current_plays().is_empty());
         for p in play_state0.current_plays().into_iter() {
@@ -1080,7 +1069,7 @@ mod test {
             .with_cut("AS")
             .with_hands("KH", "KS")
             .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
-            .as_playing(Some(1));
+            .as_playing(1);
 
         let non_player = Player::new();
         let error = game0.pass(non_player).err().unwrap();
@@ -1094,7 +1083,7 @@ mod test {
             .with_cut("AS")
             .with_hands("AH", "AS")
             .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "8H")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
 
         let error = game0.pass(pone).err().unwrap();
@@ -1108,7 +1097,7 @@ mod test {
             .with_cut("AS")
             .with_hands("KH", "KS")
             .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1127,7 +1116,7 @@ mod test {
             .with_cut("AS")
             .with_hands("KH", "KS")
             .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1145,7 +1134,7 @@ mod test {
             .with_scores(0, 0)
             .with_cut("AS")
             .with_hands("7H8H8D9C", "4S5STHJH")
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(_, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1153,7 +1142,7 @@ mod test {
         let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
 
         assert_eq!(dealer1, dealer0);
-        assert_eq!(play_state1.next_to_play(), Some(dealer1));
+        assert_eq!(play_state1.next_to_play(), dealer1);
     }
 
     #[test]
@@ -1163,7 +1152,7 @@ mod test {
             .with_cut("AS")
             .with_hands("7H8H8D9C", "5STHJH")
             .with_current_plays(&vec![(1, "4S")])
-            .as_playing(Some(0));
+            .as_playing(0);
         let pone = game0.pone();
         let Game::Playing(_, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1171,7 +1160,7 @@ mod test {
         let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
 
         assert_eq!(dealer1, dealer0);
-        assert_eq!(play_state1.next_to_play(), Some(pone));
+        assert_eq!(play_state1.next_to_play(), pone);
     }
 
     #[test]
@@ -1181,7 +1170,7 @@ mod test {
             .with_cut("AS")
             .with_hands("8H8D", "5SJH")
             .with_current_plays(&vec![(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(_, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1189,7 +1178,7 @@ mod test {
         let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
 
         assert_eq!(dealer1, dealer0);
-        assert_eq!(play_state1.next_to_play(), Some(dealer1));
+        assert_eq!(play_state1.next_to_play(), dealer1);
     }
 
     #[test]
@@ -1199,7 +1188,7 @@ mod test {
             .with_cut("AS")
             .with_hands("7H8H8D", "4S5S")
             .with_current_plays(&vec![(1, "JH"), (0, "9C"), (1, "TH")])
-            .as_playing(Some(0));
+            .as_playing(0);
         let pone = game0.pone();
         let Game::Playing(_, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1207,7 +1196,7 @@ mod test {
         let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
 
         assert_eq!(dealer1, dealer0);
-        assert_eq!(play_state1.next_to_play(), Some(pone));
+        assert_eq!(play_state1.next_to_play(), pone);
     }
 
     #[test]
@@ -1217,7 +1206,7 @@ mod test {
             .with_cut("AS")
             .with_hands("8H8D", "5SJH")
             .with_current_plays(&vec![(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(_, dealer0, _, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1226,7 +1215,7 @@ mod test {
         let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
 
         assert_eq!(dealer1, dealer0);
-        assert_eq!(play_state1.next_to_play(), Some(pone));
+        assert_eq!(play_state1.next_to_play(), pone);
         assert_eq!(play_state1.previous_plays(), play_state0.current_plays());
         assert!(play_state1.current_plays().is_empty());
         assert_eq!(play_state1.pass_count(), 0);
@@ -1239,7 +1228,7 @@ mod test {
             .with_cut("AS")
             .with_hands("7H8H8D", "4S5S")
             .with_current_plays(&vec![(1, "JH"), (0, "9C"), (1, "TH")])
-            .as_playing(Some(0));
+            .as_playing(0);
         let pone = game0.pone();
         let Game::Playing(_, dealer0, _, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1248,7 +1237,7 @@ mod test {
         let Game::Playing(_, dealer1, _, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
 
         assert_eq!(dealer1, dealer0);
-        assert_eq!(play_state1.next_to_play(), Some(dealer1));
+        assert_eq!(play_state1.next_to_play(), dealer1);
         assert_eq!(play_state1.previous_plays(), play_state0.current_plays());
         assert!(play_state1.current_plays().is_empty());
         assert_eq!(play_state1.pass_count(), 0);
@@ -1261,7 +1250,7 @@ mod test {
             .with_cut("AS")
             .with_hands("7H8H8D", "5STH")
             .with_current_plays(&vec![(1, "JH"), (0, "9C"), (1, "4S")])
-            .as_playing(Some(0));
+            .as_playing(0);
         let pone = game0.pone();
         let Game::Playing(_, dealer0, _, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1273,35 +1262,10 @@ mod test {
         expected_current_plays.push(last_play);
 
         assert_eq!(dealer1, dealer0);
-        assert_eq!(play_state1.next_to_play(), Some(pone));
+        assert_eq!(play_state1.next_to_play(), pone);
         assert_eq!(play_state1.previous_plays(), expected_current_plays);
         assert!(play_state1.current_plays().is_empty());
         assert_eq!(play_state1.pass_count(), 0);
-    }
-
-    #[test]
-    fn no_next_to_play_when_all_plays_completed() {
-        let game0 = Builder::new(2)
-            .with_scores(0, 0)
-            .with_cut("AS")
-            .with_hands("7H", "")
-            .with_current_plays(&vec![(1, "TH"), (0, "8D"), (1, "5S")])
-            .with_previous_plays(&vec![(1, "JH"), (0, "9C"), (1, "4S"), (0, "8H")])
-            .as_playing(Some(0));
-        let pone = game0.pone();
-        let Game::Playing(_, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
-
-        let game1 = game0.play(dealer0, Card::from("7H")).ok().unwrap();
-        let Game::Playing(_, dealer1, hands1, play_state1, _, _) = game1.clone() else { panic!("Unexpected state") };
-
-        assert_eq!(dealer1, dealer0);
-        assert_eq!(hands1[&dealer1], Hand::from("9C8H8D7H"));
-        assert_eq!(hands1[&pone], Hand::from("JH4STH5S"));
-        assert_eq!(play_state1.next_to_play(), None);
-        assert!(play_state1.current_plays().is_empty());
-        assert!(play_state1.previous_plays().is_empty());
-        assert_eq!(play_state1.pass_count(), 0);
-
     }
     
     #[test]
@@ -1311,7 +1275,7 @@ mod test {
             .with_cut("AS")
             .with_hands("KH", "8D")
             .with_current_plays(&vec![(0, "7D")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1330,7 +1294,7 @@ mod test {
             .with_cut("AS")
             .with_hands("KH", "8D")
             .with_current_plays(&vec![(0, "8S")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1349,7 +1313,7 @@ mod test {
             .with_cut("AS")
             .with_hands("KH", "8DAH")
             .with_current_plays(&vec![(1, "8C"), (0, "8S")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1368,7 +1332,7 @@ mod test {
             .with_cut("AS")
             .with_hands("KH", "7DAH")
             .with_current_plays(&vec![(1, "7C"), (0, "7S"), (0, "7H")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1387,7 +1351,7 @@ mod test {
             .with_cut("AS")
             .with_hands("KH", "AS")
             .with_current_plays(&vec![(1, "2D"), (0, "3H")])
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1405,7 +1369,7 @@ mod test {
             .with_scores(0, 0)
             .with_cut("AS")
             .with_hands("5H7H6H", "AH8S7S")
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1427,7 +1391,7 @@ mod test {
             .with_scores(0, 0)
             .with_cut("AS")
             .with_hands("5H7H6H", "AH9S8S")
-            .as_playing(Some(1));
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1448,8 +1412,10 @@ mod test {
         let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_cut("4H")
-            .with_hands("7H8CAC2C", "JHKS5HTH")
-            .as_playing(None);
+            .with_previous_plays(&vec![
+                (0, "7H"), (0, "8C"), (0, "AC"), (0, "2C"),
+                (1, "JH"), (1, "KS"), (1, "5H"), (1, "TH")])
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1466,8 +1432,10 @@ mod test {
         let game0 = Builder::new(2)
             .with_scores(0, 115)
             .with_cut("4H")
-            .with_hands("7H8CAC2C", "JHKS5HTH")
-            .as_playing(None);
+            .with_previous_plays(&vec![
+                (0, "7H"), (0, "8C"), (0, "AC"), (0, "2C"),
+                (1, "JH"), (1, "KS"), (1, "5H"), (1, "TH")])
+            .as_playing(1);
         let pone = game0.pone();
         let Game::Playing(scores0, dealer, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
@@ -1484,7 +1452,7 @@ mod test {
             .with_scores(0, 0)
             .with_cut("4H")
             .with_hands("7H8CAC2C", "JCKS5HTH")
-            .as_playing(Some(1));
+            .as_playing(1);
 
         let error = game0.score_pone().err().unwrap();
         assert_eq!(error, Error::CannotScorePone);
@@ -1532,7 +1500,7 @@ mod test {
             .with_scores(0, 115)
             .with_cut("4H")
             .with_hands("7H8CAC2C", "JHKS5HTH")
-            .as_playing(None);
+            .as_playing(1);
 
         let error = game0.score_dealer().err().unwrap();
         assert_eq!(error, Error::ActionNotPermitted);       
@@ -1544,7 +1512,7 @@ mod test {
             .with_scores(0, 115)
             .with_cut("4H")
             .with_hands("7H8CAC2C", "JHKS5HTH")
-            .as_playing(None);
+            .as_playing(1);
 
         let error = game0.score_crib().err().unwrap();
         assert_eq!(error, Error::ActionNotPermitted);       

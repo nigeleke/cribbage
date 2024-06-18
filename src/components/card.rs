@@ -19,6 +19,7 @@ pub fn Card(
     on_selected: Option<WriteSignal<bool>>,
 
 ) -> impl IntoView {
+
     let class = style!{
         div {
             display: flex;
@@ -39,9 +40,6 @@ pub fn Card(
             on_selected.update(|s| *s = selected() );
         }
     };
-
-    logging::log!("opacity-card {}", opacity);
-
 
     let card_view = match card {
         CardSlot::FaceUp(card) => view! {

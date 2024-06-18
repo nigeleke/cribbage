@@ -123,9 +123,9 @@ impl Builder {
         Game::Discarding(scores, players[self.dealer], hands, crib, deck)
     }
 
-    pub fn as_playing(self, next_to_play: Option<usize>) -> Game {
+    pub fn as_playing(self, next_to_play: usize) -> Game {
         let players = self.players.clone();
-        let player = next_to_play.map(|p| players[p]);
+        let player = players[next_to_play];
         let scores = self.scores.clone();
         let scores = self.merged(scores);
         let hands = self.hands.clone();

@@ -247,7 +247,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "JD"), (0, "5H")])
             .with_cut("AH")
-            .as_playing(None);
+            .as_playing(1);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::current_play(&play_state), 2)
     }
@@ -259,7 +259,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "JD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(None);
+            .as_playing(1);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::current_play(&play_state), 2)
     }
@@ -271,7 +271,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(None);
+            .as_playing(1);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::current_play(&play_state), 6)
     }
@@ -283,7 +283,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(None);
+            .as_playing(1);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::current_play(&play_state), 12)
     }
@@ -300,7 +300,7 @@ mod test {
                 .with_hands("KS", "KD")
                 .with_current_plays(&current_plays)
                 .with_cut("KH")
-                .as_playing(None);
+                .as_playing(1);
             let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
             assert_eq!(GameScorer::current_play(&play_state), if len < 3 { 0 } else { len })
         }
@@ -313,7 +313,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(None);
+            .as_playing(1);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::end_of_play(&play_state), 1)
     }
@@ -325,7 +325,7 @@ mod test {
             .with_hands("", "")
             .with_current_plays(&vec![(0, "KC"), (0, "KD"), (0, "KH"), (0, "AS")])
             .with_cut("KS")
-            .as_playing(None);
+            .as_playing(1);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
         assert_eq!(GameScorer::end_of_play(&play_state), 2)
     }
@@ -435,7 +435,7 @@ mod test {
             .with_hands("AH", "KD")
             .with_cut("2H")
             .with_current_plays(&vec![(1, "TH"), (0, "9H"), (1, "QH")])
-            .as_playing(Some(0));
+            .as_playing(0);
         let Game::Playing(_, dealer, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
         let game1 = game0.play(dealer, Card::from("AH")).ok().unwrap();

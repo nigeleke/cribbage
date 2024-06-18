@@ -6,6 +6,7 @@ use super::discarding::Discarding;
 use super::playing::Playing;
 use super::plays::Plays;
 use super::scoreboard::Scoreboard;
+use super::scoring::Scoring;
 
 use crate::view::prelude::{
     Card as CardView,
@@ -23,8 +24,8 @@ use crate::view::prelude::{
 use leptos::*;
 use style4rs::style;
 
-#[derive(Clone, Copy, Debug)]
-enum ScoringWhom {
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum ScoringEntity {
     Pone,
     Dealer,
     Crib,
@@ -37,6 +38,8 @@ pub fn Game(
     game: GameView,
 
 ) -> impl IntoView {
+    logging::log!("component::Game");
+
     match game {
         GameView::Starting(cuts) =>
             view! { <StartingGame cuts /> },
@@ -48,13 +51,13 @@ pub fn Game(
             view! { <PlayingGame scores hands play_state cut crib dealer /> },
 
         GameView::ScoringPone(scores, dealer, hands, cut, crib) =>
-            view! { <ScoringGame scores whom=ScoringWhom::Pone hands cut crib dealer /> },
+            view! { <ScoringGame scores entity=ScoringEntity::Pone hands cut crib dealer /> },
 
         GameView::ScoringDealer(scores, dealer, hands, cut, crib) =>
-            view! { <ScoringGame scores whom=ScoringWhom::Dealer hands cut crib dealer /> },
+            view! { <ScoringGame scores entity=ScoringEntity::Dealer hands cut crib dealer /> },
 
         GameView::ScoringCrib(scores, dealer, hands, cut, crib) =>
-            view! { <ScoringGame scores whom=ScoringWhom::Crib hands cut crib dealer /> },
+            view! { <ScoringGame scores entity=ScoringEntity::Crib hands cut crib dealer /> },
 
         GameView::Finished(scores) =>
             view! { <FinishingGame scores /> },
@@ -67,6 +70,7 @@ fn StartingGame(
     cuts: CutsView,
 
 ) -> impl IntoView {
+    logging::log!("component::StartingGame");
 
     let player_view = Box::new(move || {
         let cuts = cuts.clone();
@@ -87,6 +91,7 @@ fn DiscardingGame(
     dealer: Role,
 
 ) -> impl IntoView {
+    logging::log!("component::DiscardingGame");
 
     let opponent_hand = hands[&Role::Opponent].clone();
 
@@ -112,6 +117,7 @@ fn PlayingGame(
     dealer: Role,
     
 ) -> impl IntoView {
+    logging::log!("component::PlayingGame");
 
     let opponent_hand = hands[&Role::Opponent].clone();
     let state = play_state.clone();
@@ -137,19 +143,33 @@ fn ScoringGame(
     cut: CardView,
     crib: Crib,
     dealer: Role,
-    whom: ScoringWhom,
+    entity: ScoringEntity,
     
 ) -> impl IntoView {
+    logging::log!("component::ScoringGame");
 
+    let cards_being_scored = match entity {
+        ScoringEntity::Pone => hands[&dealer.opponent()].clone(),
+        ScoringEntity::Dealer => hands[&dealer].clone(),
+        ScoringEntity::Crib => crib.clone(),
+    };
+
+    let player_hand = hands[&Role::CurrentPlayer].clone();
     let opponent_hand = hands[&Role::Opponent].clone();
 
-    let player_view = Box::new(move || { 
-        view! { <><button>{format!("{:?}", whom)}</button></> }.into() 
+    #[allow(unused_braces)]
+    let player_view = Box::new(move || {
+        view! { <><Scoring cards=player_hand /></> }
     });
 
     view! {
-        <Template scores player_view opponent_hand dealer cut=CardSlot::FaceUp(cut) crib>
-            {format!("{:?}", whom)}
+        <Template scores 
+            player_view 
+            opponent_hand
+            dealer
+            cut=CardSlot::FaceUp(cut)
+            crib={if entity == ScoringEntity::Crib { Crib::new() } else { crib } }>
+            <Cards cards=cards_being_scored />
         </Template>
     }
 }
@@ -160,7 +180,12 @@ fn FinishingGame(
     scores: Scores,
 
 ) -> impl IntoView {
-    let player_view = Box::new(move || view! { <><button>"Done"</button></> }.into());
+    logging::log!("component::FinishingGame");
+
+    #[allow(unused_braces)]
+    let player_view = Box::new(move || {
+        view! { <><button>"Done"</button></> }
+    });
 
     view! {
         <Template player_view>
@@ -199,41 +224,27 @@ fn Template(
             flex-direction: row;
             justify-content: space-evenly;
         }
-        .scoreboard {
-            flex: 0 1 auto;
-        }
         .dynamicview {
-            flex: 1 1 auto;
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
         }
         .cribandcutview {
-            flex: 0 1 auto;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
-        .playerview {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-        }
-
     };
-
-    logging::log!("Game::display: scores: {:?} opponent_hand: {:?} dealer: {:?} cut: {:?} crib: {:?}", scores, opponent_hand, dealer, cut, crib);
 
     let hide_player_crib = dealer != Some(Role::CurrentPlayer);
     let hide_opponent_crib = dealer != Some(Role::Opponent);
 
-    let crib = crib.clone();
-
     view!{
         class = class,
         <div>
-            <div class="scoreboard"><Scoreboard scores=scores /></div>
+            <Scoreboard scores=scores />
             <div class="dynamicview">
                 { player_view() }
                 <div>{children.map(|c| c())}</div>
@@ -252,7 +263,7 @@ fn Template(
                     if hide_opponent_crib {
                         view! { <Card card=CardSlot::Empty /> }
                     } else {
-                        view! ( <Crib crib />)
+                        view! ( <Crib crib=crib.clone() />)
                     }
                 }
             </div>

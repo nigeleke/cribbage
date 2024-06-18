@@ -13,6 +13,8 @@ pub fn Discarding(
     current_player_hand: Hand
 
 ) -> impl IntoView {
+    logging::log!("component::Discarding");
+
     let class = style!{
         div {
             display: flex;

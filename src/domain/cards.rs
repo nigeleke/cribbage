@@ -1,7 +1,6 @@
-use super::format::format_vec;
-
 use crate::constants::*;
 use crate::domain::prelude::*;
+use crate::fmt::format_vec;
 
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};

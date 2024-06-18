@@ -1,10 +1,11 @@
 use super::card::{Card, Rank, Value};
 use super::cards::{Hand, Hands};
-use super::format::{format_hashmap, format_vec};
 use super::player::Player;
 use super::result::{Error, Result};
 
 use crate::constants::*;
+use crate::fmt::{format_hashmap, format_vec};
+use crate::scorer::Scorer;
 
 use serde::{Serialize, Deserialize};
 use std::collections::HashSet;

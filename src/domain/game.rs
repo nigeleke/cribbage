@@ -1,13 +1,13 @@
 use super::card::{Card, Cuts, Rank};
 use super::cards::{Crib, Deck, Hand, Hands};
-use super::format::format_hashmap;
 use super::player::Player;
 use super::plays::PlayState;
 use super::result::{Error, Result};
 use super::score::{Score, Scores};
-use super::game_scorer::*;
 
 use crate::constants::*;
+use crate::fmt::format_hashmap;
+use crate::scorer::Scorer;
 
 use serde::{Deserialize, Serialize};
 
@@ -142,7 +142,7 @@ impl Game {
                     let pone = self.pone();
                     let play_state = PlayState::new(pone, &hands);
                     let game = Game::Playing(scores.clone(), *dealer, hands, play_state, cut, crib);
-                    let score = GameScorer::his_heels_on_cut_pre_play(cut);
+                    let score = Scorer::his_heels_on_cut_pre_play(cut);
                     game.score_points(*dealer, score)
                 } else {
                     Ok(Game::Discarding(scores.clone(), *dealer, hands, crib, deck.clone()))
@@ -225,8 +225,8 @@ impl Game {
 
                 hand.remove(card);
                 play_state.play(card);
-                let score_current_play = GameScorer::current_play(play_state);
-                let score_end_of_play = GameScorer::end_of_play(play_state);
+                let score_current_play = Scorer::current_play(play_state);
+                let score_end_of_play = Scorer::end_of_play(play_state);
 
                 let all_cards_are_played = play_state.all_are_cards_played();
                 let end_of_play = play_state.target_reached() || all_cards_are_played;
@@ -247,8 +247,6 @@ impl Game {
         let players = game.players();
         verify::player(player, &players)?;
         
-        let pone = game.pone();
-
         match game {
             Game::Playing(ref mut scores, dealer, ref mut hands, ref mut play_state, cut, ref mut crib) => {
                 let legal_plays = play_state.legal_plays(player)?;
@@ -259,7 +257,7 @@ impl Game {
                 let mut score = 0;
 
                 if play_state.pass_count() == NUMBER_OF_PLAYERS_IN_GAME {
-                    score += GameScorer::end_of_play(play_state);                    
+                    score += Scorer::end_of_play(play_state);                    
                     play_state.start_new_play();                    
                 }
 
@@ -280,7 +278,7 @@ impl Game {
 
                 let hands = play_state.finish_plays();
                 game = Game::ScoringPone(scores.clone(), dealer, hands.clone(), cut, crib.clone());
-                let score = GameScorer::hand(&hands[&pone], cut);
+                let score = Scorer::hand(&hands[&pone], cut);
                 game.score_points(pone, score)
             },
             _ => Err(Error::ActionNotPermitted),
@@ -292,7 +290,7 @@ impl Game {
         match game {
             Game::ScoringPone(ref mut scores, dealer, hands, cut, crib) => {
                 game = Game::ScoringDealer(scores.clone(), dealer, hands.clone(), cut, crib.clone());
-                let score = GameScorer::hand(&hands[&dealer], cut);
+                let score = Scorer::hand(&hands[&dealer], cut);
                 game.score_points(dealer, score)
             },
             _ => Err(Error::ActionNotPermitted),
@@ -304,7 +302,7 @@ impl Game {
         match game {
             Game::ScoringDealer(ref mut scores, dealer, hands, cut, crib) => {
                 game = Game::ScoringCrib(scores.clone(), dealer, hands.clone(), cut, crib.clone());
-                let score = GameScorer::crib(&crib, cut);
+                let score = Scorer::crib(&crib, cut);
                 game.score_points(dealer, score)
             },
             _ => Err(Error::ActionNotPermitted),

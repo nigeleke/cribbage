@@ -244,17 +244,15 @@
 
 mod card;
 mod cards;
-mod format;
 mod game;
 mod player;
 mod plays;
 mod result;
 mod score;
-mod game_scorer;
 
 pub mod prelude {
-  pub use crate::domain::card::{Card, Value};
-  pub use crate::domain::cards::Hand;
+  pub use crate::domain::card::{Card, Cut, Face, Rank, Value};
+  pub use crate::domain::cards::{Cards, Crib, Hand};
   pub use crate::domain::game::Game;
   pub use crate::domain::player::Player;
   pub use crate::domain::plays::{Play, PlayState};
@@ -263,5 +261,6 @@ pub mod prelude {
 
 #[cfg(test)]
 pub mod test {
-  pub use crate::domain::cards::{Cards, Crib, Deck};
+  pub use crate::domain::prelude::*;
+  pub use crate::domain::cards::Deck;
 }

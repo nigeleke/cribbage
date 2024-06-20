@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (3cf924b93 2024-06-15)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (d8a38b000 2024-06-19)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -259,6 +259,17 @@
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::card::Card;
 <span class="kw">use </span><span class="kw">super</span>::cards::Cards;
 <span class="kw">use </span><span class="kw">super</span>::crib::Crib;
@@ -267,6 +278,7 @@
 <span class="kw">use </span><span class="kw">super</span>::playing::Playing;
 <span class="kw">use </span><span class="kw">super</span>::plays::Plays;
 <span class="kw">use </span><span class="kw">super</span>::scoreboard::Scoreboard;
+<span class="kw">use </span><span class="kw">super</span>::scoring::Scoring;
 
 <span class="kw">use </span><span class="kw">crate</span>::view::prelude::{
     Card <span class="kw">as </span>CardView,
@@ -278,14 +290,14 @@
     Hands,
     PlayState,
     Role, 
-    Scores
+    Peggings
 };
 
 <span class="kw">use </span>leptos::<span class="kw-2">*</span>;
 <span class="kw">use </span>style4rs::style;
 
-<span class="attr">#[derive(Clone, Copy, Debug)]
-</span><span class="kw">enum </span>ScoringWhom {
+<span class="attr">#[derive(Clone, Copy, Debug, PartialEq)]
+</span><span class="kw">enum </span>ScoringEntity {
     Pone,
     Dealer,
     Crib,
@@ -298,6 +310,8 @@
     game: GameView,
 
 ) -&gt; <span class="kw">impl </span>IntoView {
+    <span class="macro">logging::log!</span>(<span class="string">"component::Game"</span>);
+
     <span class="kw">match </span>game {
         GameView::Starting(cuts) =&gt;
             <span class="macro">view!</span> { &lt;StartingGame cuts /&gt; },
@@ -309,13 +323,13 @@
             <span class="macro">view!</span> { &lt;PlayingGame scores hands play_state cut crib dealer /&gt; },
 
         GameView::ScoringPone(scores, dealer, hands, cut, crib) =&gt;
-            <span class="macro">view!</span> { &lt;ScoringGame scores whom=ScoringWhom::Pone hands cut crib dealer /&gt; },
+            <span class="macro">view!</span> { &lt;ScoringGame scores entity=ScoringEntity::Pone hands cut crib dealer /&gt; },
 
         GameView::ScoringDealer(scores, dealer, hands, cut, crib) =&gt;
-            <span class="macro">view!</span> { &lt;ScoringGame scores whom=ScoringWhom::Dealer hands cut crib dealer /&gt; },
+            <span class="macro">view!</span> { &lt;ScoringGame scores entity=ScoringEntity::Dealer hands cut crib dealer /&gt; },
 
         GameView::ScoringCrib(scores, dealer, hands, cut, crib) =&gt;
-            <span class="macro">view!</span> { &lt;ScoringGame scores whom=ScoringWhom::Crib hands cut crib dealer /&gt; },
+            <span class="macro">view!</span> { &lt;ScoringGame scores entity=ScoringEntity::Crib hands cut crib dealer /&gt; },
 
         GameView::Finished(scores) =&gt;
             <span class="macro">view!</span> { &lt;FinishingGame scores /&gt; },
@@ -328,6 +342,7 @@
     cuts: CutsView,
 
 ) -&gt; <span class="kw">impl </span>IntoView {
+    <span class="macro">logging::log!</span>(<span class="string">"component::StartingGame"</span>);
 
     <span class="kw">let </span>player_view = Box::new(<span class="kw">move </span>|| {
         <span class="kw">let </span>cuts = cuts.clone();
@@ -342,12 +357,13 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>DiscardingGame(
 
-    scores: Scores,
+    scores: Peggings,
     hands: Hands,
     crib: Crib,
     dealer: Role,
 
 ) -&gt; <span class="kw">impl </span>IntoView {
+    <span class="macro">logging::log!</span>(<span class="string">"component::DiscardingGame"</span>);
 
     <span class="kw">let </span>opponent_hand = hands[<span class="kw-2">&amp;</span>Role::Opponent].clone();
 
@@ -365,7 +381,7 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>PlayingGame(
 
-    scores: Scores,
+    scores: Peggings,
     hands: Hands,
     play_state: PlayState,
     cut: CardView,
@@ -373,6 +389,7 @@
     dealer: Role,
     
 ) -&gt; <span class="kw">impl </span>IntoView {
+    <span class="macro">logging::log!</span>(<span class="string">"component::PlayingGame"</span>);
 
     <span class="kw">let </span>opponent_hand = hands[<span class="kw-2">&amp;</span>Role::Opponent].clone();
     <span class="kw">let </span>state = play_state.clone();
@@ -393,24 +410,38 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>ScoringGame(
 
-    scores: Scores,
+    scores: Peggings,
     hands: Hands,
     cut: CardView,
     crib: Crib,
     dealer: Role,
-    whom: ScoringWhom,
+    entity: ScoringEntity,
     
 ) -&gt; <span class="kw">impl </span>IntoView {
+    <span class="macro">logging::log!</span>(<span class="string">"component::ScoringGame"</span>);
 
+    <span class="kw">let </span>cards_being_scored = <span class="kw">match </span>entity {
+        ScoringEntity::Pone =&gt; hands[<span class="kw-2">&amp;</span>dealer.opponent()].clone(),
+        ScoringEntity::Dealer =&gt; hands[<span class="kw-2">&amp;</span>dealer].clone(),
+        ScoringEntity::Crib =&gt; crib.clone(),
+    };
+
+    <span class="kw">let </span>player_hand = hands[<span class="kw-2">&amp;</span>Role::CurrentPlayer].clone();
     <span class="kw">let </span>opponent_hand = hands[<span class="kw-2">&amp;</span>Role::Opponent].clone();
 
-    <span class="kw">let </span>player_view = Box::new(<span class="kw">move </span>|| { 
-        <span class="macro">view!</span> { &lt;&gt;&lt;button&gt;{<span class="macro">format!</span>(<span class="string">"{:?}"</span>, whom)}&lt;/button&gt;&lt;/&gt; }.into() 
+    <span class="attr">#[allow(unused_braces)]
+    </span><span class="kw">let </span>player_view = Box::new(<span class="kw">move </span>|| {
+        <span class="macro">view!</span> { &lt;&gt;&lt;Scoring cards=player_hand /&gt;&lt;/&gt; }
     });
 
     <span class="macro">view!</span> {
-        &lt;Template scores player_view opponent_hand dealer cut=CardSlot::FaceUp(cut) crib&gt;
-            {<span class="macro">format!</span>(<span class="string">"{:?}"</span>, whom)}
+        &lt;Template scores 
+            player_view 
+            opponent_hand
+            dealer
+            cut=CardSlot::FaceUp(cut)
+            crib={<span class="kw">if </span>entity == ScoringEntity::Crib { Crib::new() } <span class="kw">else </span>{ crib } }&gt;
+            &lt;Cards cards=cards_being_scored /&gt;
         &lt;/Template&gt;
     }
 }
@@ -418,10 +449,15 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>FinishingGame(
 
-    scores: Scores,
+    scores: Peggings,
 
 ) -&gt; <span class="kw">impl </span>IntoView {
-    <span class="kw">let </span>player_view = Box::new(<span class="kw">move </span>|| <span class="macro">view!</span> { &lt;&gt;&lt;button&gt;<span class="string">"Done"</span>&lt;/button&gt;&lt;/&gt; }.into());
+    <span class="macro">logging::log!</span>(<span class="string">"component::FinishingGame"</span>);
+
+    <span class="attr">#[allow(unused_braces)]
+    </span><span class="kw">let </span>player_view = Box::new(<span class="kw">move </span>|| {
+        <span class="macro">view!</span> { &lt;&gt;&lt;button&gt;<span class="string">"Done"</span>&lt;/button&gt;&lt;/&gt; }
+    });
 
     <span class="macro">view!</span> {
         &lt;Template player_view&gt;
@@ -436,7 +472,7 @@
     player_view: Children,
 
     <span class="attr">#[prop(optional)]
-    </span>scores: Scores,
+    </span>scores: Peggings,
 
     <span class="attr">#[prop(optional)]
     </span>opponent_hand: <span class="prelude-ty">Option</span>&lt;Hand&gt;,
@@ -460,41 +496,27 @@
             flex-direction: row;
             justify-content: space-evenly;
         }
-        .scoreboard {
-            flex: <span class="number">0 1 </span>auto;
-        }
         .dynamicview {
-            flex: <span class="number">1 1 </span>auto;
+            flex-grow: <span class="number">1</span>;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
         }
         .cribandcutview {
-            flex: <span class="number">0 1 </span>auto;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
-        .playerview {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-        }
-
     };
-
-    <span class="macro">logging::log!</span>(<span class="string">"Game::display: scores: {:?} opponent_hand: {:?} dealer: {:?} cut: {:?} crib: {:?}"</span>, scores, opponent_hand, dealer, cut, crib);
 
     <span class="kw">let </span>hide_player_crib = dealer != <span class="prelude-val">Some</span>(Role::CurrentPlayer);
     <span class="kw">let </span>hide_opponent_crib = dealer != <span class="prelude-val">Some</span>(Role::Opponent);
 
-    <span class="kw">let </span>crib = crib.clone();
-
     <span class="macro">view!</span>{
         class = class,
         &lt;div&gt;
-            &lt;div class=<span class="string">"scoreboard"</span>&gt;&lt;Scoreboard scores=scores /&gt;&lt;/div&gt;
+            &lt;Scoreboard scores=scores /&gt;
             &lt;div class=<span class="string">"dynamicview"</span>&gt;
                 { player_view() }
                 &lt;div&gt;{children.map(|c| c())}&lt;/div&gt;
@@ -513,7 +535,7 @@
                     <span class="kw">if </span>hide_opponent_crib {
                         <span class="macro">view!</span> { &lt;Card card=CardSlot::Empty /&gt; }
                     } <span class="kw">else </span>{
-                        <span class="macro">view!</span> ( &lt;Crib crib /&gt;)
+                        <span class="macro">view!</span> ( &lt;Crib crib=crib.clone() /&gt;)
                     }
                 }
             &lt;/div&gt;

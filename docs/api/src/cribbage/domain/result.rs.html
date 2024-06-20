@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/result.rs`."><title>result.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (3cf924b93 2024-06-15)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/result.rs`."><title>result.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (d8a38b000 2024-06-19)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -85,47 +85,57 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::player::Player;
-<span class="kw">use </span><span class="kw">super</span>::card::Card;
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::cards::prelude::Card;
 
-<span class="attr">#[derive(Debug, PartialEq)]
+<span class="kw">use </span><span class="kw">crate</span>::types::prelude::Player;
+
+<span class="kw">use </span>thiserror::Error;
+
+<span class="attr">#[derive(Debug, Error, PartialEq)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>Error {
-    ActionNotPermitted,
-    CannotPass,
-    CannotPlay,
-    CannotPlayCard,
-    CannotScorePone,
-    CutForStartDecided,
-    CutForStartUndecided,
-    InvalidCard(Card),
-    InvalidPlayer(Player),
-    NotEnoughPlayers,
-    TooManyDiscards,
-    TooManyPlayers,
+    <span class="attr">#[error(<span class="string">"an action was attempted which is not permitted in the current game state"</span>)]
+    </span>ActionNotPermitted,
+
+    <span class="attr">#[error(<span class="string">"not this player's turn to pass"</span>)]
+    </span>CannotPass,
+
+    <span class="attr">#[error(<span class="string">"not this player's turn to play a card"</span>)]
+    </span>CannotPlay,
+
+    <span class="attr">#[error(<span class="string">"cannot play the desired card"</span>)]
+    </span>CannotPlayCard,
+
+    <span class="attr">#[error(<span class="string">"cannot score pone as it is still possible to play cards"</span>)]
+    </span>CannotScorePone,
+
+    <span class="attr">#[error(<span class="string">"cannot redraw for start of game as cut for dealer was decisive"</span>)]
+    </span>CutForStartDecided,
+
+    <span class="attr">#[error(<span class="string">"cannot start game as there is not a descisive cut for dealer"</span>)]
+    </span>CutForStartUndecided,
+
+    <span class="attr">#[error(<span class="string">"the card {0} does belong to the player"</span>)]
+    </span>InvalidCard(Card),
+
+    <span class="attr">#[error(<span class="string">"player {0} is not a participant of the current game"</span>)]
+    </span>InvalidPlayer(Player),
+
+    <span class="attr">#[error(<span class="string">"there are not enough players to allow ther current game to be started"</span>)]
+    </span>NotEnoughPlayers,
+
+    <span class="attr">#[error(<span class="string">"only two cards can be discarded to the crib"</span>)]
+    </span>TooManyDiscards,
+
+    <span class="attr">#[error(<span class="string">"too many players requested for new game"</span>)]
+    </span>TooManyPlayers,
 }
 
-<span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>Error {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
-        <span class="kw">match </span><span class="self">self </span>{
-            Error::ActionNotPermitted =&gt; <span class="macro">write!</span>(f, <span class="string">"an action was attempted which is not permitted in the current game state"</span>),
-            Error::CannotPass =&gt; <span class="macro">write!</span>(f, <span class="string">"not player's turn to pass"</span>),
-            Error::CannotPlay =&gt; <span class="macro">write!</span>(f, <span class="string">"not player's turn to play a card"</span>),
-            Error::CannotPlayCard =&gt; <span class="macro">write!</span>(f, <span class="string">"cannot play the desired card"</span>),
-            Error::CannotScorePone =&gt; <span class="macro">write!</span>(f, <span class="string">"cannot score pone as it is still possible to play cards"</span>),
-            Error::CutForStartDecided =&gt; <span class="macro">write!</span>(f, <span class="string">"cannot redraw for start of game as cut for dealer was decisive"</span>),
-            Error::CutForStartUndecided =&gt; <span class="macro">write!</span>(f, <span class="string">"cannot start game as there is not a descisive cut for dealer"</span>),
-            Error::InvalidCard(c) =&gt; <span class="macro">write!</span>(f, <span class="string">"the card {} does belong to the player"</span>, c),
-            Error::InvalidPlayer(p) =&gt; <span class="macro">write!</span>(f, <span class="string">"player {} is not a participant of the current game"</span>, p),
-            Error::NotEnoughPlayers =&gt; <span class="macro">write!</span>(f, <span class="string">"there are not enough players to allow ther current game to be started"</span>),
-            Error::TooManyDiscards =&gt; <span class="macro">write!</span>(f, <span class="string">"only two cards can be discarded to the crib"</span>),
-            Error::TooManyPlayers =&gt; <span class="macro">write!</span>(f, <span class="string">"too many players requested for new game"</span>),
-        }
-    }
-}
-
-<span class="kw">impl </span>std::error::Error <span class="kw">for </span>Error {}
-
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+<span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
@@ -154,8 +164,8 @@
         <span class="kw">let </span>expected_invalid_player = <span class="macro">format!</span>(<span class="string">"player {} is not a participant of the current game"</span>, player);
         <span class="kw">let </span>expected = <span class="macro">vec!</span>[
             <span class="string">"an action was attempted which is not permitted in the current game state"</span>,
-            <span class="string">"not player's turn to pass"</span>,
-            <span class="string">"not player's turn to play a card"</span>,
+            <span class="string">"not this player's turn to pass"</span>,
+            <span class="string">"not this player's turn to play a card"</span>,
             <span class="string">"cannot play the desired card"</span>,
             <span class="string">"cannot score pone as it is still possible to play cards"</span>,
             <span class="string">"cannot redraw for start of game as cut for dealer was decisive"</span>,

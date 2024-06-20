@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/playing.rs`."><title>playing.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (3cf924b93 2024-06-15)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/playing.rs`."><title>playing.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (d8a38b000 2024-06-19)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -127,103 +127,103 @@
     play_state: PlayState
 
 ) -&gt; <span class="kw">impl </span>IntoView {
-    <span class="kw">move </span>|| {
-        <span class="kw">let </span>class = <span class="macro">style!</span>{
-            div {
-                display: flex;
-                flex-direction: column;
-                justify-content: space-around;
-                align-items: center;
-                gap: <span class="number">5vh</span>;
-            }
-        };
-    
-        <span class="kw">let </span>(current_player_cards, <span class="kw">_</span>) = create_signal(current_player_hand.clone());
-    
-        <span class="kw">let </span>(legal_plays, <span class="kw">_</span>) = create_signal(play_state.legal_plays().clone());
-    
-        <span class="kw">let </span>(selected, set_selected) = create_signal(Vec::&lt;bool&gt;::new());
-        <span class="kw">let </span>selected_cards = <span class="kw">move </span>|| {
-            selected()
-                .into_iter()
-                .zip(current_player_cards())
-                .filter_map(|(s, c)| {
-                    <span class="kw">if let </span>CardSlot::FaceUp(card) = c {
-                        s.then_some(card)
-                    } <span class="kw">else </span>{
-                        <span class="prelude-val">None
-                    </span>}
-            })
-            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-        };
-        <span class="kw">let </span>selected_play = <span class="kw">move </span>|| {
-            <span class="kw">let </span>cards = selected_cards().into_iter().filter(|c| legal_plays().contains(c)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-            (cards.len() == <span class="number">1</span>).then(|| cards[<span class="number">0</span>])
-        };
-        <span class="kw">let </span>disabled = <span class="kw">move </span>|| { selected_play().is_none() };
-    
-        <span class="kw">let </span>context = use_context::&lt;Context&gt;().unwrap();
-    
-        <span class="kw">let </span>on_play = {
-            <span class="kw">let </span>context = context.clone();
-            <span class="kw">move </span>|<span class="kw">_</span>| {
-                <span class="kw">let </span>id = context.id.clone();
-                <span class="kw">let </span>state = context.state;
-                <span class="kw">let </span>selected_play = selected_play();
-                <span class="kw">let </span>cards = selected_play.unwrap();
-                spawn_local(<span class="kw">async move </span>{
-                    <span class="kw">if let </span><span class="prelude-val">Ok</span>(game) = play(id, cards).<span class="kw">await </span>{
-                        state.set(<span class="prelude-val">Some</span>(game.clone()));
-                    }
-                });
-            }
-        };
-    
-        <span class="kw">let </span>on_pass = {
-            <span class="kw">let </span>context = context.clone();
-            <span class="kw">move </span>|<span class="kw">_</span>| {
-                <span class="kw">let </span>id = context.id.clone();
-                <span class="kw">let </span>state = context.state;
-                spawn_local(<span class="kw">async move </span>{
-                    <span class="kw">if let </span><span class="prelude-val">Ok</span>(game) = pass(id).<span class="kw">await </span>{
-                        state.set(<span class="prelude-val">Some</span>(game.clone()));
-                    }
-                });
-            }
-        };
-    
-        <span class="kw">let </span>on_score_pone = {
-            <span class="kw">let </span>context = context.clone();
-            <span class="kw">move </span>|<span class="kw">_</span>| {
-                <span class="kw">let </span>id = context.id.clone();
-                <span class="kw">let </span>state = context.state;
-                spawn_local(<span class="kw">async move </span>{
-                    <span class="kw">if let </span><span class="prelude-val">Ok</span>(game) = score_pone(id).<span class="kw">await </span>{
-                        state.set(<span class="prelude-val">Some</span>(game.clone()));
-                    }
-                });
-            }    
-        };
-    
-        <span class="macro">view!</span> {
-            class = class,
-            &lt;div&gt;
-                {<span class="kw">move </span>|| {
-                    <span class="kw">let </span>current_player_cards = current_player_cards();
-                    <span class="macro">view!</span>{ &lt;Cards cards=current_player_cards on_selected=set_selected /&gt; }
-                }}
-                &lt;span&gt;{
-                    <span class="kw">if </span>play_state.finished_plays() {
-                        <span class="macro">view!</span> { &lt;button on:click=on_score_pone&gt;<span class="string">"Score pone"</span>&lt;/button&gt; }
-                    } <span class="kw">else if </span>play_state.must_pass() {
-                        <span class="macro">view!</span> { &lt;button on:click=on_pass&gt;<span class="string">"Pass"</span>&lt;/button&gt; }
-                    } <span class="kw">else </span>{
-                        <span class="macro">view!</span> { &lt;button on:click=on_play disabled=disabled&gt;<span class="string">"Play"</span>&lt;/button&gt; }
-                    }
-                }&lt;/span&gt;
-            &lt;/div&gt;
+    <span class="macro">logging::log!</span>(<span class="string">"component::Playing"</span>);
+
+    <span class="kw">let </span>class = <span class="macro">style!</span>{
+        div {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            gap: <span class="number">5vh</span>;
+        }
+    };
+
+    <span class="kw">let </span>(current_player_cards, <span class="kw">_</span>) = create_signal(current_player_hand.clone());
+
+    <span class="kw">let </span>(legal_plays, <span class="kw">_</span>) = create_signal(play_state.legal_plays().clone());
+
+    <span class="kw">let </span>(selected, set_selected) = create_signal(Vec::&lt;bool&gt;::new());
+    <span class="kw">let </span>selected_cards = <span class="kw">move </span>|| {
+        selected()
+            .into_iter()
+            .zip(current_player_cards())
+            .filter_map(|(s, c)| {
+                <span class="kw">if let </span>CardSlot::FaceUp(card) = c {
+                    s.then_some(card)
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">None
+                </span>}
+        })
+        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+    };
+    <span class="kw">let </span>selected_play = <span class="kw">move </span>|| {
+        <span class="kw">let </span>cards = selected_cards().into_iter().filter(|c| legal_plays().contains(c)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        (cards.len() == <span class="number">1</span>).then(|| cards[<span class="number">0</span>])
+    };
+    <span class="kw">let </span>disabled = <span class="kw">move </span>|| { selected_play().is_none() };
+
+    <span class="kw">let </span>context = use_context::&lt;Context&gt;().unwrap();
+
+    <span class="kw">let </span>on_play = {
+        <span class="kw">let </span>context = context.clone();
+        <span class="kw">move </span>|<span class="kw">_</span>| {
+            <span class="kw">let </span>id = context.id.clone();
+            <span class="kw">let </span>state = context.state;
+            <span class="kw">let </span>selected_play = selected_play();
+            <span class="kw">let </span>cards = selected_play.unwrap();
+            spawn_local(<span class="kw">async move </span>{
+                <span class="kw">if let </span><span class="prelude-val">Ok</span>(game) = play(id, cards).<span class="kw">await </span>{
+                    state.set(<span class="prelude-val">Some</span>(game.clone()));
+                }
+            });
+        }
+    };
+
+    <span class="kw">let </span>on_pass = {
+        <span class="kw">let </span>context = context.clone();
+        <span class="kw">move </span>|<span class="kw">_</span>| {
+            <span class="kw">let </span>id = context.id.clone();
+            <span class="kw">let </span>state = context.state;
+            spawn_local(<span class="kw">async move </span>{
+                <span class="kw">if let </span><span class="prelude-val">Ok</span>(game) = pass(id).<span class="kw">await </span>{
+                    state.set(<span class="prelude-val">Some</span>(game.clone()));
+                }
+            });
+        }
+    };
+
+    <span class="kw">let </span>on_score_pone = {
+        <span class="kw">let </span>context = context.clone();
+        <span class="kw">move </span>|<span class="kw">_</span>| {
+            <span class="kw">let </span>id = context.id.clone();
+            <span class="kw">let </span>state = context.state;
+            spawn_local(<span class="kw">async move </span>{
+                <span class="kw">if let </span><span class="prelude-val">Ok</span>(game) = score_pone(id).<span class="kw">await </span>{
+                    state.set(<span class="prelude-val">Some</span>(game.clone()));
+                }
+            });
         }    
-    }
+    };
+
+    <span class="macro">view!</span> {
+        class = class,
+        &lt;div&gt;
+            {<span class="kw">move </span>|| {
+                <span class="kw">let </span>current_player_cards = current_player_cards();
+                <span class="macro">view!</span>{ &lt;Cards cards=current_player_cards on_selected=set_selected /&gt; }
+            }}
+            &lt;span&gt;{
+                <span class="kw">if </span>play_state.all_cards_are_played() {
+                    <span class="macro">view!</span> { &lt;button on:click=on_score_pone&gt;<span class="string">"Score pone"</span>&lt;/button&gt; }
+                } <span class="kw">else if </span>play_state.must_pass() {
+                    <span class="macro">view!</span> { &lt;button on:click=on_pass&gt;<span class="string">"Pass"</span>&lt;/button&gt; }
+                } <span class="kw">else </span>{
+                    <span class="macro">view!</span> { &lt;button on:click=on_play disabled=disabled&gt;<span class="string">"Play"</span>&lt;/button&gt; }
+                }
+            }&lt;/span&gt;
+        &lt;/div&gt;
+    }    
 }
 
 </code></pre></div></section></main></body></html>

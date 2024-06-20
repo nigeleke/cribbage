@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/view/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (3cf924b93 2024-06-15)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/view/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (d8a38b000 2024-06-19)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -109,38 +109,14 @@
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-<a href="#123" id="123">123</a>
-<a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::card::{Card, CardSlot, Cut};
 <span class="kw">use </span><span class="kw">super</span>::cards::{Crib, Cuts, Hands};
 <span class="kw">use </span><span class="kw">super</span>::plays::PlayState;
 <span class="kw">use </span><span class="kw">super</span>::role::{Dealer, Role};
-<span class="kw">use </span><span class="kw">super</span>::score::Scores;
+<span class="kw">use </span><span class="kw">super</span>::pegging::Peggings;
 
-<span class="kw">use </span><span class="kw">crate</span>::domain::prelude::{Game <span class="kw">as </span>DomainGame, Player <span class="kw">as </span>DomainPlayer};
+<span class="kw">use </span><span class="kw">crate</span>::domain::prelude::Game <span class="kw">as </span>DomainGame;
+<span class="kw">use </span><span class="kw">crate</span>::types::prelude::Player;
 
 <span class="kw">use </span>serde::{Serialize, Deserialize};
 
@@ -150,42 +126,16 @@
 </span><span class="attr">#[derive(Clone, Debug, Serialize, Deserialize)]
 </span><span class="kw">pub enum </span>Game {
     Starting(Cuts),
-    Discarding(Scores, Hands, Crib, Dealer),
-    Playing(Scores, Hands, PlayState, Cut, Crib, Dealer),
-    ScoringPone(Scores, Role, Hands, Cut, Crib),
-    ScoringDealer(Scores, Role, Hands, Cut, Crib),
-    ScoringCrib(Scores, Role, Hands, Cut, Crib),
-    Finished(Scores),
+    Discarding(Peggings, Hands, Crib, Dealer),
+    Playing(Peggings, Hands, PlayState, Cut, Crib, Dealer),
+    ScoringPone(Peggings, Role, Hands, Cut, Crib),
+    ScoringDealer(Peggings, Role, Hands, Cut, Crib),
+    ScoringCrib(Peggings, Role, Hands, Cut, Crib),
+    Finished(Peggings),
 }
 
-<span class="kw">impl </span>Game {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>scores(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Scores {
-        <span class="kw">match </span><span class="self">self </span>{
-            Game::Starting(<span class="kw">_</span>) =&gt; Scores::new(),
-            Game::Discarding(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores.clone(),
-            Game::Playing(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores.clone(),
-            Game::ScoringPone(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores.clone(),
-            Game::ScoringDealer(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores.clone(),
-            Game::ScoringCrib(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores.clone(),
-            Game::Finished(scores) =&gt; scores.clone(),
-        }
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dealer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Role&gt; {
-        <span class="kw">match </span><span class="self">self </span>{
-            Game::Starting(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
-            Game::Discarding(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, dealer) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>dealer),
-            Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, dealer) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>dealer),
-            Game::ScoringPone(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>dealer),
-            Game::ScoringDealer(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>dealer),
-            Game::ScoringCrib(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>dealer),
-            Game::Finished(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
-        }
-    }
-}
-
-<span class="kw">impl </span>From&lt;(DomainGame, DomainPlayer)&gt; <span class="kw">for </span>Game {
-    <span class="kw">fn </span>from((game, player): (DomainGame, DomainPlayer)) -&gt; <span class="self">Self </span>{
+<span class="kw">impl </span>From&lt;(DomainGame, Player)&gt; <span class="kw">for </span>Game {
+    <span class="kw">fn </span>from((game, player): (DomainGame, Player)) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>game {
             DomainGame::Starting(cuts, <span class="kw">_</span>) =&gt; {
                 <span class="kw">let </span>(player_cut, opponent_cut) = partition_for(player, <span class="kw-2">&amp;</span>cuts);
@@ -248,8 +198,8 @@
     }
 }
 
-<span class="kw">fn </span>partition_for&lt;T: Clone&gt;(player: DomainPlayer, map: <span class="kw-2">&amp;</span>HashMap&lt;DomainPlayer, T&gt;) -&gt; (T, T) {
-    <span class="kw">let </span>(players, opponents): (HashMap&lt;<span class="kw-2">&amp;</span>DomainPlayer, <span class="kw-2">&amp;</span>T&gt;, HashMap&lt;<span class="kw-2">&amp;</span>DomainPlayer, <span class="kw-2">&amp;</span>T&gt;) =
+<span class="kw">fn </span>partition_for&lt;T: Clone&gt;(player: Player, map: <span class="kw-2">&amp;</span>HashMap&lt;Player, T&gt;) -&gt; (T, T) {
+    <span class="kw">let </span>(players, opponents): (HashMap&lt;<span class="kw-2">&amp;</span>Player, <span class="kw-2">&amp;</span>T&gt;, HashMap&lt;<span class="kw-2">&amp;</span>Player, <span class="kw-2">&amp;</span>T&gt;) =
         map.iter().partition(|(p, <span class="kw">_</span>)| <span class="kw-2">**</span>p == player);
     <span class="kw">let </span>players_t = players.into_values().next().unwrap();
     <span class="kw">let </span>opponents_t = opponents.into_values().take(<span class="number">1</span>).next().unwrap();

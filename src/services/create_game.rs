@@ -5,6 +5,7 @@ pub async fn create_game() -> Result<(), ServerFnError> {
     use crate::domain::prelude::*;
     use crate::ssr::auth;
     use crate::ssr::database::prelude::*;
+    use crate::types::prelude::Player;
     use std::collections::HashSet;
 
     let user = auth::authenticated_user().await?;

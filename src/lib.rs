@@ -7,8 +7,8 @@ mod domain;
 mod error_template;
 mod fmt;
 mod pages;
-mod scorer;
 mod services;
+mod types;
 mod view;
 
 pub mod prelude {

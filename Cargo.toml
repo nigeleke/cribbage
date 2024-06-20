@@ -31,7 +31,6 @@ style4rs = { git = "https://github.com/nigeleke/style4rs.git" }
 dotenv = { version = "0.15", optional = true }
 axum_session = { version = "0.14", optional = true }
 axum-extra = { version = "0.9", optional = true }
-yansi = "1.0.1"
 futures = "0.3.30"
 itertools = "0.13.0"
 

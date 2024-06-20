@@ -1,4 +1,5 @@
 use crate::domain::prelude::*;
+use crate::types::prelude::Player;
 
 pub struct Opponent;
 

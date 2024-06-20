@@ -45,7 +45,7 @@ pub(crate) fn Plays(
                     }
                 </div>
                 <div class="runningtotal">
-                    { (running_total != 0).then_some( { view! { <p>{running_total}</p> } } ) }
+                    { (running_total != 0.into()).then_some( { view! { <p>{running_total.to_string()}</p> } } ) }
                 </div>
             </div>
     }

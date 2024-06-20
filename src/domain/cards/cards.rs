@@ -1,17 +1,16 @@
-use crate::constants::*;
-use crate::domain::prelude::*;
+use super::card::Card;
+
+use crate::types::prelude::*;
 use crate::fmt::format_vec;
 
-use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
 
-use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Cards<T>
 where T: Clone {
-    cards: Vec<Card>,
+    pub(crate) cards: Vec<Card>,
     _marker: std::marker::PhantomData<T>
 }
 
@@ -41,10 +40,6 @@ where T: Clone {
         self.cards.len()
     }
 
-    pub(crate) fn value(&self) -> Value {
-        self.cards.iter().map(|c| c.value()).sum()
-    }
-
     pub fn is_empty(&self) -> bool {
         self.cards.is_empty()
     }
@@ -66,6 +61,13 @@ where T: Clone {
     #[cfg(test)]
     pub(crate) fn contains_none(&self, cards: &[Card]) -> bool {
         cards.iter().all(|c| !self.cards.contains(c))
+    }
+}
+
+impl<T> HasValue for Cards<T>
+where T: Clone {
+    fn value(&self) -> Value {
+        self.cards.iter().map(|&c| c.value()).sum()
     }
 }
 
@@ -106,7 +108,7 @@ where T: Clone {
         let cards = card_chunks(value)
             .iter()
             .map(|cid| Card::from(cid.as_str()))
-            .collect::<Vec<Card>>();
+            .collect::<Vec<_>>();
 
         Self { cards, _marker: Default::default() }
     }
@@ -117,77 +119,4 @@ where U: Clone {
     fn from_iter<T: IntoIterator<Item = Card>>(iter: T) -> Self {
         Self { cards: Vec::from_iter(iter), _marker: Default::default() }
     }
-}
-
-/// A deck of cards.
-#[derive(Clone, Debug, PartialEq)]
-pub struct DeckType;
-pub type Deck = Cards<DeckType>;
-
-impl Deck {
-    pub(crate) fn shuffled_pack() -> Deck {
-        let mut cards = Card::all();
-        cards.shuffle(&mut thread_rng());
-        cards.into()
-    }
-
-    pub(crate) fn cut(&self) -> (Card, Deck) {
-        let Some((card, remainder)) = self.cards.split_first() else { unreachable!() };
-        (*card, Deck::from(Vec::from(remainder)))
-    }
-
-    pub(crate) fn deal(&self, players: &HashSet<Player>) -> (Hands, Deck) {
-        let cards = &self.cards;
-        let hands = players
-            .iter()
-            .enumerate()
-            .map(|(i, p)| (*p, Hand::from(Vec::from(&cards[i*CARDS_DEALT_PER_HAND .. (i+1)*CARDS_DEALT_PER_HAND]))));
-        let deck = Deck::from(Vec::from(&cards[NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND ..]));
-        (Hands::from_iter(hands), deck)
-    }
-}
-
-/// A player's hand.
-#[derive(Clone, Debug, PartialEq)]
-pub struct HandType;
-pub type Hand = Cards<HandType>;
-pub type Hands = HashMap<Player, Hand>;
-
-/// The current Crib.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CribType;
-pub type Crib = Cards<CribType>;
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn contains_52_cards() {
-        let deck = Deck::shuffled_pack();
-        assert_eq!(deck.cards.len(), 52);
-    }
-
-    #[test]
-    fn contains_all_cards_for_all_suits_and_faces() {
-        let deck = Deck::shuffled_pack();
-        let cards = Card::all();
-
-        for card in cards {
-            assert!(deck.cards.contains(&card))
-        }
-    }
-
-    #[test]
-    fn allow_a_random_card_to_be_cut() {
-        let deck = Deck::shuffled_pack();
-        let (cut, remaining) = deck.cut();
-        assert!(deck.cards.contains(&cut));
-        assert!(!remaining.cards.contains(&cut));
-        assert_eq!(remaining.cards.len(), 51);
-        for card in deck.cards {
-            assert_eq!(remaining.cards.contains(&card), card != cut)
-        }
-    }
-
 }

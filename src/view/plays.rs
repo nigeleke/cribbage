@@ -5,8 +5,8 @@ use crate::domain::prelude::{
     Hand as DomainHand,
     Play as DomainPlay,
     PlayState as DomainPlayState,
-    Player as DomainPlayer,
 };
+use crate::types::prelude::{Player, Value};
 
 use serde::{Deserialize, Serialize};
 
@@ -22,8 +22,8 @@ impl Play {
     }
 }
 
-impl From<(DomainPlay, DomainPlayer)> for Play {
-    fn from((play, player): (DomainPlay, DomainPlayer)) -> Self {
+impl From<(DomainPlay, Player)> for Play {
+    fn from((play, player): (DomainPlay, Player)) -> Self {
         let role = (play.player(), player).into();
         let card = CardSlot::FaceUp(play.card());
         Play { role, card }
@@ -32,7 +32,7 @@ impl From<(DomainPlay, DomainPlayer)> for Play {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PlayState {
-    running_total: usize,
+    running_total: Value,
     all_cards_are_played: bool,
     legal_plays: Vec<Card>,
     current_plays: Vec<Play>,
@@ -52,7 +52,7 @@ impl PlayState {
         DomainHand::from(self.legal_plays.clone())
     }
 
-    pub(crate) fn running_total(&self) -> usize {
+    pub(crate) fn running_total(&self) -> Value {
         self.running_total
     }
 
@@ -65,10 +65,10 @@ impl PlayState {
     }
 }
 
-impl From<(DomainPlayState, DomainPlayer)> for PlayState {
-    fn from((play_state, player): (DomainPlayState, DomainPlayer)) -> Self {
+impl From<(DomainPlayState, Player)> for PlayState {
+    fn from((play_state, player): (DomainPlayState, Player)) -> Self {
         
-        let running_total = play_state.running_total().into();
+        let running_total = play_state.running_total();
 
         let all_cards_are_played = play_state.all_are_cards_played();
 

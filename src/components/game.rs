@@ -18,7 +18,7 @@ use crate::view::prelude::{
     Hands,
     PlayState,
     Role, 
-    Scores
+    Peggings
 };
 
 use leptos::*;
@@ -85,7 +85,7 @@ fn StartingGame(
 #[component]
 fn DiscardingGame(
 
-    scores: Scores,
+    scores: Peggings,
     hands: Hands,
     crib: Crib,
     dealer: Role,
@@ -109,7 +109,7 @@ fn DiscardingGame(
 #[component]
 fn PlayingGame(
 
-    scores: Scores,
+    scores: Peggings,
     hands: Hands,
     play_state: PlayState,
     cut: CardView,
@@ -138,7 +138,7 @@ fn PlayingGame(
 #[component]
 fn ScoringGame(
 
-    scores: Scores,
+    scores: Peggings,
     hands: Hands,
     cut: CardView,
     crib: Crib,
@@ -177,7 +177,7 @@ fn ScoringGame(
 #[component]
 fn FinishingGame(
 
-    scores: Scores,
+    scores: Peggings,
 
 ) -> impl IntoView {
     logging::log!("component::FinishingGame");
@@ -200,7 +200,7 @@ fn Template(
     player_view: Children,
 
     #[prop(optional)]
-    scores: Scores,
+    scores: Peggings,
 
     #[prop(optional)]
     opponent_hand: Option<Hand>,

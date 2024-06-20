@@ -1,11 +1,9 @@
-use super::card::{Card, Rank, Value};
-use super::cards::{Hand, Hands};
-use super::player::Player;
+use super::cards::prelude::{Card, Hand, Hands};
 use super::result::{Error, Result};
 
 use crate::constants::*;
 use crate::fmt::{format_hashmap, format_vec};
-use crate::scorer::Scorer;
+use crate::types::prelude::*;
 
 use serde::{Serialize, Deserialize};
 use std::collections::HashSet;
@@ -44,7 +42,7 @@ impl std::fmt::Display for Play {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PlayState {
     next_to_play: Player,
     legal_plays: Hands,

@@ -2,9 +2,10 @@ use super::card::{Card, CardSlot, Cut};
 use super::cards::{Crib, Cuts, Hands};
 use super::plays::PlayState;
 use super::role::{Dealer, Role};
-use super::score::Scores;
+use super::pegging::Peggings;
 
-use crate::domain::prelude::{Game as DomainGame, Player as DomainPlayer};
+use crate::domain::prelude::Game as DomainGame;
+use crate::types::prelude::Player;
 
 use serde::{Serialize, Deserialize};
 
@@ -14,42 +15,16 @@ use std::collections::HashMap;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Game {
     Starting(Cuts),
-    Discarding(Scores, Hands, Crib, Dealer),
-    Playing(Scores, Hands, PlayState, Cut, Crib, Dealer),
-    ScoringPone(Scores, Role, Hands, Cut, Crib),
-    ScoringDealer(Scores, Role, Hands, Cut, Crib),
-    ScoringCrib(Scores, Role, Hands, Cut, Crib),
-    Finished(Scores),
+    Discarding(Peggings, Hands, Crib, Dealer),
+    Playing(Peggings, Hands, PlayState, Cut, Crib, Dealer),
+    ScoringPone(Peggings, Role, Hands, Cut, Crib),
+    ScoringDealer(Peggings, Role, Hands, Cut, Crib),
+    ScoringCrib(Peggings, Role, Hands, Cut, Crib),
+    Finished(Peggings),
 }
 
-impl Game {
-    pub(crate) fn scores(&self) -> Scores {
-        match self {
-            Game::Starting(_) => Scores::new(),
-            Game::Discarding(scores, _, _, _) => scores.clone(),
-            Game::Playing(scores, _, _, _, _, _) => scores.clone(),
-            Game::ScoringPone(scores, _, _, _, _) => scores.clone(),
-            Game::ScoringDealer(scores, _, _, _, _) => scores.clone(),
-            Game::ScoringCrib(scores, _, _, _, _) => scores.clone(),
-            Game::Finished(scores) => scores.clone(),
-        }
-    }
-
-    pub(crate) fn dealer(&self) -> Option<Role> {
-        match self {
-            Game::Starting(_) => None,
-            Game::Discarding(_, _, _, dealer) => Some(*dealer),
-            Game::Playing(_, _, _, _, _, dealer) => Some(*dealer),
-            Game::ScoringPone(_, dealer, _, _, _) => Some(*dealer),
-            Game::ScoringDealer(_, dealer, _, _, _) => Some(*dealer),
-            Game::ScoringCrib(_, dealer, _, _, _) => Some(*dealer),
-            Game::Finished(_) => None,
-        }
-    }
-}
-
-impl From<(DomainGame, DomainPlayer)> for Game {
-    fn from((game, player): (DomainGame, DomainPlayer)) -> Self {
+impl From<(DomainGame, Player)> for Game {
+    fn from((game, player): (DomainGame, Player)) -> Self {
         match game {
             DomainGame::Starting(cuts, _) => {
                 let (player_cut, opponent_cut) = partition_for(player, &cuts);
@@ -112,8 +87,8 @@ impl From<(DomainGame, DomainPlayer)> for Game {
     }
 }
 
-fn partition_for<T: Clone>(player: DomainPlayer, map: &HashMap<DomainPlayer, T>) -> (T, T) {
-    let (players, opponents): (HashMap<&DomainPlayer, &T>, HashMap<&DomainPlayer, &T>) =
+fn partition_for<T: Clone>(player: Player, map: &HashMap<Player, T>) -> (T, T) {
+    let (players, opponents): (HashMap<&Player, &T>, HashMap<&Player, &T>) =
         map.iter().partition(|(p, _)| **p == player);
     let players_t = players.into_values().next().unwrap();
     let opponents_t = opponents.into_values().take(1).next().unwrap();

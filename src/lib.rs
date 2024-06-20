@@ -5,8 +5,10 @@ mod constants;
 mod components;
 mod domain;
 mod error_template;
+mod fmt;
 mod pages;
 mod services;
+mod types;
 mod view;
 
 pub mod prelude {

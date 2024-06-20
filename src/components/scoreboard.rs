@@ -1,4 +1,5 @@
-use crate::view::prelude::{Role, Score, Scores};
+use crate::types::prelude::HasPoints;
+use crate::view::prelude::{Role, Pegging, Peggings};
 
 use leptos::*;
 
@@ -9,12 +10,12 @@ use std::ops::Range;
 #[component]
 pub(crate) fn Scoreboard(
 
-    scores: Scores,
+    scores: Peggings,
 
 ) -> impl IntoView {
     provide_context(scores.clone());
 
-    let default_score = Score::default();
+    let default_score = Pegging::default();
     let current_player_score = scores.get(&Role::CurrentPlayer).unwrap_or(&default_score);
     let opponent_score = scores.get(&Role::Opponent).unwrap_or(&default_score);
 
@@ -29,10 +30,10 @@ pub(crate) fn Scoreboard(
                 <rect width="100%" height="100%" rx="5" ry="5" fill="goldenrod" />
                 <g transform="translate(2,2)">
                     <rect width="80" height="310" rx="4" ry="4" fill="url(#woodPattern)" />
-                    <text x="10" y="15" font-size="7" fill="palegoldenrod">"You: "{current_player_score.front_peg()}</text>
+                    <text x="10" y="15" font-size="7" fill="palegoldenrod">"You: "{current_player_score.front_peg().to_string()}</text>
                     <Track x_offset=10 y_offset=27 role=Role::CurrentPlayer />
                     <Track x_offset=50 y_offset=27 role=Role::Opponent />
-                    <text x="10" y="300" font-size="7" fill="palegoldenrod">"Opponent: "{opponent_score.front_peg()}</text>
+                    <text x="10" y="300" font-size="7" fill="palegoldenrod">"Opponent: "{opponent_score.front_peg().to_string()}</text>
                 </g>
             </svg>
         </div>
@@ -105,16 +106,17 @@ fn Hole(
     representation: usize
 
 ) -> impl IntoView {
+    
     let role = use_context::<Role>().unwrap();
-    let scores = use_context::<Scores>().unwrap();
-    let default_score = Score::default();
+    let scores = use_context::<Peggings>().unwrap();
+    let default_score = Pegging::default();
     let score = scores.get(&role).unwrap_or(&default_score);
 
-    let colour = (if role == Role::CurrentPlayer { "green" } else { "red" }).to_string();
+    let colour = (if role == Role::CurrentPlayer { "lime" } else { "red" }).to_string();
     let fill = match representation {
         0 => colour,
-        n if score.front_peg() % 60 == n => colour,
-        n if score.back_peg() % 60 == n => colour,
+        n if score.front_peg().points() % 60.into() == n.into() => colour,
+        n if score.back_peg().points() % 60.into() == n.into() => colour,
         n if n >= 121 => colour,
         _ => "gray".into(),
     };

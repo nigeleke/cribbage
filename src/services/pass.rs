@@ -8,6 +8,7 @@ pub async fn pass(game_id: String) -> Result<GameView, ServerFnError> {
     use crate::ssr::auth;
     use crate::ssr::database::prelude::*;
     use crate::ssr::opponent::Opponent;
+    use crate::types::prelude::Player;
     use uuid::Uuid;
 
     let player: Player = auth::authenticated_user().await?.into();

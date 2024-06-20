@@ -11,6 +11,7 @@ pub(crate) fn Plays(
     state: PlayState,
 
 ) -> impl IntoView {
+
     let class = style!{
         div {
             flex: 1 1 auto;
@@ -36,11 +37,15 @@ pub(crate) fn Plays(
         class = class,
             <div>
                 <div>
-                    <Cards cards={previous_plays} opacity="0.1".into() />
-                    <Cards cards={current_plays} />
+                    {
+                        (!previous_plays.is_empty()).then_some(view! { <Cards cards={previous_plays} opacity="0.1".into() /> }.into_view())
+                    }
+                    {
+                        (!current_plays.is_empty()).then_some(view! { <Cards cards={current_plays} /> }.into_view())
+                    }
                 </div>
                 <div class="runningtotal">
-                    { (running_total != 0).then_some( { view! { <p>{running_total}</p> } } ) }
+                    { (running_total != 0.into()).then_some( { view! { <p>{running_total.to_string()}</p> } } ) }
                 </div>
             </div>
     }

@@ -1,44 +1,49 @@
-use super::player::Player;
-use super::card::Card;
+use super::cards::prelude::Card;
 
-#[derive(Debug, PartialEq)]
+use crate::types::prelude::Player;
+
+use thiserror::Error;
+
+#[derive(Debug, Error, PartialEq)]
 pub(crate) enum Error {
+    #[error("an action was attempted which is not permitted in the current game state")]
     ActionNotPermitted,
+
+    #[error("not this player's turn to pass")]
     CannotPass,
+
+    #[error("not this player's turn to play a card")]
     CannotPlay,
+
+    #[error("cannot play the desired card")]
     CannotPlayCard,
+
+    #[error("cannot score pone as it is still possible to play cards")]
     CannotScorePone,
+
+    #[error("cannot redraw for start of game as cut for dealer was decisive")]
     CutForStartDecided,
+
+    #[error("cannot start game as there is not a descisive cut for dealer")]
     CutForStartUndecided,
+
+    #[error("the card {0} does belong to the player")]
     InvalidCard(Card),
+
+    #[error("player {0} is not a participant of the current game")]
     InvalidPlayer(Player),
+
+    #[error("there are not enough players to allow ther current game to be started")]
     NotEnoughPlayers,
+
+    #[error("only two cards can be discarded to the crib")]
     TooManyDiscards,
+
+    #[error("too many players requested for new game")]
     TooManyPlayers,
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Error::ActionNotPermitted => write!(f, "an action was attempted which is not permitted in the current game state"),
-            Error::CannotPass => write!(f, "not player's turn to pass"),
-            Error::CannotPlay => write!(f, "not player's turn to play a card"),
-            Error::CannotPlayCard => write!(f, "cannot play the desired card"),
-            Error::CannotScorePone => write!(f, "cannot score pone as it is still possible to play cards"),
-            Error::CutForStartDecided => write!(f, "cannot redraw for start of game as cut for dealer was decisive"),
-            Error::CutForStartUndecided => write!(f, "cannot start game as there is not a descisive cut for dealer"),
-            Error::InvalidCard(c) => write!(f, "the card {} does belong to the player", c),
-            Error::InvalidPlayer(p) => write!(f, "player {} is not a participant of the current game", p),
-            Error::NotEnoughPlayers => write!(f, "there are not enough players to allow ther current game to be started"),
-            Error::TooManyDiscards => write!(f, "only two cards can be discarded to the crib"),
-            Error::TooManyPlayers => write!(f, "too many players requested for new game"),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
-
-pub(crate) type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[cfg(test)]
 mod test {
@@ -67,8 +72,8 @@ mod test {
         let expected_invalid_player = format!("player {} is not a participant of the current game", player);
         let expected = vec![
             "an action was attempted which is not permitted in the current game state",
-            "not player's turn to pass",
-            "not player's turn to play a card",
+            "not this player's turn to pass",
+            "not this player's turn to play a card",
             "cannot play the desired card",
             "cannot score pone as it is still possible to play cards",
             "cannot redraw for start of game as cut for dealer was decisive",

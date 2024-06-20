@@ -1,16 +1,19 @@
 use crate::domain::prelude::*;
 use crate::domain::test::*;
+use crate::types::prelude::Player;
 
 use std::collections::{HashMap, HashSet};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Builder {
     players: Vec<Player>,
     dealer: usize,
     cuts: Vec<Card>,
-    scores: Vec<Score>,
+    scores: Vec<Pegging>,
     hands: Vec<Hand>,
-    play_state: PlayState,
+    current_plays: Vec<Play>,
+    previous_plays: Vec<Play>,
+    pass_count: usize,
     crib: Crib,
     cut: Option<Card>,
     deck: Deck,
@@ -20,14 +23,8 @@ impl Builder {
     pub fn new(player_count: usize) -> Self {
         Self {
             players: Vec::from_iter((0..player_count).map(|_| Player::new())),
-            dealer: Default::default(), 
-            cuts: Default::default(),
-            scores: Default::default(),
-            hands: Default::default(),
-            play_state: Default::default(),
-            crib: Default::default(),
-            cut: Default::default(),
             deck: Deck::shuffled_pack(),
+            ..Default::default()
         }
     }
 
@@ -52,8 +49,8 @@ impl Builder {
     }
 
     pub fn with_scores(mut self, score0: usize, score1: usize) -> Self {
-        self.scores.push(Score::default().add(score0));
-        self.scores.push(Score::default().add(score1));
+        self.scores.push(Pegging::default().add(score0.into()));
+        self.scores.push(Pegging::default().add(score1.into()));
         self
     }
 
@@ -85,18 +82,21 @@ impl Builder {
     }
 
     pub fn with_current_plays(mut self, plays: &[(usize, &str)]) -> Self {
-        let _ = plays.into_iter().for_each(|(p, c)| self.play_state.force_current_play(self.players[*p], Card::from(*c)));
+        let plays = plays.into_iter().map(|(p, c)| (self.players[*p], Card::from(*c)));
+        let plays = plays.map(|(p, c)| Play::new(p, c));
+        self.current_plays = Vec::from_iter(plays);
         self
     }
 
     pub fn with_previous_plays(mut self, plays: &[(usize, &str)]) -> Self {
-        let _ = plays.into_iter().for_each(|(p, c)| self.play_state.force_previous_play(self.players[*p], Card::from(*c)));
+        let plays = plays.into_iter().map(|(p, c)| (self.players[*p], Card::from(*c)));
+        let plays = plays.map(|(p, c)| Play::new(p, c));
+        self.previous_plays = Vec::from_iter(plays);
         self
     }
 
     pub fn with_pass(mut self) -> Self {
-        let new_pass_count = self.play_state.pass_count() + 1;
-        self.play_state.force_pass_count(new_pass_count);
+        self.pass_count += 1;
         self
     }
 
@@ -123,22 +123,20 @@ impl Builder {
         Game::Discarding(scores, players[self.dealer], hands, crib, deck)
     }
 
-    pub fn as_playing(self, next_to_play: Option<usize>) -> Game {
+    pub fn as_playing(self, next_to_play: usize) -> Game {
         let players = self.players.clone();
-        let player = next_to_play.map(|p| players[p]);
+        let player = players[next_to_play];
         let scores = self.scores.clone();
         let scores = self.merged(scores);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let mut play_state = PlayState::new(player, &hands);
         play_state
-            .force_pass_count(self.play_state.pass_count());
-        self.play_state
-            .current_plays()
+            .force_pass_count(self.pass_count);
+        self.current_plays
             .iter()
             .for_each(|p| play_state.force_current_play(p.player(), p.card()));
-        self.play_state
-            .previous_plays()
+        self.previous_plays
             .iter()
             .for_each(|p| play_state.force_previous_play(p.player(), p.card()));
         let cut = self.cut.unwrap();

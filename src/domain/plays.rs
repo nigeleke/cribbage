@@ -1,10 +1,9 @@
-use super::card::{Card, Rank, Value};
-use super::cards::{Hand, Hands};
-use super::format::{format_hashmap, format_vec};
-use super::player::Player;
+use super::cards::prelude::{Card, Hand, Hands};
 use super::result::{Error, Result};
 
 use crate::constants::*;
+use crate::fmt::{format_hashmap, format_vec};
+use crate::types::prelude::*;
 
 use serde::{Serialize, Deserialize};
 use std::collections::HashSet;
@@ -43,9 +42,9 @@ impl std::fmt::Display for Play {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PlayState {
-    next_to_play: Option<Player>,
+    next_to_play: Player,
     legal_plays: Hands,
     pass_count: usize,
     current_plays: Vec<Play>,
@@ -53,7 +52,7 @@ pub struct PlayState {
 }
 
 impl PlayState {
-    pub(crate) fn new(next_to_play: Option<Player>, hands: &Hands) -> Self {
+    pub(crate) fn new(next_to_play: Player, hands: &Hands) -> Self {
         Self {
             next_to_play,
             legal_plays: hands.clone(),
@@ -72,7 +71,7 @@ impl PlayState {
     }
 
     pub(crate) fn legal_plays(&self, player: Player) -> Result<Hand> {
-        if Some(player) == self.next_to_play {
+        if player == self.next_to_play {
             Ok(self.legal_plays_unchecked(player))
         } else {
             Err(Error::CannotPlay)
@@ -100,7 +99,7 @@ impl PlayState {
     }
 
     pub(crate) fn play(&mut self, card: Card) {
-        let Some(player) = self.next_to_play else { panic!("play::failed on next_to_play"); };
+        let player = self.next_to_play;
         if self.pass_count() == 0 {
             self.make_opponent_next_player();
         }
@@ -125,9 +124,9 @@ impl PlayState {
         let mut players = legal_plays.keys();
         let (player1, player2) = (players.next().unwrap(), players.next().unwrap());
 
-        let Some(player) = self.next_to_play else { panic!("make_opponent_next_player::failed on next_to_play.") };
+        let player = self.next_to_play;
         let opponent = if player == *player1 { *player2 } else { *player1 };
-        self.next_to_play = Some(opponent);
+        self.next_to_play = opponent;
     }
 
     pub(crate) fn is_current_play_finished(&self) -> bool {
@@ -145,20 +144,19 @@ impl PlayState {
         self.running_total() == Value::from(PLAY_TARGET)
     }
 
-    pub(crate) fn are_plays_finished(&self) -> bool {
+    pub(crate) fn all_are_cards_played(&self) -> bool {
         let legal_plays = &self.legal_plays;
         legal_plays.iter().all(|(_, hand)| hand.is_empty())
     }
 
     pub(crate) fn finish_plays(&mut self) -> Hands {
         let hands = self.regather_hands();
-        self.next_to_play = None;
         self.current_plays = Vec::default();
         self.previous_plays = Vec::default();
         hands
     }
 
-    pub(crate) fn next_to_play(&self) -> Option<Player> {
+    pub(crate) fn next_to_play(&self) -> Player {
         self.next_to_play
     }
 
@@ -195,7 +193,7 @@ impl PlayState {
 impl std::fmt::Display for PlayState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Next({}), Legal({}), Passes({}), Current({}), Previous({})",
-            if let Some(player) = self.next_to_play { player.to_string() } else { "-".to_string() },
+            self.next_to_play,
             format_hashmap(&self.legal_plays),
             self.pass_count,
             format_vec(&self.current_plays),

@@ -2,6 +2,7 @@ use crate::components::Context;
 use crate::components::card::Card;
 
 use crate::services::prelude::{redraw, start};
+use crate::types::prelude::*;
 use crate::view::prelude::{CardSlot, Cut, Cuts, Role};
 
 use leptos::*;
@@ -15,6 +16,8 @@ pub(crate) fn CuttingForStart(
     cuts: Cuts
 
 ) -> impl IntoView {
+    logging::log!("component::CuttingForStart");
+
     let class = style!{
         div {
             display: flex;

@@ -34,7 +34,7 @@ pub fn GamePage() -> impl IntoView {
             }
             <ErrorBoundary fallback=|_| Error>
                 { move || match game_state() {
-                    Some(game) => { view! { <Game game=game /> } },
+                    Some(game) => { view! { <Game game /> } },
                     None => view! { <Loading /> },
                 } }
             </ErrorBoundary>

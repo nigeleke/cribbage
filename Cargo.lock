@@ -680,7 +680,6 @@ dependencies = [
  "tracing",
  "uuid",
  "wasm-bindgen",
- "yansi",
 ]
 
 [[package]]

@@ -3,7 +3,7 @@ mod cards;
 mod game;
 mod role;
 mod plays;
-mod score;
+mod pegging;
 
 pub mod prelude {
     pub use super::card::{Card, CardSlot, Cut};
@@ -11,5 +11,5 @@ pub mod prelude {
     pub use super::game::Game;
     pub use super::plays::{PlayState};
     pub use super::role::Role;
-    pub use super::score::{Score, Scores};
+    pub use super::pegging::{Pegging, Peggings};
 }

@@ -9,13 +9,7 @@ pub struct Player(Uuid);
 
 impl Player {
     #[cfg(any(feature = "ssr", test))]
-    pub(crate) fn new() -> Self { Self::default() }
-}
-
-impl Default for Player {
-    fn default() -> Self {
-        Self(Uuid::new_v4())
-    }
+    pub(crate) fn new() -> Self { Self(Uuid::new_v4()) }
 }
 
 impl Eq for Player { }
@@ -41,7 +35,7 @@ impl Display for Player {
 #[cfg(test)]
 mod test {
     use super::*;
-    
+
     #[test]
     fn convert_from_uuid_to_player() {
         let uuid0 = Uuid::new_v4();

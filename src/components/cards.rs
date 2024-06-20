@@ -36,7 +36,7 @@ pub(crate) fn Cards(
     
     let selections = (0..cards.len()).map(|_| create_rw_signal(false)).collect::<Vec<_>>();
     let wo_selections = selections.iter().map(|s| s.write_only()).collect::<Vec<_>>();
-logging::log!("opactiry {}", opacity);
+
     view!{
         class = class,
         <div>
@@ -52,11 +52,22 @@ logging::log!("opactiry {}", opacity);
                 });
 
                 let n = if stacked { 1 } else { cards.len() };
-            
-                if on_selected.is_none() {
-                    cards.iter().take(n).map(move |card| view!{ <Card card={*card} opacity=opacity.clone() /> }).collect::<Vec<_>>()
+
+                if cards.is_empty() {
+                   view! { <Card card=CardSlot::Empty /> }.into_view()
+                } else if on_selected.is_none() {
+                    cards.iter()
+                        .take(n)
+                        .map(move |card| view!{ <Card card={*card} opacity=opacity.clone() /> })
+                        .collect::<Vec<_>>()
+                        .into_view()
                 } else {
-                    cards.iter().take(n).enumerate().map(move |(i, card)| view!{ <Card card={*card} on_selected={wo_selections[i]} opacity=opacity.clone() /> }).collect::<Vec<_>>()
+                    cards.iter()
+                        .take(n)
+                        .enumerate()
+                        .map(move |(i, card)| view!{ <Card card={*card} on_selected={wo_selections[i]} opacity=opacity.clone() /> })
+                        .collect::<Vec<_>>()
+                        .into_view()
                 }
             }
         </div>

@@ -1,4 +1,4 @@
-use crate::domain::prelude::Player;
+use crate::types::prelude::Player;
 
 use uuid::Uuid;
 
@@ -13,6 +13,6 @@ impl From<Uuid> for User {
 
 impl Into<Player> for User {
     fn into(self) -> Player {
-        self.0.into()
+        Player::from(self.0)
     }
 }

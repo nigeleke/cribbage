@@ -4,9 +4,9 @@ use leptos::*;
 
 #[server]
 pub async fn start(game_id: String) -> Result<GameView, ServerFnError> {
-    use crate::domain::prelude::*;
     use crate::ssr::auth;
     use crate::ssr::database::prelude::*;
+    use crate::types::prelude::Player;
     use uuid::Uuid;
 
     let player: Player = auth::authenticated_user().await?.into();

@@ -38,4 +38,3 @@ impl std::fmt::Display for Value {
         write!(f, "{}", self.0)
     }
 }
-

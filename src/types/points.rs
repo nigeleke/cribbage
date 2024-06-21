@@ -5,6 +5,7 @@ use serde::{Serialize, Deserialize};
 pub struct Points(usize);
 
 impl Points {
+    #[cfg(test)]
     pub fn new(value: usize) -> Self {
         Self(value)
     }

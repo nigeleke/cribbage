@@ -17,7 +17,7 @@ impl Scorer for HandScorer {
         let hand = self.0.clone();
         let cut = self.1;
         let mut all_cards = hand.clone();
-        all_cards.add(&vec![cut]);
+        all_cards.add(&[cut]);
 
         CardsScorer::fifteens(&all_cards) +
             CardsScorer::pairs(&all_cards) +

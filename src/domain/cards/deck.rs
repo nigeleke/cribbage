@@ -23,7 +23,7 @@ impl Deck {
 
     pub fn cut(&self) -> (Cut, Deck) {
         let Some((&card, remainder)) = self.cards.split_first() else { unreachable!() };
-        (card.into(), Deck::from(Vec::from(remainder)))
+        (card, Deck::from(Vec::from(remainder)))
     }
 
     pub fn deal(&self, players: &HashSet<Player>) -> (Hands, Deck) {

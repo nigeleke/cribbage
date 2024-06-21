@@ -17,7 +17,7 @@ impl Scorer for CribScorer {
         let crib = self.0.clone();
         let cut = self.1;
         let mut all_cards = crib.clone();
-        all_cards.add(&vec![cut]);
+        all_cards.add(&[cut]);
 
         CardsScorer::fifteens(&all_cards) +
             CardsScorer::pairs(&all_cards) +

@@ -3,13 +3,11 @@ mod cards;
 mod game;
 mod role;
 mod plays;
-mod pegging;
+mod scores;
 
-pub mod prelude {
-    pub use super::card::{Card, CardSlot, Cut};
-    pub use super::cards::{Crib, Cuts, Hand, Hands};
-    pub use super::game::Game;
-    pub use super::plays::{PlayState};
-    pub use super::role::Role;
-    pub use super::pegging::{Pegging, Peggings};
-}
+pub use self::card::{Card, CardSlot, Cut};
+pub use self::cards::{Crib, Cuts, Hand, Hands};
+pub use self::game::Game;
+pub use self::plays::{PlayState};
+pub use self::role::Role;
+pub use self::scores::{Score, Scores};

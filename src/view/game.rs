@@ -2,10 +2,10 @@ use super::card::{Card, CardSlot, Cut};
 use super::cards::{Crib, Cuts, Hands};
 use super::plays::PlayState;
 use super::role::{Dealer, Role};
-use super::pegging::Peggings;
+use super::scores::Scores;
 
-use crate::domain::prelude::Game as DomainGame;
-use crate::types::prelude::Player;
+use crate::domain::Game as DomainGame;
+use crate::types::Player;
 
 use serde::{Serialize, Deserialize};
 
@@ -15,12 +15,12 @@ use std::collections::HashMap;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Game {
     Starting(Cuts),
-    Discarding(Peggings, Hands, Crib, Dealer),
-    Playing(Peggings, Hands, PlayState, Cut, Crib, Dealer),
-    ScoringPone(Peggings, Role, Hands, Cut, Crib),
-    ScoringDealer(Peggings, Role, Hands, Cut, Crib),
-    ScoringCrib(Peggings, Role, Hands, Cut, Crib),
-    Finished(Peggings),
+    Discarding(Scores, Hands, Crib, Dealer),
+    Playing(Scores, Hands, PlayState, Cut, Crib, Dealer),
+    ScoringPone(Scores, Role, Hands, Cut, Crib),
+    ScoringDealer(Scores, Role, Hands, Cut, Crib),
+    ScoringCrib(Scores, Role, Hands, Cut, Crib),
+    Finished(Scores),
 }
 
 impl From<(DomainGame, Player)> for Game {

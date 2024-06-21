@@ -244,21 +244,14 @@
 
 mod cards;
 mod game;
-mod pegging;
 mod plays;
 mod result;
 mod scorers;
+mod scores;
 
-pub mod prelude {
-  pub use crate::domain::{
-    cards::prelude::*,
-    game::Game,
-    plays::{Play, PlayState},
-    pegging::Pegging
-  };
-}
-
-#[cfg(test)]
-pub mod test {
-  pub use crate::domain::prelude::*;
-}
+pub use crate::domain::{
+  cards::*,
+  game::Game,
+  plays::*,
+  scores::*,
+};

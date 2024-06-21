@@ -11,21 +11,18 @@ mod plays;
 mod scoreboard;
 mod scoring;
 
-pub(crate) mod prelude {
-    pub use super::Context;
-    pub use super::error::Error;
-    pub use super::game::Game;
-    pub use super::loading::Loading;
-}
+pub use self::error::Error;
+pub use self::game::Game;
+pub use self::loading::Loading;
 
-use crate::view::prelude::Game as GameView;
+use crate::view::Game as GameView;
 
 use leptos::*;
 
 #[derive(Clone, Debug)]
 pub struct Context {
-    pub(crate) id: String,
-    pub(crate) state: RwSignal<Option<GameView>>,
+    pub id: String,
+    pub state: RwSignal<Option<GameView>>,
 }
 
 impl Context {

@@ -1,6 +1,6 @@
 use super::cards::Cards;
 
-use crate::types::prelude::*;
+use crate::types::*;
 
 use std::collections::HashMap;
 

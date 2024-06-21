@@ -1,9 +1,6 @@
 mod game;
 
-pub mod prelude {
-    pub use super::{get_database, init_database};
-    pub use super::game::{insert_game, select_game, update_game};
-}
+pub use self::game::{insert_game, select_game, update_game};
 
 use sqlx::*;
 use sqlx::any::*;

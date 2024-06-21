@@ -1,12 +1,12 @@
 use super::cards::Cards;
 
-use crate::view::prelude::PlayState;
+use crate::view::PlayState;
 
 use leptos::*;
 use style4rs::style;
 
 #[component]
-pub(crate) fn Plays(
+pub fn Plays(
 
     state: PlayState,
 

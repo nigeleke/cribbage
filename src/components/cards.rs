@@ -1,4 +1,4 @@
-use crate::view::prelude::CardSlot;
+use crate::view::CardSlot;
 
 use super::card::Card;
 
@@ -11,7 +11,7 @@ use style4rs::style;
 /// If `on_selected` is provided then it will be triggered when any
 /// of the card's selected state changes.
 #[component]
-pub(crate) fn Cards(
+pub fn Cards(
     
     cards: Vec<CardSlot>,
     

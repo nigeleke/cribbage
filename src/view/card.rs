@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-pub type Card = crate::domain::prelude::Card;
+pub type Card = crate::domain::Card;
 
 #[derive(Clone, Copy, Default, Serialize, Deserialize, Debug)]
 pub enum CardSlot {

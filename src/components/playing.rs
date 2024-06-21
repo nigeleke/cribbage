@@ -1,7 +1,7 @@
 use crate::components::cards::Cards;
 use crate::components::Context;
-use crate::services::prelude::{pass, play, score_pone};
-use crate::view::prelude::{CardSlot, Hand, PlayState};
+use crate::services::{pass, play, score_pone};
+use crate::view::{CardSlot, Hand, PlayState};
 
 use leptos::*;
 use style4rs::style;

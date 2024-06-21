@@ -4,7 +4,7 @@ async fn main() {
     use dotenv;
     dotenv::dotenv().ok();
 
-    use cribbage::prelude::*;
+    use cribbage::App;
     use cribbage::ssr::database::*;
     use cribbage::ssr::fileserv::file_and_error_handler;
 

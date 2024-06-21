@@ -11,20 +11,17 @@ mod services;
 mod types;
 mod view;
 
-pub mod prelude {
-    pub use crate::app::App;
-} 
-
+pub use crate::app::App;
 
 #[cfg(test)]
 mod test;
 
 #[cfg(feature = "ssr")]
 pub mod ssr {
-    pub(crate) mod auth;
+    pub mod auth;
     pub mod database;
     pub mod fileserv;
-    pub(crate) mod opponent;
+    pub mod opponent;
 }
 
 #[cfg(feature = "hydrate")]

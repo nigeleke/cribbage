@@ -1,7 +1,7 @@
 use crate::components::cards::Cards;
 use crate::components::Context;
-use crate::services::prelude::{score_dealer};
-use crate::view::prelude::Hand;
+use crate::services::{score_dealer};
+use crate::view::Hand;
 
 use leptos::*;
 use style4rs::style;

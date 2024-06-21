@@ -1,8 +1,8 @@
 use super::scorer::Scorer;
-use super::scorer::constants::*;
+use super::constants::*;
 
-use crate::domain::prelude::Cut;
-use crate::types::prelude::{Face, HasFace, Points};
+use crate::domain::Cut;
+use crate::types::{Face, HasFace, Points};
 
 pub struct CutScorer(Cut);
 
@@ -28,7 +28,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn his_heels_on_cut_for_non_jack() {
+    fn should_not_score_his_heels_on_non_jack_cut() {
         let cards = vec![
             "AH", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "TH", "QH", "KH",
             "AC", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "TC", "QC", "KC",
@@ -41,7 +41,7 @@ mod test {
     }
 
     #[test]
-    fn his_heels_on_cut_for_jack() {
+    fn should_score_his_heels_on_jack_cut() {
         let cards = vec!["JH", "JC", "JD", "JS"];
         cards
             .into_iter()

@@ -1,6 +1,6 @@
-use crate::components::prelude::*;
-use crate::services::prelude::*;
-use crate::view::prelude::Game;
+use crate::components::*;
+use crate::services::*;
+use crate::view::Game;
 
 use leptos::*;
 use leptos_router::*;

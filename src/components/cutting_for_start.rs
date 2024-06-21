@@ -1,9 +1,9 @@
 use crate::components::Context;
 use crate::components::card::Card;
 
-use crate::services::prelude::{redraw, start};
-use crate::types::prelude::*;
-use crate::view::prelude::{CardSlot, Cut, Cuts, Role};
+use crate::services::{redraw, start};
+use crate::types::*;
+use crate::view::{CardSlot, Cut, Cuts, Role};
 
 use leptos::*;
 use style4rs::style;
@@ -11,7 +11,7 @@ use style4rs::style;
 /// The Cuts component shows the initial cuts at the start of the game.
 /// It enables the user to start or redraw as appropriate to the cuts' ranks.
 #[component]
-pub(crate) fn CuttingForStart(
+pub fn CuttingForStart(
 
     cuts: Cuts
 

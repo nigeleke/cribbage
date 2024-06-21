@@ -4,7 +4,7 @@ use super::cards::Cards;
 use super::hand::{Hand, Hands};
 
 use crate::constants::*;
-use crate::types::prelude::*;
+use crate::types::*;
 
 use rand::{seq::SliceRandom, thread_rng};
 use std::collections::HashSet;
@@ -15,18 +15,18 @@ pub struct DeckType;
 pub type Deck = Cards<DeckType>;
 
 impl Deck {
-    pub(crate) fn shuffled_pack() -> Deck {
+    pub fn shuffled_pack() -> Deck {
         let mut cards = Card::all();
         cards.shuffle(&mut thread_rng());
         cards.into()
     }
 
-    pub(crate) fn cut(&self) -> (Cut, Deck) {
+    pub fn cut(&self) -> (Cut, Deck) {
         let Some((&card, remainder)) = self.cards.split_first() else { unreachable!() };
         (card.into(), Deck::from(Vec::from(remainder)))
     }
 
-    pub(crate) fn deal(&self, players: &HashSet<Player>) -> (Hands, Deck) {
+    pub fn deal(&self, players: &HashSet<Player>) -> (Hands, Deck) {
         let cards = &self.cards;
         let hands = players
             .iter()

@@ -1,6 +1,5 @@
-use crate::domain::prelude::*;
-use crate::domain::test::*;
-use crate::types::prelude::Player;
+use crate::domain::*;
+use crate::types::Player;
 
 use std::collections::{HashMap, HashSet};
 
@@ -9,7 +8,7 @@ pub struct Builder {
     players: Vec<Player>,
     dealer: usize,
     cuts: Vec<Card>,
-    scores: Vec<Pegging>,
+    scores: Vec<Score>,
     hands: Vec<Hand>,
     current_plays: Vec<Play>,
     previous_plays: Vec<Play>,
@@ -49,8 +48,8 @@ impl Builder {
     }
 
     pub fn with_scores(mut self, score0: usize, score1: usize) -> Self {
-        self.scores.push(Pegging::default().add(score0.into()));
-        self.scores.push(Pegging::default().add(score1.into()));
+        self.scores.push(Score::default().add(score0.into()));
+        self.scores.push(Score::default().add(score1.into()));
         self
     }
 

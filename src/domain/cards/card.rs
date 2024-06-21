@@ -1,4 +1,4 @@
-use crate::types::prelude::*;
+use crate::types::*;
 
 use enum_iterator::all;
 use serde::{Deserialize, Serialize};

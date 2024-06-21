@@ -1,9 +1,9 @@
 use super::scorer::Scorer;
-use super::scorer::constants::*;
+use super::constants::*;
 
 use crate::constants::PLAY_TARGET;
-use crate::domain::prelude::PlayState;
-use crate::types::prelude::Points;
+use crate::domain::PlayState;
+use crate::types::Points;
 
 pub struct EndOfPlayScorer(PlayState);
 
@@ -31,11 +31,11 @@ impl Scorer for EndOfPlayScorer {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::domain::prelude::Game;
-    use crate::test::prelude::Builder;
+    use crate::domain::Game;
+    use crate::test::Builder;
 
     #[test]
-    fn target_not_reached() {
+    fn should_score_when_target_not_reached() {
         let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("", "")
@@ -47,7 +47,7 @@ mod test {
     }
 
     #[test]
-    fn target_reached() {
+    fn should_score_when_target_reached() {
         let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("", "")

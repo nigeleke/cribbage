@@ -5,11 +5,9 @@ mod cut;
 mod deck;
 mod hand;
 
-pub mod prelude {
-    pub(crate) use super::cards::Cards;
-    pub use super::card::Card;
-    pub use super::crib::Crib;
-    pub use super::cut::{Cut, Cuts};
-    pub use super::deck::Deck;
-    pub use super::hand::{Hand, Hands};
-}
+pub use self::cards::Cards;
+pub use self::card::Card;
+pub use self::crib::Crib;
+pub use self::cut::{Cut, Cuts};
+pub use self::deck::Deck;
+pub use self::hand::{Hand, Hands};

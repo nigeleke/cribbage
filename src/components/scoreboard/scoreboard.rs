@@ -1,9 +1,8 @@
-use crate::types::HasPoints;
+use super::track::Track;
+
 use crate::view::{Role, Score, Scores};
 
 use leptos::*;
-
-use std::ops::Range;
 
 /// Show the scoreboard.
 /// TODO: In a small screen just show the scores.
@@ -40,92 +39,3 @@ pub fn Scoreboard(
     }
 }
 
-/// Show a graphical scoring track in the scoreboard.
-#[component]
-fn Track(
-
-    x_offset: usize,
-    y_offset: usize,
-    role: Role
-
-) -> impl IntoView {
-
-    provide_context(role);
-
-    let translate = format!("translate({},{})", x_offset, y_offset);
-
-    view! {
-        <g transform=translate>
-            {move || (0..6).map(|n| { 
-                let up_base = n*5+1;
-                let up_range = up_base..(up_base+5);
-                let down_base = 5*n+31;
-                let down_range = down_base..(down_base+5);
-                view!{ <Block x_offset=0 y_offset={n*42} up_range=up_range down_range=down_range /> }
-            }).collect::<Vec<_>>()}
-        </g>
-    }
-}
-
-/// Show a common block of a track in the scoreboard.
-#[component]
-fn Block(
-
-    x_offset: usize,
-    y_offset: usize,
-    up_range: Range<usize>,
-    down_range: Range<usize>
-
-) -> impl IntoView {
-
-    let translate = format!("translate({},{})", x_offset, y_offset);
-
-    let zipped = up_range.zip(down_range.rev()).enumerate();
-
-    view!{
-        <g transform=translate>
-            <rect width="20" height="44" rx="3" ry="3" fill="goldenrod" />
-            <g transform="translate(2,2)">
-                <rect width="16" height="40" rx="2" ry="2" fill="palegoldenrod" />
-                <g transform="translate(2,2)">
-                    {zipped.map(|(i, (up, down))| view!{
-                        <Hole x_offset=0 y_offset={8*i} representation={up} />
-                        <Hole x_offset=8 y_offset={8*i} representation={down} />
-                    }).collect::<Vec<_>>()}
-                </g>
-            </g>
-        </g>}
-}
-
-/// Show a single hole in the scoreboard.
-#[component]
-fn Hole(
-
-    x_offset: usize,
-    y_offset: usize,
-    representation: usize
-
-) -> impl IntoView {
-    
-    let role = use_context::<Role>().unwrap();
-    let scores = use_context::<Scores>().unwrap();
-    let default_score = Score::default();
-    let score = scores.get(&role).unwrap_or(&default_score);
-
-    let colour = (if role == Role::CurrentPlayer { "lime" } else { "red" }).to_string();
-    let fill = match representation {
-        0 => colour,
-        n if score.front_peg().points() % 60.into() == n.into() => colour,
-        n if score.back_peg().points() % 60.into() == n.into() => colour,
-        n if n >= 121 => colour,
-        _ => "gray".into(),
-    };
-
-    let translate = format!("translate({},{})", x_offset, y_offset);
-
-    view! {
-        <g transform=translate>
-            <circle cx="2" cy="2" r="2" fill=fill />
-        </g>
-    }
-}

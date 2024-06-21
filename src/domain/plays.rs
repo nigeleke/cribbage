@@ -1,9 +1,9 @@
-use super::cards::prelude::{Card, Hand, Hands};
+use super::cards::{Card, Hand, Hands};
 use super::result::{Error, Result};
 
 use crate::constants::*;
 use crate::fmt::{format_hashmap, format_vec};
-use crate::types::prelude::*;
+use crate::types::*;
 
 use serde::{Serialize, Deserialize};
 use std::collections::HashSet;
@@ -15,7 +15,7 @@ pub struct Play {
 }
 
 impl Play {
-    pub(crate) fn new(player: Player, card: Card) -> Self {
+    pub fn new(player: Player, card: Card) -> Self {
         Self { player, card }
     }
 
@@ -52,7 +52,7 @@ pub struct PlayState {
 }
 
 impl PlayState {
-    pub(crate) fn new(next_to_play: Player, hands: &Hands) -> Self {
+    pub fn new(next_to_play: Player, hands: &Hands) -> Self {
         Self {
             next_to_play,
             legal_plays: hands.clone(),
@@ -62,7 +62,7 @@ impl PlayState {
         }
     }
 
-    pub(crate) fn running_total(&self) -> Value {
+    pub fn running_total(&self) -> Value {
         let cards = Hand::from(self.current_plays
             .iter()
             .map(|p| p.card)
@@ -70,7 +70,7 @@ impl PlayState {
         cards.value()
     }
 
-    pub(crate) fn legal_plays(&self, player: Player) -> Result<Hand> {
+    pub fn legal_plays(&self, player: Player) -> Result<Hand> {
         if player == self.next_to_play {
             Ok(self.legal_plays_unchecked(player))
         } else {
@@ -86,19 +86,19 @@ impl PlayState {
         legal_plays
     }
 
-    pub(crate) fn pass_count(&self) -> usize {
+    pub fn pass_count(&self) -> usize {
         self.pass_count
     }
 
-    pub(crate) fn current_plays(&self) -> Vec<Play> {
+    pub fn current_plays(&self) -> Vec<Play> {
         self.current_plays.clone()
     }
 
-    pub(crate) fn previous_plays(&self) -> Vec<Play> {
+    pub fn previous_plays(&self) -> Vec<Play> {
         self.previous_plays.clone()
     }
 
-    pub(crate) fn play(&mut self, card: Card) {
+    pub fn play(&mut self, card: Card) {
         let player = self.next_to_play;
         if self.pass_count() == 0 {
             self.make_opponent_next_player();
@@ -113,7 +113,7 @@ impl PlayState {
         self.current_plays.push(play);
     }
 
-    pub(crate) fn pass(&mut self) {
+    pub fn pass(&mut self) {
         self.make_opponent_next_player();
         self.pass_count += 1;
     }
@@ -129,34 +129,34 @@ impl PlayState {
         self.next_to_play = opponent;
     }
 
-    pub(crate) fn is_current_play_finished(&self) -> bool {
+    pub fn is_current_play_finished(&self) -> bool {
         let running_total = self.running_total();
         let legal_plays = &self.legal_plays;
         legal_plays.iter().all(|(_, hand)| hand.cards().iter().all(|c| c.value() + running_total > PLAY_TARGET.into()))
     }
 
-    pub(crate) fn start_new_play(&mut self) {
+    pub fn start_new_play(&mut self) {
         self.previous_plays.append(&mut self.current_plays);
         self.pass_count = 0;
     }
 
-    pub(crate) fn target_reached(&self) -> bool {
+    pub fn target_reached(&self) -> bool {
         self.running_total() == Value::from(PLAY_TARGET)
     }
 
-    pub(crate) fn all_are_cards_played(&self) -> bool {
+    pub fn all_are_cards_played(&self) -> bool {
         let legal_plays = &self.legal_plays;
         legal_plays.iter().all(|(_, hand)| hand.is_empty())
     }
 
-    pub(crate) fn finish_plays(&mut self) -> Hands {
+    pub fn finish_plays(&mut self) -> Hands {
         let hands = self.regather_hands();
         self.current_plays = Vec::default();
         self.previous_plays = Vec::default();
         hands
     }
 
-    pub(crate) fn next_to_play(&self) -> Player {
+    pub fn next_to_play(&self) -> Player {
         self.next_to_play
     }
 
@@ -174,17 +174,17 @@ impl PlayState {
     }
 
     #[cfg(test)]
-    pub(crate) fn force_current_play(&mut self, player: Player, card: Card) {
+    pub fn force_current_play(&mut self, player: Player, card: Card) {
         self.current_plays.push(Play::new(player, card))
     }
 
     #[cfg(test)]
-    pub(crate) fn force_previous_play(&mut self, player: Player, card: Card) {
+    pub fn force_previous_play(&mut self, player: Player, card: Card) {
         self.previous_plays.push(Play::new(player, card))
     }
 
     #[cfg(test)]
-    pub(crate) fn force_pass_count(&mut self, n: usize) {
+    pub fn force_pass_count(&mut self, n: usize) {
         self.pass_count = n;
     }
 

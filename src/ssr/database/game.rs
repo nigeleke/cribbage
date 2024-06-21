@@ -1,4 +1,4 @@
-use crate::domain::prelude::Game;
+use crate::domain::Game;
 
 use leptos::*;
 use sqlx::{Any, FromRow, Transaction};

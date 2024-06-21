@@ -1,14 +1,14 @@
-use crate::view::prelude::Game as GameView;
+use crate::view::Game as GameView;
 
 use leptos::*;
 
 #[server]
 pub async fn pass(game_id: String) -> Result<GameView, ServerFnError> {
-    use crate::domain::prelude::*;
+    use crate::domain::*;
     use crate::ssr::auth;
-    use crate::ssr::database::prelude::*;
+    use crate::ssr::database::*;
     use crate::ssr::opponent::Opponent;
-    use crate::types::prelude::Player;
+    use crate::types::Player;
     use uuid::Uuid;
 
     let player: Player = auth::authenticated_user().await?.into();

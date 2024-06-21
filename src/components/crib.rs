@@ -1,4 +1,4 @@
-use crate::view::prelude::{CardSlot, Crib};
+use crate::view::{CardSlot, Crib};
 
 use super::card::Card;
 use super::cards::Cards;

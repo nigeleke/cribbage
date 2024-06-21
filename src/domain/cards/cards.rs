@@ -1,6 +1,6 @@
 use super::card::Card;
 
-use crate::types::prelude::*;
+use crate::types::*;
 use crate::fmt::format_vec;
 
 use serde::{Deserialize, Serialize};
@@ -10,33 +10,33 @@ use std::fmt::Display;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Cards<T>
 where T: Clone {
-    pub(crate) cards: Vec<Card>,
+    pub cards: Vec<Card>,
     _marker: std::marker::PhantomData<T>
 }
 
 impl<T> Cards<T>
 where T: Clone {
-    pub(crate) fn remove(&mut self, card: Card) {
+    pub fn remove(&mut self, card: Card) {
         self.cards.retain(|c| *c != card)
     }
 
-    pub(crate) fn remove_all(&mut self, cards: &[Card]) {
+    pub fn remove_all(&mut self, cards: &[Card]) {
         for card in cards {
             self.remove(*card)
         }
     }
 
-    pub(crate) fn add(&mut self, cards: &[Card]) {
+    pub fn add(&mut self, cards: &[Card]) {
         for card in cards {
             self.cards.push(*card)
         }
     }
 
-    pub(crate) fn cards(&self) -> Vec<Card> {
+    pub fn cards(&self) -> Vec<Card> {
         self.cards.clone()
     }
 
-    pub(crate) fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.cards.len()
     }
 
@@ -45,21 +45,21 @@ where T: Clone {
     }
 
     #[cfg(test)]
-    pub(crate) fn get(&self, indices: &[usize]) -> Vec<Card> {
+    pub fn get(&self, indices: &[usize]) -> Vec<Card> {
         Vec::from_iter(indices.into_iter().filter_map(|i| Some(self.cards[*i])))
     }
 
-    pub(crate) fn contains(&self, card: &Card) -> bool {
+    pub fn contains(&self, card: &Card) -> bool {
         self.cards.contains(card)
     }
 
     #[cfg(test)]
-    pub(crate) fn contains_all(&self, cards: &[Card]) -> bool {
+    pub fn contains_all(&self, cards: &[Card]) -> bool {
         cards.iter().all(|c| self.contains(c))
     }
 
     #[cfg(test)]
-    pub(crate) fn contains_none(&self, cards: &[Card]) -> bool {
+    pub fn contains_none(&self, cards: &[Card]) -> bool {
         cards.iter().all(|c| !self.cards.contains(c))
     }
 }

@@ -8,17 +8,17 @@ use super::plays::Plays;
 use super::scoreboard::Scoreboard;
 use super::scoring::Scoring;
 
-use crate::view::prelude::{
+use crate::view::{
     Card as CardView,
     CardSlot,
-    Crib,
+    Crib as CribView,
     Cuts as CutsView,
     Game as GameView,
     Hand,
     Hands,
     PlayState,
     Role, 
-    Peggings
+    Scores,
 };
 
 use leptos::*;
@@ -85,9 +85,9 @@ fn StartingGame(
 #[component]
 fn DiscardingGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
-    crib: Crib,
+    crib: CribView,
     dealer: Role,
 
 ) -> impl IntoView {
@@ -109,11 +109,11 @@ fn DiscardingGame(
 #[component]
 fn PlayingGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
     play_state: PlayState,
     cut: CardView,
-    crib: Crib,
+    crib: CribView,
     dealer: Role,
     
 ) -> impl IntoView {
@@ -138,10 +138,10 @@ fn PlayingGame(
 #[component]
 fn ScoringGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
     cut: CardView,
-    crib: Crib,
+    crib: CribView,
     dealer: Role,
     entity: ScoringEntity,
     
@@ -168,7 +168,7 @@ fn ScoringGame(
             opponent_hand
             dealer
             cut=CardSlot::FaceUp(cut)
-            crib={if entity == ScoringEntity::Crib { Crib::new() } else { crib } }>
+            crib={if entity == ScoringEntity::Crib { CribView::new() } else { crib } }>
             <Cards cards=cards_being_scored />
         </Template>
     }
@@ -177,7 +177,7 @@ fn ScoringGame(
 #[component]
 fn FinishingGame(
 
-    scores: Peggings,
+    scores: Scores,
 
 ) -> impl IntoView {
     logging::log!("component::FinishingGame");
@@ -200,7 +200,7 @@ fn Template(
     player_view: Children,
 
     #[prop(optional)]
-    scores: Peggings,
+    scores: Scores,
 
     #[prop(optional)]
     opponent_hand: Option<Hand>,
@@ -212,7 +212,7 @@ fn Template(
     cut: CardSlot,
 
     #[prop(optional)]
-    crib: Crib,
+    crib: CribView,
 
     #[prop(optional)]
     children: Option<Children>,

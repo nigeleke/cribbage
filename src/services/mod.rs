@@ -10,16 +10,14 @@ mod score_dealer;
 mod score_pone;
 mod start;
 
-pub mod prelude {
-    pub use super::create_game::create_game;
-    pub use super::next_round::next_round;
-    pub use super::discard::discard;
-    pub use super::get_game::get_game;
-    pub use super::pass::pass;
-    pub use super::play::play;
-    pub use super::redraw::redraw;
-    pub use super::score_crib::score_crib;
-    pub use super::score_dealer::score_dealer;
-    pub use super::score_pone::score_pone;
-    pub use super::start::start;
-}
+pub use self::create_game::create_game;
+pub use self::next_round::next_round;
+pub use self::discard::discard;
+pub use self::get_game::get_game;
+pub use self::pass::pass;
+pub use self::play::play;
+pub use self::redraw::redraw;
+pub use self::score_crib::score_crib;
+pub use self::score_dealer::score_dealer;
+pub use self::score_pone::score_pone;
+pub use self::start::start;

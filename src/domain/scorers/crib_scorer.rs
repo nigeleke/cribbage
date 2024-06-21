@@ -1,8 +1,8 @@
 use super::cards_scorer::CardsScorer;
 use super::scorer::Scorer;
 
-use crate::domain::prelude::{Crib, Cut};
-use crate::types::prelude::Points;
+use crate::domain::{Crib, Cut};
+use crate::types::Points;
 
 pub struct CribScorer(Crib, Cut);
 

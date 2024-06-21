@@ -1,8 +1,8 @@
 use crate::constants::*;
 use crate::components::Context;
 use crate::components::cards::Cards;
-use crate::services::prelude::discard;
-use crate::view::prelude::{CardSlot, Hand};
+use crate::services::discard;
+use crate::view::{CardSlot, Hand};
 
 use leptos::*;
 use style4rs::style;

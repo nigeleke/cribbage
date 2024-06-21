@@ -1,11 +1,11 @@
-use super::cards::prelude::*;
-use super::plays::PlayState;
-use super::result::{Error, Result};
-use super::scorers::prelude::*;
-use super::pegging::{Pegging, Peggings};
+use super::cards::{Card, Crib, Cut, Cuts, Deck, Hand, Hands};
+use super::plays::{PlayState};
+use super::result::*;
+use super::scores::{Score, Scores};
+use super::scorers::*;
 
 use crate::constants::*;
-use crate::types::prelude::*;
+use crate::types::*;
 use crate::fmt::format_hashmap;
 
 use serde::{Deserialize, Serialize};
@@ -16,16 +16,16 @@ use std::collections::{HashMap, HashSet};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Game {
     Starting(Cuts, Deck),
-    Discarding(Peggings, Player, Hands, Crib, Deck),
-    Playing(Peggings, Player, Hands, PlayState, Cut, Crib),
-    ScoringPone(Peggings, Player, Hands, Cut, Crib),
-    ScoringDealer(Peggings, Player, Hands, Cut, Crib),
-    ScoringCrib(Peggings, Player, Hands, Cut, Crib),
-    Finished(Peggings),
+    Discarding(Scores, Player, Hands, Crib, Deck),
+    Playing(Scores, Player, Hands, PlayState, Cut, Crib),
+    ScoringPone(Scores, Player, Hands, Cut, Crib),
+    ScoringDealer(Scores, Player, Hands, Cut, Crib),
+    ScoringCrib(Scores, Player, Hands, Cut, Crib),
+    Finished(Scores),
 }
 
 impl Game {
-    pub(crate) fn new(players: &HashSet<Player>) -> Result<Game> {
+    pub fn new(players: &HashSet<Player>) -> Result<Game> {
         if players.len() > NUMBER_OF_PLAYERS_IN_GAME {
             return Err(Error::TooManyPlayers)
         }
@@ -54,7 +54,7 @@ impl Game {
         }
     }
 
-    pub(crate) fn player_1_2(&self) -> (Player, Player) {
+    pub fn player_1_2(&self) -> (Player, Player) {
         let players = Vec::from_iter(self.players());
         (players[0], players[1])
     }
@@ -67,7 +67,7 @@ impl Game {
         }
     }
 
-    pub fn scores(&self) -> Peggings {
+    pub fn scores(&self) -> Scores {
         match self {
             Game::Starting(_, _) => unreachable!(),
             Game::Discarding(scores, _, _, _, _) => scores,
@@ -87,13 +87,13 @@ impl Game {
             .is_empty()
     }
 
-    pub(crate) fn start(&self) -> Result<Self> {
+    pub fn start(&self) -> Result<Self> {
         match self {
             Game::Starting(cuts, _) => {
                 let players = self.players();
                 verify::players(&players)?;
                 verify::different_cuts(cuts)?;
-                let scores: Peggings = Peggings::from_iter(players.iter().map(|&p| (p, Pegging::default())));
+                let scores: Scores = Scores::from_iter(players.iter().map(|&p| (p, Score::default())));
                 let mut cuts = cuts.iter();
                 let Some((player1, cut1)) = cuts.next() else { unreachable!() };
                 let Some((player2, cut2)) = cuts.next() else { unreachable!() };
@@ -107,7 +107,7 @@ impl Game {
         }
     }
 
-    pub(crate) fn redraw(&self) -> Result<Self> {
+    pub fn redraw(&self) -> Result<Self> {
         match self {
             Game::Starting(cuts, _) => {
                 let players = self.players();
@@ -119,7 +119,7 @@ impl Game {
         }
     }
 
-    pub(crate) fn discard(&self, player: Player, discards: &[Card]) -> Result<Self> {
+    pub fn discard(&self, player: Player, discards: &[Card]) -> Result<Self> {
         match self {
             Game::Discarding(scores, dealer, hands, crib, deck) => {
                 let players = self.players();
@@ -174,7 +174,7 @@ impl Game {
     }
 
     fn score_points(&self, player: Player, points: Points) -> Result<Self> {
-        let update = |mut scores: Peggings| {
+        let update = |mut scores: Scores| {
             scores.insert(player, scores[&player].add(points));
             scores
         };
@@ -208,7 +208,7 @@ impl Game {
         Ok(game)
     }
 
-    pub(crate) fn play(&self, player: Player, card: Card) -> Result<Game> {
+    pub fn play(&self, player: Player, card: Card) -> Result<Game> {
         let mut game = self.clone();
 
         let players = game.players();
@@ -240,7 +240,7 @@ impl Game {
         }
     }
 
-    pub(crate) fn pass(&self, player: Player) -> Result<Game> {
+    pub fn pass(&self, player: Player) -> Result<Game> {
         let mut game = self.clone();
         let players = game.players();
         verify::player(player, &players)?;
@@ -266,7 +266,7 @@ impl Game {
         }
     }
 
-    pub(crate) fn score_pone(&self) -> Result<Game> {
+    pub fn score_pone(&self) -> Result<Game> {
         let mut game = self.clone();
         let pone = game.pone();
         
@@ -283,7 +283,7 @@ impl Game {
         }
     }
 
-    pub(crate) fn score_dealer(&self) -> Result<Game> {
+    pub fn score_dealer(&self) -> Result<Game> {
         let mut game = self.clone();
         match game {
             Game::ScoringPone(ref mut scores, dealer, hands, cut, crib) => {
@@ -295,7 +295,7 @@ impl Game {
         }
     }
 
-    pub(crate) fn score_crib(&self) -> Result<Game> {
+    pub fn score_crib(&self) -> Result<Game> {
         let mut game = self.clone();
         match game {
             Game::ScoringDealer(ref mut scores, dealer, hands, cut, crib) => {
@@ -307,7 +307,7 @@ impl Game {
         }
     }
 
-    pub(crate) fn deal_next_hands(&self) -> Result<Game> {
+    pub fn deal_next_hands(&self) -> Result<Game> {
         match self {
             Game::ScoringCrib(scores, _, _, _, _) => {
                 let players = self.players();
@@ -356,7 +356,7 @@ impl std::fmt::Display for Game {
 mod verify {
     use super::*;
 
-    pub(crate) fn players(players: &HashSet<Player>) -> Result<()> {
+    pub fn players(players: &HashSet<Player>) -> Result<()> {
         if players.len() != NUMBER_OF_PLAYERS_IN_GAME {
             Err(Error::NotEnoughPlayers)
         } else {
@@ -364,7 +364,7 @@ mod verify {
         }
     }
 
-    pub(crate) fn player(player: Player, players: &HashSet<Player>) -> Result<()> {
+    pub fn player(player: Player, players: &HashSet<Player>) -> Result<()> {
         if !players.contains(&player) {
             Err(Error::InvalidPlayer(player))
         } else {
@@ -372,7 +372,7 @@ mod verify {
         }
     }
 
-    pub(crate) fn different_cuts(cuts: &Cuts) -> Result<()> {
+    pub fn different_cuts(cuts: &Cuts) -> Result<()> {
         let cuts: HashSet<Rank> = HashSet::from_iter(cuts.values().map(|c| c.rank()));
         if cuts.len() != NUMBER_OF_PLAYERS_IN_GAME {
             Err(Error::CutForStartUndecided)
@@ -381,7 +381,7 @@ mod verify {
         }
     }
 
-    pub(crate) fn same_cuts(cuts: &Cuts) -> Result<()> {
+    pub fn same_cuts(cuts: &Cuts) -> Result<()> {
         let cuts: HashSet<Rank> = HashSet::from_iter(cuts.values().map(|c| c.rank()));
         if cuts.len() == NUMBER_OF_PLAYERS_IN_GAME {
             Err(Error::CutForStartDecided)
@@ -390,7 +390,7 @@ mod verify {
         }
     }
 
-    pub(crate) fn discards(discards: &[Card], hand: &Hand) -> Result<()> {
+    pub fn discards(discards: &[Card], hand: &Hand) -> Result<()> {
         for discard in discards {
             verify::card(*discard, &hand.cards())?
         }
@@ -402,7 +402,7 @@ mod verify {
         }
     }
 
-    pub(crate) fn card(card: Card, cards: &[Card]) -> Result<()> {
+    pub fn card(card: Card, cards: &[Card]) -> Result<()> {
         if !cards.contains(&card) {
             Err(Error::InvalidCard(card))
         } else {
@@ -410,7 +410,7 @@ mod verify {
         }
     }
 
-    pub(crate) fn no_legal_plays(cards: &[Card]) -> Result<()> {
+    pub fn no_legal_plays(cards: &[Card]) -> Result<()> {
         if cards.is_empty() {
             Ok(())
         } else {
@@ -418,7 +418,7 @@ mod verify {
         }
     }
 
-    pub(crate) fn ready_to_score_pone(play_state: &PlayState) -> Result<()> {
+    pub fn ready_to_score_pone(play_state: &PlayState) -> Result<()> {
         if play_state.all_are_cards_played() {
             Ok(())
         } else {
@@ -432,9 +432,8 @@ mod verify {
 mod test {
     use super::*;
     // use crate::domain::card::{Cut, Face};
+    use crate::test::Builder;
     use crate::domain::plays::Play;
-
-    use crate::test::prelude::*;
 
     #[test]
     fn play_with_zero_one_or_two_players() {
@@ -699,7 +698,7 @@ mod test {
         assert_eq!(error, Error::InvalidPlayer(non_player));
     }
 
-    fn after_discards_common_tests() -> (Peggings, Peggings, Cut, Player, Player) {
+    fn after_discards_common_tests() -> (Scores, Scores, Cut, Player, Player) {
         let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")

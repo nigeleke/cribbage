@@ -1,8 +1,8 @@
 use super::scorer::Scorer;
-use super::scorer::constants::*;
+use super::constants::*;
 
-use crate::domain::prelude::PlayState;
-use crate::types::prelude::{Points, Rank};
+use crate::domain::PlayState;
+use crate::types::{Points, Rank};
 
 pub struct CurrentPlayScorer(PlayState);
 
@@ -79,8 +79,8 @@ impl Scorer for CurrentPlayScorer {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::domain::prelude::{Card, Game};
-    use crate::test::prelude::Builder;
+    use crate::domain::{Card, Game};
+    use crate::test::Builder;
 
     #[test]
     fn fifteens_scores() {

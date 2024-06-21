@@ -1,4 +1,4 @@
-use crate::view::prelude::CardSlot;
+use crate::view::CardSlot;
 
 use leptos::*;
 use style4rs::style;

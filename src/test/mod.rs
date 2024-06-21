@@ -1,5 +1,3 @@
 mod builder;
 
-pub mod prelude {
-    pub use super::builder::Builder;
-}
+pub use self::builder::Builder;

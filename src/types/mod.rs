@@ -5,14 +5,12 @@ mod rank;
 mod suit;
 mod value;
 
-pub(crate) mod prelude {
-    pub use super::face::{Face, HasFace};
-    pub use super::suit::{Suit, HasSuit};
+pub use self::face::{Face, HasFace};
+pub use self::suit::{Suit, HasSuit};
 
-    pub use super::rank::{Rank, HasRank};
-    pub use super::value::{Value, HasValue};
+pub use self::rank::{Rank, HasRank};
+pub use self::value::{Value, HasValue};
 
-    pub use super::points::{Points, HasPoints};
+pub use self::points::{Points, HasPoints};
 
-    pub use super::player::Player;
-}
+pub use self::player::Player;

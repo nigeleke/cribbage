@@ -1,12 +1,12 @@
 use super::card::{Card, CardSlot};
 use super::role::Role;
 
-use crate::domain::prelude::{
+use crate::domain::{
     Hand as DomainHand,
     Play as DomainPlay,
     PlayState as DomainPlayState,
 };
-use crate::types::prelude::{Player, Value};
+use crate::types::{Player, Value};
 
 use serde::{Deserialize, Serialize};
 
@@ -17,7 +17,7 @@ pub struct Play {
 }
 
 impl Play {
-    pub(crate) fn card(&self) -> CardSlot {
+    pub fn card(&self) -> CardSlot {
         self.card
     }
 }
@@ -40,27 +40,27 @@ pub struct PlayState {
 }
 
 impl PlayState {
-    pub(crate) fn all_cards_are_played(&self) -> bool {
+    pub fn all_cards_are_played(&self) -> bool {
         self.all_cards_are_played
     }
 
-    pub(crate) fn must_pass(&self) -> bool {
+    pub fn must_pass(&self) -> bool {
         self.legal_plays.is_empty()
     }
 
-    pub(crate) fn legal_plays(&self) -> DomainHand {
+    pub fn legal_plays(&self) -> DomainHand {
         DomainHand::from(self.legal_plays.clone())
     }
 
-    pub(crate) fn running_total(&self) -> Value {
+    pub fn running_total(&self) -> Value {
         self.running_total
     }
 
-    pub(crate) fn current_plays(&self) -> Vec<Play> {
+    pub fn current_plays(&self) -> Vec<Play> {
         self.current_plays.clone()
     }
 
-    pub(crate) fn previous_plays(&self) -> Vec<Play> {
+    pub fn previous_plays(&self) -> Vec<Play> {
         self.previous_plays.clone()
     }
 }

@@ -1,8 +1,8 @@
 use super::scorer::Scorer;
-use super::scorer::constants::*;
+use super::constants::*;
 
-use crate::domain::prelude::Cut;
-use crate::types::prelude::{Face, HasFace, Points};
+use crate::domain::Cut;
+use crate::types::{Face, HasFace, Points};
 
 pub struct CutScorer(Cut);
 

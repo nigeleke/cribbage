@@ -1,31 +1,18 @@
+use super::Peg;
+
 use crate::constants::WINNING_SCORE;
-use crate::types::prelude::{Player, Points, HasPoints};
+use crate::types::{Player, Points, HasPoints};
 
 use serde::{Serialize, Deserialize};
 
 use std::collections::HashMap;
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
-pub struct Peg(Points);
+pub struct Score(Peg, Peg);
 
-impl HasPoints for Peg {
-    fn points(&self) -> Points {
-        self.0
-    }
-}
+pub type Scores = HashMap<Player, Score>;
 
-impl std::fmt::Display for Peg {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
-pub struct Pegging(Peg, Peg);
-
-pub type Peggings = HashMap<Player, Pegging>;
-
-impl Pegging {
+impl Score {
     pub fn front_peg(&self) -> Peg { self.1 }
     pub fn back_peg(&self) -> Peg { self.0 }
 
@@ -33,7 +20,7 @@ impl Pegging {
         if points == 0.into() {
             *self
         } else {
-            Self ( self.front_peg(), Peg(self.front_peg().points() + points))
+            Self ( self.front_peg(), Peg::new(self.front_peg().points() + points))
         }
     }
 
@@ -42,13 +29,13 @@ impl Pegging {
     }
 }
 
-impl HasPoints for Pegging {
+impl HasPoints for Score {
     fn points(&self) -> Points {
         self.front_peg().points()
     }
 }
 
-impl std::fmt::Display for Pegging {
+impl std::fmt::Display for Score {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}->{}", self.0, self.1)
     }

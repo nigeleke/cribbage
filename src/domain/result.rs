@@ -1,11 +1,11 @@
-use super::cards::prelude::Card;
+use super::cards::Card;
 
-use crate::types::prelude::Player;
+use crate::types::Player;
 
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq)]
-pub(crate) enum Error {
+pub enum Error {
     #[error("an action was attempted which is not permitted in the current game state")]
     ActionNotPermitted,
 

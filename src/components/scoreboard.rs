@@ -1,5 +1,5 @@
-use crate::types::prelude::HasPoints;
-use crate::view::prelude::{Role, Pegging, Peggings};
+use crate::types::HasPoints;
+use crate::view::{Role, Score, Scores};
 
 use leptos::*;
 
@@ -8,14 +8,14 @@ use std::ops::Range;
 /// Show the scoreboard.
 /// TODO: In a small screen just show the scores.
 #[component]
-pub(crate) fn Scoreboard(
+pub fn Scoreboard(
 
-    scores: Peggings,
+    scores: Scores,
 
 ) -> impl IntoView {
     provide_context(scores.clone());
 
-    let default_score = Pegging::default();
+    let default_score = Score::default();
     let current_player_score = scores.get(&Role::CurrentPlayer).unwrap_or(&default_score);
     let opponent_score = scores.get(&Role::Opponent).unwrap_or(&default_score);
 
@@ -108,8 +108,8 @@ fn Hole(
 ) -> impl IntoView {
     
     let role = use_context::<Role>().unwrap();
-    let scores = use_context::<Peggings>().unwrap();
-    let default_score = Pegging::default();
+    let scores = use_context::<Scores>().unwrap();
+    let default_score = Score::default();
     let score = scores.get(&role).unwrap_or(&default_score);
 
     let colour = (if role == Role::CurrentPlayer { "lime" } else { "red" }).to_string();

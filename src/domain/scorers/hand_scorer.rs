@@ -1,8 +1,8 @@
 use super::cards_scorer::CardsScorer;
 use super::scorer::Scorer;
 
-use crate::domain::prelude::{Cut, Hand};
-use crate::types::prelude::Points;
+use crate::domain::{Cut, Hand};
+use crate::types::Points;
 
 pub struct HandScorer(Hand, Cut);
 

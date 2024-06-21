@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (d8a38b000 2024-06-19)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (684b3553f 2024-06-20)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -280,17 +280,17 @@
 <span class="kw">use </span><span class="kw">super</span>::scoreboard::Scoreboard;
 <span class="kw">use </span><span class="kw">super</span>::scoring::Scoring;
 
-<span class="kw">use </span><span class="kw">crate</span>::view::prelude::{
+<span class="kw">use </span><span class="kw">crate</span>::view::{
     Card <span class="kw">as </span>CardView,
     CardSlot,
-    Crib,
+    Crib <span class="kw">as </span>CribView,
     Cuts <span class="kw">as </span>CutsView,
     Game <span class="kw">as </span>GameView,
     Hand,
     Hands,
     PlayState,
     Role, 
-    Peggings
+    Scores,
 };
 
 <span class="kw">use </span>leptos::<span class="kw-2">*</span>;
@@ -357,9 +357,9 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>DiscardingGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
-    crib: Crib,
+    crib: CribView,
     dealer: Role,
 
 ) -&gt; <span class="kw">impl </span>IntoView {
@@ -381,11 +381,11 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>PlayingGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
     play_state: PlayState,
     cut: CardView,
-    crib: Crib,
+    crib: CribView,
     dealer: Role,
     
 ) -&gt; <span class="kw">impl </span>IntoView {
@@ -410,10 +410,10 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>ScoringGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
     cut: CardView,
-    crib: Crib,
+    crib: CribView,
     dealer: Role,
     entity: ScoringEntity,
     
@@ -440,7 +440,7 @@
             opponent_hand
             dealer
             cut=CardSlot::FaceUp(cut)
-            crib={<span class="kw">if </span>entity == ScoringEntity::Crib { Crib::new() } <span class="kw">else </span>{ crib } }&gt;
+            crib={<span class="kw">if </span>entity == ScoringEntity::Crib { CribView::new() } <span class="kw">else </span>{ crib } }&gt;
             &lt;Cards cards=cards_being_scored /&gt;
         &lt;/Template&gt;
     }
@@ -449,7 +449,7 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>FinishingGame(
 
-    scores: Peggings,
+    scores: Scores,
 
 ) -&gt; <span class="kw">impl </span>IntoView {
     <span class="macro">logging::log!</span>(<span class="string">"component::FinishingGame"</span>);
@@ -472,7 +472,7 @@
     player_view: Children,
 
     <span class="attr">#[prop(optional)]
-    </span>scores: Peggings,
+    </span>scores: Scores,
 
     <span class="attr">#[prop(optional)]
     </span>opponent_hand: <span class="prelude-ty">Option</span>&lt;Hand&gt;,
@@ -484,7 +484,7 @@
     </span>cut: CardSlot,
 
     <span class="attr">#[prop(optional)]
-    </span>crib: Crib,
+    </span>crib: CribView,
 
     <span class="attr">#[prop(optional)]
     </span>children: <span class="prelude-ty">Option</span>&lt;Children&gt;,

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/scorers/cut_scorer.rs`."><title>cut_scorer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (d8a38b000 2024-06-19)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/scorers/cut_scorer.rs`."><title>cut_scorer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (684b3553f 2024-06-20)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -51,10 +51,10 @@
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::scorer::Scorer;
-<span class="kw">use </span><span class="kw">super</span>::scorer::constants::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">super</span>::constants::<span class="kw-2">*</span>;
 
-<span class="kw">use </span><span class="kw">crate</span>::domain::prelude::Cut;
-<span class="kw">use </span><span class="kw">crate</span>::types::prelude::{Face, HasFace, Points};
+<span class="kw">use </span><span class="kw">crate</span>::domain::Cut;
+<span class="kw">use </span><span class="kw">crate</span>::types::{Face, HasFace, Points};
 
 <span class="kw">pub struct </span>CutScorer(Cut);
 
@@ -80,7 +80,7 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>his_heels_on_cut_for_non_jack() {
+    </span><span class="kw">fn </span>should_not_score_his_heels_on_non_jack_cut() {
         <span class="kw">let </span>cards = <span class="macro">vec!</span>[
             <span class="string">"AH"</span>, <span class="string">"2H"</span>, <span class="string">"3H"</span>, <span class="string">"4H"</span>, <span class="string">"5H"</span>, <span class="string">"6H"</span>, <span class="string">"7H"</span>, <span class="string">"8H"</span>, <span class="string">"9H"</span>, <span class="string">"TH"</span>, <span class="string">"QH"</span>, <span class="string">"KH"</span>,
             <span class="string">"AC"</span>, <span class="string">"2C"</span>, <span class="string">"3C"</span>, <span class="string">"4C"</span>, <span class="string">"5C"</span>, <span class="string">"6C"</span>, <span class="string">"7C"</span>, <span class="string">"8C"</span>, <span class="string">"9C"</span>, <span class="string">"TC"</span>, <span class="string">"QC"</span>, <span class="string">"KC"</span>,
@@ -93,7 +93,7 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>his_heels_on_cut_for_jack() {
+    </span><span class="kw">fn </span>should_score_his_heels_on_jack_cut() {
         <span class="kw">let </span>cards = <span class="macro">vec!</span>[<span class="string">"JH"</span>, <span class="string">"JC"</span>, <span class="string">"JD"</span>, <span class="string">"JS"</span>];
         cards
             .into_iter()

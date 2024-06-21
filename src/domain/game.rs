@@ -431,7 +431,6 @@ mod verify {
 #[cfg(test)]
 mod test {
     use super::*;
-    // use crate::domain::card::{Cut, Face};
     use crate::test::Builder;
     use crate::domain::plays::Play;
 
@@ -1606,6 +1605,67 @@ mod test {
 
         let error = game0.score_crib().err().unwrap();
         assert_eq!(error, Error::ActionNotPermitted);
+    }
+
+    #[test]
+    fn should_output_user_readable_starting_game_in_logs() {
+        let game = Builder::new(2)
+            .with_cuts("ASAC")
+            .as_starting();
+
+        let game = game.to_string();
+        assert!(game.contains("Starting("));
+        assert!(game.contains("Cuts("));
+        assert!(game.contains("Deck("));
+    }
+
+    #[test]
+    fn should_output_user_readable_discarding_game_in_logs() {
+        let game = Builder::new(2)
+            .with_scores(0, 0)
+            .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
+            .as_discarding();
+
+        let game = game.to_string();
+        assert!(game.contains("Discarding("));
+        assert!(game.contains("Scores("));
+        assert!(game.contains("Dealer("));
+        assert!(game.contains("Hands("));
+        assert!(game.contains("Crib("));
+        assert!(game.contains("Deck("));
+    }
+
+    #[test]
+    fn should_output_user_readable_playing_game_in_logs() {
+        let game = Builder::new(2)
+            .with_scores(0, 0)
+            .with_hands("9S", "4S")
+            .with_cut("AS")
+            .as_playing(1);
+
+        let game = game.to_string();
+        assert!(game.contains("Playing("));
+        assert!(game.contains("Scores("));
+        assert!(game.contains("Dealer("));
+        assert!(game.contains("Hands("));
+        assert!(game.contains("PlayState("));
+        assert!(game.contains("Next("));
+        assert!(game.contains("Legal("));
+        assert!(game.contains("Passes("));
+        assert!(game.contains("Current("));
+        assert!(game.contains("Previous("));
+        assert!(game.contains("Cut("));
+        assert!(game.contains("Crib("));
+    }
+
+    #[test]
+    #[ignore]
+    fn should_output_user_readable_scoring_game_in_logs() {
+    }
+
+    #[test]
+    #[ignore]
+    fn should_output_user_readable_finished_game_in_logs() {
     }
 
 }   

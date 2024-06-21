@@ -83,7 +83,7 @@ mod test {
     use crate::test::Builder;
 
     #[test]
-    fn fifteens_scores() {
+    fn should_score_fifteens() {
         let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("", "")
@@ -95,7 +95,7 @@ mod test {
     }
 
     #[test]
-    fn pairs_scores() {
+    fn should_score_pairs() {
         let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("", "")
@@ -107,7 +107,7 @@ mod test {
     }
 
     #[test]
-    fn royal_pair_scores() {
+    fn should_score_royal_pairs() {
         let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("", "")
@@ -119,7 +119,7 @@ mod test {
     }
 
     #[test]
-    fn double_royal_pair_scores() {
+    fn should_score_double_royal_pairs() {
         let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("", "")
@@ -131,7 +131,7 @@ mod test {
     }
 
     #[test]
-    fn run_n_scores() {
+    fn should_score_runs() {
         let current_plays = vec![(0, "2C"), (0, "3C"), (0, "4C"), (0, "5C"), (0, "6C"), (0, "7C")];
         for len in 1..=current_plays.len() {
             let current_plays = current_plays.clone();
@@ -149,7 +149,7 @@ mod test {
     }
 
     #[test]
-    fn rules_example_flush() {
+    fn should_score_rules_example_flush() {
         let game0 = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("AH", "KD")

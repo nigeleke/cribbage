@@ -35,7 +35,7 @@ mod test {
     use crate::test::Builder;
 
     #[test]
-    fn target_not_reached() {
+    fn should_score_when_target_not_reached() {
         let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("", "")
@@ -47,7 +47,7 @@ mod test {
     }
 
     #[test]
-    fn target_reached() {
+    fn should_score_when_target_reached() {
         let game = Builder::new(2)
             .with_scores(0, 0)
             .with_hands("", "")

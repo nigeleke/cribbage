@@ -96,7 +96,7 @@
 
     <span class="kw">pub fn </span>cut(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (Cut, Deck) {
         <span class="kw">let </span><span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>card, remainder)) = <span class="self">self</span>.cards.split_first() <span class="kw">else </span>{ <span class="macro">unreachable!</span>() };
-        (card.into(), Deck::from(Vec::from(remainder)))
+        (card, Deck::from(Vec::from(remainder)))
     }
 
     <span class="kw">pub fn </span>deal(<span class="kw-2">&amp;</span><span class="self">self</span>, players: <span class="kw-2">&amp;</span>HashSet&lt;Player&gt;) -&gt; (Hands, Deck) {

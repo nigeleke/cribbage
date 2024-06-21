@@ -118,7 +118,7 @@
         <span class="kw">let </span>hand = <span class="self">self</span>.<span class="number">0</span>.clone();
         <span class="kw">let </span>cut = <span class="self">self</span>.<span class="number">1</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>all_cards = hand.clone();
-        all_cards.add(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[cut]);
+        all_cards.add(<span class="kw-2">&amp;</span>[cut]);
 
         CardsScorer::fifteens(<span class="kw-2">&amp;</span>all_cards) +
             CardsScorer::pairs(<span class="kw-2">&amp;</span>all_cards) +

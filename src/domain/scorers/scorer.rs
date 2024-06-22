@@ -1,5 +1,5 @@
-use crate::types::*;
+use crate::domain::ScoreReasons;
 
 pub trait Scorer {
-    fn score(&self) -> Points;
+    fn score(&self) -> ScoreReasons;
 }

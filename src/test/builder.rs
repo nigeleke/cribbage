@@ -42,8 +42,8 @@ impl Builder {
         pub type Cuts = Cards<CutsType>;
 
         let cuts = Cuts::from(cuts);
-        self.deck.remove_all(&cuts.cards());
-        self.cuts.append(&mut cuts.cards());
+        self.deck.remove_all(cuts.as_ref());
+        cuts.as_ref().iter().for_each(|c| self.cuts.push(*c));
         self
     }
 
@@ -56,7 +56,7 @@ impl Builder {
     pub fn with_hands(mut self, hand0: &str, hand1: &str) -> Self {
         let mut add_hand = |hand: &str| {
             let hand = Hand::from(hand);
-            self.deck.remove_all(&hand.cards());
+            self.deck.remove_all(hand.as_ref());
             self.hands.push(hand);
         };
 
@@ -68,7 +68,7 @@ impl Builder {
 
     pub fn with_crib(mut self, crib: &str) -> Self {
         let crib = Crib::from(crib);
-        self.deck.remove_all(&crib.cards());
+        self.deck.remove_all(crib.as_ref());
         self.crib = crib.into();
         self
     }

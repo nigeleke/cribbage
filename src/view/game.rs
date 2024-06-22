@@ -35,8 +35,8 @@ impl From<(DomainGame, Player)> for Game {
                 let (player_score, opponent_score) = partition_for(player, &scores);
                 let scores = merge(player_score, opponent_score);
                 let (player_hand, opponent_hand) = partition_for(player, &hands);
-                let hands = merge(face_up(&player_hand.cards()), face_down(&opponent_hand.cards()));
-                let crib = face_down(&crib.cards());
+                let hands = merge(face_up(player_hand.as_ref()), face_down(opponent_hand.as_ref()));
+                let crib = face_down(crib.as_ref());
                 let dealer = Dealer::from((dealer, player));
                 Game::Discarding(scores, hands, crib, dealer)
             },
@@ -45,9 +45,9 @@ impl From<(DomainGame, Player)> for Game {
                 let scores = merge(player_score, opponent_score);
                 let (player_hand, opponent_hand) = partition_for(player, &hands);
                 // TODO: Change opponent face_up back to face_down.
-                let hands = merge(face_up(&player_hand.cards()), face_up(&opponent_hand.cards()));
+                let hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
                 let play_state = (play_state, player).into();
-                let crib = face_down(&crib.cards());
+                let crib = face_down(crib.as_ref());
                 let dealer = Dealer::from((dealer, player));
                 Game::Playing(scores, hands, play_state, cut, crib, dealer)
             },
@@ -56,8 +56,8 @@ impl From<(DomainGame, Player)> for Game {
                 let (player_score, opponent_score) = partition_for(player, scores);
                 let scores = merge(player_score, opponent_score);
                 let (player_hand, opponent_hand) = partition_for(player, hands);
-                let hands = merge(face_up(&player_hand.cards()), face_up(&opponent_hand.cards()));
-                let crib = face_down(&crib.cards());
+                let hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
+                let crib = face_down(crib.as_ref());
                 Game::ScoringPone(scores, pone, hands, cut, crib)
             },
             DomainGame::ScoringDealer(ref scores, _, ref hands, cut, ref crib) => {
@@ -65,8 +65,8 @@ impl From<(DomainGame, Player)> for Game {
                 let (player_score, opponent_score) = partition_for(player, scores);
                 let scores = merge(player_score, opponent_score);
                 let (player_hand, opponent_hand) = partition_for(player, hands);
-                let hands = merge(face_up(&player_hand.cards()), face_up(&opponent_hand.cards()));
-                let crib = face_down(&crib.cards());
+                let hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
+                let crib = face_down(crib.as_ref());
                 Game::ScoringDealer(scores, pone, hands, cut, crib)
             },
             DomainGame::ScoringCrib(ref scores, _, ref hands, cut, ref crib) => {
@@ -74,8 +74,8 @@ impl From<(DomainGame, Player)> for Game {
                 let (player_score, opponent_score) = partition_for(player, scores);
                 let scores = merge(player_score, opponent_score);
                 let (player_hand, opponent_hand) = partition_for(player, hands);
-                let hands = merge(face_up(&player_hand.cards()), face_up(&opponent_hand.cards()));
-                let crib = face_down(&crib.cards());
+                let hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
+                let crib = face_down(crib.as_ref());
                 Game::ScoringCrib(scores, pone, hands, cut, crib)
             },
             DomainGame::Finished(ref scores) => {

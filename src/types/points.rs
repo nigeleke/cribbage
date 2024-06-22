@@ -48,3 +48,9 @@ impl std::ops::Rem for Points {
         Points(self.0 % rhs.0)
     }
 }
+
+impl std::iter::Sum for Points {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Points::default(), |acc, i| acc + i)
+    }
+}

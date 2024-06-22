@@ -1,7 +1,7 @@
 use super::cards::{Card, Crib, Cut, Cuts, Deck, Hand, Hands};
-use super::plays::{PlayState};
+use super::plays::PlayState;
 use super::result::*;
-use super::scores::{Score, Scores};
+use super::scores::{ScoreReasons, Score, Scores};
 use super::scorers::*;
 
 use crate::constants::*;
@@ -141,7 +141,7 @@ impl Game {
                     let play_state = PlayState::new(pone, &hands);
                     let game = Game::Playing(scores.clone(), *dealer, hands, play_state, cut, crib);
                     let score = CutScorer::new(cut).score();
-                    game.score_points(*dealer, score)
+                    game.score(*dealer, &score)
                 } else {
                     Ok(Game::Discarding(scores.clone(), *dealer, hands, crib, deck.clone()))
                 }
@@ -173,8 +173,9 @@ impl Game {
         if player == player1 { player2 } else { player1 }
     }
 
-    fn score_points(&self, player: Player, points: Points) -> Result<Self> {
+    fn score(&self, player: Player, reasons: &ScoreReasons) -> Result<Self> {
         let update = |mut scores: Scores| {
+            let points = reasons.points();
             scores.insert(player, scores[&player].add(points));
             scores
         };
@@ -218,8 +219,8 @@ impl Game {
             Game::Playing(ref mut scores, dealer, ref mut hands, ref mut play_state, cut, ref mut crib) => {
                 let hand = hands.get_mut(&player).unwrap();
                 let legal_plays = play_state.legal_plays(player)?;
-                verify::card(card, &hand.cards())?;
-                verify::card(card, &legal_plays.cards()).map_err(|_| Error::CannotPlayCard)?;
+                verify::card(card, hand.as_ref())?;
+                verify::card(card, legal_plays.as_ref()).map_err(|_| Error::CannotPlayCard)?;
 
                 hand.remove(card);
                 play_state.play(card);
@@ -234,7 +235,7 @@ impl Game {
                 }
                 
                 Game::Playing(scores.clone(), dealer, hands.clone(), play_state.clone(), cut, crib.clone())
-                    .score_points(player, score_current_play + score_end_of_play)
+                    .score(player, &(score_current_play + score_end_of_play))
             },
             _ => Err(Error::ActionNotPermitted),
         }
@@ -244,23 +245,23 @@ impl Game {
         let mut game = self.clone();
         let players = game.players();
         verify::player(player, &players)?;
-        
+
         match game {
             Game::Playing(ref mut scores, dealer, ref mut hands, ref mut play_state, cut, ref mut crib) => {
                 let legal_plays = play_state.legal_plays(player)?;
-                verify::no_legal_plays(&legal_plays.cards())?;
+                verify::no_legal_plays(legal_plays.as_ref())?;
 
                 play_state.pass();
 
-                let mut score = Points::default();
+                let mut reasons = ScoreReasons::default();
 
                 if play_state.pass_count() == NUMBER_OF_PLAYERS_IN_GAME {
-                    score += EndOfPlayScorer::new(play_state).score();                    
+                    reasons = EndOfPlayScorer::new(play_state).score();
                     play_state.start_new_play();                    
                 }
 
                 Game::Playing(scores.clone(), dealer, hands.clone(), play_state.clone(), cut, crib.clone())
-                    .score_points(player, score)
+                    .score(player, &reasons)
             },
             _ => Err(Error::ActionNotPermitted),
         }
@@ -277,7 +278,7 @@ impl Game {
                 let hands = play_state.finish_plays();
                 game = Game::ScoringPone(scores.clone(), dealer, hands.clone(), cut, crib.clone());
                 let score = HandScorer::new(&hands[&pone], cut).score();
-                game.score_points(pone, score)
+                game.score(pone, &score)
             },
             _ => Err(Error::ActionNotPermitted),
         }
@@ -289,7 +290,7 @@ impl Game {
             Game::ScoringPone(ref mut scores, dealer, hands, cut, crib) => {
                 game = Game::ScoringDealer(scores.clone(), dealer, hands.clone(), cut, crib.clone());
                 let score = HandScorer::new(&hands[&dealer], cut).score();
-                game.score_points(dealer, score)
+                game.score(dealer, &score)
             },
             _ => Err(Error::ActionNotPermitted),
         }
@@ -301,7 +302,7 @@ impl Game {
             Game::ScoringDealer(ref mut scores, dealer, hands, cut, crib) => {
                 game = Game::ScoringCrib(scores.clone(), dealer, hands.clone(), cut, crib.clone());
                 let score = CribScorer::new(&crib, cut).score();
-                game.score_points(dealer, score)
+                game.score(dealer, &score)
             },
             _ => Err(Error::ActionNotPermitted),
         }
@@ -392,7 +393,7 @@ mod verify {
 
     pub fn discards(discards: &[Card], hand: &Hand) -> Result<()> {
         for discard in discards {
-            verify::card(*discard, &hand.cards())?
+            verify::card(*discard, hand.as_ref())?
         }
 
         if hand.len() - discards.len() < CARDS_KEPT_PER_HAND {
@@ -432,7 +433,7 @@ mod verify {
 mod test {
     use super::*;
     use crate::test::Builder;
-    use crate::domain::plays::Play;
+    use crate::domain::{Play, ScoreReasons, ScoreReason};
 
     #[test]
     fn play_with_zero_one_or_two_players() {
@@ -525,7 +526,7 @@ mod test {
 
         players
             .iter()
-            .for_each(|p| assert_eq!(hands[p].cards().len(), CARDS_DEALT_PER_HAND));
+            .for_each(|p| assert_eq!(hands[p].len(), CARDS_DEALT_PER_HAND));
     }
 
     #[test]
@@ -544,11 +545,11 @@ mod test {
         });
         
         players.iter().for_each(|p| {
-            assert_eq!(hands[p].cards().len(), CARDS_DEALT_PER_HAND);
+            assert_eq!(hands[p].len(), CARDS_DEALT_PER_HAND);
         });
 
-        assert_eq!(crib.cards().len(), 0);
-        assert_eq!(deck.cards().len(), 52 - (NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND));
+        assert_eq!(crib.len(), 0);
+        assert_eq!(deck.len(), 52 - (NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND));
     }
 
     #[test]
@@ -775,7 +776,7 @@ mod test {
         let pone_score0 = scores0[&pone0].clone();
 
         assert_eq!(play_state0.legal_plays(dealer0).err().unwrap(), Error::CannotPlay);
-        assert_eq!(play_state0.legal_plays(pone0).ok().unwrap().cards(), Hand::from("4S").cards());
+        assert_eq!(play_state0.legal_plays(pone0).ok().unwrap(), Hand::from("4S"));
 
         let game1 = game0.play(pone0, Card::from("4S")).ok().unwrap();
         let pone1 = game1.pone();
@@ -847,7 +848,7 @@ mod test {
         let pone0 = game0.pone();
         let Game::Playing(_, _, _, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
-        assert_eq!(play_state0.legal_plays(pone0).ok().unwrap().cards(), Hand::from("").cards());
+        assert_eq!(play_state0.legal_plays(pone0).ok().unwrap(), Hand::from(""));
 
         let error = game0.play(pone0, Card::from("4S")).err().unwrap();
         assert_eq!(error, Error::CannotPlayCard)
@@ -896,6 +897,7 @@ mod test {
         assert_eq!(score1_pone, score0_pone.add(1.into()));
         assert_eq!(score1_dealer, score0_dealer);
         assert_eq!(play_state.next_to_play(), dealer1);
+        // TODO: assert score_history...
     }
 
     #[test]
@@ -1040,6 +1042,7 @@ mod test {
         let Game::Playing(scores0, dealer0, hands0, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
         let game1 = game0.pass(pone).ok().unwrap();
+        println!("E");
         let game2 = game1.pass(dealer0).ok().unwrap();
 
         let Game::Playing(scores2, dealer2, hands2, play_state2, _, _) = game2.clone() else { panic!("Unexpected state") };

@@ -72,11 +72,10 @@ impl From<(DomainPlayState, Player)> for PlayState {
 
         let all_cards_are_played = play_state.all_are_cards_played();
 
-        let legal_plays = if !all_cards_are_played {
-            play_state.legal_plays(player).ok().unwrap().cards()
-        } else {
-            vec![]
-        };
+        let mut legal_plays = Vec::new();
+        if !all_cards_are_played {
+            legal_plays = Vec::from(play_state.legal_plays(player).ok().unwrap().as_ref());
+        }
         
         let current_plays = play_state
             .current_plays()

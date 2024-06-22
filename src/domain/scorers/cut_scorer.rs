@@ -1,8 +1,8 @@
 use super::scorer::Scorer;
 use super::constants::*;
 
-use crate::domain::Cut;
-use crate::types::{Face, HasFace, Points};
+use crate::domain::{Cut, ScoreReasons};
+use crate::types::{Face, HasFace};
 
 pub struct CutScorer(Cut);
 
@@ -13,19 +13,22 @@ impl CutScorer {
 }
 
 impl Scorer for CutScorer {
-    fn score(&self) -> Points {
+    fn score(&self) -> ScoreReasons {
+        let mut reasons = ScoreReasons::default();
+
         let cut = self.0;
         if cut.face() == Face::Jack {
-            SCORE_HIS_HEELS_ON_CUT.into()
-        } else {
-            Points::default()
+            reasons.with_his_heels(&[cut], SCORE_HIS_HEELS_ON_CUT.into());
         }
+
+        reasons
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::types::HasPoints;
 
     #[test]
     fn should_not_score_his_heels_on_non_jack_cut() {
@@ -36,7 +39,7 @@ mod test {
         cards
             .into_iter()
             .for_each(|c| {
-                assert_eq!(CutScorer(Cut::from(c)).score(), 0.into())
+                assert_eq!(CutScorer(Cut::from(c)).score().points(), 0.into())
             });
     }
 
@@ -46,7 +49,7 @@ mod test {
         cards
             .into_iter()
             .for_each(|c| {
-                assert_eq!(CutScorer(Cut::from(c)).score(), 2.into())
+                assert_eq!(CutScorer(Cut::from(c)).score().points(), 2.into())
             });
     }
 }

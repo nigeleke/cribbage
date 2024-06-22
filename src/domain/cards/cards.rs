@@ -32,10 +32,6 @@ where T: Clone {
         }
     }
 
-    pub fn cards(&self) -> Vec<Card> {
-        self.cards.clone()
-    }
-
     pub fn len(&self) -> usize {
         self.cards.len()
     }
@@ -89,6 +85,13 @@ impl<T> From<Vec<Card>> for Cards<T>
 where T: Clone {
     fn from(value: Vec<Card>) -> Self {
         Self { cards: value, _marker: Default::default() }
+    }
+}
+
+impl<T> AsRef<[Card]> for Cards<T>
+where T: Clone {
+    fn as_ref(&self) -> &[Card] {
+        &self.cards
     }
 }
 

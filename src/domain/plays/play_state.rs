@@ -1,46 +1,13 @@
-use super::cards::{Card, Hand, Hands};
-use super::result::{Error, Result};
+use super::play::Play;
 
 use crate::constants::*;
+use crate::domain::{Card, Hand, Hands};
+use crate::domain::result::{Error, Result};
 use crate::fmt::{format_hashmap, format_vec};
 use crate::types::*;
 
 use serde::{Serialize, Deserialize};
 use std::collections::HashSet;
-
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
-pub struct Play {
-    player: Player,
-    card: Card,
-}
-
-impl Play {
-    pub fn new(player: Player, card: Card) -> Self {
-        Self { player, card }
-    }
-
-    pub fn player(self) -> Player {
-        self.player
-    }
-
-    pub fn card(self) -> Card {
-        self.card
-    }
-
-    pub fn value(self) -> Value {
-        self.card.value()
-    }
-
-    pub fn rank(self) -> Rank {
-        self.card.rank()
-    }
-}
-
-impl std::fmt::Display for Play {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({} -> {})", self.player, self.card)
-    }
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PlayState {
@@ -65,7 +32,7 @@ impl PlayState {
     pub fn running_total(&self) -> Value {
         let cards = Hand::from(self.current_plays
             .iter()
-            .map(|p| p.card)
+            .map(|p| p.card())
             .collect::<Vec<_>>());
         cards.value()
     }
@@ -80,8 +47,8 @@ impl PlayState {
 
     fn legal_plays_unchecked(&self, player: Player) -> Hand {
         let running_total = self.running_total();
-        let legal_plays: Hand = self.legal_plays[&player].cards().into_iter()
-            .filter(|c| running_total + c.value() <= PLAY_TARGET.into())
+        let legal_plays: Hand = self.legal_plays[&player].as_ref().iter()
+            .filter_map(|c| (running_total + c.value() <= PLAY_TARGET.into()).then_some(*c))
             .collect::<Vec<_>>().into();
         legal_plays
     }
@@ -132,7 +99,7 @@ impl PlayState {
     pub fn is_current_play_finished(&self) -> bool {
         let running_total = self.running_total();
         let legal_plays = &self.legal_plays;
-        legal_plays.iter().all(|(_, hand)| hand.cards().iter().all(|c| c.value() + running_total > PLAY_TARGET.into()))
+        legal_plays.iter().all(|(_, hand)| hand.as_ref().iter().all(|c| c.value() + running_total > PLAY_TARGET.into()))
     }
 
     pub fn start_new_play(&mut self) {
@@ -165,9 +132,9 @@ impl PlayState {
         let mut plays = self.current_plays();
         plays.append(&mut previous_plays);
         
-        let players: HashSet<Player> = HashSet::from_iter(plays.iter().map(|p| p.player));
+        let players: HashSet<Player> = HashSet::from_iter(plays.iter().map(|p| p.player()));
         let player_cards = players.into_iter().map(|player| {
-            (player, plays.iter().filter_map(|p| (p.player == player).then_some(p.card)).collect::<Hand>())
+            (player, plays.iter().filter_map(|p| (p.player() == player).then_some(p.card())).collect::<Hand>())
         });
 
         Hands::from_iter(player_cards)

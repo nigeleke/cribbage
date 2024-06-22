@@ -2,8 +2,7 @@ use super::scorer::Scorer;
 use super::constants::*;
 
 use crate::constants::PLAY_TARGET;
-use crate::domain::PlayState;
-use crate::types::Points;
+use crate::domain::{PlayState, ScoreReasons, ScoreReason};
 
 pub struct EndOfPlayScorer(PlayState);
 
@@ -14,17 +13,25 @@ impl EndOfPlayScorer {
 }
 
 impl Scorer for EndOfPlayScorer {
-    fn score(&self) -> Points {
-        let play_state = self.0.clone();
+    fn score(&self) -> ScoreReasons {
+        let mut reasons = ScoreReasons::default();
+
+        let play_state = &self.0;
+
         if play_state.is_current_play_finished() {
+            let cards = play_state.current_plays()
+                .iter()
+                .map(|p| p.card())
+                .collect::<Vec<_>>();
+
             if play_state.running_total() == PLAY_TARGET.into() {
-                SCORE_THIRTY_ONE.into()
+                reasons.with_end_of_play(&cards, SCORE_THIRTY_ONE.into());
             } else {
-                SCORE_UNDER_THIRTY_ONE.into()
+                reasons.with_end_of_play(&cards, SCORE_UNDER_THIRTY_ONE.into());
             }
-        } else {
-            Points::default()
         }
+
+        reasons
     }
 }
 
@@ -33,6 +40,7 @@ mod test {
     use super::*;
     use crate::domain::Game;
     use crate::test::Builder;
+    use crate::types::HasPoints;
 
     #[test]
     fn should_score_when_target_not_reached() {
@@ -43,7 +51,7 @@ mod test {
             .with_cut("KH")
             .as_playing(1);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
-        assert_eq!(EndOfPlayScorer(play_state).score(), 1.into())
+        assert_eq!(EndOfPlayScorer(play_state).score().points(), 1.into())
     }
 
     #[test]
@@ -55,7 +63,7 @@ mod test {
             .with_cut("KS")
             .as_playing(1);
         let Game::Playing(_, _, _, play_state, _, _) = game else { panic!("Unexpected state") };
-        assert_eq!(EndOfPlayScorer(play_state).score(), 2.into())
+        assert_eq!(EndOfPlayScorer(play_state).score().points(), 2.into())
     }
 
 }

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (684b3553f 2024-06-20)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (c1b336cb6 2024-06-21)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1669,10 +1669,13 @@
 <a href="#1669" id="1669">1669</a>
 <a href="#1670" id="1670">1670</a>
 <a href="#1671" id="1671">1671</a>
+<a href="#1672" id="1672">1672</a>
+<a href="#1673" id="1673">1673</a>
+<a href="#1674" id="1674">1674</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::cards::{Card, Crib, Cut, Cuts, Deck, Hand, Hands};
-<span class="kw">use </span><span class="kw">super</span>::plays::{PlayState};
+<span class="kw">use </span><span class="kw">super</span>::plays::PlayState;
 <span class="kw">use </span><span class="kw">super</span>::result::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">super</span>::scores::{Score, Scores};
+<span class="kw">use </span><span class="kw">super</span>::scores::{ScoreReasons, Score, Scores};
 <span class="kw">use </span><span class="kw">super</span>::scorers::<span class="kw-2">*</span>;
 
 <span class="kw">use </span><span class="kw">crate</span>::constants::<span class="kw-2">*</span>;
@@ -1812,7 +1815,7 @@
                     <span class="kw">let </span>play_state = PlayState::new(pone, <span class="kw-2">&amp;</span>hands);
                     <span class="kw">let </span>game = Game::Playing(scores.clone(), <span class="kw-2">*</span>dealer, hands, play_state, cut, crib);
                     <span class="kw">let </span>score = CutScorer::new(cut).score();
-                    game.score_points(<span class="kw-2">*</span>dealer, score)
+                    game.score(<span class="kw-2">*</span>dealer, <span class="kw-2">&amp;</span>score)
                 } <span class="kw">else </span>{
                     <span class="prelude-val">Ok</span>(Game::Discarding(scores.clone(), <span class="kw-2">*</span>dealer, hands, crib, deck.clone()))
                 }
@@ -1844,8 +1847,9 @@
         <span class="kw">if </span>player == player1 { player2 } <span class="kw">else </span>{ player1 }
     }
 
-    <span class="kw">fn </span>score_points(<span class="kw-2">&amp;</span><span class="self">self</span>, player: Player, points: Points) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    <span class="kw">fn </span>score(<span class="kw-2">&amp;</span><span class="self">self</span>, player: Player, reasons: <span class="kw-2">&amp;</span>ScoreReasons) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>update = |<span class="kw-2">mut </span>scores: Scores| {
+            <span class="kw">let </span>points = reasons.points();
             scores.insert(player, scores[<span class="kw-2">&amp;</span>player].add(points));
             scores
         };
@@ -1889,8 +1893,8 @@
             Game::Playing(<span class="kw-2">ref mut </span>scores, dealer, <span class="kw-2">ref mut </span>hands, <span class="kw-2">ref mut </span>play_state, cut, <span class="kw-2">ref mut </span>crib) =&gt; {
                 <span class="kw">let </span>hand = hands.get_mut(<span class="kw-2">&amp;</span>player).unwrap();
                 <span class="kw">let </span>legal_plays = play_state.legal_plays(player)<span class="question-mark">?</span>;
-                verify::card(card, <span class="kw-2">&amp;</span>hand.cards())<span class="question-mark">?</span>;
-                verify::card(card, <span class="kw-2">&amp;</span>legal_plays.cards()).map_err(|<span class="kw">_</span>| Error::CannotPlayCard)<span class="question-mark">?</span>;
+                verify::card(card, hand.as_ref())<span class="question-mark">?</span>;
+                verify::card(card, legal_plays.as_ref()).map_err(|<span class="kw">_</span>| Error::CannotPlayCard)<span class="question-mark">?</span>;
 
                 hand.remove(card);
                 play_state.play(card);
@@ -1905,7 +1909,7 @@
                 }
                 
                 Game::Playing(scores.clone(), dealer, hands.clone(), play_state.clone(), cut, crib.clone())
-                    .score_points(player, score_current_play + score_end_of_play)
+                    .score(player, <span class="kw-2">&amp;</span>(score_current_play + score_end_of_play))
             },
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted),
         }
@@ -1915,23 +1919,23 @@
         <span class="kw">let </span><span class="kw-2">mut </span>game = <span class="self">self</span>.clone();
         <span class="kw">let </span>players = game.players();
         verify::player(player, <span class="kw-2">&amp;</span>players)<span class="question-mark">?</span>;
-        
+
         <span class="kw">match </span>game {
             Game::Playing(<span class="kw-2">ref mut </span>scores, dealer, <span class="kw-2">ref mut </span>hands, <span class="kw-2">ref mut </span>play_state, cut, <span class="kw-2">ref mut </span>crib) =&gt; {
                 <span class="kw">let </span>legal_plays = play_state.legal_plays(player)<span class="question-mark">?</span>;
-                verify::no_legal_plays(<span class="kw-2">&amp;</span>legal_plays.cards())<span class="question-mark">?</span>;
+                verify::no_legal_plays(legal_plays.as_ref())<span class="question-mark">?</span>;
 
                 play_state.pass();
 
-                <span class="kw">let </span><span class="kw-2">mut </span>score = Points::default();
+                <span class="kw">let </span><span class="kw-2">mut </span>reasons = ScoreReasons::default();
 
                 <span class="kw">if </span>play_state.pass_count() == NUMBER_OF_PLAYERS_IN_GAME {
-                    score += EndOfPlayScorer::new(play_state).score();                    
+                    reasons = EndOfPlayScorer::new(play_state).score();
                     play_state.start_new_play();                    
                 }
 
                 Game::Playing(scores.clone(), dealer, hands.clone(), play_state.clone(), cut, crib.clone())
-                    .score_points(player, score)
+                    .score(player, <span class="kw-2">&amp;</span>reasons)
             },
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted),
         }
@@ -1948,7 +1952,7 @@
                 <span class="kw">let </span>hands = play_state.finish_plays();
                 game = Game::ScoringPone(scores.clone(), dealer, hands.clone(), cut, crib.clone());
                 <span class="kw">let </span>score = HandScorer::new(<span class="kw-2">&amp;</span>hands[<span class="kw-2">&amp;</span>pone], cut).score();
-                game.score_points(pone, score)
+                game.score(pone, <span class="kw-2">&amp;</span>score)
             },
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted),
         }
@@ -1960,7 +1964,7 @@
             Game::ScoringPone(<span class="kw-2">ref mut </span>scores, dealer, hands, cut, crib) =&gt; {
                 game = Game::ScoringDealer(scores.clone(), dealer, hands.clone(), cut, crib.clone());
                 <span class="kw">let </span>score = HandScorer::new(<span class="kw-2">&amp;</span>hands[<span class="kw-2">&amp;</span>dealer], cut).score();
-                game.score_points(dealer, score)
+                game.score(dealer, <span class="kw-2">&amp;</span>score)
             },
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted),
         }
@@ -1972,7 +1976,7 @@
             Game::ScoringDealer(<span class="kw-2">ref mut </span>scores, dealer, hands, cut, crib) =&gt; {
                 game = Game::ScoringCrib(scores.clone(), dealer, hands.clone(), cut, crib.clone());
                 <span class="kw">let </span>score = CribScorer::new(<span class="kw-2">&amp;</span>crib, cut).score();
-                game.score_points(dealer, score)
+                game.score(dealer, <span class="kw-2">&amp;</span>score)
             },
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::ActionNotPermitted),
         }
@@ -2063,7 +2067,7 @@
 
     <span class="kw">pub fn </span>discards(discards: <span class="kw-2">&amp;</span>[Card], hand: <span class="kw-2">&amp;</span>Hand) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">for </span>discard <span class="kw">in </span>discards {
-            verify::card(<span class="kw-2">*</span>discard, <span class="kw-2">&amp;</span>hand.cards())<span class="question-mark">?
+            verify::card(<span class="kw-2">*</span>discard, hand.as_ref())<span class="question-mark">?
         </span>}
 
         <span class="kw">if </span>hand.len() - discards.len() &lt; CARDS_KEPT_PER_HAND {
@@ -2103,7 +2107,7 @@
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::test::Builder;
-    <span class="kw">use </span><span class="kw">crate</span>::domain::plays::Play;
+    <span class="kw">use </span><span class="kw">crate</span>::domain::{Play, ScoreReasons, ScoreReason};
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>play_with_zero_one_or_two_players() {
@@ -2196,7 +2200,7 @@
 
         players
             .iter()
-            .for_each(|p| <span class="macro">assert_eq!</span>(hands[p].cards().len(), CARDS_DEALT_PER_HAND));
+            .for_each(|p| <span class="macro">assert_eq!</span>(hands[p].len(), CARDS_DEALT_PER_HAND));
     }
 
     <span class="attr">#[test]
@@ -2215,11 +2219,11 @@
         });
         
         players.iter().for_each(|p| {
-            <span class="macro">assert_eq!</span>(hands[p].cards().len(), CARDS_DEALT_PER_HAND);
+            <span class="macro">assert_eq!</span>(hands[p].len(), CARDS_DEALT_PER_HAND);
         });
 
-        <span class="macro">assert_eq!</span>(crib.cards().len(), <span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(deck.cards().len(), <span class="number">52 </span>- (NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND));
+        <span class="macro">assert_eq!</span>(crib.len(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(deck.len(), <span class="number">52 </span>- (NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND));
     }
 
     <span class="attr">#[test]
@@ -2446,7 +2450,7 @@
         <span class="kw">let </span>pone_score0 = scores0[<span class="kw-2">&amp;</span>pone0].clone();
 
         <span class="macro">assert_eq!</span>(play_state0.legal_plays(dealer0).err().unwrap(), Error::CannotPlay);
-        <span class="macro">assert_eq!</span>(play_state0.legal_plays(pone0).ok().unwrap().cards(), Hand::from(<span class="string">"4S"</span>).cards());
+        <span class="macro">assert_eq!</span>(play_state0.legal_plays(pone0).ok().unwrap(), Hand::from(<span class="string">"4S"</span>));
 
         <span class="kw">let </span>game1 = game0.play(pone0, Card::from(<span class="string">"4S"</span>)).ok().unwrap();
         <span class="kw">let </span>pone1 = game1.pone();
@@ -2518,7 +2522,7 @@
         <span class="kw">let </span>pone0 = game0.pone();
         <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state0, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-        <span class="macro">assert_eq!</span>(play_state0.legal_plays(pone0).ok().unwrap().cards(), Hand::from(<span class="string">""</span>).cards());
+        <span class="macro">assert_eq!</span>(play_state0.legal_plays(pone0).ok().unwrap(), Hand::from(<span class="string">""</span>));
 
         <span class="kw">let </span>error = game0.play(pone0, Card::from(<span class="string">"4S"</span>)).err().unwrap();
         <span class="macro">assert_eq!</span>(error, Error::CannotPlayCard)
@@ -2567,7 +2571,8 @@
         <span class="macro">assert_eq!</span>(score1_pone, score0_pone.add(<span class="number">1</span>.into()));
         <span class="macro">assert_eq!</span>(score1_dealer, score0_dealer);
         <span class="macro">assert_eq!</span>(play_state.next_to_play(), dealer1);
-    }
+        <span class="comment">// TODO: assert score_history...
+    </span>}
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>score_play_when_target_not_reached_finished() {
@@ -2711,6 +2716,7 @@
         <span class="kw">let </span>Game::Playing(scores0, dealer0, hands0, play_state0, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
         <span class="kw">let </span>game1 = game0.pass(pone).ok().unwrap();
+        <span class="macro">println!</span>(<span class="string">"E"</span>);
         <span class="kw">let </span>game2 = game1.pass(dealer0).ok().unwrap();
 
         <span class="kw">let </span>Game::Playing(scores2, dealer2, hands2, play_state2, <span class="kw">_</span>, <span class="kw">_</span>) = game2.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };

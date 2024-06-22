@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/scorers/current_play_scorer.rs`."><title>current_play_scorer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (684b3553f 2024-06-20)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/domain/scorers/current_play_scorer.rs`."><title>current_play_scorer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (c1b336cb6 2024-06-21)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -164,11 +164,51 @@
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::scorer::Scorer;
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>leptos::html::math;
+
+<span class="kw">use </span><span class="kw">super</span>::scorer::Scorer;
 <span class="kw">use </span><span class="kw">super</span>::constants::<span class="kw-2">*</span>;
 
-<span class="kw">use </span><span class="kw">crate</span>::domain::PlayState;
-<span class="kw">use </span><span class="kw">crate</span>::types::{Points, Rank};
+<span class="kw">use </span><span class="kw">crate</span>::domain::{PlayState, ScoreReasons};
+<span class="kw">use </span><span class="kw">crate</span>::types::{Points, Rank, HasFace, HasRank};
 
 <span class="kw">pub struct </span>CurrentPlayScorer(PlayState);
 
@@ -177,65 +217,88 @@
         <span class="self">Self</span>(play_state.clone())
     } 
 
-    <span class="kw">fn </span>fifteens(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Points {
-        <span class="kw">let </span>play_state = <span class="self">self</span>.<span class="number">0</span>.clone();
+    <span class="kw">fn </span>fifteens(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ScoreReasons {
+        <span class="kw">let </span><span class="kw-2">mut </span>reasons = ScoreReasons::default();
+
+        <span class="kw">let </span>play_state = <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>;
+        <span class="kw">let </span>cards = play_state.current_plays()
+            .into_iter()
+            .map(|p| p.card())
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+
         <span class="kw">if </span>play_state.running_total() == <span class="number">15</span>.into() {
-            SCORE_FIFTEEN.into()
-        } <span class="kw">else </span>{
-            Points::default()
+            reasons.with_fifteen(<span class="kw-2">&amp;</span>cards, SCORE_FIFTEEN.into())
         }
+
+        reasons
     }
 
-    <span class="kw">fn </span>pairs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Points {
-        <span class="kw">let </span>play_state = <span class="self">self</span>.<span class="number">0</span>.clone();
-        <span class="kw">let </span>current_plays = <span class="kw-2">&amp;</span>play_state.current_plays();
-        <span class="kw">let </span><span class="kw-2">mut </span>current_plays = current_plays.iter().rev();
-        <span class="kw">let </span>play = current_plays.next().unwrap();
-        <span class="kw">let </span>previous = current_plays.take_while(|p| p.value() == play.value());
-        <span class="kw">match </span>previous.count() {
-            <span class="number">0 </span>=&gt; Points::default(),
-            <span class="number">1 </span>=&gt; SCORE_PAIR.into(),
-            <span class="number">2 </span>=&gt; SCORE_ROYAL_PAIR.into(),
-            <span class="number">3 </span>=&gt; SCORE_DOUBLE_ROYAL_PAIR.into(),
+    <span class="kw">fn </span>pairs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ScoreReasons {
+        <span class="kw">let </span><span class="kw-2">mut </span>reasons = ScoreReasons::default();
+
+        <span class="kw">let </span>play_state = <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>cards = play_state.current_plays()
+            .into_iter()
+            .map(|p| p.card())
+            .rev();
+
+        <span class="kw">let </span>first = cards.next().unwrap();
+        <span class="kw">let </span>matching = cards.take_while(|c| c.face() == first.face());
+
+        <span class="kw">let </span><span class="kw-2">mut </span>cards = Vec::from_iter(matching);
+        cards.push(first);
+
+        <span class="kw">let </span>points = <span class="kw">match </span>cards.len() {
+            <span class="number">1 </span>=&gt; Points::default(),
+            <span class="number">2 </span>=&gt; SCORE_PAIR.into(),
+            <span class="number">3 </span>=&gt; SCORE_ROYAL_PAIR.into(),
+            <span class="number">4 </span>=&gt; SCORE_DOUBLE_ROYAL_PAIR.into(),
             <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+        };
+
+        <span class="kw">if </span>points != <span class="number">0</span>.into() {
+            reasons.with_pairs(<span class="kw-2">&amp;</span>cards, points)
         }
+
+        reasons
     }
 
-    <span class="kw">fn </span>runs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Points {
-        <span class="kw">let </span>play_state = <span class="self">self</span>.<span class="number">0</span>.clone();
+    <span class="kw">fn </span>runs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ScoreReasons {
+        <span class="kw">let </span><span class="kw-2">mut </span>reasons = ScoreReasons::default();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>total = Points::default();
+        <span class="kw">let </span>play_state = <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>;
 
         <span class="kw">let </span>current_plays = <span class="kw-2">&amp;</span>play_state.current_plays();
 
         <span class="kw">for </span>len <span class="kw">in </span>(MINIMUM_RUN_LENGTH..=current_plays.len()).rev() {
             <span class="kw">let </span>current_plays = current_plays.iter().rev();
-            <span class="kw">let </span><span class="kw-2">mut </span>plays = current_plays
-                .map(|p| p.rank())
+            <span class="kw">let </span><span class="kw-2">mut </span>cards = current_plays
+                .map(|p| p.card())
                 .take(len)
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-            plays.sort_by(|<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span>b| a.cmp(<span class="kw-2">&amp;</span>b));
 
-            <span class="kw">let </span>differences = plays
+            cards.sort_by(|<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span>b| a.rank().cmp(<span class="kw-2">&amp;</span>b.rank()));
+
+            <span class="kw">let </span>differences = cards
                 .windows(<span class="number">2</span>)
-                .map(|w| w[<span class="number">1</span>] - w[<span class="number">0</span>])
+                .map(|w| w[<span class="number">1</span>].rank() - w[<span class="number">0</span>].rank())
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
             <span class="kw">let </span>sequential = differences.iter().all(|d| <span class="kw-2">*</span>d == Rank::new(<span class="number">1</span>));
             <span class="kw">if </span>sequential {
-                total += len.into();
+                reasons.with_run(<span class="kw-2">&amp;</span>cards, len.into());
                 <span class="kw">break</span>;
             }
         }
 
-        total
+        reasons
     }
 
 }
 
 
 <span class="kw">impl </span>Scorer <span class="kw">for </span>CurrentPlayScorer {
-    <span class="kw">fn </span>score(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Points {
+    <span class="kw">fn </span>score(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ScoreReasons {
         <span class="self">self</span>.fifteens() +
             <span class="self">self</span>.pairs() +
             <span class="self">self</span>.runs()
@@ -247,17 +310,18 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::domain::{Card, Game};
     <span class="kw">use </span><span class="kw">crate</span>::test::Builder;
+    <span class="kw">use </span><span class="kw">crate</span>::types::HasPoints;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>should_score_fifteens() {
         <span class="kw">let </span>game = Builder::new(<span class="number">2</span>)
             .with_scores(<span class="number">0</span>, <span class="number">0</span>)
             .with_hands(<span class="string">""</span>, <span class="string">""</span>)
-            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"JD"</span>), (<span class="number">0</span>, <span class="string">"5H"</span>)])
+            .with_current_plays(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="string">"JD"</span>), (<span class="number">0</span>, <span class="string">"5H"</span>)])
             .with_cut(<span class="string">"AH"</span>)
             .as_playing(<span class="number">1</span>);
         <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state, <span class="kw">_</span>, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-        <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score(), <span class="number">2</span>.into())
+        <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score().points(), <span class="number">2</span>.into())
     }
 
     <span class="attr">#[test]
@@ -265,11 +329,11 @@
         <span class="kw">let </span>game = Builder::new(<span class="number">2</span>)
             .with_scores(<span class="number">0</span>, <span class="number">0</span>)
             .with_hands(<span class="string">""</span>, <span class="string">""</span>)
-            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"JD"</span>), (<span class="number">0</span>, <span class="string">"AH"</span>), (<span class="number">0</span>, <span class="string">"AS"</span>)])
+            .with_current_plays(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="string">"JD"</span>), (<span class="number">0</span>, <span class="string">"AH"</span>), (<span class="number">0</span>, <span class="string">"AS"</span>)])
             .with_cut(<span class="string">"KH"</span>)
             .as_playing(<span class="number">1</span>);
         <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state, <span class="kw">_</span>, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-        <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score(), <span class="number">2</span>.into())
+        <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score().points(), <span class="number">2</span>.into())
     }
 
     <span class="attr">#[test]
@@ -277,11 +341,11 @@
         <span class="kw">let </span>game = Builder::new(<span class="number">2</span>)
             .with_scores(<span class="number">0</span>, <span class="number">0</span>)
             .with_hands(<span class="string">""</span>, <span class="string">""</span>)
-            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"AD"</span>), (<span class="number">0</span>, <span class="string">"AH"</span>), (<span class="number">0</span>, <span class="string">"AS"</span>)])
+            .with_current_plays(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="string">"AD"</span>), (<span class="number">0</span>, <span class="string">"AH"</span>), (<span class="number">0</span>, <span class="string">"AS"</span>)])
             .with_cut(<span class="string">"KH"</span>)
             .as_playing(<span class="number">1</span>);
         <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state, <span class="kw">_</span>, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-        <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score(), <span class="number">6</span>.into())
+        <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score().points(), <span class="number">6</span>.into())
     }
 
     <span class="attr">#[test]
@@ -289,16 +353,16 @@
         <span class="kw">let </span>game = Builder::new(<span class="number">2</span>)
             .with_scores(<span class="number">0</span>, <span class="number">0</span>)
             .with_hands(<span class="string">""</span>, <span class="string">""</span>)
-            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"AC"</span>), (<span class="number">0</span>, <span class="string">"AD"</span>), (<span class="number">0</span>, <span class="string">"AH"</span>), (<span class="number">0</span>, <span class="string">"AS"</span>)])
+            .with_current_plays(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="string">"AC"</span>), (<span class="number">0</span>, <span class="string">"AD"</span>), (<span class="number">0</span>, <span class="string">"AH"</span>), (<span class="number">0</span>, <span class="string">"AS"</span>)])
             .with_cut(<span class="string">"KH"</span>)
             .as_playing(<span class="number">1</span>);
         <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state, <span class="kw">_</span>, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-        <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score(), <span class="number">12</span>.into())
+        <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score().points(), <span class="number">12</span>.into())
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>should_score_runs() {
-        <span class="kw">let </span>current_plays = <span class="macro">vec!</span>[(<span class="number">0</span>, <span class="string">"2C"</span>), (<span class="number">0</span>, <span class="string">"3C"</span>), (<span class="number">0</span>, <span class="string">"4C"</span>), (<span class="number">0</span>, <span class="string">"5C"</span>), (<span class="number">0</span>, <span class="string">"6C"</span>), (<span class="number">0</span>, <span class="string">"7C"</span>)];
+        <span class="kw">let </span>current_plays = <span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="string">"2C"</span>), (<span class="number">0</span>, <span class="string">"3C"</span>), (<span class="number">0</span>, <span class="string">"4C"</span>), (<span class="number">0</span>, <span class="string">"5C"</span>), (<span class="number">0</span>, <span class="string">"6C"</span>), (<span class="number">0</span>, <span class="string">"7C"</span>)];
         <span class="kw">for </span>len <span class="kw">in </span><span class="number">1</span>..=current_plays.len() {
             <span class="kw">let </span>current_plays = current_plays.clone();
             <span class="kw">let </span>current_plays = current_plays.into_iter().take(len);
@@ -310,8 +374,20 @@
                 .with_cut(<span class="string">"KH"</span>)
                 .as_playing(<span class="number">1</span>);
             <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state, <span class="kw">_</span>, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-            <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score(), (<span class="kw">if </span>len &lt; <span class="number">3 </span>{ <span class="number">0 </span>} <span class="kw">else </span>{ len }).into())
+            <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score().points(), (<span class="kw">if </span>len &lt; <span class="number">3 </span>{ <span class="number">0 </span>} <span class="kw">else </span>{ len }).into())
         }
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>should_score_runs_unordered() {
+        <span class="kw">let </span>game = Builder::new(<span class="number">2</span>)
+            .with_scores(<span class="number">0</span>, <span class="number">0</span>)
+            .with_hands(<span class="string">"KS"</span>, <span class="string">"KD"</span>)
+            .with_current_plays(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="string">"3S"</span>), (<span class="number">0</span>, <span class="string">"2C"</span>), (<span class="number">0</span>, <span class="string">"AS"</span>)])
+            .with_cut(<span class="string">"KH"</span>)
+            .as_playing(<span class="number">1</span>);
+        <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state, <span class="kw">_</span>, <span class="kw">_</span>) = game <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score().points(), <span class="number">3</span>.into())
     }
 
     <span class="attr">#[test]
@@ -320,13 +396,13 @@
             .with_scores(<span class="number">0</span>, <span class="number">0</span>)
             .with_hands(<span class="string">"AH"</span>, <span class="string">"KD"</span>)
             .with_cut(<span class="string">"2H"</span>)
-            .with_current_plays(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="number">1</span>, <span class="string">"TH"</span>), (<span class="number">0</span>, <span class="string">"9H"</span>), (<span class="number">1</span>, <span class="string">"QH"</span>)])
+            .with_current_plays(<span class="kw-2">&amp;</span>[(<span class="number">1</span>, <span class="string">"TH"</span>), (<span class="number">0</span>, <span class="string">"9H"</span>), (<span class="number">1</span>, <span class="string">"QH"</span>)])
             .as_playing(<span class="number">0</span>);
         <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
         <span class="kw">let </span>game1 = game0.play(dealer, Card::from(<span class="string">"AH"</span>)).ok().unwrap();
         <span class="kw">let </span>Game::Playing(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, play_state, <span class="kw">_</span>, <span class="kw">_</span>) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-        <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score(), <span class="number">0</span>.into());
+        <span class="macro">assert_eq!</span>(CurrentPlayScorer(play_state).score().points(), <span class="number">0</span>.into());
     }
 
 }</code></pre></div></section></main></body></html>

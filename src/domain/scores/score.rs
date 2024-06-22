@@ -23,10 +23,6 @@ impl Score {
             Self ( self.front_peg(), Peg::new(self.front_peg().points() + points))
         }
     }
-
-    pub fn is_winning_score(&self) -> bool {
-        self.points() >= WINNING_SCORE.into()
-    }
 }
 
 impl HasPoints for Score {

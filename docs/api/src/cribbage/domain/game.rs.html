@@ -1679,9 +1679,6 @@
 <a href="#1679" id="1679">1679</a>
 <a href="#1680" id="1680">1680</a>
 <a href="#1681" id="1681">1681</a>
-<a href="#1682" id="1682">1682</a>
-<a href="#1683" id="1683">1683</a>
-<a href="#1684" id="1684">1684</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::cards::{Card, Crib, Cut, Cuts, Deck, Hand, Hands};
 <span class="kw">use </span><span class="kw">super</span>::plays::PlayState;
 <span class="kw">use </span><span class="kw">super</span>::result::<span class="kw-2">*</span>;
@@ -1740,9 +1737,6 @@
 
     <span class="kw">pub fn </span>player_1_2(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (Player, Player) {
         <span class="kw">let </span>players = Vec::from_iter(<span class="self">self</span>.players());
-
-        <span class="macro">println!</span>(<span class="string">"player12 {:?}"</span>, players);
-
         (players[<span class="number">0</span>], players[<span class="number">1</span>])
     }
 
@@ -1853,7 +1847,8 @@
         <span class="kw">if </span><span class="self">self</span>.dealer() == player1 { player2 } <span class="kw">else </span>{ player1 }
     }
 
-    <span class="kw">pub fn </span>opponent(<span class="kw-2">&amp;</span><span class="self">self</span>, player: Player) -&gt; Player {
+    <span class="attr">#[cfg(any(feature = <span class="string">"ssr"</span>, test))]
+    </span><span class="kw">pub fn </span>opponent(<span class="kw-2">&amp;</span><span class="self">self</span>, player: Player) -&gt; Player {
         <span class="macro">assert!</span>(<span class="self">self</span>.players().contains(<span class="kw-2">&amp;</span>player));
         <span class="kw">let </span>(player1, player2) = <span class="self">self</span>.player_1_2();
         <span class="kw">if </span>player == player1 { player2 } <span class="kw">else </span>{ player1 }
@@ -1861,14 +1856,10 @@
 
     <span class="kw">fn </span>score(<span class="kw-2">&amp;</span><span class="self">self</span>, player: Player, reasons: <span class="kw-2">&amp;</span>ScoreReasons) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>update = |scores: <span class="kw-2">&amp;mut </span>Scores| {
-            <span class="macro">println!</span>(<span class="string">"updating: {} with {} for {}"</span>, <span class="self">self</span>, reasons, player);
             scores.add(player, reasons);
-            <span class="macro">println!</span>(<span class="string">"updated: {}"</span>, <span class="self">self</span>);
         };
 
         <span class="kw">let </span><span class="kw-2">mut </span>game = <span class="self">self</span>.clone();
-        <span class="macro">println!</span>(<span class="string">"updating2: {} with {} for {}"</span>, game, reasons, player);
-        
         <span class="kw">match </span>game {
             Game::Starting(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
             Game::Discarding(<span class="kw-2">ref mut </span>scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; update(scores),
@@ -1878,8 +1869,6 @@
             Game::ScoringCrib(<span class="kw-2">ref mut </span>scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; update(scores),
             Game::Finished(<span class="kw">_</span>) =&gt; { },
         };
-
-        <span class="macro">println!</span>(<span class="string">"updated2: {}"</span>, game);
 
         <span class="kw">if </span>game.has_winner() {
             <span class="kw">let </span>scores = game.scores();
@@ -1937,9 +1926,7 @@
                 <span class="kw">let </span><span class="kw-2">mut </span>reasons = ScoreReasons::default();
 
                 <span class="kw">if </span>play_state.pass_count() == NUMBER_OF_PLAYERS_IN_GAME {
-                    <span class="macro">println!</span>(<span class="string">"pc: {}"</span>, play_state.pass_count());
                     reasons = EndOfPlayScorer::new(play_state).score();
-                    <span class="macro">println!</span>(<span class="string">"reasons: {}"</span>, reasons);
                     play_state.start_new_play();                    
                 }
 
@@ -2135,6 +2122,22 @@
     #[should_panic]
     </span><span class="kw">fn </span>fail_to_play_with_more_than_two_players() {
         <span class="kw">let _ </span>= Builder::new(<span class="number">3</span>).as_new();
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>provide_opponent_to_existing_player() {
+        <span class="kw">let </span>game = Builder::new(<span class="number">2</span>).as_new();
+        <span class="kw">let </span>(player, opponent) = game.player_1_2();
+
+        <span class="macro">assert_eq!</span>(game.opponent(player), opponent);
+        <span class="macro">assert_eq!</span>(game.opponent(opponent), player);
+    }
+
+    <span class="attr">#[test]
+    #[should_panic]
+    </span><span class="kw">fn </span>fail_to_provide_opponent_for_invalid_player() {
+        <span class="kw">let </span>game = Builder::new(<span class="number">2</span>).as_new();
+        <span class="kw">let _ </span>= game.opponent(Player::new());
     }
 
     <span class="attr">#[test]
@@ -2725,10 +2728,7 @@
         <span class="kw">let </span>Game::Playing(scores0, dealer0, hands0, play_state0, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
         <span class="kw">let </span>game1 = game0.pass(pone).ok().unwrap();
-        <span class="macro">println!</span>(<span class="string">"game1: {}"</span>, game1.clone());
-
         <span class="kw">let </span>game2 = game1.pass(dealer0).ok().unwrap();
-        <span class="macro">println!</span>(<span class="string">"game2: {}"</span>, game2.clone());
 
         <span class="kw">let </span>Game::Playing(scores2, dealer2, hands2, play_state2, <span class="kw">_</span>, <span class="kw">_</span>) = game2.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
@@ -3120,21 +3120,15 @@
                 (<span class="number">0</span>, <span class="string">"7H"</span>), (<span class="number">0</span>, <span class="string">"8C"</span>), (<span class="number">0</span>, <span class="string">"AC"</span>), (<span class="number">0</span>, <span class="string">"2C"</span>),
                 (<span class="number">1</span>, <span class="string">"JH"</span>), (<span class="number">1</span>, <span class="string">"KS"</span>), (<span class="number">1</span>, <span class="string">"5H"</span>), (<span class="number">1</span>, <span class="string">"TH"</span>)])
             .as_playing(<span class="number">1</span>);
-        <span class="macro">println!</span>(<span class="string">"A"</span>);
+
         <span class="kw">let </span>pone = game0.pone();
-        <span class="macro">println!</span>(<span class="string">"B"</span>);
         <span class="kw">let </span>Game::Playing(scores0, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-        <span class="macro">println!</span>(<span class="string">"C"</span>);
 
         <span class="kw">let </span>game1 = game0.score_pone().ok().unwrap();
-        <span class="macro">println!</span>(<span class="string">"D"</span>);
         <span class="kw">let </span>Game::Finished(scores1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-        <span class="macro">println!</span>(<span class="string">"E"</span>);
 
         <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>dealer], scores0.peggings()[<span class="kw-2">&amp;</span>dealer]);
-        <span class="macro">println!</span>(<span class="string">"F"</span>);
         <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone].add(<span class="number">7</span>.into()));
-        <span class="macro">println!</span>(<span class="string">"G"</span>);
     }
 
     <span class="attr">#[test]

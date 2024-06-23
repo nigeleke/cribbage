@@ -7,7 +7,6 @@ use crate::fmt::{format_hashmap, format_vec};
 use crate::types::*;
 
 use serde::{Serialize, Deserialize};
-use std::collections::HashSet;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PlayState {
@@ -132,7 +131,7 @@ impl PlayState {
         let mut plays = self.current_plays();
         plays.append(&mut previous_plays);
         
-        let players: HashSet<Player> = HashSet::from_iter(plays.iter().map(|p| p.player()));
+        let players = Players::from_iter(plays.iter().map(|p| p.player()));
         let player_cards = players.into_iter().map(|player| {
             (player, plays.iter().filter_map(|p| (p.player() == player).then_some(p.card())).collect::<Hand>())
         });

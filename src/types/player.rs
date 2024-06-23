@@ -1,11 +1,14 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use std::collections::HashSet;
 use std::fmt::Display;
 use std::hash::{Hash, Hasher};
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Player(Uuid);
+
+pub type Players = HashSet<Player>;
 
 impl Player {
     #[cfg(any(feature = "ssr", test))]

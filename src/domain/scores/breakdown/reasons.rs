@@ -58,6 +58,14 @@ impl std::ops::Add for Reasons {
     }
 }
 
+impl std::ops::AddAssign for Reasons {
+    fn add_assign(&mut self, rhs: Self) {
+        let mut rhs = rhs.0.clone();
+        self.0.append(&mut rhs);
+
+    }
+}
+
 impl std::fmt::Display for Reasons {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let reasons = self.0.iter()

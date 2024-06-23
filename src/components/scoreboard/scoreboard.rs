@@ -1,6 +1,6 @@
 use super::track::Track;
 
-use crate::view::{Role, Score, Scores};
+use crate::view::{Role, Pegging, Peggings};
 
 use leptos::*;
 
@@ -9,12 +9,12 @@ use leptos::*;
 #[component]
 pub fn Scoreboard(
 
-    scores: Scores,
+    scores: Peggings,
 
 ) -> impl IntoView {
     provide_context(scores.clone());
 
-    let default_score = Score::default();
+    let default_score = Pegging::default();
     let current_player_score = scores.get(&Role::CurrentPlayer).unwrap_or(&default_score);
     let opponent_score = scores.get(&Role::Opponent).unwrap_or(&default_score);
 

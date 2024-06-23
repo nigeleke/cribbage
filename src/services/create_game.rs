@@ -5,12 +5,11 @@ pub async fn create_game() -> Result<(), ServerFnError> {
     use crate::domain::*;
     use crate::ssr::auth;
     use crate::ssr::database::*;
-    use crate::types::Player;
-    use std::collections::HashSet;
+    use crate::types::{Player, Players};
 
     let user = auth::authenticated_user().await?;
     let opponent = Player::new();
-    let players: HashSet<Player> = HashSet::from_iter(vec![user.into(), opponent].into_iter());
+    let players = Players::from_iter(vec![user.into(), opponent].into_iter());
     
     let game = Game::new(&players)?;
 

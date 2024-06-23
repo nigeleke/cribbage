@@ -1,5 +1,5 @@
 use crate::types::HasPoints;
-use crate::view::{Role, Score, Scores};
+use crate::view::{Role, Pegging, Peggings};
 
 use leptos::*;
 
@@ -14,8 +14,8 @@ pub fn Hole(
 ) -> impl IntoView {
     
     let role = use_context::<Role>().unwrap();
-    let scores = use_context::<Scores>().unwrap();
-    let default_score = Score::default();
+    let scores = use_context::<Peggings>().unwrap();
+    let default_score = Pegging::default();
     let score = scores.get(&role).unwrap_or(&default_score);
 
     let colour = (if role == Role::CurrentPlayer { "lime" } else { "red" }).to_string();
@@ -45,7 +45,7 @@ mod test {
     fn hole_should_render_unoccupied() {
         let runtime = create_runtime();
         let _ = provide_context(Role::CurrentPlayer);
-        let _ = provide_context(Scores::default());
+        let _ = provide_context(Peggings::default());
 
         let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, }).into_view();
         let rendered = hole.render_to_string().to_string();
@@ -59,8 +59,8 @@ mod test {
         let runtime = create_runtime();
         let _ = provide_context(Role::CurrentPlayer);
 
-        let mut scores = Scores::default();
-        let score = Score::default().add(30.into());
+        let mut scores = Peggings::default();
+        let score = Pegging::default().add(30.into());
         let _ = scores.insert(Role::CurrentPlayer, score);
         let _ = provide_context(scores);
 
@@ -76,8 +76,8 @@ mod test {
         let runtime = create_runtime();
         let _ = provide_context(Role::Opponent);
 
-        let mut scores = Scores::default();
-        let score = Score::default().add(30.into());
+        let mut scores = Peggings::default();
+        let score = Pegging::default().add(30.into());
         let _ = scores.insert(Role::Opponent, score);
         let _ = provide_context(scores);
 

@@ -1,7 +1,7 @@
 use super::constants::*;
 
-use crate::domain::{Card, Cards, ScoreReasons, ScoreReason};
-use crate::types::{Face, HasFace, HasRank, HasSuit, HasValue, Points, Value};
+use crate::domain::{Card, Cards, ScoreReasons};
+use crate::types::{Face, HasFace, HasRank, HasSuit, HasValue, Value};
 
 use itertools::*;
 

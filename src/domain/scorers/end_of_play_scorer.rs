@@ -2,7 +2,7 @@ use super::scorer::Scorer;
 use super::constants::*;
 
 use crate::constants::PLAY_TARGET;
-use crate::domain::{PlayState, ScoreReasons, ScoreReason};
+use crate::domain::{PlayState, ScoreReasons};
 
 pub struct EndOfPlayScorer(PlayState);
 
@@ -45,7 +45,7 @@ mod test {
     #[test]
     fn should_score_when_target_not_reached() {
         let game = Builder::new(2)
-            .with_scores(0, 0)
+            .with_peggings(0, 0)
             .with_hands("", "")
             .with_current_plays(&vec![(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
@@ -57,7 +57,7 @@ mod test {
     #[test]
     fn should_score_when_target_reached() {
         let game = Builder::new(2)
-            .with_scores(0, 0)
+            .with_peggings(0, 0)
             .with_hands("", "")
             .with_current_plays(&vec![(0, "KC"), (0, "KD"), (0, "KH"), (0, "AS")])
             .with_cut("KS")

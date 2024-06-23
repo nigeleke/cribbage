@@ -1,6 +1,5 @@
 use super::Peg;
 
-use crate::constants::WINNING_SCORE;
 use crate::types::{Player, Points, HasPoints};
 
 use serde::{Serialize, Deserialize};
@@ -8,11 +7,11 @@ use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
-pub struct Score(Peg, Peg);
+pub struct Pegging(Peg, Peg);
 
-pub type Scores = HashMap<Player, Score>;
+pub type Peggings = HashMap<Player, Pegging>;
 
-impl Score {
+impl Pegging {
     pub fn front_peg(&self) -> Peg { self.1 }
     pub fn back_peg(&self) -> Peg { self.0 }
 
@@ -25,13 +24,13 @@ impl Score {
     }
 }
 
-impl HasPoints for Score {
+impl HasPoints for Pegging {
     fn points(&self) -> Points {
         self.front_peg().points()
     }
 }
 
-impl std::fmt::Display for Score {
+impl std::fmt::Display for Pegging {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}->{}", self.0, self.1)
     }

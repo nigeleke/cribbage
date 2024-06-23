@@ -13,4 +13,4 @@ pub use self::value::{Value, HasValue};
 
 pub use self::points::{Points, HasPoints};
 
-pub use self::player::Player;
+pub use self::player::{Player, Players};

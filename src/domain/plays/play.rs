@@ -1,5 +1,4 @@
 use crate::domain::Card;
-use crate::fmt::{format_hashmap, format_vec};
 use crate::types::*;
 
 use serde::{Serialize, Deserialize};

@@ -1,14 +1,14 @@
 use crate::domain::*;
-use crate::types::Player;
+use crate::types::{Player, Players};
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 #[derive(Debug, Default)]
 pub struct Builder {
     players: Vec<Player>,
     dealer: usize,
     cuts: Vec<Card>,
-    scores: Vec<Score>,
+    peggings: Vec<Pegging>,
     hands: Vec<Hand>,
     current_plays: Vec<Play>,
     previous_plays: Vec<Play>,
@@ -47,9 +47,9 @@ impl Builder {
         self
     }
 
-    pub fn with_scores(mut self, score0: usize, score1: usize) -> Self {
-        self.scores.push(Score::default().add(score0.into()));
-        self.scores.push(Score::default().add(score1.into()));
+    pub fn with_peggings(mut self, points0: usize, points1: usize) -> Self {
+        self.peggings.push(Pegging::default().add(points0.into()));
+        self.peggings.push(Pegging::default().add(points1.into()));
         self
     }
 
@@ -100,7 +100,7 @@ impl Builder {
     }
 
     pub fn as_new(self) -> Game {
-        let players = HashSet::from_iter(self.players.into_iter());
+        let players = Players::from_iter(self.players.into_iter());
         Game::new(&players).ok().unwrap()
     }
 
@@ -113,8 +113,9 @@ impl Builder {
 
     pub fn as_discarding(self) -> Game {
         let players = self.players.clone();
-        let scores = self.scores.clone();
-        let scores = self.merged(scores);
+        let peggings = self.peggings.clone();
+        let peggings = self.merged(peggings);
+        let scores = Scores::from(&peggings);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let crib = self.crib.clone();
@@ -125,8 +126,9 @@ impl Builder {
     pub fn as_playing(self, next_to_play: usize) -> Game {
         let players = self.players.clone();
         let player = players[next_to_play];
-        let scores = self.scores.clone();
-        let scores = self.merged(scores);
+        let peggings = self.peggings.clone();
+        let peggings = self.merged(peggings);
+        let scores = Scores::from(&peggings);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let mut play_state = PlayState::new(player, &hands);
@@ -145,8 +147,9 @@ impl Builder {
 
     pub fn as_scoring_pone(self) -> Game {
         let players = self.players.clone();
-        let scores = self.scores.clone();
-        let scores = self.merged(scores);
+        let peggings = self.peggings.clone();
+        let peggings = self.merged(peggings);
+        let scores = Scores::from(&peggings);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let cut = self.cut.unwrap();
@@ -156,8 +159,9 @@ impl Builder {
     }
     pub fn as_scoring_dealer(self) -> Game {
         let players = self.players.clone();
-        let scores = self.scores.clone();
-        let scores = self.merged(scores);
+        let peggings = self.peggings.clone();
+        let peggings = self.merged(peggings);
+        let scores = Scores::from(&peggings);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let cut = self.cut.unwrap();
@@ -167,8 +171,9 @@ impl Builder {
 
     pub fn as_scoring_crib(self) -> Game {
         let players = self.players.clone();
-        let scores = self.scores.clone();
-        let scores = self.merged(scores);
+        let peggings = self.peggings.clone();
+        let peggings = self.merged(peggings);
+        let scores = Scores::from(&peggings);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let cut = self.cut.unwrap();

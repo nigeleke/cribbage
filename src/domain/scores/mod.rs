@@ -1,10 +1,13 @@
-mod peg;
 mod breakdown;
-mod score;
+mod peg;
+mod pegging;
+mod scores;
 
-pub use peg::Peg;
 pub use breakdown::{
     Reasons as ScoreReasons,
-    Reason as ScoreReason,
 };
-pub use score::{Score, Scores};
+
+pub use peg::Peg;
+pub use pegging::Pegging;
+
+pub use scores::Scores;

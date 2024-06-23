@@ -1,5 +1,3 @@
-use leptos::html::math;
-
 use super::scorer::Scorer;
 use super::constants::*;
 
@@ -111,7 +109,7 @@ mod test {
     #[test]
     fn should_score_fifteens() {
         let game = Builder::new(2)
-            .with_scores(0, 0)
+            .with_peggings(0, 0)
             .with_hands("", "")
             .with_current_plays(&[(0, "JD"), (0, "5H")])
             .with_cut("AH")
@@ -123,7 +121,7 @@ mod test {
     #[test]
     fn should_score_pairs() {
         let game = Builder::new(2)
-            .with_scores(0, 0)
+            .with_peggings(0, 0)
             .with_hands("", "")
             .with_current_plays(&[(0, "JD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
@@ -135,7 +133,7 @@ mod test {
     #[test]
     fn should_score_royal_pairs() {
         let game = Builder::new(2)
-            .with_scores(0, 0)
+            .with_peggings(0, 0)
             .with_hands("", "")
             .with_current_plays(&[(0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
@@ -147,7 +145,7 @@ mod test {
     #[test]
     fn should_score_double_royal_pairs() {
         let game = Builder::new(2)
-            .with_scores(0, 0)
+            .with_peggings(0, 0)
             .with_hands("", "")
             .with_current_plays(&[(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
@@ -164,7 +162,7 @@ mod test {
             let current_plays = current_plays.into_iter().take(len);
             let current_plays = Vec::from_iter(current_plays);
             let game = Builder::new(2)
-                .with_scores(0, 0)
+                .with_peggings(0, 0)
                 .with_hands("KS", "KD")
                 .with_current_plays(&current_plays)
                 .with_cut("KH")
@@ -177,7 +175,7 @@ mod test {
     #[test]
     fn should_score_runs_unordered() {
         let game = Builder::new(2)
-            .with_scores(0, 0)
+            .with_peggings(0, 0)
             .with_hands("KS", "KD")
             .with_current_plays(&[(0, "3S"), (0, "2C"), (0, "AS")])
             .with_cut("KH")
@@ -189,7 +187,7 @@ mod test {
     #[test]
     fn should_score_rules_example_flush() {
         let game0 = Builder::new(2)
-            .with_scores(0, 0)
+            .with_peggings(0, 0)
             .with_hands("AH", "KD")
             .with_cut("2H")
             .with_current_plays(&[(1, "TH"), (0, "9H"), (1, "QH")])

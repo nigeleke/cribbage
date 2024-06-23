@@ -7,7 +7,6 @@ use crate::constants::*;
 use crate::types::*;
 
 use rand::{seq::SliceRandom, thread_rng};
-use std::collections::HashSet;
 
 /// A deck of cards.
 #[derive(Clone, Debug, PartialEq)]
@@ -26,7 +25,7 @@ impl Deck {
         (card, Deck::from(Vec::from(remainder)))
     }
 
-    pub fn deal(&self, players: &HashSet<Player>) -> (Hands, Deck) {
+    pub fn deal(&self, players: &Players) -> (Hands, Deck) {
         let cards = &self.cards;
         let hands = players
             .iter()

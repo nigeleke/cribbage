@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/view/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (c1b336cb6 2024-06-21)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/view/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (3cb521a43 2024-06-22)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -108,12 +108,11 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::card::{Card, CardSlot, Cut};
 <span class="kw">use </span><span class="kw">super</span>::cards::{Crib, Cuts, Hands};
 <span class="kw">use </span><span class="kw">super</span>::plays::PlayState;
 <span class="kw">use </span><span class="kw">super</span>::role::{Dealer, Role};
-<span class="kw">use </span><span class="kw">super</span>::scores::Scores;
+<span class="kw">use </span><span class="kw">super</span>::scores::Peggings;
 
 <span class="kw">use </span><span class="kw">crate</span>::domain::Game <span class="kw">as </span>DomainGame;
 <span class="kw">use </span><span class="kw">crate</span>::types::Player;
@@ -126,12 +125,12 @@
 </span><span class="attr">#[derive(Clone, Debug, Serialize, Deserialize)]
 </span><span class="kw">pub enum </span>Game {
     Starting(Cuts),
-    Discarding(Scores, Hands, Crib, Dealer),
-    Playing(Scores, Hands, PlayState, Cut, Crib, Dealer),
-    ScoringPone(Scores, Role, Hands, Cut, Crib),
-    ScoringDealer(Scores, Role, Hands, Cut, Crib),
-    ScoringCrib(Scores, Role, Hands, Cut, Crib),
-    Finished(Scores),
+    Discarding(Peggings, Hands, Crib, Dealer),
+    Playing(Peggings, Hands, PlayState, Cut, Crib, Dealer),
+    ScoringPone(Peggings, Role, Hands, Cut, Crib),
+    ScoringDealer(Peggings, Role, Hands, Cut, Crib),
+    ScoringCrib(Peggings, Role, Hands, Cut, Crib),
+    Finished(Peggings),
 }
 
 <span class="kw">impl </span>From&lt;(DomainGame, Player)&gt; <span class="kw">for </span>Game {
@@ -143,56 +142,55 @@
                 Game::Starting(cuts)
             },
             DomainGame::Discarding(scores, dealer, hands, crib, _deck) =&gt; {
-                <span class="kw">let </span>(player_score, opponent_score) = partition_for(player, <span class="kw-2">&amp;</span>scores);
-                <span class="kw">let </span>scores = merge(player_score, opponent_score);
+                <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
+                <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
                 <span class="kw">let </span>(player_hand, opponent_hand) = partition_for(player, <span class="kw-2">&amp;</span>hands);
                 <span class="kw">let </span>hands = merge(face_up(player_hand.as_ref()), face_down(opponent_hand.as_ref()));
                 <span class="kw">let </span>crib = face_down(crib.as_ref());
                 <span class="kw">let </span>dealer = Dealer::from((dealer, player));
-                Game::Discarding(scores, hands, crib, dealer)
+                Game::Discarding(peggings, hands, crib, dealer)
             },
             DomainGame::Playing(scores, dealer, hands, play_state, cut, crib) =&gt; {
-                <span class="kw">let </span>(player_score, opponent_score) = partition_for(player, <span class="kw-2">&amp;</span>scores);
-                <span class="kw">let </span>scores = merge(player_score, opponent_score);
+                <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
+                <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
                 <span class="kw">let </span>(player_hand, opponent_hand) = partition_for(player, <span class="kw-2">&amp;</span>hands);
-                <span class="comment">// TODO: Change opponent face_up back to face_down.
-                </span><span class="kw">let </span>hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
+                <span class="kw">let </span>hands = merge(face_up(player_hand.as_ref()), face_down(opponent_hand.as_ref()));
                 <span class="kw">let </span>play_state = (play_state, player).into();
                 <span class="kw">let </span>crib = face_down(crib.as_ref());
                 <span class="kw">let </span>dealer = Dealer::from((dealer, player));
-                Game::Playing(scores, hands, play_state, cut, crib, dealer)
+                Game::Playing(peggings, hands, play_state, cut, crib, dealer)
             },
             DomainGame::ScoringPone(<span class="kw-2">ref </span>scores, <span class="kw">_</span>, <span class="kw-2">ref </span>hands, cut, <span class="kw-2">ref </span>crib) =&gt; {
                 <span class="kw">let </span>pone = Role::from((game.pone(), player));
-                <span class="kw">let </span>(player_score, opponent_score) = partition_for(player, scores);
-                <span class="kw">let </span>scores = merge(player_score, opponent_score);
+                <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
+                <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
                 <span class="kw">let </span>(player_hand, opponent_hand) = partition_for(player, hands);
                 <span class="kw">let </span>hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
                 <span class="kw">let </span>crib = face_down(crib.as_ref());
-                Game::ScoringPone(scores, pone, hands, cut, crib)
+                Game::ScoringPone(peggings, pone, hands, cut, crib)
             },
             DomainGame::ScoringDealer(<span class="kw-2">ref </span>scores, <span class="kw">_</span>, <span class="kw-2">ref </span>hands, cut, <span class="kw-2">ref </span>crib) =&gt; {
                 <span class="kw">let </span>pone = Role::from((game.pone(), player));
-                <span class="kw">let </span>(player_score, opponent_score) = partition_for(player, scores);
-                <span class="kw">let </span>scores = merge(player_score, opponent_score);
+                <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
+                <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
                 <span class="kw">let </span>(player_hand, opponent_hand) = partition_for(player, hands);
                 <span class="kw">let </span>hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
                 <span class="kw">let </span>crib = face_down(crib.as_ref());
-                Game::ScoringDealer(scores, pone, hands, cut, crib)
+                Game::ScoringDealer(peggings, pone, hands, cut, crib)
             },
             DomainGame::ScoringCrib(<span class="kw-2">ref </span>scores, <span class="kw">_</span>, <span class="kw-2">ref </span>hands, cut, <span class="kw-2">ref </span>crib) =&gt; {
                 <span class="kw">let </span>pone = Role::from((game.pone(), player));
-                <span class="kw">let </span>(player_score, opponent_score) = partition_for(player, scores);
-                <span class="kw">let </span>scores = merge(player_score, opponent_score);
+                <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
+                <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
                 <span class="kw">let </span>(player_hand, opponent_hand) = partition_for(player, hands);
                 <span class="kw">let </span>hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
                 <span class="kw">let </span>crib = face_down(crib.as_ref());
-                Game::ScoringCrib(scores, pone, hands, cut, crib)
+                Game::ScoringCrib(peggings, pone, hands, cut, crib)
             },
             DomainGame::Finished(<span class="kw-2">ref </span>scores) =&gt; {
-                <span class="kw">let </span>(player_score, opponent_score) = partition_for(player, scores);
-                <span class="kw">let </span>scores = merge(player_score, opponent_score);
-                Game::Finished(scores)
+                <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
+                <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
+                Game::Finished(peggings)
             },
         }
     }

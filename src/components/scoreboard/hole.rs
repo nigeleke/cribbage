@@ -44,12 +44,15 @@ mod test {
     #[test]
     fn hole_should_render_unoccupied() {
         let runtime = create_runtime();
+        
         let _ = provide_context(Role::CurrentPlayer);
         let _ = provide_context(Peggings::default());
 
         let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, }).into_view();
         let rendered = hole.render_to_string().to_string();
+        
         runtime.dispose();
+
         assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
         assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="gray"#), "actual {}", rendered);
     }   
@@ -57,16 +60,19 @@ mod test {
     #[test]
     fn hole_should_render_occupied_by_current_player() {
         let runtime = create_runtime();
+        
         let _ = provide_context(Role::CurrentPlayer);
 
-        let mut scores = Peggings::default();
-        let score = Pegging::default().add(30.into());
-        let _ = scores.insert(Role::CurrentPlayer, score);
-        let _ = provide_context(scores);
+        let mut peggings = Peggings::default();
+        let pegging = Pegging::default().add(30.into());
+        let _ = peggings.insert(Role::CurrentPlayer, pegging);
+        let _ = provide_context(peggings);
 
         let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, }).into_view();
         let rendered = hole.render_to_string().to_string();
+        
         runtime.dispose();
+        
         assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
         assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime"#), "actual {}", rendered);
     }   
@@ -74,17 +80,81 @@ mod test {
     #[test]
     fn hole_should_render_occupied_by_opponent() {
         let runtime = create_runtime();
+        
         let _ = provide_context(Role::Opponent);
 
-        let mut scores = Peggings::default();
-        let score = Pegging::default().add(30.into());
-        let _ = scores.insert(Role::Opponent, score);
-        let _ = provide_context(scores);
+        let mut peggings = Peggings::default();
+        let pegging = Pegging::default().add(30.into());
+        let _ = peggings.insert(Role::Opponent, pegging);
+        let _ = provide_context(peggings);
 
         let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, }).into_view();
         let rendered = hole.render_to_string().to_string();
+        
         runtime.dispose();
+        
         assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
         assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="red"#), "actual {}", rendered);
-    }   
+    }
+
+    #[test]
+    fn start_hole_should_render_players_score_zero() {
+        let runtime = create_runtime();
+
+        let _ = provide_context(Role::CurrentPlayer);
+
+        let mut peggings = Peggings::default();
+        let pegging = Pegging::default().add(30.into());
+        let _ = peggings.insert(Role::Opponent, pegging);
+        let _ = provide_context(peggings);
+
+
+        let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 0, }).into_view();
+        let rendered = hole.render_to_string().to_string();        
+
+        runtime.dispose();
+
+        assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
+        assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime"#), "actual {}", rendered);
+    }
+
+    #[test]
+    fn winning_hole_should_render_players_eq_121() {
+        let runtime = create_runtime();
+
+        let _ = provide_context(Role::CurrentPlayer);
+
+        let mut peggings = Peggings::default();
+        let pegging = Pegging::default().add(121.into());
+        let _ = peggings.insert(Role::Opponent, pegging);
+        let _ = provide_context(peggings);
+
+        let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 121, }).into_view();
+        let rendered = hole.render_to_string().to_string();        
+
+        runtime.dispose();
+
+        assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
+        assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime"#), "actual {}", rendered);
+    }
+
+    #[test]
+    fn winning_hole_should_render_players_gt_121() {
+        let runtime = create_runtime();
+
+        let _ = provide_context(Role::CurrentPlayer);
+
+        let mut peggings = Peggings::default();
+        let pegging = Pegging::default().add(122.into());
+        let _ = peggings.insert(Role::Opponent, pegging);
+        let _ = provide_context(peggings);
+
+        let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 121, }).into_view();
+        let rendered = hole.render_to_string().to_string();        
+
+        runtime.dispose();
+
+        assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
+        assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime"#), "actual {}", rendered);
+    }
 }

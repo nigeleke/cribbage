@@ -56,9 +56,6 @@ impl Game {
 
     pub fn player_1_2(&self) -> (Player, Player) {
         let players = Vec::from_iter(self.players());
-
-        println!("player12 {:?}", players);
-
         (players[0], players[1])
     }
 
@@ -169,6 +166,7 @@ impl Game {
         if self.dealer() == player1 { player2 } else { player1 }
     }
 
+    #[cfg(any(feature = "ssr", test))]
     pub fn opponent(&self, player: Player) -> Player {
         assert!(self.players().contains(&player));
         let (player1, player2) = self.player_1_2();
@@ -177,14 +175,10 @@ impl Game {
 
     fn score(&self, player: Player, reasons: &ScoreReasons) -> Result<Self> {
         let update = |scores: &mut Scores| {
-            println!("updating: {} with {} for {}", self, reasons, player);
             scores.add(player, reasons);
-            println!("updated: {}", self);
         };
 
         let mut game = self.clone();
-        println!("updating2: {} with {} for {}", game, reasons, player);
-        
         match game {
             Game::Starting(_, _) => unreachable!(),
             Game::Discarding(ref mut scores, _, _, _, _) => update(scores),
@@ -194,8 +188,6 @@ impl Game {
             Game::ScoringCrib(ref mut scores, _, _, _, _) => update(scores),
             Game::Finished(_) => { },
         };
-
-        println!("updated2: {}", game);
 
         if game.has_winner() {
             let scores = game.scores();
@@ -253,9 +245,7 @@ impl Game {
                 let mut reasons = ScoreReasons::default();
 
                 if play_state.pass_count() == NUMBER_OF_PLAYERS_IN_GAME {
-                    println!("pc: {}", play_state.pass_count());
                     reasons = EndOfPlayScorer::new(play_state).score();
-                    println!("reasons: {}", reasons);
                     play_state.start_new_play();                    
                 }
 
@@ -451,6 +441,22 @@ mod test {
     #[should_panic]
     fn fail_to_play_with_more_than_two_players() {
         let _ = Builder::new(3).as_new();
+    }
+
+    #[test]
+    fn provide_opponent_to_existing_player() {
+        let game = Builder::new(2).as_new();
+        let (player, opponent) = game.player_1_2();
+
+        assert_eq!(game.opponent(player), opponent);
+        assert_eq!(game.opponent(opponent), player);
+    }
+
+    #[test]
+    #[should_panic]
+    fn fail_to_provide_opponent_for_invalid_player() {
+        let game = Builder::new(2).as_new();
+        let _ = game.opponent(Player::new());
     }
 
     #[test]
@@ -1041,10 +1047,7 @@ mod test {
         let Game::Playing(scores0, dealer0, hands0, play_state0, _, _) = game0.clone() else { panic!("Unexpected state") };
 
         let game1 = game0.pass(pone).ok().unwrap();
-        println!("game1: {}", game1.clone());
-
         let game2 = game1.pass(dealer0).ok().unwrap();
-        println!("game2: {}", game2.clone());
 
         let Game::Playing(scores2, dealer2, hands2, play_state2, _, _) = game2.clone() else { panic!("Unexpected state") };
 
@@ -1436,21 +1439,15 @@ mod test {
                 (0, "7H"), (0, "8C"), (0, "AC"), (0, "2C"),
                 (1, "JH"), (1, "KS"), (1, "5H"), (1, "TH")])
             .as_playing(1);
-        println!("A");
+
         let pone = game0.pone();
-        println!("B");
         let Game::Playing(scores0, dealer, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
-        println!("C");
 
         let game1 = game0.score_pone().ok().unwrap();
-        println!("D");
         let Game::Finished(scores1) = game1.clone() else { panic!("Unexpected state") };
-        println!("E");
 
         assert_eq!(scores1.peggings()[&dealer], scores0.peggings()[&dealer]);
-        println!("F");
         assert_eq!(scores1.peggings()[&pone], scores0.peggings()[&pone].add(7.into()));
-        println!("G");
     }
 
     #[test]

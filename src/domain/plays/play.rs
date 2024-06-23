@@ -21,14 +21,6 @@ impl Play {
     pub fn card(self) -> Card {
         self.card
     }
-
-    pub fn value(self) -> Value {
-        self.card.value()
-    }
-
-    pub fn rank(self) -> Rank {
-        self.card.rank()
-    }
 }
 
 impl std::fmt::Display for Play {

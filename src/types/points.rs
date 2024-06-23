@@ -4,13 +4,6 @@ use serde::{Serialize, Deserialize};
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Points(usize);
 
-impl Points {
-    #[cfg(test)]
-    pub fn new(value: usize) -> Self {
-        Self(value)
-    }
-}
-
 pub trait HasPoints {
     fn points(&self) -> Points;
 }
@@ -32,12 +25,6 @@ impl std::ops::Add for Points {
 
     fn add(self, rhs: Self) -> Self::Output {
         Points(self.0 + rhs.0)
-    }
-}
-
-impl std::ops::AddAssign for Points {
-    fn add_assign(&mut self, rhs: Self) {
-        self.0 += rhs.0;
     }
 }
 

@@ -39,3 +39,25 @@ pub fn Scoreboard(
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::test::{LeptosRuntime, TestResult};
+    use crate::view::Peggings;
+
+    #[test]
+    fn scoreboard_should_render_2_tracks() -> TestResult {
+        LeptosRuntime::run(|| {
+            let scores = Peggings::default();
+
+            let scoreboard = Scoreboard(ScoreboardProps { scores }).into_view();
+            let rendered = scoreboard.render_to_string().to_string();
+
+            println!("{}", rendered);
+
+            let track_count = rendered.matches("leptos-track-start").count();
+            assert_eq!(track_count, 2);
+        })        
+    }
+}
+

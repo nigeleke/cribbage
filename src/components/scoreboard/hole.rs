@@ -39,7 +39,6 @@ pub fn Hole(
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::HoleProps;
     use crate::test::{LeptosRuntime, TestResult};
 
     #[test]

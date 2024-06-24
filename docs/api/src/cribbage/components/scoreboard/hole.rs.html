@@ -147,17 +147,6 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::types::HasPoints;
 <span class="kw">use </span><span class="kw">crate</span>::view::{Role, Pegging, Peggings};
 
@@ -199,122 +188,112 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span><span class="kw">super</span>::HoleProps;
+    <span class="kw">use </span><span class="kw">crate</span>::test::{LeptosRuntime, TestResult};
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>hole_should_render_unoccupied() {
-        <span class="kw">let </span>runtime = create_runtime();
-        
-        <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
-        <span class="kw">let _ </span>= provide_context(Peggings::default());
-
-        <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, }).into_view();
-        <span class="kw">let </span>rendered = hole.render_to_string().to_string();
-        
-        runtime.dispose();
-
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="gray"#</span>), <span class="string">"actual {}"</span>, rendered);
+    </span><span class="kw">fn </span>hole_should_render_unoccupied() -&gt; TestResult {
+        LeptosRuntime::run(|| {
+            <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
+            <span class="kw">let _ </span>= provide_context(Peggings::default());
+    
+            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, }).into_view();
+            <span class="kw">let </span>rendered = hole.render_to_string().to_string();
+    
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="gray"#</span>), <span class="string">"actual {}"</span>, rendered);
+        })
     }   
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>hole_should_render_occupied_by_current_player() {
-        <span class="kw">let </span>runtime = create_runtime();
-        
-        <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
+    </span><span class="kw">fn </span>hole_should_render_occupied_by_current_player() -&gt; TestResult {
+        LeptosRuntime::run(|| {
+            <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
-        <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
-        <span class="kw">let _ </span>= peggings.insert(Role::CurrentPlayer, pegging);
-        <span class="kw">let _ </span>= provide_context(peggings);
-
-        <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, }).into_view();
-        <span class="kw">let </span>rendered = hole.render_to_string().to_string();
+            <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
+            <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
+            <span class="kw">let _ </span>= peggings.insert(Role::CurrentPlayer, pegging);
+            <span class="kw">let _ </span>= provide_context(peggings);
+    
+            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, }).into_view();
+            <span class="kw">let </span>rendered = hole.render_to_string().to_string();
+            
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);        
+        })
         
-        runtime.dispose();
-        
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);
     }   
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>hole_should_render_occupied_by_opponent() {
-        <span class="kw">let </span>runtime = create_runtime();
-        
-        <span class="kw">let _ </span>= provide_context(Role::Opponent);
+    </span><span class="kw">fn </span>hole_should_render_occupied_by_opponent() -&gt; TestResult {
+        LeptosRuntime::run(|| {
+            <span class="kw">let _ </span>= provide_context(Role::Opponent);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
-        <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
-        <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
-        <span class="kw">let _ </span>= provide_context(peggings);
-
-        <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, }).into_view();
-        <span class="kw">let </span>rendered = hole.render_to_string().to_string();
-        
-        runtime.dispose();
-        
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="red"#</span>), <span class="string">"actual {}"</span>, rendered);
+            <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
+            <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
+            <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
+            <span class="kw">let _ </span>= provide_context(peggings);
+    
+            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, }).into_view();
+            <span class="kw">let </span>rendered = hole.render_to_string().to_string();
+    
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="red"#</span>), <span class="string">"actual {}"</span>, rendered);
+        })
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>start_hole_should_render_players_score_zero() {
-        <span class="kw">let </span>runtime = create_runtime();
+    </span><span class="kw">fn </span>start_hole_should_render_players_score_zero() -&gt; TestResult {
+        LeptosRuntime::run(|| {
+            <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
 
-        <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
-
-        <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
-        <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
-        <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
-        <span class="kw">let _ </span>= provide_context(peggings);
-
-
-        <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">0</span>, }).into_view();
-        <span class="kw">let </span>rendered = hole.render_to_string().to_string();        
-
-        runtime.dispose();
-
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);
+            <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
+            <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
+            <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
+            <span class="kw">let _ </span>= provide_context(peggings);
+    
+    
+            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">0</span>, }).into_view();
+            <span class="kw">let </span>rendered = hole.render_to_string().to_string();        
+    
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);
+        })
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>winning_hole_should_render_players_eq_121() {
-        <span class="kw">let </span>runtime = create_runtime();
+    </span><span class="kw">fn </span>winning_hole_should_render_players_eq_121() -&gt; TestResult {
+        LeptosRuntime::run(|| {
+            <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
 
-        <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
-
-        <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
-        <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">121</span>.into());
-        <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
-        <span class="kw">let _ </span>= provide_context(peggings);
-
-        <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">121</span>, }).into_view();
-        <span class="kw">let </span>rendered = hole.render_to_string().to_string();        
-
-        runtime.dispose();
-
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);
+            <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
+            <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">121</span>.into());
+            <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
+            <span class="kw">let _ </span>= provide_context(peggings);
+    
+            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">121</span>, }).into_view();
+            <span class="kw">let </span>rendered = hole.render_to_string().to_string();        
+    
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);
+        })
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>winning_hole_should_render_players_gt_121() {
-        <span class="kw">let </span>runtime = create_runtime();
+    </span><span class="kw">fn </span>winning_hole_should_render_players_gt_121() -&gt; TestResult {
+        LeptosRuntime::run(|| {
+            <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
 
-        <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
-
-        <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
-        <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">122</span>.into());
-        <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
-        <span class="kw">let _ </span>= provide_context(peggings);
-
-        <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">121</span>, }).into_view();
-        <span class="kw">let </span>rendered = hole.render_to_string().to_string();        
-
-        runtime.dispose();
-
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-        <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);
+            <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
+            <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">122</span>.into());
+            <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
+            <span class="kw">let _ </span>= provide_context(peggings);
+    
+            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">121</span>, }).into_view();
+            <span class="kw">let </span>rendered = hole.render_to_string().to_string();        
+    
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
+            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);
+        })
     }
-}</code></pre></div></section></main></body></html>
+}
+</code></pre></div></section></main></body></html>

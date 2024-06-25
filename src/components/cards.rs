@@ -72,5 +72,31 @@ pub fn Cards(
             }
         </div>
     }
+}
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::domain::Hand;
+    use crate::test::LeptosRuntime;
+
+    #[test]
+    fn cards_uses_vertical_space_when_cards_is_empty() {
+        LeptosRuntime::new(
+            || {
+                let cards = Hand::from("AS2S3S")
+                    .as_ref()
+                    .into_iter()
+                    .map(|c| CardSlot::FaceUp(*c))
+                    .collect::<Vec<_>>();
+                Cards(CardsProps { cards, stacked: false, opacity: "".into(), on_selected: None })
+            },
+            |_: &View| {},
+            |rendered: String| {
+                assert!(rendered.contains(r#"<card-t rank="Ace" suit="Spades" opacity="""#));
+                assert!(rendered.contains(r#"<card-t rank="Two" suit="Spades" opacity="""#));
+                assert!(rendered.contains(r#"<card-t rank="Three" suit="Spades" opacity="""#));
+            }
+        ).run()
+    }
 }

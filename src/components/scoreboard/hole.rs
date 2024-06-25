@@ -39,111 +39,126 @@ pub fn Hole(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::test::{LeptosRuntime, TestResult};
+    use crate::test::LeptosRuntime;
 
     #[test]
-    fn hole_should_render_unoccupied() -> TestResult {
-        LeptosRuntime::run(|| {
-            let _ = provide_context(Role::CurrentPlayer);
-            let _ = provide_context(Peggings::default());
-    
-            let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, }).into_view();
-            let rendered = hole.render_to_string().to_string();
-    
-            assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
-            assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="gray"#), "actual {}", rendered);
-        })
+    fn hole_should_render_unoccupied() {
+        LeptosRuntime::new(
+            || {
+                let _ = provide_context(Role::CurrentPlayer);
+                let _ = provide_context(Peggings::default());
+                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, })
+            },
+            |_: &View| {},
+            |rendered: String| {
+                assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
+                assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="gray""#));
+            }
+        ).run()
     }   
 
     #[test]
-    fn hole_should_render_occupied_by_current_player() -> TestResult {
-        LeptosRuntime::run(|| {
-            let _ = provide_context(Role::CurrentPlayer);
+    fn hole_should_render_occupied_by_current_player() {
+        LeptosRuntime::new(
+            || {
+                let _ = provide_context(Role::CurrentPlayer);
 
-            let mut peggings = Peggings::default();
-            let pegging = Pegging::default().add(30.into());
-            let _ = peggings.insert(Role::CurrentPlayer, pegging);
-            let _ = provide_context(peggings);
-    
-            let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, }).into_view();
-            let rendered = hole.render_to_string().to_string();
+                let mut peggings = Peggings::default();
+                let pegging = Pegging::default().add(30.into());
+                let _ = peggings.insert(Role::CurrentPlayer, pegging);
+                let _ = provide_context(peggings);
             
-            assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
-            assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime"#), "actual {}", rendered);        
-        })
-        
+                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, })
+            },
+            |_: &View| {},
+            |rendered: String| {
+                assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
+                assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime""#));
+            }
+        ).run()
     }   
 
     #[test]
-    fn hole_should_render_occupied_by_opponent() -> TestResult {
-        LeptosRuntime::run(|| {
-            let _ = provide_context(Role::Opponent);
+    fn hole_should_render_occupied_by_opponent() {
+        LeptosRuntime::new(
+            || {
+                let _ = provide_context(Role::Opponent);
 
-            let mut peggings = Peggings::default();
-            let pegging = Pegging::default().add(30.into());
-            let _ = peggings.insert(Role::Opponent, pegging);
-            let _ = provide_context(peggings);
-    
-            let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, }).into_view();
-            let rendered = hole.render_to_string().to_string();
-    
-            assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
-            assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="red"#), "actual {}", rendered);
-        })
+                let mut peggings = Peggings::default();
+                let pegging = Pegging::default().add(30.into());
+                let _ = peggings.insert(Role::Opponent, pegging);
+                let _ = provide_context(peggings);
+            
+                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, })
+            },
+            |_: &View| {},
+            |rendered: String| {
+                assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
+                assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="red""#));
+            }
+        ).run()
     }
 
     #[test]
-    fn start_hole_should_render_players_score_zero() -> TestResult {
-        LeptosRuntime::run(|| {
-            let _ = provide_context(Role::CurrentPlayer);
+    fn start_hole_should_render_players_score_zero() {
+        LeptosRuntime::new(
+            || {
+                let _ = provide_context(Role::CurrentPlayer);
 
-            let mut peggings = Peggings::default();
-            let pegging = Pegging::default().add(30.into());
-            let _ = peggings.insert(Role::Opponent, pegging);
-            let _ = provide_context(peggings);
-    
-    
-            let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 0, }).into_view();
-            let rendered = hole.render_to_string().to_string();        
-    
-            assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
-            assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime"#), "actual {}", rendered);
-        })
+                let mut peggings = Peggings::default();
+                let pegging = Pegging::default().add(30.into());
+                let _ = peggings.insert(Role::Opponent, pegging);
+                let _ = provide_context(peggings);
+            
+                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 0, })
+            },
+            |_: &View| {},
+            |rendered: String| {
+                assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
+                assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime""#));
+            }
+        ).run()
     }
 
     #[test]
-    fn winning_hole_should_render_players_eq_121() -> TestResult {
-        LeptosRuntime::run(|| {
-            let _ = provide_context(Role::CurrentPlayer);
+    fn winning_hole_should_render_players_eq_121() {
+        LeptosRuntime::new(
+            || {
+                let _ = provide_context(Role::CurrentPlayer);
 
-            let mut peggings = Peggings::default();
-            let pegging = Pegging::default().add(121.into());
-            let _ = peggings.insert(Role::Opponent, pegging);
-            let _ = provide_context(peggings);
-    
-            let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 121, }).into_view();
-            let rendered = hole.render_to_string().to_string();        
-    
-            assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
-            assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime"#), "actual {}", rendered);
-        })
+                let mut peggings = Peggings::default();
+                let pegging = Pegging::default().add(121.into());
+                let _ = peggings.insert(Role::Opponent, pegging);
+                let _ = provide_context(peggings);
+            
+                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 121, })
+            },
+            |_: &View| {},
+            |rendered: String| {
+                assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
+                assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime""#));
+            }
+        ).run()
     }
 
     #[test]
-    fn winning_hole_should_render_players_gt_121() -> TestResult {
-        LeptosRuntime::run(|| {
-            let _ = provide_context(Role::CurrentPlayer);
+    fn winning_hole_should_render_players_gt_121() {
+        LeptosRuntime::new(
+            || {
+                let _ = provide_context(Role::CurrentPlayer);
 
-            let mut peggings = Peggings::default();
-            let pegging = Pegging::default().add(122.into());
-            let _ = peggings.insert(Role::Opponent, pegging);
-            let _ = provide_context(peggings);
-    
-            let hole = Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 121, }).into_view();
-            let rendered = hole.render_to_string().to_string();        
-    
-            assert!(rendered.contains(r#"<g transform="translate(10,20)"#), "actual {}", rendered);
-            assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime"#), "actual {}", rendered);
-        })
+                let mut peggings = Peggings::default();
+                let pegging = Pegging::default().add(122.into());
+                let _ = peggings.insert(Role::Opponent, pegging);
+                let _ = provide_context(peggings);
+            
+                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 121, })
+            },
+            |_: &View| {},
+            |rendered: String| {
+                assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
+                assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime""#));
+            }
+        ).run()
     }
 }

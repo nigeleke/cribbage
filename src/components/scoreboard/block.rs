@@ -38,34 +38,40 @@ pub fn Block(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::test::{LeptosRuntime, TestResult};
+    use crate::test::LeptosRuntime;
     use crate::view::{Peggings, Role};
 
     #[test]
-    fn block_should_render_within_a_rectangle() -> TestResult {
-        LeptosRuntime::run(|| {
-            let _ = provide_context(Role::CurrentPlayer);
-            let _ = provide_context(Peggings::default());
-
-            let block = Block(BlockProps { x_offset: 0, y_offset: 0, up_range: 0..5, down_range: 5..10 }).into_view();
-            let rendered = block.render_to_string().to_string();
-
-            assert!(rendered.contains(r#"<rect width="20" height="44" rx="3" ry="3" fill="goldenrod""#));
-            assert!(rendered.contains(r#"<rect width="16" height="40" rx="2" ry="2" fill="palegoldenrod""#));
-        })
+    fn block_should_render_within_a_rectangle() {
+        LeptosRuntime::new(
+            || {
+                let _ = provide_context(Role::CurrentPlayer);
+                let _ = provide_context(Peggings::default());
+        
+                Block(BlockProps { x_offset: 0, y_offset: 0, up_range: 0..5, down_range: 5..10 })        
+            },
+            |_: &View| {},
+            |rendered: String| {
+                assert!(rendered.contains(r#"<rect width="20" height="44" rx="3" ry="3" fill="goldenrod""#));
+                assert!(rendered.contains(r#"<rect width="16" height="40" rx="2" ry="2" fill="palegoldenrod""#));
+            }
+        ).run()
     }
 
     #[test]
-    fn block_should_render_10_holes() -> TestResult {
-        LeptosRuntime::run(|| {
-            let _ = provide_context(Role::CurrentPlayer);
-            let _ = provide_context(Peggings::default());
-
-            let block = Block(BlockProps { x_offset: 0, y_offset: 0, up_range: 0..5, down_range: 5..10 }).into_view();
-            let rendered = block.render_to_string().to_string();
-
-            let hole_count = rendered.matches("<circle ").count();
-            assert_eq!(hole_count, 10);
-        })
+    fn block_should_render_10_holes() {
+        LeptosRuntime::new(
+            || {
+                let _ = provide_context(Role::CurrentPlayer);
+                let _ = provide_context(Peggings::default());
+        
+                Block(BlockProps { x_offset: 0, y_offset: 0, up_range: 0..5, down_range: 5..10 })        
+            },
+            |_: &View| {},
+            |rendered: String| {
+                let hole_count = rendered.matches("<circle ").count();
+                assert_eq!(hole_count, 10);
+            }
+        ).run()
     }
 }

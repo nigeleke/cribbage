@@ -253,17 +253,17 @@ fn Template(
             <div class="cribandcutview">
                 {
                     if hide_player_crib {
-                        view! { <Card card=CardSlot::Empty /> }
+                       view! { <Card card=CardSlot::Empty /> }
                     } else {
-                        view! { <Crib crib=crib.clone() /> }
+                       view! { <Crib crib=crib.clone() /> }
                     }
                 }
                 <Card card=cut />
                 {
                     if hide_opponent_crib {
-                        view! { <Card card=CardSlot::Empty /> }
+                       view! { <Card card=CardSlot::Empty /> }
                     } else {
-                        view! ( <Crib crib=crib.clone() />)
+                       view! ( <Crib crib=crib.clone() />)
                     }
                 }
             </div>

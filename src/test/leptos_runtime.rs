@@ -1,17 +1,49 @@
 use leptos::*;
 
-use std::panic;
+pub struct LeptosRuntime<G, W, T, V>
+where
+    G: Fn() -> V,
+    W: Fn(&View) -> (),
+    T: Fn(String) -> (),
+    V: IntoView {
+    runtime: RuntimeId,
+    given: G,
+    when: W,
+    then: T,
+}
 
-pub type TestResult = Result<(), Box<dyn std::any::Any + Send>>;
-type TestFn = fn() -> ();
+impl<G, W, T, V> LeptosRuntime<G, W, T, V>
+where
+    G: Fn() -> V,
+    W: Fn(&View) -> (),
+    T: Fn(String) -> (),
+    V: IntoView {
 
-pub struct LeptosRuntime;
+    pub fn new(
+        given: G,
+        when: W,
+        then: T) -> Self {
+        Self { runtime: create_runtime(), given, when, then }
+    }
 
-impl LeptosRuntime {
-    pub fn run(test_fn: TestFn) -> TestResult {
+    pub fn run(&self) {
         let runtime = create_runtime();
-        let result = panic::catch_unwind(test_fn);
+        let view = (self.given)().into_view();
+        (self.when)(&view);
+        let rendered = view.render_to_string().to_string();
+        (self.then)(rendered);
         runtime.dispose();
-        result
-    } 
+    }
+}
+
+impl<G, W, T, V> Drop for LeptosRuntime<G, W, T, V>
+where
+    G: Fn() -> V,
+    W: Fn(&View) -> (),
+    T: Fn(String) -> (),
+    V: IntoView {
+
+    fn drop(&mut self) {
+        self.runtime.dispose()
+    }
 }

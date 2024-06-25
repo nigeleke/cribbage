@@ -34,20 +34,23 @@ pub fn Track(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::test::{LeptosRuntime, TestResult};
+    use crate::test::LeptosRuntime;
     use crate::view::Peggings;
 
     #[test]
-    fn track_should_render_6_blocks() -> TestResult {
-        LeptosRuntime::run(|| {
-            let _ = provide_context(Role::CurrentPlayer);
-            let _ = provide_context(Peggings::default());
+    fn track_should_render_6_blocks() {
+        LeptosRuntime::new(
+            || {
+                let _ = provide_context(Role::CurrentPlayer);
+                let _ = provide_context(Peggings::default());
 
-            let track = Track(TrackProps { x_offset: 0, y_offset: 0, role: Role::CurrentPlayer}).into_view();
-            let rendered = track.render_to_string().to_string();
-
-            let block_count = rendered.matches("leptos-block-start").count();
-            assert_eq!(block_count, 6);
-        })
+                Track(TrackProps { x_offset: 0, y_offset: 0, role: Role::CurrentPlayer})
+            },
+            |_: &View| {},
+            |rendered: String| {
+                let block_count = rendered.matches("leptos-block-start").count();
+                assert_eq!(block_count, 6);
+            }
+        ).run()
     }
 }

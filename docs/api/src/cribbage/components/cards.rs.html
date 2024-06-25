@@ -74,6 +74,32 @@
 <a href="#74" id="74">74</a>
 <a href="#75" id="75">75</a>
 <a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::view::CardSlot;
 
 <span class="kw">use </span><span class="kw">super</span>::card::Card;
@@ -148,6 +174,31 @@
             }
         &lt;/div&gt;
     }
-
 }
-</code></pre></div></section></main></body></html>
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::domain::Hand;
+    <span class="kw">use </span><span class="kw">crate</span>::test::LeptosRuntime;
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>cards_uses_vertical_space_when_cards_is_empty() {
+        LeptosRuntime::new(
+            || {
+                <span class="kw">let </span>cards = Hand::from(<span class="string">"AS2S3S"</span>)
+                    .as_ref()
+                    .into_iter()
+                    .map(|c| CardSlot::FaceUp(<span class="kw-2">*</span>c))
+                    .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+                Cards(CardsProps { cards, stacked: <span class="bool-val">false</span>, opacity: <span class="string">""</span>.into(), on_selected: <span class="prelude-val">None </span>})
+            },
+            |<span class="kw">_</span>: <span class="kw-2">&amp;</span>View| {},
+            |rendered: String| {
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;card-t rank="Ace" suit="Spades" opacity="""#</span>));
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;card-t rank="Two" suit="Spades" opacity="""#</span>));
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;card-t rank="Three" suit="Spades" opacity="""#</span>));
+            }
+        ).run()
+    }
+}</code></pre></div></section></main></body></html>

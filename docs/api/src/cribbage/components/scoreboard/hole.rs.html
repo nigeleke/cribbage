@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/scoreboard/hole.rs`."><title>hole.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (bcf94dec5 2024-06-23)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/components/scoreboard/hole.rs`."><title>hole.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="cribbage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (6b0f4b5ec 2024-06-24)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -147,6 +147,21 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::types::HasPoints;
 <span class="kw">use </span><span class="kw">crate</span>::view::{Role, Pegging, Peggings};
 
@@ -188,112 +203,127 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span><span class="kw">crate</span>::test::{LeptosRuntime, TestResult};
+    <span class="kw">use </span><span class="kw">crate</span>::test::LeptosRuntime;
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>hole_should_render_unoccupied() -&gt; TestResult {
-        LeptosRuntime::run(|| {
-            <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
-            <span class="kw">let _ </span>= provide_context(Peggings::default());
-    
-            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, }).into_view();
-            <span class="kw">let </span>rendered = hole.render_to_string().to_string();
-    
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="gray"#</span>), <span class="string">"actual {}"</span>, rendered);
-        })
+    </span><span class="kw">fn </span>hole_should_render_unoccupied() {
+        LeptosRuntime::new(
+            || {
+                <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
+                <span class="kw">let _ </span>= provide_context(Peggings::default());
+                Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, })
+            },
+            |<span class="kw">_</span>: <span class="kw-2">&amp;</span>View| {},
+            |rendered: String| {
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>));
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="gray""#</span>));
+            }
+        ).run()
     }   
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>hole_should_render_occupied_by_current_player() -&gt; TestResult {
-        LeptosRuntime::run(|| {
-            <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
+    </span><span class="kw">fn </span>hole_should_render_occupied_by_current_player() {
+        LeptosRuntime::new(
+            || {
+                <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
 
-            <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
-            <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
-            <span class="kw">let _ </span>= peggings.insert(Role::CurrentPlayer, pegging);
-            <span class="kw">let _ </span>= provide_context(peggings);
-    
-            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, }).into_view();
-            <span class="kw">let </span>rendered = hole.render_to_string().to_string();
+                <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
+                <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
+                <span class="kw">let _ </span>= peggings.insert(Role::CurrentPlayer, pegging);
+                <span class="kw">let _ </span>= provide_context(peggings);
             
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);        
-        })
-        
+                Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, })
+            },
+            |<span class="kw">_</span>: <span class="kw-2">&amp;</span>View| {},
+            |rendered: String| {
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>));
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime""#</span>));
+            }
+        ).run()
     }   
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>hole_should_render_occupied_by_opponent() -&gt; TestResult {
-        LeptosRuntime::run(|| {
-            <span class="kw">let _ </span>= provide_context(Role::Opponent);
+    </span><span class="kw">fn </span>hole_should_render_occupied_by_opponent() {
+        LeptosRuntime::new(
+            || {
+                <span class="kw">let _ </span>= provide_context(Role::Opponent);
 
-            <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
-            <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
-            <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
-            <span class="kw">let _ </span>= provide_context(peggings);
-    
-            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, }).into_view();
-            <span class="kw">let </span>rendered = hole.render_to_string().to_string();
-    
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="red"#</span>), <span class="string">"actual {}"</span>, rendered);
-        })
+                <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
+                <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
+                <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
+                <span class="kw">let _ </span>= provide_context(peggings);
+            
+                Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">30</span>, })
+            },
+            |<span class="kw">_</span>: <span class="kw-2">&amp;</span>View| {},
+            |rendered: String| {
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>));
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="red""#</span>));
+            }
+        ).run()
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>start_hole_should_render_players_score_zero() -&gt; TestResult {
-        LeptosRuntime::run(|| {
-            <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
+    </span><span class="kw">fn </span>start_hole_should_render_players_score_zero() {
+        LeptosRuntime::new(
+            || {
+                <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
 
-            <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
-            <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
-            <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
-            <span class="kw">let _ </span>= provide_context(peggings);
-    
-    
-            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">0</span>, }).into_view();
-            <span class="kw">let </span>rendered = hole.render_to_string().to_string();        
-    
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);
-        })
+                <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
+                <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">30</span>.into());
+                <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
+                <span class="kw">let _ </span>= provide_context(peggings);
+            
+                Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">0</span>, })
+            },
+            |<span class="kw">_</span>: <span class="kw-2">&amp;</span>View| {},
+            |rendered: String| {
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>));
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime""#</span>));
+            }
+        ).run()
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>winning_hole_should_render_players_eq_121() -&gt; TestResult {
-        LeptosRuntime::run(|| {
-            <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
+    </span><span class="kw">fn </span>winning_hole_should_render_players_eq_121() {
+        LeptosRuntime::new(
+            || {
+                <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
 
-            <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
-            <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">121</span>.into());
-            <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
-            <span class="kw">let _ </span>= provide_context(peggings);
-    
-            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">121</span>, }).into_view();
-            <span class="kw">let </span>rendered = hole.render_to_string().to_string();        
-    
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);
-        })
+                <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
+                <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">121</span>.into());
+                <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
+                <span class="kw">let _ </span>= provide_context(peggings);
+            
+                Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">121</span>, })
+            },
+            |<span class="kw">_</span>: <span class="kw-2">&amp;</span>View| {},
+            |rendered: String| {
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>));
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime""#</span>));
+            }
+        ).run()
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>winning_hole_should_render_players_gt_121() -&gt; TestResult {
-        LeptosRuntime::run(|| {
-            <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
+    </span><span class="kw">fn </span>winning_hole_should_render_players_gt_121() {
+        LeptosRuntime::new(
+            || {
+                <span class="kw">let _ </span>= provide_context(Role::CurrentPlayer);
 
-            <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
-            <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">122</span>.into());
-            <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
-            <span class="kw">let _ </span>= provide_context(peggings);
-    
-            <span class="kw">let </span>hole = Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">121</span>, }).into_view();
-            <span class="kw">let </span>rendered = hole.render_to_string().to_string();        
-    
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>), <span class="string">"actual {}"</span>, rendered);
-            <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime"#</span>), <span class="string">"actual {}"</span>, rendered);
-        })
+                <span class="kw">let </span><span class="kw-2">mut </span>peggings = Peggings::default();
+                <span class="kw">let </span>pegging = Pegging::default().add(<span class="number">122</span>.into());
+                <span class="kw">let _ </span>= peggings.insert(Role::Opponent, pegging);
+                <span class="kw">let _ </span>= provide_context(peggings);
+            
+                Hole(HoleProps { x_offset: <span class="number">10</span>, y_offset: <span class="number">20</span>, representation: <span class="number">121</span>, })
+            },
+            |<span class="kw">_</span>: <span class="kw-2">&amp;</span>View| {},
+            |rendered: String| {
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;g transform="translate(10,20)"#</span>));
+                <span class="macro">assert!</span>(rendered.contains(<span class="string">r#"&lt;circle cx="2" cy="2" r="2" fill="lime""#</span>));
+            }
+        ).run()
     }
 }
 </code></pre></div></section></main></body></html>

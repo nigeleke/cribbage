@@ -24,7 +24,8 @@ pub async fn create_game() -> Result<(), ServerFnError> {
         .await
         .map_err(ServerFnError::WrappedServerError)?;
 
-    leptos_axum::redirect(&format!("game/{}", game_id.to_string()));
+    let path = format!("game/{}", game_id.to_string());
+    leptos_axum::redirect(&path);
 
     Ok(())
 }

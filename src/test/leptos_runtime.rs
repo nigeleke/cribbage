@@ -27,12 +27,19 @@ where
     }
 
     pub fn run(&self) {
+        println!("a");
         let runtime = create_runtime();
+        println!("b");
         let view = (self.given)().into_view();
+        println!("c");
         (self.when)(&view);
+        println!("d");
         let rendered = view.render_to_string().to_string();
+        println!("e");
         (self.then)(rendered);
+        println!("f");
         runtime.dispose();
+        println!("g");
     }
 }
 

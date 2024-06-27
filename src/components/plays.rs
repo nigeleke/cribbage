@@ -3,7 +3,8 @@ use super::cards::Cards;
 use crate::view::PlayState;
 
 use leptos::*;
-use style4rs::style;
+use leptos_meta::*;
+use thaw::*;
 
 #[component]
 pub fn Plays(
@@ -12,41 +13,34 @@ pub fn Plays(
 
 ) -> impl IntoView {
 
-    let class = style!{
-        div {
-            flex: 1 1 auto;
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: end;
-            gap: 18px;
-        }
-
-        .runningtotal {
-            flex: 1 1 auto;
-            align-self: end;
-            font-size: 42px;
-        }
-    };
-
     let running_total = state.running_total();
     let current_plays = state.current_plays().into_iter().map(|p| p.card()).collect::<Vec<_>>();
     let previous_plays = state.previous_plays().into_iter().map(|p| p.card()).collect::<Vec<_>>();
 
     view!{
-        class = class,
-            <div>
-                <div>
-                    {
-                        (!previous_plays.is_empty()).then_some(view! { <Cards cards={previous_plays} opacity="0.1".into() /> }.into_view())
-                    }
-                    {
-                        (!current_plays.is_empty()).then_some(view! { <Cards cards={current_plays} /> }.into_view())
-                    }
-                </div>
-                <div class="runningtotal">
-                    { (running_total != 0.into()).then_some( { view! { <p>{running_total.to_string()}</p> } } ) }
-                </div>
+        <Space class="outer" justify=SpaceJustify::SpaceBetween>
+            <Space class="inner">
+                {
+                    (!previous_plays.is_empty()).then_some(view! { <Cards cards={previous_plays} opacity="0.1".into() /> }.into_view())
+                }
+                {
+                    (!current_plays.is_empty()).then_some(view! { <Cards cards={current_plays} /> }.into_view())
+                }
+            </Space>
+            <div class="plays-runningtotal">
+                { (running_total != 0.into()).then_some( { view! { <p>{running_total.to_string()}</p> } } ) }
             </div>
+        </Space>
+        <Style>
+            ".thaw-space.outer {
+              flex-grow: 1;
+            }
+            .thaw-space.inner {
+              flex-wrap: 1;
+            }
+            .plays-runningtotal {
+              font-size: 24pt;
+            }"
+        </Style>
     }
 }

@@ -6,7 +6,7 @@ use crate::types::*;
 use crate::view::{CardSlot, Cut, Cuts, Role};
 
 use leptos::*;
-use style4rs::style;
+use thaw::*;
 
 /// The Cuts component shows the initial cuts at the start of the game.
 /// It enables the user to start or redraw as appropriate to the cuts' ranks.
@@ -16,49 +16,6 @@ pub fn CuttingForStart(
     cuts: Cuts
 
 ) -> impl IntoView {
-    logging::log!("component::CuttingForStart");
-
-    let class = style!{
-        div {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5vh;
-        }
-        .cuts {
-            display: flex;
-            flex-direction: row;
-            gap: 5vw;
-        }
-        .cut {
-            display: flex;
-            flex-direction: column;
-            gap: 5vh;
-        }
-        .playercut {
-            opacity: 0;
-            animation: spin-in 0.75s ease-in forwards;
-        }
-        .opponentcut {
-            opacity: 0;
-            animation: spin-in 0.75s ease-in forwards;
-            animation-delay: 1s;
-        }
-        button {
-            flex-shrink: 1;
-            opacity: 0;
-            animation: fade-in 0.25s ease-in forwards;
-            animation-delay: 1.5s;
-        }
-        @keyframes spin-in {
-            from { transform: rotate(0deg); opacity: 0 }
-            to { transform: rotate(360deg); opacity: 1 }
-        }
-        @keyframes fade-in {
-            from { opacity: 0 }
-            to { opacity: 1 }
-        }
-    };
 
     let player_cut: Cut = cuts[&Role::CurrentPlayer];
     let player_rank = player_cut.rank();
@@ -101,24 +58,30 @@ pub fn CuttingForStart(
     };
 
     view! {
-        class = class,
-        <div>
-            <div class="cuts">
-                <div class="cut">
-                    <div class="playercut"><Card card=CardSlot::FaceUp(player_cut) /></div>
-                    <div>"Your cut"</div>
-                </div>
-                <div class="cut">
-                    <div class="opponentcut"><Card card=CardSlot::FaceUp(opponent_cut) /></div>
-                    <div>"Opponent's cut"</div>
-                </div>
-            </div>
+        <Space vertical=true align=SpaceAlign::Center>
+            <Space justify=SpaceJustify::SpaceBetween>
+                <CardWithLabel card=CardSlot::FaceUp(player_cut) label="Your cut".into() />
+                <CardWithLabel card=CardSlot::FaceUp(opponent_cut) label="Opponent's cut".into() />
+            </Space>
             { if player_rank == opponent_rank {
-                view! { class = class, <button on:click=on_redraw>{start_status}</button>}
+                view! { <Button on_click=on_redraw>{start_status}</Button>}
             } else {
-                view! { class = class, <button on:click=on_start>{start_status}</button>}
+                view! { <Button on_click=on_start>{start_status}</Button>}
             }
             }
-        </div>
+        </Space>
+    }
+}
+
+#[component]
+fn CardWithLabel(
+    card: CardSlot,
+    label: String,
+) -> impl IntoView {
+    view! {
+        <Space vertical=true align=SpaceAlign::Center>
+            <Card card />
+            <span>{label}</span>
+        </Space>
     }
 }

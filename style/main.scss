@@ -45,7 +45,7 @@ a:hover {
     color: darken($text, 10%);
 }
 
-button {
+button.thaw-button {
     border: none;
     background-color: lighten($background, 50%);
     font-size: large;
@@ -56,15 +56,15 @@ button {
     border-radius: 10px;
 }
 
-button:disabled {
+button.thaw-button:disabled {
     background-color: lighten($background, 20%);
 }
 
-button:hover:enabled {
+button.thaw-button:hover:enabled {
     background-color: lighten($background, 55%);
 }
 
-button:active:enabled {
+button.thaw-button:active:enabled {
     background-color: lighten($background, 75%);
 }
 

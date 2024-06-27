@@ -1,7 +1,7 @@
 use crate::view::CardSlot;
 
 use leptos::*;
-use style4rs::style;
+use leptos_meta::Style;
 
 /// The component to display a card. The card itself can be presented face-up, face-down,
 /// empty (which is a gap) or as a placeholder (which is a card sized dashed line).
@@ -20,19 +20,6 @@ pub fn Card(
 
 ) -> impl IntoView {
 
-    let class = style!{
-        div {
-            display: flex;
-            flex-direction: column;
-            width: 120px;
-        }
-    };
-    let inner = style!{
-        div.selected {
-            transform: translate(0px, -20px) rotate(5deg);
-        }
-    };
-    
     let selected = create_rw_signal(false);
     let on_click = move |_| {
         if let Some(on_selected) = on_selected {
@@ -41,9 +28,8 @@ pub fn Card(
         }
     };
 
-    let card_view = match card {
+    let card = match card {
         CardSlot::FaceUp(card) => view! {
-            class = inner,
             <div class:selected=selected on:click=on_click>
                 <card-t rank=card.face_name() suit=card.suit_name() opacity=opacity /> 
             </div>
@@ -62,11 +48,17 @@ pub fn Card(
         }.into_view(),
     };
 
-    view!{
-        class = class,
-        <div>{card_view}</div>
+    view! {
+        <div class="card-wrapper">{card}</div>
+        <Style>
+        ".card-wrapper {
+            width: 120px;
+        }
+        div.selected {
+            transform: translate(0px, -20px) rotate(5deg);
+        }"
+        </Style>
     }
-
 }
 
 #[cfg(test)]

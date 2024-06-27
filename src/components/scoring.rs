@@ -4,7 +4,7 @@ use crate::services::{score_dealer};
 use crate::view::Hand;
 
 use leptos::*;
-use style4rs::style;
+use thaw::*;
 
 #[component]
 pub fn Scoring(
@@ -12,17 +12,6 @@ pub fn Scoring(
     cards: Hand,
 
 ) -> impl IntoView {
-    logging::log!("component::Scoring");
-
-    let class = style!{
-        div {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            align-items: center;
-            gap: 5vh;
-        }
-    };
 
     let cards = move || cards.clone();
 
@@ -42,13 +31,12 @@ pub fn Scoring(
     };
 
     view! {
-        class = class,
         <div>
             {move || {
                 let cards = cards();
                 view!{ <Cards cards /> }
             }}
-            <span><button on:click=on_score_next>"Score next"</button></span>
+            <Button on_click=on_score_next>"Score next"</Button>
         </div>
     }    
 }

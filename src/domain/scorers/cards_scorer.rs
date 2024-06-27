@@ -95,7 +95,7 @@ impl CardsScorer {
 
         let cards = cards.as_ref();
 
-        let jacks = cards.into_iter().filter(|c| c.face() == Face::Jack);
+        let jacks = cards.iter().filter(|c| c.face() == Face::Jack);
         let suits = jacks.filter(|c| c.suit() == cut.suit());
         if suits.count() == 1 {
             reasons.with_his_heels(cards, SCORE_HIS_HEELS.into())

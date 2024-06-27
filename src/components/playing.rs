@@ -4,7 +4,7 @@ use crate::services::{pass, play, score_pone};
 use crate::view::{CardSlot, Hand, PlayState};
 
 use leptos::*;
-use style4rs::style;
+use thaw::*;
 
 #[component]
 pub fn Playing(
@@ -13,17 +13,6 @@ pub fn Playing(
     play_state: PlayState
 
 ) -> impl IntoView {
-    logging::log!("component::Playing");
-
-    let class = style!{
-        div {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            align-items: center;
-            gap: 5vh;
-        }
-    };
 
     let (current_player_cards, _) = create_signal(current_player_hand.clone());
 
@@ -47,7 +36,7 @@ pub fn Playing(
         let cards = selected_cards().into_iter().filter(|c| legal_plays().contains(c)).collect::<Vec<_>>();
         (cards.len() == 1).then(|| cards[0])
     };
-    let disabled = move || { selected_play().is_none() };
+    let disabled = (move || { selected_play().is_none() }).into_signal();
 
     let context = use_context::<Context>().unwrap();
 
@@ -93,22 +82,21 @@ pub fn Playing(
     };
 
     view! {
-        class = class,
-        <div>
+        <Space vertical=true justify=SpaceJustify::SpaceBetween align=SpaceAlign::Center>
             {move || {
                 let current_player_cards = current_player_cards();
                 view!{ <Cards cards=current_player_cards on_selected=set_selected /> }
             }}
-            <span>{
+            {
                 if play_state.all_cards_are_played() {
-                    view! { <button on:click=on_score_pone>"Score pone"</button> }
+                    view! { <Button on_click=on_score_pone>"Score pone"</Button> }
                 } else if play_state.must_pass() {
-                    view! { <button on:click=on_pass>"Pass"</button> }
+                    view! { <Button on_click=on_pass>"Pass"</Button> }
                 } else {
-                    view! { <button on:click=on_play disabled=disabled>"Play"</button> }
+                    view! { <Button on_click=on_play disabled>"Play"</Button> }
                 }
-            }</span>
-        </div>
+            }
+        </Space>
     }    
 }
 

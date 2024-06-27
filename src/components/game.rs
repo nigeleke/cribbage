@@ -22,7 +22,8 @@ use crate::view::{
 };
 
 use leptos::*;
-use style4rs::style;
+use leptos_meta::*;
+use thaw::*;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum ScoringEntity {
@@ -38,8 +39,6 @@ pub fn Game(
     game: GameView,
 
 ) -> impl IntoView {
-    logging::log!("component::Game");
-
     match game {
         GameView::Starting(cuts) =>
             view! { <StartingGame cuts /> },
@@ -70,7 +69,6 @@ fn StartingGame(
     cuts: CutsView,
 
 ) -> impl IntoView {
-    logging::log!("component::StartingGame");
 
     let player_view = Box::new(move || {
         let cuts = cuts.clone();
@@ -91,7 +89,6 @@ fn DiscardingGame(
     dealer: Role,
 
 ) -> impl IntoView {
-    logging::log!("component::DiscardingGame");
 
     let opponent_hand = hands[&Role::Opponent].clone();
 
@@ -117,7 +114,6 @@ fn PlayingGame(
     dealer: Role,
     
 ) -> impl IntoView {
-    logging::log!("component::PlayingGame");
 
     let opponent_hand = hands[&Role::Opponent].clone();
     let state = play_state.clone();
@@ -146,7 +142,6 @@ fn ScoringGame(
     entity: ScoringEntity,
     
 ) -> impl IntoView {
-    logging::log!("component::ScoringGame");
 
     let cards_being_scored = match entity {
         ScoringEntity::Pone => hands[&dealer.opponent()].clone(),
@@ -180,11 +175,10 @@ fn FinishingGame(
     scores: Peggings,
 
 ) -> impl IntoView {
-    logging::log!("component::FinishingGame");
 
     #[allow(unused_braces)]
     let player_view = Box::new(move || {
-        view! { <><button>"Done"</button></> }
+        view! { <><Button>"Done"</Button></> }
     });
 
     view! {
@@ -218,55 +212,50 @@ fn Template(
     children: Option<Children>,
 
 ) -> impl IntoView {
-    let class = style!{
-        div {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-evenly;
-        }
-        .dynamicview {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .cribandcutview {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-    };
 
     let hide_player_crib = dealer != Some(Role::CurrentPlayer);
     let hide_opponent_crib = dealer != Some(Role::Opponent);
 
     view!{
-        class = class,
-        <div>
-            <Scoreboard scores=scores />
-            <div class="dynamicview">
-                { player_view() }
-                <div>{children.map(|c| c())}</div>
-                { opponent_hand.map(|cards| view! { <Cards cards /> }) }
-            </div>
-            <div class="cribandcutview">
-                {
-                    if hide_player_crib {
-                       view! { <Card card=CardSlot::Empty /> }
-                    } else {
-                       view! { <Crib crib=crib.clone() /> }
-                    }
-                }
-                <Card card=cut />
-                {
-                    if hide_opponent_crib {
-                       view! { <Card card=CardSlot::Empty /> }
-                    } else {
-                       view! ( <Crib crib=crib.clone() />)
-                    }
-                }
-            </div>
-        </div>
+        <Grid cols=5>
+            <GridItem><Scoreboard scores=scores /></GridItem>
+            <GridItem column=3>
+                <Space vertical=true justify=SpaceJustify::SpaceAround align=SpaceAlign::Center>
+                    { player_view() }
+                    <>{children.map(|c| c())}</>
+                    { opponent_hand.map(|cards| view! { <Cards cards /> }) }
+                </Space>
+            </GridItem>
+            <GridItem>
+                <Space vertical=true justify=SpaceJustify::SpaceAround align=SpaceAlign::End>
+                    <PlayerCribView hidden=hide_player_crib crib=crib.clone() />
+                    <Card card=cut />
+                    <PlayerCribView hidden=hide_opponent_crib crib />
+                </Space>
+            </GridItem>
+        </Grid>
+        <Style>
+        ".thaw-grid {
+          justify-items: center;
+        }
+        .thaw-grid-item {
+          display: flex;
+        }
+        .thaw-space {
+          flex-grow: 1;
+        }"
+        </Style>
+    }
+}
+
+#[component]
+fn PlayerCribView(
+    hidden: bool,
+    crib: CribView,
+) -> impl IntoView {
+    if hidden {
+        view! { <Card card=CardSlot::Empty /> }
+    } else {
+        view! { <Crib crib /> }
     }
 }

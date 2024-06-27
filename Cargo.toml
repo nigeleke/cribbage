@@ -27,15 +27,16 @@ enum-iterator = "2.0.0"
 rand = "0.8.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-style4rs = { git = "https://github.com/nigeleke/style4rs.git" }
 dotenv = { version = "0.15", optional = true }
 axum_session = { version = "0.14", optional = true }
 axum-extra = { version = "0.9", optional = true }
 futures = "0.3.30"
 itertools = "0.13.0"
+thaw = "0.3.2"
 
 [features]
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
+csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr", "thaw/csr"]
+hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate", "thaw/hydrate"]
 ssr = [
     "dep:axum",
     "dep:tokio",
@@ -51,10 +52,8 @@ ssr = [
     "dep:axum_session",
     "axum-extra/cookie",
     "dep:server_fn",
+    "thaw/ssr",
 ]
-
-[build-dependencies]
-style4rs = { git = "https://github.com/nigeleke/style4rs.git" }
 
 # Defines a size-optimized profile for the WASM bundle in release mode
 [profile.wasm-release]

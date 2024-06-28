@@ -10,4 +10,4 @@ pub use self::cards::{Crib, Cuts, Hand, Hands};
 pub use self::game::Game;
 pub use self::plays::{PlayState};
 pub use self::role::Role;
-pub use self::scores::{Pegging, Peggings};
+pub use self::scores::{Pegging, Peggings, Scores};

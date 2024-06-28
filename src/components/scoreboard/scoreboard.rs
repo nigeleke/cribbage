@@ -9,14 +9,14 @@ use leptos::*;
 #[component]
 pub fn Scoreboard(
 
-    scores: Peggings,
+    peggings: Peggings,
 
 ) -> impl IntoView {
-    provide_context(scores.clone());
+    provide_context(peggings.clone());
 
     let default_score = Pegging::default();
-    let current_player_score = scores.get(&Role::CurrentPlayer).unwrap_or(&default_score);
-    let opponent_score = scores.get(&Role::Opponent).unwrap_or(&default_score);
+    let current_player_score = peggings.get(&Role::CurrentPlayer).unwrap_or(&default_score);
+    let opponent_score = peggings.get(&Role::Opponent).unwrap_or(&default_score);
 
     view! {
         <div>
@@ -50,7 +50,7 @@ mod test {
         LeptosRuntime::new(
             || {
                 let scores = Peggings::default();
-                Scoreboard(ScoreboardProps { scores })
+                Scoreboard(ScoreboardProps { peggings: scores })
             },
             |_: &View| {},
             |rendered: String| {

@@ -16,9 +16,10 @@ use crate::view::{
     Game as GameView,
     Hand,
     Hands,
+    Peggings,
     PlayState,
     Role, 
-    Peggings,
+    Scores,
 };
 
 use leptos::*;
@@ -58,8 +59,8 @@ pub fn Game(
         GameView::ScoringCrib(scores, dealer, hands, cut, crib) =>
             view! { <ScoringGame scores entity=ScoringEntity::Crib hands cut crib dealer /> },
 
-        GameView::Finished(scores) =>
-            view! { <FinishingGame scores /> },
+        GameView::Finished(_winner, peggings) =>
+            view! { <FinishingGame peggings /> },
     }
 }
 
@@ -83,7 +84,7 @@ fn StartingGame(
 #[component]
 fn DiscardingGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
     crib: CribView,
     dealer: Role,
@@ -106,7 +107,7 @@ fn DiscardingGame(
 #[component]
 fn PlayingGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
     play_state: PlayState,
     cut: CardView,
@@ -134,7 +135,7 @@ fn PlayingGame(
 #[component]
 fn ScoringGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
     cut: CardView,
     crib: CribView,
@@ -172,7 +173,7 @@ fn ScoringGame(
 #[component]
 fn FinishingGame(
 
-    scores: Peggings,
+    peggings: Peggings,
 
 ) -> impl IntoView {
 
@@ -183,7 +184,7 @@ fn FinishingGame(
 
     view! {
         <Template player_view>
-            <Scoreboard scores />
+            <Scoreboard peggings />
         </Template>
     }
 }
@@ -194,7 +195,7 @@ fn Template(
     player_view: Children,
 
     #[prop(optional)]
-    scores: Peggings,
+    scores: Scores,
 
     #[prop(optional)]
     opponent_hand: Option<Hand>,
@@ -218,7 +219,7 @@ fn Template(
 
     view!{
         <Grid cols=5>
-            <GridItem><Scoreboard scores=scores /></GridItem>
+            <GridItem><Scoreboard peggings={scores.peggings()} /></GridItem>
             <GridItem column=3>
                 <Space vertical=true justify=SpaceJustify::SpaceAround align=SpaceAlign::Center>
                     { player_view() }

@@ -20,6 +20,10 @@ impl Scores {
         self.0.clone()
     }
 
+    pub fn reasons(&self) -> Reasons {
+        self.1.clone()
+    }
+
     pub fn add(&mut self, player: Player, reasons: &Reasons) {
         let points = reasons.points();
         let peggings = &mut self.0;

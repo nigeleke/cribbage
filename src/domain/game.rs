@@ -1,7 +1,7 @@
 use super::cards::{Card, Crib, Cut, Cuts, Deck, Hand, Hands};
 use super::plays::PlayState;
 use super::result::*;
-use super::scores::{Scores, ScoreReasons};
+use super::scores::{Peggings, Scores, ScoreReasons};
 use super::scorers::*;
 
 use crate::constants::*;
@@ -21,7 +21,7 @@ pub enum Game {
     ScoringPone(Scores, Player, Hands, Cut, Crib),
     ScoringDealer(Scores, Player, Hands, Cut, Crib),
     ScoringCrib(Scores, Player, Hands, Cut, Crib),
-    Finished(Scores),
+    Finished(Player, Peggings),
 }
 
 impl Game {
@@ -50,7 +50,7 @@ impl Game {
             Game::ScoringPone(_, _, hands, _, _) => Players::from_iter(hands.keys().cloned()),
             Game::ScoringDealer(_, _, hands, _, _) => Players::from_iter(hands.keys().cloned()),
             Game::ScoringCrib(_, _, hands, _, _) => Players::from_iter(hands.keys().cloned()),
-            Game::Finished(scores) => Players::from_iter(scores.peggings().keys().cloned()),
+            Game::Finished(_, peggings) => Players::from_iter(peggings.keys().cloned()),
         }
     }
 
@@ -66,24 +66,23 @@ impl Game {
         }
     }
 
-    pub fn scores(&self) -> Scores {
+    pub fn peggings(&self) -> Peggings {
         match self {
             Game::Starting(_, _) => unreachable!(),
-            Game::Discarding(scores, _, _, _, _) => scores,
-            Game::Playing(scores, _, _, _, _, _) => scores,
-            Game::ScoringPone(scores, _, _, _, _) => scores,
-            Game::ScoringDealer(scores, _, _, _, _) => scores,
-            Game::ScoringCrib(scores, _, _, _, _) => scores,
-            Game::Finished(scores) => scores,
+            Game::Discarding(scores, _, _, _, _) => scores.peggings(),
+            Game::Playing(scores, _, _, _, _, _) => scores.peggings(),
+            Game::ScoringPone(scores, _, _, _, _) => scores.peggings(),
+            Game::ScoringDealer(scores, _, _, _, _) => scores.peggings(),
+            Game::ScoringCrib(scores, _, _, _, _) => scores.peggings(),
+            Game::Finished(_, peggings) => peggings.clone(),
         }.clone()
     }
 
-    fn has_winner(&self) -> bool {
-        let peggings = self.scores().peggings();
-        !peggings.values()
-            .filter(|s| s.points() >= WINNING_SCORE.into())
-            .collect::<Vec<_>>()
-            .is_empty()
+    fn winner(&self) -> Option<Player> {
+        let peggings = self.peggings();
+        peggings.iter()
+            .filter_map(|(player, pegging)| (pegging.points() >= WINNING_SCORE.into()).then_some(*player))
+            .next()
     }
 
     pub fn start(&self) -> Result<Self> {
@@ -157,7 +156,7 @@ impl Game {
             Game::ScoringPone(_, dealer, _, _, _) => *dealer,
             Game::ScoringDealer(_, dealer, _, _, _) => *dealer,
             Game::ScoringCrib(_, dealer, _, _, _) => *dealer,
-            Game::Finished(_) => unreachable!(),
+            Game::Finished(_, _) => unreachable!(),
         }
     }
 
@@ -186,12 +185,12 @@ impl Game {
             Game::ScoringPone(ref mut scores, _, _, _, _) => update(scores),
             Game::ScoringDealer(ref mut scores, _, _, _, _) => update(scores),
             Game::ScoringCrib(ref mut scores, _, _, _, _) => update(scores),
-            Game::Finished(_) => { },
+            Game::Finished(_, _) => { },
         };
 
-        if game.has_winner() {
-            let scores = game.scores();
-            game = Game::Finished(scores)
+        if let Some(winner) = game.winner() {
+            let scores = game.peggings();
+            game = Game::Finished(winner, scores)
         }
 
         Ok(game)
@@ -337,8 +336,8 @@ impl std::fmt::Display for Game {
                 write!(f, "ScoringCrib(Scores({}), Dealer({}), Hands({}), Cut({})), Crib({}))",
                     scores, dealer, format_hashmap(hands), cut, crib),
         
-            Game::Finished(scores) =>
-                write!(f, "Finished(Scores({}))", scores),
+            Game::Finished(winner, peggings) =>
+                write!(f, "Finished(Winner({}), Peggings({}))", winner, format_hashmap(peggings)),
         }
     }
 }
@@ -919,9 +918,10 @@ mod test {
         let score0_pone = scores0.peggings()[&pone];
 
         let game1 = game0.play(pone, Card::from("5H")).ok().unwrap();
-        let Game::Finished(scores1) = game1.clone() else { panic!("Unexpected state") };
-        let score1_pone = scores1.peggings()[&pone];
+        let Game::Finished(winner, peggings1) = game1.clone() else { panic!("Unexpected state") };
+        let score1_pone = peggings1[&pone];
     
+        assert_eq!(winner, pone);
         assert_eq!(score1_pone, score0_pone.add(2.into()));
     }
 
@@ -987,10 +987,11 @@ mod test {
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
         let game1 = game0.play(pone, Card::from("AH")).ok().unwrap();
-        let Game::Finished(scores1) = game1.clone() else { panic!("Unexpected state") };
+        let Game::Finished(winner, peggings1) = game1.clone() else { panic!("Unexpected state") };
 
-        assert_eq!(scores1.peggings()[&pone], scores0.peggings()[&pone].add(2.into()));
-        assert_eq!(scores1.peggings()[&dealer0], scores0.peggings()[&dealer0]);
+        assert_eq!(winner, pone);
+        assert_eq!(peggings1[&pone], scores0.peggings()[&pone].add(2.into()));
+        assert_eq!(peggings1[&dealer0], scores0.peggings()[&dealer0]);
     }
 
     #[test]
@@ -1006,10 +1007,11 @@ mod test {
         let Game::Playing(scores0, dealer0, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
         let game1 = game0.play(pone, Card::from("AH")).ok().unwrap();
-        let Game::Finished(scores1) = game1.clone() else { panic!("Unexpected state") };
+        let Game::Finished(winner, peggings1) = game1.clone() else { panic!("Unexpected state") };
 
-        assert_eq!(scores1.peggings()[&pone], scores0.peggings()[&pone].add(1.into()));
-        assert_eq!(scores1.peggings()[&dealer0], scores0.peggings()[&dealer0]);
+        assert_eq!(winner, pone);
+        assert_eq!(peggings1[&pone], scores0.peggings()[&pone].add(1.into()));
+        assert_eq!(peggings1[&dealer0], scores0.peggings()[&dealer0]);
     }
 
     #[test]
@@ -1124,9 +1126,10 @@ mod test {
         let game1 = game0.pass(pone).ok().unwrap();
         let game2 = game1.pass(dealer0).ok().unwrap();
 
-        let Game::Finished(scores2) = game2.clone() else { panic!("Unexpected state") };
-        assert_eq!(scores2.peggings()[&pone], scores0.peggings()[&pone]);
-        assert_eq!(scores2.peggings()[&dealer0], scores0.peggings()[&dealer0].add(1.into()));
+        let Game::Finished(winner, peggings2) = game2.clone() else { panic!("Unexpected state") };
+        assert_eq!(winner, dealer0);
+        assert_eq!(peggings2[&pone], scores0.peggings()[&pone]);
+        assert_eq!(peggings2[&dealer0], scores0.peggings()[&dealer0].add(1.into()));
     }
 
     #[test]
@@ -1444,10 +1447,11 @@ mod test {
         let Game::Playing(scores0, dealer, _, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
         let game1 = game0.score_pone().ok().unwrap();
-        let Game::Finished(scores1) = game1.clone() else { panic!("Unexpected state") };
+        let Game::Finished(winner, peggings1) = game1.clone() else { panic!("Unexpected state") };
 
-        assert_eq!(scores1.peggings()[&dealer], scores0.peggings()[&dealer]);
-        assert_eq!(scores1.peggings()[&pone], scores0.peggings()[&pone].add(7.into()));
+        assert_eq!(winner, pone);
+        assert_eq!(peggings1[&dealer], scores0.peggings()[&dealer]);
+        assert_eq!(peggings1[&pone], scores0.peggings()[&pone].add(7.into()));
     }
 
     #[test]
@@ -1550,10 +1554,11 @@ mod test {
         let Game::ScoringPone(scores0, dealer, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
         let game1 = game0.score_dealer().ok().unwrap();
-        let Game::Finished(scores1) = game1.clone() else { panic!("Unexpected state") };
+        let Game::Finished(winner, peggings1) = game1.clone() else { panic!("Unexpected state") };
 
-        assert_eq!(scores1.peggings()[&dealer], scores0.peggings()[&dealer].add(4.into()));
-        assert_eq!(scores1.peggings()[&pone], scores0.peggings()[&pone]);
+        assert_eq!(winner, dealer);
+        assert_eq!(peggings1[&dealer], scores0.peggings()[&dealer].add(4.into()));
+        assert_eq!(peggings1[&pone], scores0.peggings()[&pone]);
     }
 
     #[test]
@@ -1598,10 +1603,11 @@ mod test {
         let Game::ScoringDealer(scores0, dealer, _, _, _) = game0.clone() else { panic!("Unexpected state") };
 
         let game1 = game0.score_crib().ok().unwrap();
-        let Game::Finished(scores1) = game1.clone() else { panic!("Unexpected state") };
+        let Game::Finished(winner, peggings1) = game1.clone() else { panic!("Unexpected state") };
 
-        assert_eq!(scores1.peggings()[&dealer], scores0.peggings()[&dealer].add(12.into()));
-        assert_eq!(scores1.peggings()[&pone], scores0.peggings()[&pone]);
+        assert_eq!(winner, dealer);
+        assert_eq!(peggings1[&dealer], scores0.peggings()[&dealer].add(12.into()));
+        assert_eq!(peggings1[&pone], scores0.peggings()[&pone]);
     }
 
     #[test]

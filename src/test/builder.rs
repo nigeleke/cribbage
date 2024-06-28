@@ -9,6 +9,7 @@ pub struct Builder {
     dealer: usize,
     cuts: Vec<Card>,
     peggings: Vec<Pegging>,
+    reasons: ScoreReasons,
     hands: Vec<Hand>,
     current_plays: Vec<Play>,
     previous_plays: Vec<Play>,
@@ -50,6 +51,11 @@ impl Builder {
     pub fn with_peggings(mut self, points0: usize, points1: usize) -> Self {
         self.peggings.push(Pegging::default().add(points0.into()));
         self.peggings.push(Pegging::default().add(points1.into()));
+        self
+    }
+
+    pub fn with_score_reasons(mut self, reasons: &[ScoreReason]) -> Self {
+        self.reasons.add(reasons);
         self
     }
 
@@ -115,7 +121,8 @@ impl Builder {
         let players = self.players.clone();
         let peggings = self.peggings.clone();
         let peggings = self.merged(peggings);
-        let scores = Scores::from(&peggings);
+        let mut scores = Scores::from(&peggings);
+        scores.add(players[0], &self.reasons);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let crib = self.crib.clone();
@@ -128,7 +135,8 @@ impl Builder {
         let player = players[next_to_play];
         let peggings = self.peggings.clone();
         let peggings = self.merged(peggings);
-        let scores = Scores::from(&peggings);
+        let mut scores = Scores::from(&peggings);
+        scores.add(players[0], &self.reasons);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let mut play_state = PlayState::new(player, &hands);
@@ -149,7 +157,8 @@ impl Builder {
         let players = self.players.clone();
         let peggings = self.peggings.clone();
         let peggings = self.merged(peggings);
-        let scores = Scores::from(&peggings);
+        let mut scores = Scores::from(&peggings);
+        scores.add(players[0], &self.reasons);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let cut = self.cut.unwrap();
@@ -161,7 +170,8 @@ impl Builder {
         let players = self.players.clone();
         let peggings = self.peggings.clone();
         let peggings = self.merged(peggings);
-        let scores = Scores::from(&peggings);
+        let mut scores = Scores::from(&peggings);
+        scores.add(players[0], &self.reasons);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let cut = self.cut.unwrap();
@@ -173,7 +183,8 @@ impl Builder {
         let players = self.players.clone();
         let peggings = self.peggings.clone();
         let peggings = self.merged(peggings);
-        let scores = Scores::from(&peggings);
+        let mut scores = Scores::from(&peggings);
+        scores.add(players[0], &self.reasons);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let cut = self.cut.unwrap();

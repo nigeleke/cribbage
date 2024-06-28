@@ -22,6 +22,7 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Stylesheet id="leptos" href="/pkg/cribbage.css"/>
+        <Link rel="icon" type_="image/ico" href="/public/favicon.ico"/>
         <Script src="/elements.cardmeister.min.js"/>
         <Title text="Cribbage"/>
 

@@ -2,7 +2,7 @@ use super::card::{Card, CardSlot, Cut};
 use super::cards::{Crib, Cuts, Hands};
 use super::plays::PlayState;
 use super::role::{Dealer, Role};
-use super::scores::Peggings;
+use super::scores::{Peggings, Scores};
 
 use crate::domain::Game as DomainGame;
 use crate::types::Player;
@@ -15,12 +15,12 @@ use std::collections::HashMap;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Game {
     Starting(Cuts),
-    Discarding(Peggings, Hands, Crib, Dealer),
-    Playing(Peggings, Hands, PlayState, Cut, Crib, Dealer),
-    ScoringPone(Peggings, Role, Hands, Cut, Crib),
-    ScoringDealer(Peggings, Role, Hands, Cut, Crib),
-    ScoringCrib(Peggings, Role, Hands, Cut, Crib),
-    Finished(Peggings),
+    Discarding(Scores, Hands, Crib, Dealer),
+    Playing(Scores, Hands, PlayState, Cut, Crib, Dealer),
+    ScoringPone(Scores, Role, Hands, Cut, Crib),
+    ScoringDealer(Scores, Role, Hands, Cut, Crib),
+    ScoringCrib(Scores, Role, Hands, Cut, Crib),
+    Finished(Role, Peggings),
 }
 
 impl From<(DomainGame, Player)> for Game {
@@ -34,53 +34,59 @@ impl From<(DomainGame, Player)> for Game {
             DomainGame::Discarding(scores, dealer, hands, crib, _deck) => {
                 let (player_pegging, opponent_pegging) = partition_for(player, &scores.peggings());
                 let peggings = merge(player_pegging, opponent_pegging);
+                let scores = Scores::new(peggings, scores.reasons());
                 let (player_hand, opponent_hand) = partition_for(player, &hands);
                 let hands = merge(face_up(player_hand.as_ref()), face_down(opponent_hand.as_ref()));
                 let crib = face_down(crib.as_ref());
                 let dealer = Dealer::from((dealer, player));
-                Game::Discarding(peggings, hands, crib, dealer)
+                Game::Discarding(scores, hands, crib, dealer)
             },
             DomainGame::Playing(scores, dealer, hands, play_state, cut, crib) => {
                 let (player_pegging, opponent_pegging) = partition_for(player, &scores.peggings());
                 let peggings = merge(player_pegging, opponent_pegging);
+                let scores = Scores::new(peggings, scores.reasons());
                 let (player_hand, opponent_hand) = partition_for(player, &hands);
                 let hands = merge(face_up(player_hand.as_ref()), face_down(opponent_hand.as_ref()));
                 let play_state = (play_state, player).into();
                 let crib = face_down(crib.as_ref());
                 let dealer = Dealer::from((dealer, player));
-                Game::Playing(peggings, hands, play_state, cut, crib, dealer)
+                Game::Playing(scores, hands, play_state, cut, crib, dealer)
             },
             DomainGame::ScoringPone(ref scores, _, ref hands, cut, ref crib) => {
                 let pone = Role::from((game.pone(), player));
                 let (player_pegging, opponent_pegging) = partition_for(player, &scores.peggings());
                 let peggings = merge(player_pegging, opponent_pegging);
+                let scores = Scores::new(peggings, scores.reasons());
                 let (player_hand, opponent_hand) = partition_for(player, hands);
                 let hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
                 let crib = face_down(crib.as_ref());
-                Game::ScoringPone(peggings, pone, hands, cut, crib)
+                Game::ScoringPone(scores, pone, hands, cut, crib)
             },
             DomainGame::ScoringDealer(ref scores, _, ref hands, cut, ref crib) => {
                 let pone = Role::from((game.pone(), player));
                 let (player_pegging, opponent_pegging) = partition_for(player, &scores.peggings());
                 let peggings = merge(player_pegging, opponent_pegging);
+                let scores = Scores::new(peggings, scores.reasons());
                 let (player_hand, opponent_hand) = partition_for(player, hands);
                 let hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
                 let crib = face_down(crib.as_ref());
-                Game::ScoringDealer(peggings, pone, hands, cut, crib)
+                Game::ScoringDealer(scores, pone, hands, cut, crib)
             },
             DomainGame::ScoringCrib(ref scores, _, ref hands, cut, ref crib) => {
                 let pone = Role::from((game.pone(), player));
                 let (player_pegging, opponent_pegging) = partition_for(player, &scores.peggings());
                 let peggings = merge(player_pegging, opponent_pegging);
+                let scores = Scores::new(peggings, scores.reasons());
                 let (player_hand, opponent_hand) = partition_for(player, hands);
                 let hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
                 let crib = face_down(crib.as_ref());
-                Game::ScoringCrib(peggings, pone, hands, cut, crib)
+                Game::ScoringCrib(scores, pone, hands, cut, crib)
             },
-            DomainGame::Finished(ref scores) => {
-                let (player_pegging, opponent_pegging) = partition_for(player, &scores.peggings());
+            DomainGame::Finished(winner, ref peggings) => {
+                let winner = Role::from((winner, player));
+                let (player_pegging, opponent_pegging) = partition_for(player, &peggings);
                 let peggings = merge(player_pegging, opponent_pegging);
-                Game::Finished(peggings)
+                Game::Finished(winner, peggings)
             },
         }
     }

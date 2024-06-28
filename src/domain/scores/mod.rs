@@ -14,6 +14,6 @@ pub use breakdown::{
 };
 
 pub use peg::Peg;
-pub use pegging::Pegging;
+pub use pegging::{Pegging, Peggings};
 
 pub use scores::Scores;

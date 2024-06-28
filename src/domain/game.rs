@@ -422,7 +422,7 @@ mod verify {
 mod test {
     use super::*;
     use crate::test::Builder;
-    use crate::domain::Play;
+    use crate::domain::{Play, ScoreReason, ScoreReasonType};
 
     #[test]
     fn play_with_zero_one_or_two_players() {
@@ -1649,8 +1649,10 @@ mod test {
     fn should_output_user_readable_playing_game_in_logs() {
         let game = Builder::new(2)
             .with_peggings(0, 0)
+            .with_score_reasons(&vec![ScoreReason::new(ScoreReasonType::Fifteen, Hand::from("KS5S").as_ref(), 2.into())])
             .with_hands("9S", "4S")
             .with_cut("AS")
+            .with_current_plays(&vec![(0, "AH")])
             .as_playing(1);
 
         let game = game.to_string();
@@ -1663,6 +1665,7 @@ mod test {
         assert!(game.contains("Legal("));
         assert!(game.contains("Passes("));
         assert!(game.contains("Current("));
+        assert!(game.contains("-> A♥"));
         assert!(game.contains("Previous("));
         assert!(game.contains("Cut("));
         assert!(game.contains("Crib("));

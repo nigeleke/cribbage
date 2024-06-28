@@ -36,6 +36,12 @@ impl Reasons {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
+
+    #[cfg(test)]
+    pub fn add(&mut self, reasons: &[Reason]) {
+        let mut reasons = Vec::from(reasons);
+        self.0.append(&mut reasons);
+    }
 }
 
 impl HasPoints for Reasons {

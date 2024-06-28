@@ -259,6 +259,7 @@
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::card::Card;
 <span class="kw">use </span><span class="kw">super</span>::cards::Cards;
 <span class="kw">use </span><span class="kw">super</span>::crib::Crib;
@@ -277,9 +278,10 @@
     Game <span class="kw">as </span>GameView,
     Hand,
     Hands,
+    Peggings,
     PlayState,
     Role, 
-    Peggings,
+    Scores,
 };
 
 <span class="kw">use </span>leptos::<span class="kw-2">*</span>;
@@ -319,8 +321,8 @@
         GameView::ScoringCrib(scores, dealer, hands, cut, crib) =&gt;
             <span class="macro">view!</span> { &lt;ScoringGame scores entity=ScoringEntity::Crib hands cut crib dealer /&gt; },
 
-        GameView::Finished(scores) =&gt;
-            <span class="macro">view!</span> { &lt;FinishingGame scores /&gt; },
+        GameView::Finished(_winner, peggings) =&gt;
+            <span class="macro">view!</span> { &lt;FinishingGame peggings /&gt; },
     }
 }
 
@@ -344,7 +346,7 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>DiscardingGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
     crib: CribView,
     dealer: Role,
@@ -367,7 +369,7 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>PlayingGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
     play_state: PlayState,
     cut: CardView,
@@ -395,7 +397,7 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>ScoringGame(
 
-    scores: Peggings,
+    scores: Scores,
     hands: Hands,
     cut: CardView,
     crib: CribView,
@@ -433,7 +435,7 @@
 <span class="attr">#[component]
 </span><span class="kw">fn </span>FinishingGame(
 
-    scores: Peggings,
+    peggings: Peggings,
 
 ) -&gt; <span class="kw">impl </span>IntoView {
 
@@ -444,7 +446,7 @@
 
     <span class="macro">view!</span> {
         &lt;Template player_view&gt;
-            &lt;Scoreboard scores /&gt;
+            &lt;Scoreboard peggings /&gt;
         &lt;/Template&gt;
     }
 }
@@ -455,7 +457,7 @@
     player_view: Children,
 
     <span class="attr">#[prop(optional)]
-    </span>scores: Peggings,
+    </span>scores: Scores,
 
     <span class="attr">#[prop(optional)]
     </span>opponent_hand: <span class="prelude-ty">Option</span>&lt;Hand&gt;,
@@ -479,7 +481,7 @@
 
     <span class="macro">view!</span>{
         &lt;Grid cols=<span class="number">5</span>&gt;
-            &lt;GridItem&gt;&lt;Scoreboard scores=scores /&gt;&lt;/GridItem&gt;
+            &lt;GridItem&gt;&lt;Scoreboard peggings={scores.peggings()} /&gt;&lt;/GridItem&gt;
             &lt;GridItem column=<span class="number">3</span>&gt;
                 &lt;Space vertical=<span class="bool-val">true </span>justify=SpaceJustify::SpaceAround align=SpaceAlign::Center&gt;
                     { player_view() }

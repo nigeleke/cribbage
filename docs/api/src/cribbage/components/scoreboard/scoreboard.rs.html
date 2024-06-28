@@ -72,14 +72,14 @@
 </span><span class="attr">#[component]
 </span><span class="kw">pub fn </span>Scoreboard(
 
-    scores: Peggings,
+    peggings: Peggings,
 
 ) -&gt; <span class="kw">impl </span>IntoView {
-    provide_context(scores.clone());
+    provide_context(peggings.clone());
 
     <span class="kw">let </span>default_score = Pegging::default();
-    <span class="kw">let </span>current_player_score = scores.get(<span class="kw-2">&amp;</span>Role::CurrentPlayer).unwrap_or(<span class="kw-2">&amp;</span>default_score);
-    <span class="kw">let </span>opponent_score = scores.get(<span class="kw-2">&amp;</span>Role::Opponent).unwrap_or(<span class="kw-2">&amp;</span>default_score);
+    <span class="kw">let </span>current_player_score = peggings.get(<span class="kw-2">&amp;</span>Role::CurrentPlayer).unwrap_or(<span class="kw-2">&amp;</span>default_score);
+    <span class="kw">let </span>opponent_score = peggings.get(<span class="kw-2">&amp;</span>Role::Opponent).unwrap_or(<span class="kw-2">&amp;</span>default_score);
 
     <span class="macro">view!</span> {
         &lt;div&gt;
@@ -113,7 +113,7 @@
         LeptosRuntime::new(
             || {
                 <span class="kw">let </span>scores = Peggings::default();
-                Scoreboard(ScoreboardProps { scores })
+                Scoreboard(ScoreboardProps { peggings: scores })
             },
             |<span class="kw">_</span>: <span class="kw-2">&amp;</span>View| {},
             |rendered: String| {

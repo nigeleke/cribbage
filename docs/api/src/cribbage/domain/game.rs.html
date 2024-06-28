@@ -1682,10 +1682,16 @@
 <a href="#1682" id="1682">1682</a>
 <a href="#1683" id="1683">1683</a>
 <a href="#1684" id="1684">1684</a>
+<a href="#1685" id="1685">1685</a>
+<a href="#1686" id="1686">1686</a>
+<a href="#1687" id="1687">1687</a>
+<a href="#1688" id="1688">1688</a>
+<a href="#1689" id="1689">1689</a>
+<a href="#1690" id="1690">1690</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::cards::{Card, Crib, Cut, Cuts, Deck, Hand, Hands};
 <span class="kw">use </span><span class="kw">super</span>::plays::PlayState;
 <span class="kw">use </span><span class="kw">super</span>::result::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">super</span>::scores::{Scores, ScoreReasons};
+<span class="kw">use </span><span class="kw">super</span>::scores::{Peggings, Scores, ScoreReasons};
 <span class="kw">use </span><span class="kw">super</span>::scorers::<span class="kw-2">*</span>;
 
 <span class="kw">use </span><span class="kw">crate</span>::constants::<span class="kw-2">*</span>;
@@ -1705,7 +1711,7 @@
     ScoringPone(Scores, Player, Hands, Cut, Crib),
     ScoringDealer(Scores, Player, Hands, Cut, Crib),
     ScoringCrib(Scores, Player, Hands, Cut, Crib),
-    Finished(Scores),
+    Finished(Player, Peggings),
 }
 
 <span class="kw">impl </span>Game {
@@ -1734,7 +1740,7 @@
             Game::ScoringPone(<span class="kw">_</span>, <span class="kw">_</span>, hands, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; Players::from_iter(hands.keys().cloned()),
             Game::ScoringDealer(<span class="kw">_</span>, <span class="kw">_</span>, hands, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; Players::from_iter(hands.keys().cloned()),
             Game::ScoringCrib(<span class="kw">_</span>, <span class="kw">_</span>, hands, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; Players::from_iter(hands.keys().cloned()),
-            Game::Finished(scores) =&gt; Players::from_iter(scores.peggings().keys().cloned()),
+            Game::Finished(<span class="kw">_</span>, peggings) =&gt; Players::from_iter(peggings.keys().cloned()),
         }
     }
 
@@ -1750,24 +1756,23 @@
         }
     }
 
-    <span class="kw">pub fn </span>scores(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Scores {
+    <span class="kw">pub fn </span>peggings(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Peggings {
         <span class="kw">match </span><span class="self">self </span>{
             Game::Starting(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
-            Game::Discarding(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores,
-            Game::Playing(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores,
-            Game::ScoringPone(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores,
-            Game::ScoringDealer(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores,
-            Game::ScoringCrib(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores,
-            Game::Finished(scores) =&gt; scores,
+            Game::Discarding(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores.peggings(),
+            Game::Playing(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores.peggings(),
+            Game::ScoringPone(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores.peggings(),
+            Game::ScoringDealer(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores.peggings(),
+            Game::ScoringCrib(scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; scores.peggings(),
+            Game::Finished(<span class="kw">_</span>, peggings) =&gt; peggings.clone(),
         }.clone()
     }
 
-    <span class="kw">fn </span>has_winner(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="kw">let </span>peggings = <span class="self">self</span>.scores().peggings();
-        !peggings.values()
-            .filter(|s| s.points() &gt;= WINNING_SCORE.into())
-            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-            .is_empty()
+    <span class="kw">fn </span>winner(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Player&gt; {
+        <span class="kw">let </span>peggings = <span class="self">self</span>.peggings();
+        peggings.iter()
+            .filter_map(|(player, pegging)| (pegging.points() &gt;= WINNING_SCORE.into()).then_some(<span class="kw-2">*</span>player))
+            .next()
     }
 
     <span class="kw">pub fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
@@ -1841,7 +1846,7 @@
             Game::ScoringPone(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="kw-2">*</span>dealer,
             Game::ScoringDealer(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="kw-2">*</span>dealer,
             Game::ScoringCrib(<span class="kw">_</span>, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="kw-2">*</span>dealer,
-            Game::Finished(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+            Game::Finished(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
         }
     }
 
@@ -1870,12 +1875,12 @@
             Game::ScoringPone(<span class="kw-2">ref mut </span>scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; update(scores),
             Game::ScoringDealer(<span class="kw-2">ref mut </span>scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; update(scores),
             Game::ScoringCrib(<span class="kw-2">ref mut </span>scores, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; update(scores),
-            Game::Finished(<span class="kw">_</span>) =&gt; { },
+            Game::Finished(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; { },
         };
 
-        <span class="kw">if </span>game.has_winner() {
-            <span class="kw">let </span>scores = game.scores();
-            game = Game::Finished(scores)
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(winner) = game.winner() {
+            <span class="kw">let </span>scores = game.peggings();
+            game = Game::Finished(winner, scores)
         }
 
         <span class="prelude-val">Ok</span>(game)
@@ -2021,8 +2026,8 @@
                 <span class="macro">write!</span>(f, <span class="string">"ScoringCrib(Scores({}), Dealer({}), Hands({}), Cut({})), Crib({}))"</span>,
                     scores, dealer, format_hashmap(hands), cut, crib),
         
-            Game::Finished(scores) =&gt;
-                <span class="macro">write!</span>(f, <span class="string">"Finished(Scores({}))"</span>, scores),
+            Game::Finished(winner, peggings) =&gt;
+                <span class="macro">write!</span>(f, <span class="string">"Finished(Winner({}), Peggings({}))"</span>, winner, format_hashmap(peggings)),
         }
     }
 }
@@ -2603,9 +2608,10 @@
         <span class="kw">let </span>score0_pone = scores0.peggings()[<span class="kw-2">&amp;</span>pone];
 
         <span class="kw">let </span>game1 = game0.play(pone, Card::from(<span class="string">"5H"</span>)).ok().unwrap();
-        <span class="kw">let </span>Game::Finished(scores1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-        <span class="kw">let </span>score1_pone = scores1.peggings()[<span class="kw-2">&amp;</span>pone];
+        <span class="kw">let </span>Game::Finished(winner, peggings1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>score1_pone = peggings1[<span class="kw-2">&amp;</span>pone];
     
+        <span class="macro">assert_eq!</span>(winner, pone);
         <span class="macro">assert_eq!</span>(score1_pone, score0_pone.add(<span class="number">2</span>.into()));
     }
 
@@ -2671,10 +2677,11 @@
         <span class="kw">let </span>Game::Playing(scores0, dealer0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
         <span class="kw">let </span>game1 = game0.play(pone, Card::from(<span class="string">"AH"</span>)).ok().unwrap();
-        <span class="kw">let </span>Game::Finished(scores1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>Game::Finished(winner, peggings1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-        <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone].add(<span class="number">2</span>.into()));
-        <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>dealer0], scores0.peggings()[<span class="kw-2">&amp;</span>dealer0]);
+        <span class="macro">assert_eq!</span>(winner, pone);
+        <span class="macro">assert_eq!</span>(peggings1[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone].add(<span class="number">2</span>.into()));
+        <span class="macro">assert_eq!</span>(peggings1[<span class="kw-2">&amp;</span>dealer0], scores0.peggings()[<span class="kw-2">&amp;</span>dealer0]);
     }
 
     <span class="attr">#[test]
@@ -2690,10 +2697,11 @@
         <span class="kw">let </span>Game::Playing(scores0, dealer0, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
         <span class="kw">let </span>game1 = game0.play(pone, Card::from(<span class="string">"AH"</span>)).ok().unwrap();
-        <span class="kw">let </span>Game::Finished(scores1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>Game::Finished(winner, peggings1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-        <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone].add(<span class="number">1</span>.into()));
-        <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>dealer0], scores0.peggings()[<span class="kw-2">&amp;</span>dealer0]);
+        <span class="macro">assert_eq!</span>(winner, pone);
+        <span class="macro">assert_eq!</span>(peggings1[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone].add(<span class="number">1</span>.into()));
+        <span class="macro">assert_eq!</span>(peggings1[<span class="kw-2">&amp;</span>dealer0], scores0.peggings()[<span class="kw-2">&amp;</span>dealer0]);
     }
 
     <span class="attr">#[test]
@@ -2808,9 +2816,10 @@
         <span class="kw">let </span>game1 = game0.pass(pone).ok().unwrap();
         <span class="kw">let </span>game2 = game1.pass(dealer0).ok().unwrap();
 
-        <span class="kw">let </span>Game::Finished(scores2) = game2.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
-        <span class="macro">assert_eq!</span>(scores2.peggings()[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone]);
-        <span class="macro">assert_eq!</span>(scores2.peggings()[<span class="kw-2">&amp;</span>dealer0], scores0.peggings()[<span class="kw-2">&amp;</span>dealer0].add(<span class="number">1</span>.into()));
+        <span class="kw">let </span>Game::Finished(winner, peggings2) = game2.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="macro">assert_eq!</span>(winner, dealer0);
+        <span class="macro">assert_eq!</span>(peggings2[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone]);
+        <span class="macro">assert_eq!</span>(peggings2[<span class="kw-2">&amp;</span>dealer0], scores0.peggings()[<span class="kw-2">&amp;</span>dealer0].add(<span class="number">1</span>.into()));
     }
 
     <span class="attr">#[test]
@@ -3128,10 +3137,11 @@
         <span class="kw">let </span>Game::Playing(scores0, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
         <span class="kw">let </span>game1 = game0.score_pone().ok().unwrap();
-        <span class="kw">let </span>Game::Finished(scores1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>Game::Finished(winner, peggings1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-        <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>dealer], scores0.peggings()[<span class="kw-2">&amp;</span>dealer]);
-        <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone].add(<span class="number">7</span>.into()));
+        <span class="macro">assert_eq!</span>(winner, pone);
+        <span class="macro">assert_eq!</span>(peggings1[<span class="kw-2">&amp;</span>dealer], scores0.peggings()[<span class="kw-2">&amp;</span>dealer]);
+        <span class="macro">assert_eq!</span>(peggings1[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone].add(<span class="number">7</span>.into()));
     }
 
     <span class="attr">#[test]
@@ -3234,10 +3244,11 @@
         <span class="kw">let </span>Game::ScoringPone(scores0, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
         <span class="kw">let </span>game1 = game0.score_dealer().ok().unwrap();
-        <span class="kw">let </span>Game::Finished(scores1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>Game::Finished(winner, peggings1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-        <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>dealer], scores0.peggings()[<span class="kw-2">&amp;</span>dealer].add(<span class="number">4</span>.into()));
-        <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone]);
+        <span class="macro">assert_eq!</span>(winner, dealer);
+        <span class="macro">assert_eq!</span>(peggings1[<span class="kw-2">&amp;</span>dealer], scores0.peggings()[<span class="kw-2">&amp;</span>dealer].add(<span class="number">4</span>.into()));
+        <span class="macro">assert_eq!</span>(peggings1[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone]);
     }
 
     <span class="attr">#[test]
@@ -3282,10 +3293,11 @@
         <span class="kw">let </span>Game::ScoringDealer(scores0, dealer, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = game0.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
         <span class="kw">let </span>game1 = game0.score_crib().ok().unwrap();
-        <span class="kw">let </span>Game::Finished(scores1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
+        <span class="kw">let </span>Game::Finished(winner, peggings1) = game1.clone() <span class="kw">else </span>{ <span class="macro">panic!</span>(<span class="string">"Unexpected state"</span>) };
 
-        <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>dealer], scores0.peggings()[<span class="kw-2">&amp;</span>dealer].add(<span class="number">12</span>.into()));
-        <span class="macro">assert_eq!</span>(scores1.peggings()[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone]);
+        <span class="macro">assert_eq!</span>(winner, dealer);
+        <span class="macro">assert_eq!</span>(peggings1[<span class="kw-2">&amp;</span>dealer], scores0.peggings()[<span class="kw-2">&amp;</span>dealer].add(<span class="number">12</span>.into()));
+        <span class="macro">assert_eq!</span>(peggings1[<span class="kw-2">&amp;</span>pone], scores0.peggings()[<span class="kw-2">&amp;</span>pone]);
     }
 
     <span class="attr">#[test]

@@ -108,11 +108,17 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::card::{Card, CardSlot, Cut};
 <span class="kw">use </span><span class="kw">super</span>::cards::{Crib, Cuts, Hands};
 <span class="kw">use </span><span class="kw">super</span>::plays::PlayState;
 <span class="kw">use </span><span class="kw">super</span>::role::{Dealer, Role};
-<span class="kw">use </span><span class="kw">super</span>::scores::Peggings;
+<span class="kw">use </span><span class="kw">super</span>::scores::{Peggings, Scores};
 
 <span class="kw">use </span><span class="kw">crate</span>::domain::Game <span class="kw">as </span>DomainGame;
 <span class="kw">use </span><span class="kw">crate</span>::types::Player;
@@ -125,12 +131,12 @@
 </span><span class="attr">#[derive(Clone, Debug, Serialize, Deserialize)]
 </span><span class="kw">pub enum </span>Game {
     Starting(Cuts),
-    Discarding(Peggings, Hands, Crib, Dealer),
-    Playing(Peggings, Hands, PlayState, Cut, Crib, Dealer),
-    ScoringPone(Peggings, Role, Hands, Cut, Crib),
-    ScoringDealer(Peggings, Role, Hands, Cut, Crib),
-    ScoringCrib(Peggings, Role, Hands, Cut, Crib),
-    Finished(Peggings),
+    Discarding(Scores, Hands, Crib, Dealer),
+    Playing(Scores, Hands, PlayState, Cut, Crib, Dealer),
+    ScoringPone(Scores, Role, Hands, Cut, Crib),
+    ScoringDealer(Scores, Role, Hands, Cut, Crib),
+    ScoringCrib(Scores, Role, Hands, Cut, Crib),
+    Finished(Role, Peggings),
 }
 
 <span class="kw">impl </span>From&lt;(DomainGame, Player)&gt; <span class="kw">for </span>Game {
@@ -144,53 +150,59 @@
             DomainGame::Discarding(scores, dealer, hands, crib, _deck) =&gt; {
                 <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
                 <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
+                <span class="kw">let </span>scores = Scores::new(peggings, scores.reasons());
                 <span class="kw">let </span>(player_hand, opponent_hand) = partition_for(player, <span class="kw-2">&amp;</span>hands);
                 <span class="kw">let </span>hands = merge(face_up(player_hand.as_ref()), face_down(opponent_hand.as_ref()));
                 <span class="kw">let </span>crib = face_down(crib.as_ref());
                 <span class="kw">let </span>dealer = Dealer::from((dealer, player));
-                Game::Discarding(peggings, hands, crib, dealer)
+                Game::Discarding(scores, hands, crib, dealer)
             },
             DomainGame::Playing(scores, dealer, hands, play_state, cut, crib) =&gt; {
                 <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
                 <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
+                <span class="kw">let </span>scores = Scores::new(peggings, scores.reasons());
                 <span class="kw">let </span>(player_hand, opponent_hand) = partition_for(player, <span class="kw-2">&amp;</span>hands);
                 <span class="kw">let </span>hands = merge(face_up(player_hand.as_ref()), face_down(opponent_hand.as_ref()));
                 <span class="kw">let </span>play_state = (play_state, player).into();
                 <span class="kw">let </span>crib = face_down(crib.as_ref());
                 <span class="kw">let </span>dealer = Dealer::from((dealer, player));
-                Game::Playing(peggings, hands, play_state, cut, crib, dealer)
+                Game::Playing(scores, hands, play_state, cut, crib, dealer)
             },
             DomainGame::ScoringPone(<span class="kw-2">ref </span>scores, <span class="kw">_</span>, <span class="kw-2">ref </span>hands, cut, <span class="kw-2">ref </span>crib) =&gt; {
                 <span class="kw">let </span>pone = Role::from((game.pone(), player));
                 <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
                 <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
+                <span class="kw">let </span>scores = Scores::new(peggings, scores.reasons());
                 <span class="kw">let </span>(player_hand, opponent_hand) = partition_for(player, hands);
                 <span class="kw">let </span>hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
                 <span class="kw">let </span>crib = face_down(crib.as_ref());
-                Game::ScoringPone(peggings, pone, hands, cut, crib)
+                Game::ScoringPone(scores, pone, hands, cut, crib)
             },
             DomainGame::ScoringDealer(<span class="kw-2">ref </span>scores, <span class="kw">_</span>, <span class="kw-2">ref </span>hands, cut, <span class="kw-2">ref </span>crib) =&gt; {
                 <span class="kw">let </span>pone = Role::from((game.pone(), player));
                 <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
                 <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
+                <span class="kw">let </span>scores = Scores::new(peggings, scores.reasons());
                 <span class="kw">let </span>(player_hand, opponent_hand) = partition_for(player, hands);
                 <span class="kw">let </span>hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
                 <span class="kw">let </span>crib = face_down(crib.as_ref());
-                Game::ScoringDealer(peggings, pone, hands, cut, crib)
+                Game::ScoringDealer(scores, pone, hands, cut, crib)
             },
             DomainGame::ScoringCrib(<span class="kw-2">ref </span>scores, <span class="kw">_</span>, <span class="kw-2">ref </span>hands, cut, <span class="kw-2">ref </span>crib) =&gt; {
                 <span class="kw">let </span>pone = Role::from((game.pone(), player));
                 <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
                 <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
+                <span class="kw">let </span>scores = Scores::new(peggings, scores.reasons());
                 <span class="kw">let </span>(player_hand, opponent_hand) = partition_for(player, hands);
                 <span class="kw">let </span>hands = merge(face_up(player_hand.as_ref()), face_up(opponent_hand.as_ref()));
                 <span class="kw">let </span>crib = face_down(crib.as_ref());
-                Game::ScoringCrib(peggings, pone, hands, cut, crib)
+                Game::ScoringCrib(scores, pone, hands, cut, crib)
             },
-            DomainGame::Finished(<span class="kw-2">ref </span>scores) =&gt; {
-                <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>scores.peggings());
+            DomainGame::Finished(winner, <span class="kw-2">ref </span>peggings) =&gt; {
+                <span class="kw">let </span>winner = Role::from((winner, player));
+                <span class="kw">let </span>(player_pegging, opponent_pegging) = partition_for(player, <span class="kw-2">&amp;</span>peggings);
                 <span class="kw">let </span>peggings = merge(player_pegging, opponent_pegging);
-                Game::Finished(peggings)
+                Game::Finished(winner, peggings)
             },
         }
     }

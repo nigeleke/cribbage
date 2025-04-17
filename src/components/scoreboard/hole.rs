@@ -1,24 +1,21 @@
-use crate::types::HasPoints;
-use crate::view::{Role, Pegging, Peggings};
+use crate::view::{Pegging, Peggings, Role};
 
 use leptos::*;
 
 /// Show a single hole in the scoreboard.
 #[component]
-pub fn Hole(
-
-    x_offset: usize,
-    y_offset: usize,
-    representation: usize
-
-) -> impl IntoView {
-    
+pub fn Hole(x_offset: usize, y_offset: usize, representation: usize) -> impl IntoView {
     let role = use_context::<Role>().unwrap();
     let scores = use_context::<Peggings>().unwrap();
     let default_score = Pegging::default();
     let score = scores.get(&role).unwrap_or(&default_score);
 
-    let colour = (if role == Role::CurrentPlayer { "lime" } else { "red" }).to_string();
+    let colour = (if role == Role::CurrentPlayer {
+        "lime"
+    } else {
+        "red"
+    })
+    .to_string();
     let fill = match representation {
         0 => colour,
         n if score.front_peg().points() % 60.into() == n.into() => colour,
@@ -47,15 +44,20 @@ mod test {
             || {
                 let _ = provide_context(Role::CurrentPlayer);
                 let _ = provide_context(Peggings::default());
-                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, })
+                Hole(HoleProps {
+                    x_offset: 10,
+                    y_offset: 20,
+                    representation: 30,
+                })
             },
             |_: &View| {},
             |rendered: String| {
                 assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
                 assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="gray""#));
-            }
-        ).run()
-    }   
+            },
+        )
+        .run()
+    }
 
     #[test]
     fn hole_should_render_occupied_by_current_player() {
@@ -67,16 +69,21 @@ mod test {
                 let pegging = Pegging::default().add(30.into());
                 let _ = peggings.insert(Role::CurrentPlayer, pegging);
                 let _ = provide_context(peggings);
-            
-                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, })
+
+                Hole(HoleProps {
+                    x_offset: 10,
+                    y_offset: 20,
+                    representation: 30,
+                })
             },
             |_: &View| {},
             |rendered: String| {
                 assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
                 assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime""#));
-            }
-        ).run()
-    }   
+            },
+        )
+        .run()
+    }
 
     #[test]
     fn hole_should_render_occupied_by_opponent() {
@@ -88,15 +95,20 @@ mod test {
                 let pegging = Pegging::default().add(30.into());
                 let _ = peggings.insert(Role::Opponent, pegging);
                 let _ = provide_context(peggings);
-            
-                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 30, })
+
+                Hole(HoleProps {
+                    x_offset: 10,
+                    y_offset: 20,
+                    representation: 30,
+                })
             },
             |_: &View| {},
             |rendered: String| {
                 assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
                 assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="red""#));
-            }
-        ).run()
+            },
+        )
+        .run()
     }
 
     #[test]
@@ -109,15 +121,20 @@ mod test {
                 let pegging = Pegging::default().add(30.into());
                 let _ = peggings.insert(Role::Opponent, pegging);
                 let _ = provide_context(peggings);
-            
-                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 0, })
+
+                Hole(HoleProps {
+                    x_offset: 10,
+                    y_offset: 20,
+                    representation: 0,
+                })
             },
             |_: &View| {},
             |rendered: String| {
                 assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
                 assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime""#));
-            }
-        ).run()
+            },
+        )
+        .run()
     }
 
     #[test]
@@ -130,15 +147,20 @@ mod test {
                 let pegging = Pegging::default().add(121.into());
                 let _ = peggings.insert(Role::Opponent, pegging);
                 let _ = provide_context(peggings);
-            
-                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 121, })
+
+                Hole(HoleProps {
+                    x_offset: 10,
+                    y_offset: 20,
+                    representation: 121,
+                })
             },
             |_: &View| {},
             |rendered: String| {
                 assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
                 assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime""#));
-            }
-        ).run()
+            },
+        )
+        .run()
     }
 
     #[test]
@@ -151,14 +173,19 @@ mod test {
                 let pegging = Pegging::default().add(122.into());
                 let _ = peggings.insert(Role::Opponent, pegging);
                 let _ = provide_context(peggings);
-            
-                Hole(HoleProps { x_offset: 10, y_offset: 20, representation: 121, })
+
+                Hole(HoleProps {
+                    x_offset: 10,
+                    y_offset: 20,
+                    representation: 121,
+                })
             },
             |_: &View| {},
             |rendered: String| {
                 assert!(rendered.contains(r#"<g transform="translate(10,20)"#));
                 assert!(rendered.contains(r#"<circle cx="2" cy="2" r="2" fill="lime""#));
-            }
-        ).run()
+            },
+        )
+        .run()
     }
 }

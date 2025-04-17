@@ -1,12 +1,10 @@
-use crate::types::Player;
-
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
 pub enum Role {
     CurrentPlayer,
-    Opponent
-} 
+    Opponent,
+}
 
 impl Role {
     pub fn opponent(&self) -> Role {

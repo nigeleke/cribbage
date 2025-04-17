@@ -1,6 +1,11 @@
-use super::cards::Cards;
+use super::card_stock::CardStock;
 
 /// The current Crib.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CribType;
-pub type Crib = Cards<CribType>;
+pub type Crib = CardStock<CribType>;
+
+pub trait HasCrib {
+    fn crib(&self) -> &Crib;
+    fn crib_mut(&mut self) -> &mut Crib;
+}

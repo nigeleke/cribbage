@@ -1,27 +1,27 @@
 use enum_iterator::Sequence;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// A Card suit.
 #[derive(Clone, Copy, Debug, Deserialize, Sequence, Serialize, PartialEq)]
-pub enum Suit { Hearts, Clubs, Diamonds, Spades }
-
-pub trait HasSuit {
-    fn suit(&self) -> Suit;
+pub enum Suit {
+    Hearts,
+    Clubs,
+    Diamonds,
+    Spades,
 }
 
 impl std::fmt::Display for Suit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            Suit::Hearts => "♥",
-            Suit::Clubs => "♣",
-            Suit::Diamonds => "♦",
-            Suit::Spades => "♠",
+            Suit::Hearts => "H",
+            Suit::Clubs => "C",
+            Suit::Diamonds => "D",
+            Suit::Spades => "S",
         };
-        write!(f, "{}", s)
+        s.fmt(f)
     }
 }
 
-#[cfg(test)]
 impl From<char> for Suit {
     fn from(value: char) -> Self {
         match value {

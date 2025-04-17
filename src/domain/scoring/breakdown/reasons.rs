@@ -1,9 +1,8 @@
 use super::reason::{Reason, ReasonType};
 
-use crate::domain::Card;
-use crate::types::{Points, HasPoints};
+use crate::domain::{Card, Points};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct Reasons(Vec<Reason>);
@@ -26,30 +25,26 @@ impl Reasons {
     }
 
     pub fn with_his_heels(&mut self, cards: &[Card], points: Points) {
-        self.0.push(Reason::new(ReasonType::HisHeels, cards, points));
+        self.0
+            .push(Reason::new(ReasonType::HisHeels, cards, points));
     }
 
     pub fn with_end_of_play(&mut self, cards: &[Card], points: Points) {
-        self.0.push(Reason::new(ReasonType::EndOfPlay, cards, points));
+        self.0
+            .push(Reason::new(ReasonType::EndOfPlay, cards, points));
     }
 
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 
-    #[cfg(test)]
     pub fn add(&mut self, reasons: &[Reason]) {
         let mut reasons = Vec::from(reasons);
         self.0.append(&mut reasons);
     }
-}
 
-impl HasPoints for Reasons {
-    fn points(&self) -> Points {
-        self.0
-            .iter()
-            .map(|i| i.points())
-            .sum()
+    pub fn points(&self) -> Points {
+        self.0.iter().map(|i| i.points()).sum()
     }
 }
 
@@ -68,15 +63,20 @@ impl std::ops::AddAssign for Reasons {
     fn add_assign(&mut self, rhs: Self) {
         let mut rhs = rhs.0.clone();
         self.0.append(&mut rhs);
+    }
+}
 
+impl std::ops::Deref for Reasons {
+    type Target = [Reason];
+
+    fn deref(&self) -> &Self::Target {
+        self.0.as_ref()
     }
 }
 
 impl std::fmt::Display for Reasons {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let reasons = self.0.iter()
-            .map(|c| c.to_string())
-            .collect::<Vec<_>>();
+        let reasons = self.0.iter().map(|c| c.to_string()).collect::<Vec<_>>();
         write!(f, "[{}]", reasons.join(", "))
     }
 }

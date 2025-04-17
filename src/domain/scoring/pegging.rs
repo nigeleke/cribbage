@@ -1,8 +1,8 @@
 use super::Peg;
 
-use crate::types::{Player, Points, HasPoints};
+use serde::{Deserialize, Serialize};
 
-use serde::{Serialize, Deserialize};
+use crate::domain::{Player, Points};
 
 use std::collections::HashMap;
 
@@ -12,20 +12,25 @@ pub struct Pegging(Peg, Peg);
 pub type Peggings = HashMap<Player, Pegging>;
 
 impl Pegging {
-    pub fn front_peg(&self) -> Peg { self.1 }
-    pub fn back_peg(&self) -> Peg { self.0 }
+    pub fn front_peg(&self) -> Peg {
+        self.1
+    }
+    pub fn back_peg(&self) -> Peg {
+        self.0
+    }
 
     pub fn add(&self, points: Points) -> Self {
         if points == 0.into() {
             *self
         } else {
-            Self ( self.front_peg(), Peg::new(self.front_peg().points() + points))
+            Self(
+                self.front_peg(),
+                Peg::new(self.front_peg().points() + points),
+            )
         }
     }
-}
 
-impl HasPoints for Pegging {
-    fn points(&self) -> Points {
+    pub fn points(&self) -> Points {
         self.front_peg().points()
     }
 }

@@ -1,0 +1,35 @@
+use crate::domain::{Cuts, Deck, HasCuts, HasDeck, HasPlayers, Players};
+
+#[derive(Debug)]
+pub struct Starting {
+    cuts: Cuts,
+    deck: Deck,
+}
+
+impl Starting {
+    pub fn new(cuts: Cuts, deck: Deck) -> Self {
+        Self { cuts, deck }
+    }
+}
+
+impl HasPlayers for Starting {
+    fn players(&self) -> Players {
+        Players::from_iter(self.cuts.keys().copied())
+    }
+}
+
+impl HasDeck for Starting {
+    fn deck(&self) -> &Deck {
+        &self.deck
+    }
+
+    fn deck_mut(&mut self) -> &mut Deck {
+        &mut self.deck
+    }
+}
+
+impl HasCuts for Starting {
+    fn cuts(&self) -> &Cuts {
+        &self.cuts
+    }
+}

@@ -1,41 +1,48 @@
-use super::rank::{Rank, HasRank};
-use super::value::{Value, HasValue};
+use super::rank::Rank;
+use super::value::Value;
 
 use enum_iterator::Sequence;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// A Card face.
 #[derive(Clone, Copy, Debug, Deserialize, Sequence, Serialize, PartialEq)]
-pub enum Face { Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King }
-
-pub trait HasFace {
-    fn face(&self) -> Face;
+pub enum Face {
+    Ace,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Jack,
+    Queen,
+    King,
 }
 
-impl HasRank for Face {
-    fn rank(&self) -> Rank {
-        let rank = 
-            match self {
-                Face::Ace => 1,
-                Face::Two => 2,
-                Face::Three => 3,
-                Face::Four => 4,
-                Face::Five => 5,
-                Face::Six => 6,
-                Face::Seven => 7,
-                Face::Eight => 8,
-                Face::Nine => 9,
-                Face::Ten => 10,
-                Face::Jack => 11,
-                Face::Queen => 12,
-                Face::King => 13,
-            };
-        Rank::new(rank)
+impl Face {
+    pub fn rank(&self) -> Rank {
+        let rank = match self {
+            Face::Ace => 1,
+            Face::Two => 2,
+            Face::Three => 3,
+            Face::Four => 4,
+            Face::Five => 5,
+            Face::Six => 6,
+            Face::Seven => 7,
+            Face::Eight => 8,
+            Face::Nine => 9,
+            Face::Ten => 10,
+            Face::Jack => 11,
+            Face::Queen => 12,
+            Face::King => 13,
+        };
+        Rank::from(rank)
     }
-}
 
-impl HasValue for Face {
-    fn value(&self) -> Value {
+    pub fn value(&self) -> Value {
         let value = match self {
             Face::Ace => 1,
             Face::Two => 2,
@@ -46,12 +53,9 @@ impl HasValue for Face {
             Face::Seven => 7,
             Face::Eight => 8,
             Face::Nine => 9,
-            Face::Ten |
-            Face::Jack |
-            Face::Queen |
-            Face::King => 10,
+            Face::Ten | Face::Jack | Face::Queen | Face::King => 10,
         };
-        Value::new(value)
+        Value::from(value)
     }
 }
 
@@ -72,11 +76,10 @@ impl std::fmt::Display for Face {
             Face::Queen => "Q",
             Face::King => "K",
         };
-        write!(f, "{}", s)
+        s.fmt(f)
     }
 }
 
-#[cfg(test)]
 impl From<char> for Face {
     fn from(value: char) -> Self {
         match value {

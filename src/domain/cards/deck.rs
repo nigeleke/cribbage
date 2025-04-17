@@ -1,17 +1,22 @@
 use super::card::Card;
+use super::card_stock::CardStock;
 use super::cut::Cut;
-use super::cards::Cards;
 use super::hand::{Hand, Hands};
 
 use crate::constants::*;
-use crate::types::*;
+use crate::domain::Players;
 
 use rand::{seq::SliceRandom, thread_rng};
 
 /// A deck of cards.
 #[derive(Clone, Debug, PartialEq)]
 pub struct DeckType;
-pub type Deck = Cards<DeckType>;
+pub type Deck = CardStock<DeckType>;
+
+pub trait HasDeck {
+    fn deck(&self) -> &Deck;
+    fn deck_mut(&mut self) -> &mut Deck;
+}
 
 impl Deck {
     pub fn shuffled_pack() -> Deck {
@@ -20,19 +25,20 @@ impl Deck {
         cards.into()
     }
 
-    pub fn cut(&self) -> (Cut, Deck) {
-        let Some((&card, remainder)) = self.cards.split_first() else { unreachable!() };
-        (card, Deck::from(Vec::from(remainder)))
+    pub fn cut(&mut self) -> Cut {
+        self.cards.pop().expect(stringify!(Deck::cut))
     }
 
-    pub fn deal(&self, players: &Players) -> (Hands, Deck) {
-        let cards = &self.cards;
-        let hands = players
-            .iter()
-            .enumerate()
-            .map(|(i, p)| (*p, Hand::from(Vec::from(&cards[i*CARDS_DEALT_PER_HAND .. (i+1)*CARDS_DEALT_PER_HAND]))));
-        let deck = Deck::from(Vec::from(&cards[NUMBER_OF_PLAYERS_IN_GAME * CARDS_DEALT_PER_HAND ..]));
-        (Hands::from_iter(hands), deck)
+    pub fn deal(&mut self, players: &Players) -> Hands {
+        let hands = Hands::from_iter(players.iter().enumerate().map(|(i, p)| {
+            let start = i * CARDS_DEALT_PER_HAND;
+            let end = start + CARDS_DEALT_PER_HAND;
+            (*p, Hand::from(self.cards[start..end].to_vec()))
+        }));
+
+        self.cards.drain(..players.len() * CARDS_DEALT_PER_HAND);
+
+        hands
     }
 }
 
@@ -58,15 +64,16 @@ mod test {
 
     #[test]
     fn allow_a_random_card_to_be_cut() {
-        let deck = Deck::shuffled_pack();
-        let (cut, remaining) = deck.cut();
-        let cut: Card = cut.into();
-        assert!(deck.contains(&cut));
-        assert!(!remaining.cards.contains(&cut));
-        assert_eq!(remaining.cards.len(), 51);
-        for card in deck.cards {
-            assert_eq!(remaining.cards.contains(&card), card != cut)
+        let deck0 = Deck::shuffled_pack();
+        let mut deck1 = deck0.clone();
+        let cut = deck1.cut();
+
+        assert!(deck0.cards.contains(&cut));
+        assert!(!deck1.cards.contains(&cut));
+        assert_eq!(deck1.cards.len(), 51);
+
+        for card in deck0.cards {
+            assert_eq!(deck1.cards.contains(&card), card != cut)
         }
     }
-
 }

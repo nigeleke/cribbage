@@ -1,12 +1,10 @@
 use super::play::Play;
 
 use crate::constants::*;
-use crate::domain::{Card, Hand, Hands};
-use crate::domain::result::{Error, Result};
+use crate::domain::{Card, Hand, Hands, Player, Players, Value};
 use crate::fmt::{format_hashmap, format_vec};
-use crate::types::*;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PlayState {
@@ -29,26 +27,23 @@ impl PlayState {
     }
 
     pub fn running_total(&self) -> Value {
-        let cards = Hand::from(self.current_plays
-            .iter()
-            .map(|p| p.card())
-            .collect::<Vec<_>>());
+        let cards = Hand::from(
+            self.current_plays
+                .iter()
+                .map(|p| p.card())
+                .collect::<Vec<_>>(),
+        );
         cards.value()
     }
 
-    pub fn legal_plays(&self, player: Player) -> Result<Hand> {
-        if player == self.next_to_play {
-            Ok(self.legal_plays_unchecked(player))
-        } else {
-            Err(Error::CannotPlay)
-        }
-    }
-
-    fn legal_plays_unchecked(&self, player: Player) -> Hand {
+    pub fn legal_plays(&self, player: Player) -> Hand {
         let running_total = self.running_total();
-        let legal_plays: Hand = self.legal_plays[&player].as_ref().iter()
-            .filter_map(|c| (running_total + c.value() <= PLAY_TARGET.into()).then_some(*c))
-            .collect::<Vec<_>>().into();
+        let legal_plays: Hand = self.legal_plays[&player]
+            .as_ref()
+            .iter()
+            .filter_map(|c| (*running_total + *c.value() <= PLAY_TARGET).then_some(*c))
+            .collect::<Vec<_>>()
+            .into();
         legal_plays
     }
 
@@ -87,18 +82,26 @@ impl PlayState {
     fn make_opponent_next_player(&mut self) {
         let legal_plays = &mut self.legal_plays;
 
-        let mut players = legal_plays.keys();
-        let (player1, player2) = (players.next().unwrap(), players.next().unwrap());
+        let players = Vec::from_iter(legal_plays.keys());
+        let (player1, player2) = (players[0], players[1]);
 
         let player = self.next_to_play;
-        let opponent = if player == *player1 { *player2 } else { *player1 };
+        let opponent = if player == *player1 {
+            *player2
+        } else {
+            *player1
+        };
         self.next_to_play = opponent;
     }
 
     pub fn is_current_play_finished(&self) -> bool {
         let running_total = self.running_total();
         let legal_plays = &self.legal_plays;
-        legal_plays.iter().all(|(_, hand)| hand.as_ref().iter().all(|c| c.value() + running_total > PLAY_TARGET.into()))
+        legal_plays.iter().all(|(_, hand)| {
+            hand.as_ref()
+                .iter()
+                .all(|c| *c.value() + *running_total > PLAY_TARGET)
+        })
     }
 
     pub fn start_new_play(&mut self) {
@@ -107,7 +110,7 @@ impl PlayState {
     }
 
     pub fn target_reached(&self) -> bool {
-        self.running_total() == Value::from(PLAY_TARGET)
+        *self.running_total() == PLAY_TARGET
     }
 
     pub fn all_are_cards_played(&self) -> bool {
@@ -130,35 +133,48 @@ impl PlayState {
         let mut previous_plays = self.previous_plays();
         let mut plays = self.current_plays();
         plays.append(&mut previous_plays);
-        
+
         let players = Players::from_iter(plays.iter().map(|p| p.player()));
         let player_cards = players.into_iter().map(|player| {
-            (player, plays.iter().filter_map(|p| (p.player() == player).then_some(p.card())).collect::<Hand>())
+            (
+                player,
+                plays
+                    .iter()
+                    .filter_map(|p| (p.player() == player).then_some(p.card()))
+                    .collect::<Hand>(),
+            )
         });
 
         Hands::from_iter(player_cards)
     }
 
-    #[cfg(test)]
     pub fn force_current_play(&mut self, player: Player, card: Card) {
         self.current_plays.push(Play::new(player, card))
     }
 
-    #[cfg(test)]
     pub fn force_previous_play(&mut self, player: Player, card: Card) {
         self.previous_plays.push(Play::new(player, card))
     }
 
-    #[cfg(test)]
     pub fn force_pass_count(&mut self, n: usize) {
         self.pass_count = n;
     }
+}
 
+pub trait HasPlayState {
+    fn play_state(&self) -> &PlayState;
+    fn play_state_mut(&mut self) -> &mut PlayState;
+
+    fn running_total(&self) -> Value {
+        self.play_state().running_total()
+    }
 }
 
 impl std::fmt::Display for PlayState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Next({}), Legal({}), Passes({}), Current({}), Previous({})",
+        write!(
+            f,
+            "Next({}), Legal({}), Passes({}), Current({}), Previous({})",
             self.next_to_play,
             format_hashmap(&self.legal_plays),
             self.pass_count,

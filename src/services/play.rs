@@ -8,7 +8,6 @@ pub async fn play(game_id: String, card: Card) -> Result<GameView, ServerFnError
     use crate::ssr::auth;
     use crate::ssr::database::*;
     use crate::ssr::opponent::Opponent;
-    use crate::types::Player;
     use uuid::Uuid;
 
     let player: Player = auth::authenticated_user().await?.into();

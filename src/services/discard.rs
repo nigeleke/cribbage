@@ -7,7 +7,6 @@ pub async fn discard(game_id: String, cards: Vec<Card>) -> Result<GameView, Serv
     use crate::ssr::auth;
     use crate::ssr::database::*;
     use crate::ssr::opponent::Opponent;
-    use crate::types::Player;
     use uuid::Uuid;
 
     let player: Player = auth::authenticated_user().await?.into();

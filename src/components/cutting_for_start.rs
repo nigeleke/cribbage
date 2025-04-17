@@ -2,7 +2,6 @@ use crate::components::Context;
 use crate::components::card::Card;
 
 use crate::services::{redraw, start};
-use crate::types::*;
 use crate::view::{CardSlot, Cut, Cuts, Role};
 
 use leptos::*;
@@ -11,12 +10,7 @@ use thaw::*;
 /// The Cuts component shows the initial cuts at the start of the game.
 /// It enables the user to start or redraw as appropriate to the cuts' ranks.
 #[component]
-pub fn CuttingForStart(
-
-    cuts: Cuts
-
-) -> impl IntoView {
-
+pub fn CuttingForStart(cuts: Cuts) -> impl IntoView {
     let player_cut: Cut = cuts[&Role::CurrentPlayer];
     let player_rank = player_cut.rank();
 
@@ -74,10 +68,7 @@ pub fn CuttingForStart(
 }
 
 #[component]
-fn CardWithLabel(
-    card: CardSlot,
-    label: String,
-) -> impl IntoView {
+fn CardWithLabel(card: CardSlot, label: String) -> impl IntoView {
     view! {
         <Space vertical=true align=SpaceAlign::Center>
             <Card card />

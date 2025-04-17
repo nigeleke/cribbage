@@ -1,6 +1,6 @@
 use super::card::Card;
+use super::value::Value;
 
-use crate::types::*;
 use crate::fmt::format_vec;
 
 use serde::{Deserialize, Serialize};
@@ -8,14 +8,12 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct Cards<T>
-where T: Clone {
+pub struct CardStock<T: Clone> {
     pub cards: Vec<Card>,
-    _marker: std::marker::PhantomData<T>
+    _marker: std::marker::PhantomData<T>,
 }
 
-impl<T> Cards<T>
-where T: Clone {
+impl<T: Clone> CardStock<T> {
     pub fn remove(&mut self, card: Card) {
         self.cards.retain(|c| *c != card)
     }
@@ -40,64 +38,58 @@ where T: Clone {
         self.cards.is_empty()
     }
 
-    #[cfg(test)]
+    pub fn value(&self) -> Value {
+        self.cards.iter().map(|c| c.value()).sum()
+    }
+
     pub fn get(&self, indices: &[usize]) -> Vec<Card> {
-        Vec::from_iter(indices.into_iter().filter_map(|i| Some(self.cards[*i])))
+        Vec::from_iter(indices.iter().map(|i| self.cards[*i]))
     }
 
     pub fn contains(&self, card: &Card) -> bool {
         self.cards.contains(card)
     }
 
-    #[cfg(test)]
     pub fn contains_all(&self, cards: &[Card]) -> bool {
         cards.iter().all(|c| self.contains(c))
     }
 
-    #[cfg(test)]
     pub fn contains_none(&self, cards: &[Card]) -> bool {
         cards.iter().all(|c| !self.cards.contains(c))
     }
 }
 
-impl<T> HasValue for Cards<T>
-where T: Clone {
-    fn value(&self) -> Value {
-        self.cards.iter().map(|&c| c.value()).sum()
-    }
-}
-
-impl<T> Default for Cards<T>
-where T: Clone {
+impl<T: Clone> Default for CardStock<T> {
     fn default() -> Self {
-        Self { cards: Default::default(), _marker: Default::default() }
+        Self {
+            cards: Default::default(),
+            _marker: Default::default(),
+        }
     }
 }
 
-impl<T> Display for Cards<T>
-where T: Clone {
+impl<T: Clone> Display for CardStock<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", format_vec(&self.cards))
     }
 }
 
-impl<T> From<Vec<Card>> for Cards<T>
-where T: Clone {
+impl<T: Clone> From<Vec<Card>> for CardStock<T> {
     fn from(value: Vec<Card>) -> Self {
-        Self { cards: value, _marker: Default::default() }
+        Self {
+            cards: value,
+            _marker: Default::default(),
+        }
     }
 }
 
-impl<T> AsRef<[Card]> for Cards<T>
-where T: Clone {
+impl<T: Clone> AsRef<[Card]> for CardStock<T> {
     fn as_ref(&self) -> &[Card] {
         &self.cards
     }
 }
 
-#[cfg(test)]
-impl<T> From<&str> for Cards<T>
-where T: Clone {
+impl<T: Clone> From<&str> for CardStock<T> {
     fn from(value: &str) -> Self {
         let card_chunks = |cards: &str| {
             cards
@@ -113,13 +105,18 @@ where T: Clone {
             .map(|cid| Card::from(cid.as_str()))
             .collect::<Vec<_>>();
 
-        Self { cards, _marker: Default::default() }
+        Self {
+            cards,
+            _marker: Default::default(),
+        }
     }
 }
 
-impl<U> FromIterator<Card> for Cards<U>
-where U: Clone {
+impl<U: Clone> FromIterator<Card> for CardStock<U> {
     fn from_iter<T: IntoIterator<Item = Card>>(iter: T) -> Self {
-        Self { cards: Vec::from_iter(iter), _marker: Default::default() }
+        Self {
+            cards: Vec::from_iter(iter),
+            _marker: Default::default(),
+        }
     }
 }

@@ -1,12 +1,7 @@
 use super::card::{Card, CardSlot};
 use super::role::Role;
 
-use crate::domain::{
-    Hand as DomainHand,
-    Play as DomainPlay,
-    PlayState as DomainPlayState,
-};
-use crate::types::{Player, Value};
+use crate::domain::{Hand as DomainHand, Play as DomainPlay, PlayState as DomainPlayState};
 
 use serde::{Deserialize, Serialize};
 
@@ -67,29 +62,33 @@ impl PlayState {
 
 impl From<(DomainPlayState, Player)> for PlayState {
     fn from((play_state, player): (DomainPlayState, Player)) -> Self {
-        
         let running_total = play_state.running_total();
 
         let all_cards_are_played = play_state.all_are_cards_played();
 
         let mut legal_plays = Vec::new();
         if !all_cards_are_played {
-            legal_plays = Vec::from(play_state.legal_plays(player).ok().unwrap().as_ref());
+            legal_plays = Vec::from(play_state.legal_plays(player).unwrap.as_ref());
         }
-        
+
         let current_plays = play_state
             .current_plays()
             .into_iter()
             .map(|p| (p, player).into())
             .collect::<Vec<_>>();
-        
+
         let previous_plays = play_state
             .previous_plays()
             .into_iter()
             .map(|p| (p, player).into())
             .collect::<Vec<_>>();
 
-        PlayState { running_total, all_cards_are_played, legal_plays, current_plays, previous_plays }
+        PlayState {
+            running_total,
+            all_cards_are_played,
+            legal_plays,
+            current_plays,
+            previous_plays,
+        }
     }
 }
-

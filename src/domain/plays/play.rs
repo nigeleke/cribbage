@@ -1,7 +1,6 @@
-use crate::domain::Card;
-use crate::types::*;
+use crate::domain::{Card, Player};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Play {

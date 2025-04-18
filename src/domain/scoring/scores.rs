@@ -1,7 +1,7 @@
 use super::breakdown::Reasons;
 use super::pegging::{Pegging, Peggings};
 
-use crate::fmt::format_hashmap;
+use crate::display::format_hashmap;
 
 use crate::domain::{Player, Players};
 use crate::prelude::WINNING_SCORE;

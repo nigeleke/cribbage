@@ -1,4 +1,5 @@
 use crate::constants::*;
+use crate::display::format_hashmap;
 use crate::domain::{
     Card, Crib, Deck, Hands, HasCrib, HasDeck, HasHands, HasPlayers, HasRoles, HasScores, Player,
     Players, Roles, Scores,
@@ -107,5 +108,19 @@ impl HasDeck for Discarding {
 
     fn deck_mut(&mut self) -> &mut Deck {
         &mut self.deck
+    }
+}
+
+impl std::fmt::Display for Discarding {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Discarding(scores: {}, roles: {}, hands: {}, crib: {}, deck: {})",
+            self.scores,
+            self.roles,
+            format_hashmap(&self.hands),
+            self.crib,
+            self.deck
+        )
     }
 }

@@ -1,62 +1,51 @@
 use crate::display::format_hashmap;
 use crate::domain::{
-    Card, Crib, Cut, Hands, HasCrib, HasCut, HasHands, HasPlayState, HasPlayers, HasRoles,
-    HasScores, PlayState, Players, Roles, Scores,
+    Crib, Cut, Hands, HasCrib, HasCut, HasHands, HasPlayers, HasRoles, HasScores, Players, Roles,
+    Scores,
 };
 
 #[derive(Debug)]
-pub struct Playing {
+pub struct Scoring<T> {
     scores: Scores,
     roles: Roles,
     hands: Hands,
-    play_state: PlayState,
     cut: Cut,
     crib: Crib,
+    _marker: std::marker::PhantomData<T>,
 }
 
-impl Playing {
-    pub fn new(
-        scores: Scores,
-        roles: Roles,
-        hands: Hands,
-        play_state: PlayState,
-        cut: Cut,
-        crib: Crib,
-    ) -> Self {
+impl<T> Scoring<T> {
+    pub fn new(scores: Scores, roles: Roles, hands: Hands, cut: Cut, crib: Crib) -> Self {
         Self {
             scores,
             roles,
             hands,
-            play_state,
             cut,
             crib,
+            _marker: std::marker::PhantomData,
         }
     }
 
-    pub fn into_parts(self) -> (Scores, Roles, Hands, PlayState, Cut, Crib) {
+    pub fn into_parts(self) -> (Scores, Roles, Hands, Cut, Crib) {
         let Self {
             scores,
             roles,
             hands,
-            play_state,
             cut,
             crib,
+            _marker,
         } = self;
-        (scores, roles, hands, play_state, cut, crib)
-    }
-
-    pub fn play(&mut self, card: Card) {
-        self.play_state.play(card);
+        (scores, roles, hands, cut, crib)
     }
 }
 
-impl HasPlayers for Playing {
+impl<T> HasPlayers for Scoring<T> {
     fn players(&self) -> Players {
         Players::from_iter(self.hands.keys().copied())
     }
 }
 
-impl HasScores for Playing {
+impl<T> HasScores for Scoring<T> {
     fn scores(&self) -> &Scores {
         &self.scores
     }
@@ -66,13 +55,13 @@ impl HasScores for Playing {
     }
 }
 
-impl HasRoles for Playing {
+impl<T> HasRoles for Scoring<T> {
     fn roles(&self) -> &Roles {
         &self.roles
     }
 }
 
-impl HasHands for Playing {
+impl<T> HasHands for Scoring<T> {
     fn hands(&self) -> &Hands {
         &self.hands
     }
@@ -82,23 +71,13 @@ impl HasHands for Playing {
     }
 }
 
-impl HasPlayState for Playing {
-    fn play_state(&self) -> &PlayState {
-        &self.play_state
-    }
-
-    fn play_state_mut(&mut self) -> &mut PlayState {
-        &mut self.play_state
-    }
-}
-
-impl HasCut for Playing {
+impl<T> HasCut for Scoring<T> {
     fn cut(&self) -> Cut {
         self.cut
     }
 }
 
-impl HasCrib for Playing {
+impl<T> HasCrib for Scoring<T> {
     fn crib(&self) -> &Crib {
         &self.crib
     }
@@ -108,15 +87,22 @@ impl HasCrib for Playing {
     }
 }
 
-impl std::fmt::Display for Playing {
+impl<T> std::fmt::Display for Scoring<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = std::any::type_name::<T>();
+        let name = name.rsplit("::").next().unwrap();
+        let name = name
+            .strip_prefix("Scoring")
+            .and_then(|s| s.strip_suffix("Type"))
+            .unwrap_or(name);
+
         write!(
             f,
-            "Playing(scores: {}, roles: {}, hands: {}, play_state: {}, cut: {}, crib: {})",
+            "Scoring{}(scores: {}, roles: {}, hands: {}, cut: {}, crib: {})",
+            name,
             self.scores,
             self.roles,
             format_hashmap(&self.hands),
-            self.play_state,
             self.cut,
             self.crib
         )

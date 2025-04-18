@@ -16,7 +16,7 @@ mod players {
     fn constructed_with_two_players() {
         let builder = GameBuilder::default();
         let players = builder.players();
-        let game = builder.as_new().unwrap();
+        let game = builder.into_new().unwrap();
         assert_eq!(game.players().len(), 2);
         for player in players.into_iter() {
             assert!(game.players().contains(&player))
@@ -26,14 +26,14 @@ mod players {
     #[test]
     fn fails_constuction_without_two_players() {
         [0, 1, 3, 4].into_iter().for_each(|n| {
-            let error = GameBuilder::new(n).as_new().unwrap_err();
+            let error = GameBuilder::new(n).into_new().unwrap_err();
             assert!(matches!(error, GameError::IncorrectNumberOfPlayers(_)));
         });
     }
 
     #[test]
     fn provide_opponent_to_existing_player() {
-        let game = GameBuilder::default().as_new().unwrap();
+        let game = GameBuilder::default().into_new().unwrap();
         let (player, opponent) = game.player_1_2().unwrap();
 
         assert_eq!(game.opponent(player).unwrap(), opponent);
@@ -42,7 +42,7 @@ mod players {
 
     #[test]
     fn fail_to_provide_opponent_for_invalid_player() {
-        let game = GameBuilder::default().as_new().unwrap();
+        let game = GameBuilder::default().into_new().unwrap();
         let error = game.opponent(Player::new()).unwrap_err();
         assert!(matches!(error, GameError::InvalidPlayer(_)))
     }
@@ -59,7 +59,7 @@ mod deck {
     #[test]
     fn use_a_standard_pack_of_cards() {
         let builder = GameBuilder::default();
-        let game = builder.as_new().unwrap();
+        let game = builder.into_new().unwrap();
         let deck = game.deck();
         assert_eq!(deck.len(), 50);
         let (player1, player2) = game.player_1_2().unwrap();
@@ -83,11 +83,11 @@ mod deal_cut {
 
     #[test]
     fn start_game_with_lowest_cut_as_dealer() {
-        for (expected_dealer, cuts) in vec![(0, "ASKS"), (1, "KSAS")] {
+        for (expected_dealer, cuts) in [(0, "ASKS"), (1, "KSAS")] {
             let builder = GameBuilder::default().with_cuts(cuts);
             let players = builder.players();
             let cuts = builder.cuts();
-            let game = builder.as_starting();
+            let game = builder.into_starting();
             let game = game.start().unwrap();
             let roles = Roles::try_from(&cuts).unwrap();
 
@@ -100,7 +100,7 @@ mod deal_cut {
 
     #[test]
     fn fail_to_start_game_if_cuts_are_the_same_value() {
-        let game = GameBuilder::default().with_cuts("ASAC").as_starting();
+        let game = GameBuilder::default().with_cuts("ASAC").into_starting();
         let error = game.start().unwrap_err();
         assert!(matches!(error, GameError::CannotDetermineRoles(_)));
     }
@@ -108,7 +108,7 @@ mod deal_cut {
     #[test]
     fn redraw_if_cuts_are_same_value() {
         use std::any::{Any, TypeId};
-        let game0 = GameBuilder::default().with_cuts("ASAC").as_starting();
+        let game0 = GameBuilder::default().with_cuts("ASAC").into_starting();
         let game0_players = game0.players();
         let game1 = game0.redraw().unwrap();
         assert_eq!(game1.type_id(), TypeId::of::<Game<Starting>>());
@@ -117,7 +117,7 @@ mod deal_cut {
 
     #[test]
     fn fail_to_redraw_if_cuts_are_not_the_same_value() {
-        let game = GameBuilder::default().with_cuts("ASKS").as_starting();
+        let game = GameBuilder::default().with_cuts("ASKS").into_starting();
         let error = game.redraw().err().unwrap();
         assert_eq!(error, GameError::CutForStartDecided);
     }
@@ -132,7 +132,7 @@ mod deal {
 
     #[test]
     fn deal_six_cards_per_player() {
-        let game = GameBuilder::default().with_cuts("ASKS").as_starting();
+        let game = GameBuilder::default().with_cuts("ASKS").into_starting();
 
         let game = game.start().unwrap();
         let players = game.players();
@@ -145,7 +145,7 @@ mod deal {
 
     #[test]
     fn deal_when_draw_decided() {
-        let game = GameBuilder::default().with_cuts("ASKS").as_starting();
+        let game = GameBuilder::default().with_cuts("ASKS").into_starting();
         let game = game.start().unwrap();
         let players = game.players();
 
@@ -186,7 +186,7 @@ mod the_crib {
         let game0 = GameBuilder::default()
             .with_peggings(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-            .as_discarding();
+            .into_discarding();
 
         let (player0, opponent0) = game0.player_1_2().unwrap();
 
@@ -195,7 +195,7 @@ mod the_crib {
 
         let opponent_hand0 = game0.hand(opponent0).unwrap().clone();
         let scores0 = game0.scores().clone();
-        let dealer0 = game0.dealer().clone();
+        let dealer0 = game0.dealer();
         let deck0 = game0.deck().clone();
 
         let DiscardResult::Discarding(game1) = game0.discard(player0, &player_discard).unwrap()
@@ -219,7 +219,7 @@ mod the_crib {
         let game0 = GameBuilder::default()
             .with_peggings(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-            .as_discarding();
+            .into_discarding();
 
         let (player0, opponent0) = game0.player_1_2().unwrap();
 
@@ -259,7 +259,7 @@ mod the_crib {
         let game0 = GameBuilder::default()
             .with_peggings(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-            .as_discarding();
+            .into_discarding();
 
         let (player0, _) = game0.player_1_2().unwrap();
 
@@ -276,7 +276,7 @@ mod the_crib {
         let game0 = GameBuilder::default()
             .with_peggings(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-            .as_discarding();
+            .into_discarding();
 
         let (player0, opponent0) = game0.player_1_2().unwrap();
 
@@ -293,7 +293,7 @@ mod the_crib {
         let game0 = GameBuilder::default()
             .with_peggings(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-            .as_discarding();
+            .into_discarding();
 
         let (player0, _) = game0.player_1_2().unwrap();
 
@@ -321,7 +321,7 @@ mod before_the_play {
         let game0 = GameBuilder::default()
             .with_peggings(0, 0)
             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-            .as_discarding();
+            .into_discarding();
 
         let (player0, opponent0) = game0.player_1_2().unwrap();
 
@@ -342,35 +342,35 @@ mod before_the_play {
             panic!("unexpected state")
         };
 
-        let DiscardResult::Playing(game2) = game1.discard(opponent0, &opponent_discard).unwrap()
+        let DiscardResult::Playing(game1) = game1.discard(opponent0, &opponent_discard).unwrap()
         else {
             panic!("unexpected state")
         };
 
-        let scores2 = game2.scores();
-        let dealer2 = game2.dealer();
-        let hands2 = game2.hands();
-        let play_state2 = game2.play_state();
-        let cut2 = game2.cut();
-        let crib2 = game2.crib();
+        let scores1 = game1.scores();
+        let dealer1 = game1.dealer();
+        let hands1 = game1.hands();
+        let play_state1 = game1.play_state();
+        let cut1 = game1.cut();
+        let crib1 = game1.crib();
 
-        let hand2 = hands2[&player0].clone();
-        let opponent_hand2 = hands2[&opponent0].clone();
+        let hand1 = hands1[&player0].clone();
+        let opponent_hand1 = hands1[&opponent0].clone();
 
-        assert_eq!(dealer2, dealer0);
-        assert!(hand2.contains_none(&player_discard));
-        assert!(crib2.contains_all(&player_discard));
-        assert!(opponent_hand2.contains_none(&opponent_discard));
-        assert!(crib2.contains_all(&opponent_discard));
-        assert!(deck0.contains(&cut2));
-        assert_eq!(crib2.len(), CARDS_REQUIRED_IN_CRIB);
-        assert_eq!(play_state2.legal_plays(pone0), hands2[&pone0]);
-        assert_eq!(play_state2.legal_plays(dealer0), hands2[&dealer0]);
-        assert_eq!(play_state2.pass_count(), 0);
-        assert_eq!(play_state2.current_plays(), vec![]);
-        assert_eq!(play_state2.previous_plays(), vec![]);
+        assert_eq!(dealer1, dealer0);
+        assert!(hand1.contains_none(&player_discard));
+        assert!(crib1.contains_all(&player_discard));
+        assert!(opponent_hand1.contains_none(&opponent_discard));
+        assert!(crib1.contains_all(&opponent_discard));
+        assert!(deck0.contains(&cut1));
+        assert_eq!(crib1.len(), CARDS_REQUIRED_IN_CRIB);
+        assert_eq!(play_state1.legal_plays(pone0), hands1[&pone0]);
+        assert_eq!(play_state1.legal_plays(dealer0), hands1[&dealer0]);
+        assert_eq!(play_state1.pass_count(), 0);
+        assert_eq!(play_state1.current_plays(), []);
+        assert_eq!(play_state1.previous_plays(), []);
 
-        (scores0.clone(), scores2.clone(), cut2, dealer2, pone0)
+        (scores0.clone(), scores1.clone(), cut1, dealer1, pone0)
     }
 
     #[test]
@@ -400,7 +400,6 @@ mod before_the_play {
                 break;
             }
         }
-        assert!(true)
     }
 }
 
@@ -424,7 +423,7 @@ mod the_play {
             .with_peggings(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
-            .as_playing(1);
+            .into_playing(1);
         let pone0 = game0.pone();
         let scores0 = game0.scores();
         let dealer0 = game0.dealer();
@@ -433,8 +432,8 @@ mod the_play {
         let cut0 = game0.cut();
         let crib0 = game0.crib().clone();
         let dealer_hand0 = hands0[&dealer0].clone();
-        let dealer_score0 = scores0.peggings()[&dealer0].clone();
-        let pone_score0 = scores0.peggings()[&pone0].clone();
+        let dealer_score0 = scores0.peggings()[&dealer0];
+        let pone_score0 = scores0.peggings()[&pone0];
 
         assert_eq!(play_state0.legal_plays(dealer0), hands0[&dealer0]);
         assert_eq!(play_state0.legal_plays(pone0), Hand::from("4S"));
@@ -472,7 +471,7 @@ mod the_play {
             .with_peggings(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
-            .as_playing(1);
+            .into_playing(1);
 
         let non_player = Player::new();
         let error = game0.play(non_player, Card::from("4S")).unwrap_err();
@@ -485,7 +484,7 @@ mod the_play {
             .with_peggings(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
-            .as_playing(1);
+            .into_playing(1);
         let pone0 = game0.pone();
         let card = Card::from("9S");
         let error = game0.play(pone0, card).unwrap_err();
@@ -498,7 +497,7 @@ mod the_play {
             .with_peggings(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
-            .as_playing(1);
+            .into_playing(1);
         let dealer0 = game0.dealer();
         let card = Card::from("9S");
         let error = game0.play(dealer0, card).unwrap_err();
@@ -511,8 +510,8 @@ mod the_play {
             .with_peggings(0, 0)
             .with_hands("9S", "4S")
             .with_cut("AS")
-            .with_current_plays(&vec![(0, "KH"), (0, "KC"), (0, "KD")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "KH"), (0, "KC"), (0, "KD")])
+            .into_playing(1);
         let pone0 = game0.pone();
 
         let play_state0 = game0.play_state();
@@ -528,8 +527,8 @@ mod the_play {
             .with_peggings(0, 0)
             .with_hands("5S", "5H")
             .with_cut("AS")
-            .with_current_plays(&vec![(0, "TH")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "TH")])
+            .into_playing(1);
         let pone0 = game0.pone();
         let scores0 = game0.scores();
         let score0_pone = scores0.peggings()[&pone0];
@@ -553,9 +552,9 @@ mod the_play {
             .with_peggings(0, 0)
             .with_hands("QS", "2H")
             .with_cut("QC")
-            .with_current_plays(&vec![(0, "JH"), (0, "QH")])
-            .with_previous_plays(&vec![(0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "JH"), (0, "QH")])
+            .with_previous_plays(&[(0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
+            .into_playing(1);
 
         let scores0 = game0.scores();
         let dealer0 = game0.dealer();
@@ -585,9 +584,9 @@ mod the_play {
             .with_peggings(0, 120)
             .with_hands("AH", "5H")
             .with_cut("QC")
-            .with_current_plays(&vec![(0, "JH")])
-            .with_previous_plays(&vec![(0, "9H"), (0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "JH")])
+            .with_previous_plays(&[(0, "9H"), (0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
+            .into_playing(1);
         let scores0 = game0.scores();
         let pone0 = game0.pone();
         let score0_pone = scores0.peggings()[&pone0];
@@ -611,9 +610,9 @@ mod the_play {
             .with_peggings(0, 0)
             .with_hands("9H", "AH")
             .with_cut("KC")
-            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "QH")])
-            .with_previous_plays(&vec![(1, "2S"), (1, "QS"), (1, "6S")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "QH")])
+            .with_previous_plays(&[(1, "2S"), (1, "QS"), (1, "6S")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -647,9 +646,9 @@ mod the_play {
             .with_peggings(0, 0)
             .with_hands("QC", "AH")
             .with_cut("KC")
-            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "QH")])
-            .with_previous_plays(&vec![(1, "2S"), (1, "QS"), (1, "6S")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "QH")])
+            .with_previous_plays(&[(1, "2S"), (1, "QS"), (1, "6S")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -682,9 +681,9 @@ mod the_play {
             .with_peggings(0, 120)
             .with_hands("QC", "AH")
             .with_cut("KC")
-            .with_current_plays(&vec![(0, "TH"), (1, "JH"), (0, "QH")])
-            .with_previous_plays(&vec![(1, "9H"), (1, "5S"), (0, "6S")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "TH"), (1, "JH"), (0, "QH")])
+            .with_previous_plays(&[(1, "9H"), (1, "5S"), (0, "6S")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -702,14 +701,36 @@ mod the_play {
     }
 
     #[test]
+    fn score_play_when_plays_finished_and_game_not_finished() {
+        let game0 = GameBuilder::default()
+            .with_peggings(0, 60)
+            .with_hands("", "AH")
+            .with_cut("KC")
+            .with_current_plays(&[(0, "8H"), (1, "JH"), (0, "QH")])
+            .with_previous_plays(&[(1, "9H"), (0, "4S"), (1, "5S"), (0, "6S")])
+            .into_playing(1);
+        let pone0 = game0.pone();
+        let scores0 = game0.scores().clone();
+        let dealer0 = game0.dealer();
+
+        let PlayResult::Scoring(game1) = game0.play(pone0, Card::from("AH")).unwrap() else {
+            panic!("unexpected state")
+        };
+
+        let peggings1 = game1.peggings();
+        assert_eq!(peggings1[&pone0], scores0.peggings()[&pone0].add(1.into()));
+        assert_eq!(peggings1[&dealer0], scores0.peggings()[&dealer0]);
+    }
+
+    #[test]
     fn score_play_when_plays_finished_and_game_finished() {
         let game0 = GameBuilder::default()
             .with_peggings(0, 120)
             .with_hands("", "AH")
             .with_cut("KC")
-            .with_current_plays(&vec![(0, "8H"), (1, "JH"), (0, "QH")])
-            .with_previous_plays(&vec![(1, "9H"), (0, "4S"), (1, "5S"), (0, "6S")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "8H"), (1, "JH"), (0, "QH")])
+            .with_previous_plays(&[(1, "9H"), (0, "4S"), (1, "5S"), (0, "6S")])
+            .into_playing(1);
         let pone0 = game0.pone();
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
@@ -732,7 +753,7 @@ mod the_play {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("7H8H8D9C", "4S5STHJH")
-            .as_playing(1);
+            .into_playing(1);
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
 
@@ -755,8 +776,8 @@ mod the_play {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("7H8H8D9C", "5STHJH")
-            .with_current_plays(&vec![(1, "4S")])
-            .as_playing(0);
+            .with_current_plays(&[(1, "4S")])
+            .into_playing(0);
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
 
@@ -779,8 +800,8 @@ mod the_play {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("7H8H8D", "5STH")
-            .with_current_plays(&vec![(1, "JH"), (0, "9C"), (1, "4S")])
-            .as_playing(0);
+            .with_current_plays(&[(1, "JH"), (0, "9C"), (1, "4S")])
+            .into_playing(0);
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
         let play_state0 = game0.play_state().clone();
@@ -811,8 +832,8 @@ mod the_play {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("KH", "8D")
-            .with_current_plays(&vec![(0, "7D")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "7D")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -840,8 +861,8 @@ mod the_play {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("KH", "8D")
-            .with_current_plays(&vec![(0, "8S")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "8S")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -869,8 +890,8 @@ mod the_play {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("KH", "8DAH")
-            .with_current_plays(&vec![(1, "8C"), (0, "8S")])
-            .as_playing(1);
+            .with_current_plays(&[(1, "8C"), (0, "8S")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -898,8 +919,8 @@ mod the_play {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("KH", "7DAH")
-            .with_current_plays(&vec![(1, "7C"), (0, "7S"), (0, "7H")])
-            .as_playing(1);
+            .with_current_plays(&[(1, "7C"), (0, "7S"), (0, "7H")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -927,8 +948,8 @@ mod the_play {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("KH", "AS")
-            .with_current_plays(&vec![(1, "2D"), (0, "3H")])
-            .as_playing(1);
+            .with_current_plays(&[(1, "2D"), (0, "3H")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -956,7 +977,7 @@ mod the_play {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("5H7H6H", "AH8S7S")
-            .as_playing(1);
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -965,30 +986,30 @@ mod the_play {
             panic!("unexpected state")
         };
 
-        let PlayResult::Playing(game2) = game1.play(dealer0, Card::from("7H")).unwrap() else {
+        let PlayResult::Playing(game1) = game1.play(dealer0, Card::from("7H")).unwrap() else {
             panic!("unexpected state")
         };
 
-        let PlayResult::Playing(game3) = game2.play(pone0, Card::from("7S")).unwrap() else {
+        let PlayResult::Playing(game1) = game1.play(pone0, Card::from("7S")).unwrap() else {
             panic!("unexpected state")
         };
 
-        let PlayResult::Playing(game4) = game3.play(dealer0, Card::from("6H")).unwrap() else {
+        let PlayResult::Playing(game1) = game1.play(dealer0, Card::from("6H")).unwrap() else {
             panic!("unexpected state")
         };
 
-        let scores4 = game4.scores();
-        let dealer4 = game4.dealer();
-        let pone4 = game4.pone();
+        let scores1 = game1.scores();
+        let dealer1 = game1.dealer();
+        let pone1 = game1.pone();
 
-        assert_eq!(dealer4, dealer0);
-        assert_eq!(pone4, pone0);
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(pone1, pone0);
         assert_eq!(
-            scores4.peggings()[&dealer4],
+            scores1.peggings()[&dealer1],
             scores0.peggings()[&dealer0].add(2.into())
         );
         assert_eq!(
-            scores4.peggings()[&pone4],
+            scores1.peggings()[&pone1],
             scores0.peggings()[&pone0].add(2.into())
         );
     }
@@ -999,7 +1020,7 @@ mod the_play {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("5H7H6H", "AH9S8S")
-            .as_playing(1);
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -1008,29 +1029,29 @@ mod the_play {
             panic!("unexpected state")
         };
 
-        let PlayResult::Playing(game2) = game1.play(dealer0, Card::from("6H")).unwrap() else {
+        let PlayResult::Playing(game1) = game1.play(dealer0, Card::from("6H")).unwrap() else {
             panic!("unexpected state")
         };
 
-        let PlayResult::Playing(game3) = game2.play(pone0, Card::from("8S")).unwrap() else {
+        let PlayResult::Playing(game1) = game1.play(pone0, Card::from("8S")).unwrap() else {
             panic!("unexpected state")
         };
 
-        let PlayResult::Playing(game4) = game3.play(dealer0, Card::from("7H")).unwrap() else {
+        let PlayResult::Playing(game1) = game1.play(dealer0, Card::from("7H")).unwrap() else {
             panic!("unexpected state")
         };
 
-        let scores4 = game4.scores();
-        let dealer4 = game4.dealer();
-        let pone4 = game4.pone();
+        let scores1 = game1.scores();
+        let dealer1 = game1.dealer();
+        let pone1 = game1.pone();
 
-        assert_eq!(dealer4, dealer0);
-        assert_eq!(pone4, pone0);
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(pone1, pone0);
         assert_eq!(
-            scores4.peggings()[&dealer4],
+            scores1.peggings()[&dealer1],
             scores0.peggings()[&dealer0].add(2.into()).add(4.into())
         );
-        assert_eq!(scores4.peggings()[&pone4], scores0.peggings()[&pone0]);
+        assert_eq!(scores1.peggings()[&pone1], scores0.peggings()[&pone0]);
     }
 }
 
@@ -1059,8 +1080,8 @@ mod the_go {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("AH", "KH")
-            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "QH")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "QH")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -1091,8 +1112,8 @@ mod the_go {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("KH", "KS")
-            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "TH"), (0, "JH"), (1, "QH")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -1103,27 +1124,27 @@ mod the_go {
             panic!("unexpected state")
         };
 
-        let PassResult::Playing(game2) = game1.pass(dealer0).unwrap() else {
+        let PassResult::Playing(game1) = game1.pass(dealer0).unwrap() else {
             panic!("unexpected state")
         };
 
-        let scores2 = game2.scores();
-        let dealer2 = game2.dealer();
-        let hands2 = game2.hands();
-        let play_state2 = game2.play_state();
+        let scores1 = game1.scores();
+        let dealer1 = game1.dealer();
+        let hands1 = game1.hands();
+        let play_state1 = game1.play_state();
 
-        assert_eq!(scores2.peggings()[&pone0], scores0.peggings()[&pone0]);
+        assert_eq!(scores1.peggings()[&pone0], scores0.peggings()[&pone0]);
         assert_eq!(
-            scores2.peggings()[&dealer2],
+            scores1.peggings()[&dealer1],
             scores0.peggings()[&dealer0].add(1.into())
         );
-        assert_eq!(dealer2, dealer0);
-        assert_eq!(hands2, &hands0);
-        assert_eq!(play_state2.next_to_play(), pone0);
-        assert_eq!(play_state2.pass_count(), 0);
-        assert!(play_state2.current_plays().is_empty());
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(hands1, &hands0);
+        assert_eq!(play_state1.next_to_play(), pone0);
+        assert_eq!(play_state1.pass_count(), 0);
+        assert!(play_state1.current_plays().is_empty());
         for p in play_state0.current_plays().into_iter() {
-            assert!(play_state2.previous_plays().contains(&p))
+            assert!(play_state1.previous_plays().contains(&p))
         }
     }
 
@@ -1133,8 +1154,8 @@ mod the_go {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("KH", "KS")
-            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "TH"), (0, "JH"), (1, "QH")])
+            .into_playing(1);
 
         let non_player = Player::new();
         let error = game0.pass(non_player).unwrap_err();
@@ -1147,8 +1168,8 @@ mod the_go {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("AH", "AS")
-            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (0, "8H")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "8H")])
+            .into_playing(1);
         let pone0 = game0.pone();
 
         let error = game0.pass(pone0).unwrap_err();
@@ -1161,8 +1182,8 @@ mod the_go {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("KH", "KS")
-            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "TH"), (0, "JH"), (1, "QH")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -1171,17 +1192,17 @@ mod the_go {
             panic!("unexpected state")
         };
 
-        let PassResult::Playing(game2) = game1.pass(dealer0).unwrap() else {
+        let PassResult::Playing(game1) = game1.pass(dealer0).unwrap() else {
             panic!("unexpectd state")
         };
 
-        let scores2 = game2.scores();
-        let dealer2 = game2.dealer();
-        let pone2 = game2.pone();
+        let scores1 = game1.scores();
+        let dealer1 = game1.dealer();
+        let pone1 = game1.pone();
 
-        assert_eq!(scores2.peggings()[&pone2], scores0.peggings()[&pone0]);
+        assert_eq!(scores1.peggings()[&pone1], scores0.peggings()[&pone0]);
         assert_eq!(
-            scores2.peggings()[&dealer2],
+            scores1.peggings()[&dealer1],
             scores0.peggings()[&dealer0].add(1.into())
         );
     }
@@ -1192,8 +1213,8 @@ mod the_go {
             .with_peggings(120, 0)
             .with_cut("AS")
             .with_hands("KH", "KS")
-            .with_current_plays(&vec![(0, "TH"), (0, "JH"), (1, "QH")])
-            .as_playing(1);
+            .with_current_plays(&[(0, "TH"), (0, "JH"), (1, "QH")])
+            .into_playing(1);
         let scores0 = game0.scores().clone();
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
@@ -1202,17 +1223,17 @@ mod the_go {
             panic!("unexpected state")
         };
 
-        let PassResult::Finished(game2) = game1.pass(dealer0).unwrap() else {
+        let PassResult::Finished(game1) = game1.pass(dealer0).unwrap() else {
             panic!("unexpected state")
         };
 
-        let winner2 = game2.winner();
-        let peggings2 = game2.peggings();
+        let winner1 = game1.winner();
+        let peggings1 = game1.peggings();
 
-        assert_eq!(winner2, dealer0);
-        assert_eq!(peggings2[&pone0], scores0.peggings()[&pone0]);
+        assert_eq!(winner1, dealer0);
+        assert_eq!(peggings1[&pone0], scores0.peggings()[&pone0]);
         assert_eq!(
-            peggings2[&dealer0],
+            peggings1[&dealer0],
             scores0.peggings()[&dealer0].add(1.into())
         );
     }
@@ -1223,8 +1244,8 @@ mod the_go {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("8H8D", "5SJH")
-            .with_current_plays(&vec![(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
-            .as_playing(1);
+            .with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
+            .into_playing(1);
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
 
@@ -1247,8 +1268,8 @@ mod the_go {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("7H8H8D", "4S5S")
-            .with_current_plays(&vec![(1, "JH"), (0, "9C"), (1, "TH")])
-            .as_playing(0);
+            .with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
+            .into_playing(0);
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
 
@@ -1271,8 +1292,8 @@ mod the_go {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("8H8D", "5SJH")
-            .with_current_plays(&vec![(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
-            .as_playing(1);
+            .with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
+            .into_playing(1);
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
         let play_state0 = game0.play_state().clone();
@@ -1281,20 +1302,20 @@ mod the_go {
             panic!("unexpected state")
         };
 
-        let PassResult::Playing(game2) = game1.pass(dealer0).unwrap() else {
+        let PassResult::Playing(game1) = game1.pass(dealer0).unwrap() else {
             panic!("unexpected state")
         };
 
-        let dealer2 = game2.dealer();
-        let pone2 = game2.pone();
-        let play_state2 = game2.play_state();
+        let dealer1 = game1.dealer();
+        let pone1 = game1.pone();
+        let play_state1 = game1.play_state();
 
-        assert_eq!(dealer2, dealer0);
-        assert_eq!(pone2, pone0);
-        assert_eq!(play_state2.next_to_play(), pone2);
-        assert_eq!(play_state2.previous_plays(), play_state0.current_plays());
-        assert!(play_state2.current_plays().is_empty());
-        assert_eq!(play_state2.pass_count(), 0);
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(pone1, pone0);
+        assert_eq!(play_state1.next_to_play(), pone1);
+        assert_eq!(play_state1.previous_plays(), play_state0.current_plays());
+        assert!(play_state1.current_plays().is_empty());
+        assert_eq!(play_state1.pass_count(), 0);
     }
 
     #[test]
@@ -1303,8 +1324,8 @@ mod the_go {
             .with_peggings(0, 0)
             .with_cut("AS")
             .with_hands("7H8H8D", "4S5S")
-            .with_current_plays(&vec![(1, "JH"), (0, "9C"), (1, "TH")])
-            .as_playing(0);
+            .with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
+            .into_playing(0);
         let dealer0 = game0.dealer();
         let pone0 = game0.pone();
         let play_state0 = game0.play_state().clone();
@@ -1313,20 +1334,20 @@ mod the_go {
             panic!("unexpected state")
         };
 
-        let PassResult::Playing(game2) = game1.pass(pone0).unwrap() else {
+        let PassResult::Playing(game1) = game1.pass(pone0).unwrap() else {
             panic!("unexpected state")
         };
 
-        let dealer2 = game2.dealer();
-        let pone2 = game2.pone();
-        let play_state2 = game2.play_state();
+        let dealer1 = game1.dealer();
+        let pone1 = game1.pone();
+        let play_state1 = game1.play_state();
 
-        assert_eq!(dealer2, dealer0);
-        assert_eq!(pone2, pone0);
-        assert_eq!(play_state2.next_to_play(), dealer2);
-        assert_eq!(play_state2.previous_plays(), play_state0.current_plays());
-        assert!(play_state2.current_plays().is_empty());
-        assert_eq!(play_state2.pass_count(), 0);
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(pone1, pone0);
+        assert_eq!(play_state1.next_to_play(), dealer1);
+        assert_eq!(play_state1.previous_plays(), play_state0.current_plays());
+        assert!(play_state1.current_plays().is_empty());
+        assert_eq!(play_state1.pass_count(), 0);
     }
 }
 
@@ -1367,7 +1388,7 @@ mod pegging {
             .with_hands("", "")
             .with_current_plays(&[(0, "JD"), (0, "5H")])
             .with_cut("AH")
-            .as_playing(1);
+            .into_playing(1);
         let play_state = game.play_state();
         assert_eq!(
             CurrentPlayScorer::new(play_state).score().points(),
@@ -1382,7 +1403,7 @@ mod pegging {
             .with_hands("", "")
             .with_current_plays(&[(0, "JD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(1);
+            .into_playing(1);
         let play_state = game.play_state();
         assert_eq!(
             CurrentPlayScorer::new(play_state).score().points(),
@@ -1397,7 +1418,7 @@ mod pegging {
             .with_hands("", "")
             .with_current_plays(&[(0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(1);
+            .into_playing(1);
         let play_state = game.play_state();
         assert_eq!(
             CurrentPlayScorer::new(play_state).score().points(),
@@ -1412,7 +1433,7 @@ mod pegging {
             .with_hands("", "")
             .with_current_plays(&[(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(1);
+            .into_playing(1);
         let play_state = game.play_state();
         assert_eq!(
             CurrentPlayScorer::new(play_state).score().points(),
@@ -1431,7 +1452,7 @@ mod pegging {
             (0, "7C"),
         ];
         for len in 1..=current_plays.len() {
-            let current_plays = current_plays.clone();
+            let current_plays = *current_plays;
             let current_plays = current_plays.into_iter().take(len);
             let current_plays = Vec::from_iter(current_plays);
             let game = GameBuilder::default()
@@ -1439,7 +1460,7 @@ mod pegging {
                 .with_hands("KS", "KD")
                 .with_current_plays(&current_plays)
                 .with_cut("KH")
-                .as_playing(1);
+                .into_playing(1);
             let play_state = game.play_state();
             assert_eq!(
                 CurrentPlayScorer::new(play_state).score().points(),
@@ -1455,7 +1476,7 @@ mod pegging {
             .with_hands("KS", "KD")
             .with_current_plays(&[(0, "3S"), (0, "2C"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(1);
+            .into_playing(1);
         let play_state = game.play_state();
         assert_eq!(
             CurrentPlayScorer::new(play_state).score().points(),
@@ -1470,7 +1491,7 @@ mod pegging {
             .with_hands("AH", "KD")
             .with_cut("2H")
             .with_current_plays(&[(1, "TH"), (0, "9H"), (1, "QH")])
-            .as_playing(0);
+            .into_playing(0);
         let dealer0 = game0.dealer();
 
         let PlayResult::Playing(game1) = game0.play(dealer0, Card::from("AH")).unwrap() else {
@@ -1489,9 +1510,9 @@ mod pegging {
         let game = GameBuilder::default()
             .with_peggings(0, 0)
             .with_hands("", "")
-            .with_current_plays(&vec![(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")])
+            .with_current_plays(&[(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")])
             .with_cut("KH")
-            .as_playing(1);
+            .into_playing(1);
         let play_state = game.play_state();
         assert_eq!(EndOfPlayScorer::new(play_state).score().points(), 1.into());
     }
@@ -1501,9 +1522,9 @@ mod pegging {
         let game = GameBuilder::default()
             .with_peggings(0, 0)
             .with_hands("", "")
-            .with_current_plays(&vec![(0, "KC"), (0, "KD"), (0, "KH"), (0, "AS")])
+            .with_current_plays(&[(0, "KC"), (0, "KD"), (0, "KH"), (0, "AS")])
             .with_cut("KS")
-            .as_playing(1);
+            .into_playing(1);
         let play_state = game.play_state();
         assert_eq!(EndOfPlayScorer::new(play_state).score().points(), 2.into())
     }
@@ -1530,6 +1551,217 @@ mod pegging {
 ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
 mod counting_the_hands {
     use super::*;
+
+    #[test]
+    fn score_pone_hand_when_plays_finished() {
+        let game0 = GameBuilder::default()
+            .with_peggings(0, 0)
+            .with_hands("", "TH")
+            .with_cut("4H")
+            .with_previous_plays(&[
+                (0, "7H"),
+                (0, "8C"),
+                (0, "AC"),
+                (0, "2C"),
+                (1, "JH"),
+                (1, "KS"),
+                (1, "5H"),
+            ])
+            .into_playing(1);
+        let scores0 = game0.scores().clone();
+        let dealer0 = game0.dealer();
+        let pone0 = game0.pone();
+
+        let PlayResult::Scoring(game1) = game0.play(pone0, Card::from("TH")).unwrap() else {
+            panic!("Unexpected state")
+        };
+
+        let scores1 = game1.scores();
+        let dealer1 = game1.dealer();
+        let pone1 = game1.pone();
+
+        assert_eq!(dealer1, dealer0);
+        assert_eq!(pone1, pone0);
+        assert_eq!(scores1.peggings()[&dealer1], scores0.peggings()[&dealer0]);
+        assert_eq!(
+            scores1.peggings()[&pone1],
+            scores0.peggings()[&pone0].add(1.into())
+        );
+    }
+
+    #[test]
+    fn score_winning_pone_when_plays_finished() {
+        let game0 = GameBuilder::default()
+            .with_peggings(0, 115)
+            .with_hands("", "TH")
+            .with_cut("4H")
+            .with_previous_plays(&[
+                (0, "7H"),
+                (0, "8C"),
+                (0, "AC"),
+                (0, "2C"),
+                (1, "JH"),
+                (1, "KS"),
+                (1, "5H"),
+            ])
+            .into_playing(1);
+
+        let dealer0 = game0.dealer();
+        let pone0 = game0.pone();
+
+        let PlayResult::Scoring(game1) = game0.play(pone0, Card::from("TH")).expect("valid play")
+        else {
+            panic!("unexpected state")
+        };
+
+        let scores1 = game1.scores().clone();
+
+        let ScorePoneResult::Finished(game2) = game1.score_hand().expect("valid score_hand") else {
+            panic!("unexpected state")
+        };
+
+        let winner2 = game2.winner();
+        let peggings2 = game2.peggings();
+
+        assert_eq!(winner2, pone0);
+        assert_eq!(peggings2[&dealer0], scores1.peggings()[&dealer0]);
+        assert_eq!(peggings2[&pone0], scores1.peggings()[&pone0].add(7.into()));
+    }
+
+    #[test]
+    fn score_dealer_after_pone_scored() {
+        let game0 = GameBuilder::default()
+            .with_peggings(0, 0)
+            .with_cut("4H")
+            .with_hands("7H8CAC2C", "JCKS5HTH")
+            .into_scoring_pone();
+        let dealer0 = game0.dealer();
+        let pone0 = game0.pone();
+
+        let ScorePoneResult::Scoring(game1) = game0.score_hand().expect("valid score_hand") else {
+            panic!("unexpected state")
+        };
+
+        let scores1 = game1.scores().clone();
+
+        let ScoreDealerResult::Scoring(game2) = game1.score_hand().expect("valid score_hand")
+        else {
+            panic!("unexpected state")
+        };
+
+        let scores2 = game2.scores();
+        let dealer2 = game2.dealer();
+        let pone2 = game2.pone();
+
+        assert_eq!(dealer0, dealer2);
+        assert_eq!(pone0, pone2);
+        assert_eq!(
+            scores2.peggings()[&dealer2],
+            scores1.peggings()[&dealer0].add(4.into())
+        );
+        assert_eq!(scores2.peggings()[&pone2], scores1.peggings()[&pone0]);
+    }
+
+    #[test]
+    fn score_winning_dealer_after_pone_scored() {
+        let game0 = GameBuilder::default()
+            .with_peggings(117, 0)
+            .with_cut("4H")
+            .with_hands("7H8CAC2C", "JCKS5HTH")
+            .into_scoring_pone();
+        let dealer0 = game0.dealer();
+        let pone0 = game0.pone();
+
+        let ScorePoneResult::Scoring(game1) = game0.score_hand().expect("valid score_hand") else {
+            panic!("unexpected state")
+        };
+
+        let scores1 = game1.scores().clone();
+
+        let ScoreDealerResult::Finished(game2) = game1.score_hand().expect("valid score_hand")
+        else {
+            panic!("unexpected state")
+        };
+
+        let winner2 = game2.winner();
+        let peggings2 = game2.peggings();
+
+        assert_eq!(winner2, dealer0);
+        assert_eq!(
+            peggings2[&winner2],
+            scores1.peggings()[&dealer0].add(4.into())
+        );
+        assert_eq!(peggings2[&pone0], scores1.peggings()[&pone0]);
+    }
+
+    #[test]
+    fn score_crib_after_dealer_scored() {
+        let game0 = GameBuilder::default()
+            .with_peggings(0, 0)
+            .with_cut("4H")
+            .with_hands("7H8CAC2C", "JCKS5HTH")
+            .with_crib("AHADASTD")
+            .into_scoring_dealer();
+        let dealer0 = game0.dealer();
+        let pone0 = game0.pone();
+
+        let ScoreDealerResult::Scoring(game1) = game0.score_hand().expect("valid score_hand")
+        else {
+            panic!("unexpected state")
+        };
+
+        let scores1 = game1.scores().clone();
+
+        let ScoreCribResult::Discarding(game2) = game1.score_crib().expect("valid score_crib")
+        else {
+            panic!("unexpected state")
+        };
+
+        let scores2 = game2.scores();
+        let dealer2 = game2.dealer();
+        let pone2 = game2.pone();
+
+        assert_eq!(dealer2, dealer0);
+        assert_eq!(pone2, pone0);
+        assert_eq!(
+            scores2.peggings()[&dealer2],
+            scores1.peggings()[&dealer0].add(12.into())
+        );
+        assert_eq!(scores2.peggings()[&pone2], scores1.peggings()[&pone0]);
+    }
+
+    #[test]
+    fn score_winning_crib_after_dealer_scored() {
+        let game0 = GameBuilder::default()
+            .with_peggings(110, 0)
+            .with_cut("4H")
+            .with_hands("7H8CAC2C", "JCKS5HTH")
+            .with_crib("AHADASTD")
+            .into_scoring_dealer();
+        let dealer0 = game0.dealer();
+        let pone0 = game0.pone();
+
+        let ScoreDealerResult::Scoring(game1) = game0.score_hand().expect("valid score_hand")
+        else {
+            panic!("unexpected state")
+        };
+
+        let scores1 = game1.scores().clone();
+
+        let ScoreCribResult::Finished(game2) = game1.score_crib().expect("valid score_crib") else {
+            panic!("unexpected state")
+        };
+
+        let winner2 = game2.winner();
+        let peggings2 = game2.peggings();
+
+        assert_eq!(winner2, dealer0);
+        assert_eq!(
+            peggings2[&winner2],
+            scores1.peggings()[&dealer0].add(12.into())
+        );
+        assert_eq!(peggings2[&pone0], scores1.peggings()[&pone0]);
+    }
 
     #[test]
     fn hand_should_score_fifteens() {
@@ -1871,9 +2103,9 @@ mod miscellaneous {}
 /// If a player wins the game before the loser has passed the halfway mark (did not reach 31 in
 /// a game of 61, or 61 in a game of 121), the loser is "lurched," and the winner scores two
 /// games instead of one. A popular variation of games played to 121, is a "skunk" (double game)
-/// for the winner if the losing player fails to pass the three-quarter mark - 91 points or more
-/// - and it is a "double skunk" (quadruple game) if the loser fails to pass the halfway mark
-/// (61 or more points).
+/// for the winner if the losing player fails to pass the three-quarter mark - 91 points or more -
+/// and it is a "double skunk" (quadruple game) if the loser fails to pass the halfway mark (61
+/// or more points).
 mod game {}
 
 /// ## The Cribbage Board

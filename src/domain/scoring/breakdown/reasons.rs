@@ -66,14 +66,6 @@ impl std::ops::AddAssign for Reasons {
     }
 }
 
-impl std::ops::Deref for Reasons {
-    type Target = [Reason];
-
-    fn deref(&self) -> &Self::Target {
-        self.0.as_ref()
-    }
-}
-
 impl std::fmt::Display for Reasons {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let reasons = self.0.iter().map(|c| c.to_string()).collect::<Vec<_>>();

@@ -68,3 +68,9 @@ pub trait HasRoles {
         self.roles().pone()
     }
 }
+
+impl std::fmt::Display for Roles {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Roles(dealer: {}, pone: {})", self.dealer, self.pone)
+    }
+}

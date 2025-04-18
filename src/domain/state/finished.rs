@@ -1,3 +1,4 @@
+use crate::display::format_hashmap;
 use crate::domain::{Peggings, Player};
 
 #[derive(Debug)]
@@ -17,5 +18,16 @@ impl Finished {
 
     pub fn peggings(&self) -> &Peggings {
         &self.peggings
+    }
+}
+
+impl std::fmt::Display for Finished {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Finished(winner: {}, peggings: {})",
+            self.winner,
+            format_hashmap(&self.peggings)
+        )
     }
 }

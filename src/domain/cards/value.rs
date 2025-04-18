@@ -18,20 +18,6 @@ impl std::ops::Deref for Value {
     }
 }
 
-impl std::ops::Add for Value {
-    type Output = Value;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Value(self.0 + rhs.0)
-    }
-}
-
-// impl std::ops::AddAssign for Value {
-//     fn add_assign(&mut self, rhs: Self) {
-//         self.0 += rhs.0;
-//     }
-// }
-
 impl std::iter::Sum<Value> for Value {
     fn sum<I: Iterator<Item = Value>>(iter: I) -> Self {
         iter.map(|v| v.0).sum::<usize>().into()
@@ -54,5 +40,11 @@ mod test {
         let values = Vec::from([3, 4].map(Value::from));
         let sum: Value = values.into_iter().sum();
         assert_eq!(sum, Value::from(7));
+    }
+
+    #[test]
+    fn value_can_be_displayed() {
+        let value = Value::from(42);
+        assert_eq!(value.to_string(), "42".to_string());
     }
 }

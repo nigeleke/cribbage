@@ -1,7 +1,7 @@
 use super::card::Card;
 use super::value::Value;
 
-use crate::fmt::format_vec;
+use crate::display::format_vec;
 
 use serde::{Deserialize, Serialize};
 
@@ -70,7 +70,7 @@ impl<T: Clone> Default for CardStock<T> {
 
 impl<T: Clone> Display for CardStock<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format_vec(&self.cards))
+        write!(f, "[{}]", format_vec(&self.cards))
     }
 }
 

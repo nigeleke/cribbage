@@ -93,6 +93,7 @@ impl Display for Player {
 #[cfg(test)]
 mod test {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn convert_from_uuid_to_player() {
@@ -100,5 +101,25 @@ mod test {
         let player = Player::from(uuid0);
         let Player(uuid1) = player;
         assert_eq!(uuid1, uuid0);
+    }
+
+    #[test]
+    fn default_player_is_a_new_player() {
+        let player = Player::default();
+        assert!(matches!(player, Player(_)));
+    }
+
+    #[test]
+    fn players_length_is_correct() {
+        let players = Players::from_iter([Player::new(), Player::new()]);
+        assert_eq!(players.len(), 2);
+        assert!(!players.is_empty());
+    }
+
+    #[test]
+    fn empty_players_length_is_correct() {
+        let players = Players::from_iter([]);
+        assert_eq!(players.len(), 0);
+        assert!(players.is_empty());
     }
 }

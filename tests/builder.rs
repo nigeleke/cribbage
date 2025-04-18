@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use cribbage::prelude::*;
 
 use std::collections::HashMap;
@@ -16,6 +18,7 @@ pub struct GameBuilder {
     crib: Crib,
     cut: Option<Card>,
     deck: Deck,
+    winner: usize,
 }
 
 impl GameBuilder {
@@ -33,6 +36,7 @@ impl GameBuilder {
             crib: Crib::default(),
             cut: None,
             deck: Deck::shuffled_pack(),
+            winner: 0,
         }
     }
 
@@ -57,10 +61,10 @@ impl GameBuilder {
         self
     }
 
-    // pub fn with_score_reasons(mut self, reasons: &[ScoreReason]) -> Self {
-    //     self.reasons.add(reasons);
-    //     self
-    // }
+    pub fn with_score_reasons(mut self, reasons: &[ScoreReason]) -> Self {
+        self.reasons.add(reasons);
+        self
+    }
 
     pub fn with_hands(mut self, hand0: &str, hand1: &str) -> Self {
         let mut add_hand = |hand: &str| {
@@ -75,12 +79,12 @@ impl GameBuilder {
         self
     }
 
-    // pub fn with_crib(mut self, crib: &str) -> Self {
-    //     let crib = Crib::from(crib);
-    //     self.deck.remove_all(crib.as_ref());
-    //     self.crib = crib.into();
-    //     self
-    // }
+    pub fn with_crib(mut self, crib: &str) -> Self {
+        let crib = Crib::from(crib);
+        self.deck.remove_all(crib.as_ref());
+        self.crib = crib;
+        self
+    }
 
     pub fn with_cut(mut self, cut: &str) -> Self {
         let cut = Card::from(cut);
@@ -91,7 +95,7 @@ impl GameBuilder {
 
     pub fn with_current_plays(mut self, plays: &[(usize, &str)]) -> Self {
         let plays = plays
-            .into_iter()
+            .iter()
             .map(|(p, c)| (self.players[*p], Card::from(*c)));
         let plays = plays.map(|(p, c)| Play::new(p, c));
         self.current_plays = Vec::from_iter(plays);
@@ -100,7 +104,7 @@ impl GameBuilder {
 
     pub fn with_previous_plays(mut self, plays: &[(usize, &str)]) -> Self {
         let plays = plays
-            .into_iter()
+            .iter()
             .map(|(p, c)| (self.players[*p], Card::from(*c)));
         let plays = plays.map(|(p, c)| Play::new(p, c));
         self.previous_plays = Vec::from_iter(plays);
@@ -113,11 +117,16 @@ impl GameBuilder {
     // }
     //
 
-    pub fn as_new(self) -> Result<Game<Starting>, GameError> {
-        Game::<Starting>::try_from(&Players::from_iter(self.players))
+    pub fn with_winner(mut self, winner: usize) -> Self {
+        self.winner = winner;
+        self
     }
 
-    pub fn as_starting(self) -> Game<Starting> {
+    pub fn into_new(self) -> Result<Game<Starting>, GameError> {
+        Game::<Starting>::try_new(&Players::from_iter(self.players))
+    }
+
+    pub fn into_starting(self) -> Game<Starting> {
         let mut deck = self.deck.clone();
         let mut cuts = self.cuts.clone();
 
@@ -133,7 +142,7 @@ impl GameBuilder {
         Game::<_>::new(Starting::new(cuts, Deck::from(deck)))
     }
 
-    pub fn as_discarding(self) -> Game<Discarding> {
+    pub fn into_discarding(self) -> Game<Discarding> {
         let players = self.players.clone();
         let peggings = self.peggings.clone();
         let peggings = self.merged(peggings);
@@ -147,7 +156,7 @@ impl GameBuilder {
         Game::<_>::new(Discarding::new(scores, roles, hands, crib, deck))
     }
 
-    pub fn as_playing(self, next_to_play: usize) -> Game<Playing> {
+    pub fn into_playing(self, next_to_play: usize) -> Game<Playing> {
         let players = self.players.clone();
         let player = players[next_to_play];
         let peggings = self.peggings.clone();
@@ -171,44 +180,58 @@ impl GameBuilder {
         Game::<_>::new(playing_state)
     }
 
-    // pub fn as_scoring_pone(self) -> Game {
-    //     let players = self.players.clone();
-    //     let peggings = self.peggings.clone();
-    //     let peggings = self.merged(peggings);
-    //     let mut scores = Scores::from(&peggings);
-    //     scores.add(players[0], &self.reasons);
-    //     let hands = self.hands.clone();
-    //     let hands = self.merged(hands);
-    //     let cut = self.cut.unwrap();
-    //     let crib = self.crib.clone();
-    //     Game::ScoringPone(scores, players[self.dealer], hands, cut, crib)
-    // }
+    pub fn into_scoring_pone(self) -> Game<ScoringPone> {
+        let players = self.players.clone();
+        let peggings = self.peggings.clone();
+        let peggings = self.merged(peggings);
+        let mut scores = Scores::from(&peggings);
+        scores.score_points(players[0], &self.reasons);
+        let roles = Roles::new(players[self.dealer], players[1 - self.dealer]);
+        let hands = self.hands.clone();
+        let hands = self.merged(hands);
+        let cut = self.cut.unwrap();
+        let crib = self.crib.clone();
+        let scoring_state = ScoringPone::new(scores, roles, hands, cut, crib);
+        Game::<_>::new(scoring_state)
+    }
 
-    // pub fn as_scoring_dealer(self) -> Game {
-    //     let players = self.players.clone();
-    //     let peggings = self.peggings.clone();
-    //     let peggings = self.merged(peggings);
-    //     let mut scores = Scores::from(&peggings);
-    //     scores.add(players[0], &self.reasons);
-    //     let hands = self.hands.clone();
-    //     let hands = self.merged(hands);
-    //     let cut = self.cut.unwrap();
-    //     let crib = self.crib.clone();
-    //     Game::ScoringDealer(scores, players[self.dealer], hands, cut, crib)
-    // }
+    pub fn into_scoring_dealer(self) -> Game<ScoringDealer> {
+        let players = self.players.clone();
+        let peggings = self.peggings.clone();
+        let peggings = self.merged(peggings);
+        let mut scores = Scores::from(&peggings);
+        scores.score_points(players[0], &self.reasons);
+        let roles = Roles::new(players[self.dealer], players[1 - self.dealer]);
+        let hands = self.hands.clone();
+        let hands = self.merged(hands);
+        let cut = self.cut.unwrap();
+        let crib = self.crib.clone();
+        let scoring_state = ScoringDealer::new(scores, roles, hands, cut, crib);
+        Game::<_>::new(scoring_state)
+    }
 
-    // pub fn as_scoring_crib(self) -> Game {
-    //     let players = self.players.clone();
-    //     let peggings = self.peggings.clone();
-    //     let peggings = self.merged(peggings);
-    //     let mut scores = Scores::from(&peggings);
-    //     scores.add(players[0], &self.reasons);
-    //     let hands = self.hands.clone();
-    //     let hands = self.merged(hands);
-    //     let cut = self.cut.unwrap();
-    //     let crib = self.crib.clone();
-    //     Game::ScoringCrib(scores, players[self.dealer], hands, cut, crib)
-    // }
+    pub fn into_scoring_crib(self) -> Game<ScoringCrib> {
+        let players = self.players.clone();
+        let peggings = self.peggings.clone();
+        let peggings = self.merged(peggings);
+        let mut scores = Scores::from(&peggings);
+        scores.score_points(players[0], &self.reasons);
+        let roles = Roles::new(players[self.dealer], players[1 - self.dealer]);
+        let hands = self.hands.clone();
+        let hands = self.merged(hands);
+        let cut = self.cut.unwrap();
+        let crib = self.crib.clone();
+        let scoring_state = ScoringCrib::new(scores, roles, hands, cut, crib);
+        Game::<_>::new(scoring_state)
+    }
+
+    pub fn into_finished(self) -> Game<Finished> {
+        let players = self.players.clone();
+        let peggings = self.peggings.clone();
+        let peggings = self.merged(peggings);
+        let finished_state = Finished::new(players[self.winner], peggings);
+        Game::<_>::new(finished_state)
+    }
 
     fn merged<T>(&self, items: Vec<T>) -> HashMap<Player, T> {
         let players = self.players.clone();

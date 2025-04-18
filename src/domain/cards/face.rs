@@ -100,3 +100,21 @@ impl From<char> for Face {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_create_face_from_valid_char() {
+        for c in "A2345678TJK".as_bytes() {
+            let _ = Face::from(*c as char);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn cannot_create_face_from_invalid_char() {
+        let _ = Face::from('#');
+    }
+}

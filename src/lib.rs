@@ -1,9 +1,9 @@
 // mod app;
 mod constants;
 // mod components;
+mod display;
 mod domain;
 // mod error_template;
-mod fmt;
 // mod pages;
 // mod services;
 // mod view;

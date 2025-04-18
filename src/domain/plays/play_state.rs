@@ -1,8 +1,8 @@
 use super::play::Play;
 
 use crate::constants::*;
+use crate::display::{format_hashmap, format_vec};
 use crate::domain::{Card, Hand, Hands, Player, Players, Value};
-use crate::fmt::{format_hashmap, format_vec};
 
 use serde::{Deserialize, Serialize};
 
@@ -164,10 +164,6 @@ impl PlayState {
 pub trait HasPlayState {
     fn play_state(&self) -> &PlayState;
     fn play_state_mut(&mut self) -> &mut PlayState;
-
-    fn running_total(&self) -> Value {
-        self.play_state().running_total()
-    }
 }
 
 impl std::fmt::Display for PlayState {

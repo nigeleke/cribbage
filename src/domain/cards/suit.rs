@@ -33,3 +33,21 @@ impl From<char> for Suit {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_create_suit_from_valid_char() {
+        for c in "HCDS".as_bytes() {
+            let _ = Suit::from(*c as char);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn cannot_create_suit_from_invalid_char() {
+        let _ = Suit::from('#');
+    }
+}

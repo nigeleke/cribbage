@@ -1,0 +1,21 @@
+[package]
+name = "domain"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+thiserror = { workspace = true }
+uuid = { workspace = true }
+enum-iterator = { workspace = true }
+rand = { workspace = true }
+itertools = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+insta = { workspace = true }
+
+[lints]
+clippy.all = "deny"
+clippy.nursery = "warn"
+clippy.unwrap_used = "forbid"
+clippy.expect_used = "allow"

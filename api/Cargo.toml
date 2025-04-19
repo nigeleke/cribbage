@@ -1,0 +1,14 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dioxus = { workspace = true, features = ["fullstack"] }
+
+[lints]
+clippy.all = "deny"
+clippy.pedantic = "warn"
+clippy.nursery = "warn"
+clippy.unwrap_used = "forbid"
+clippy.expect_used = "forbid"

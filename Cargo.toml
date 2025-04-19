@@ -1,24 +1,16 @@
-[package]
-name = "cribbage"
-version = "0.2.27"
-edition = "2024"
+[workspace]
+resolver = "2"
+# members = ["core", "ui", "web", "desktop", "mobile", "api"]
+members = ["domain"]
 
-[dependencies]
-thiserror = "1"
-uuid = { version = "1.8.0", features = ["serde", "v4"] }
-enum-iterator = "2.0.0"
-rand = "0.8.5"
+[workspace.dependencies]
+dioxus = { version = "0.6" }
+thiserror = "2"
+uuid = { version = "1.8", features = ["serde", "v4"] }
+enum-iterator = "2.0"
+rand = "0.8"
 serde = { version = "1.0", features = ["derive"] }
-itertools = "0.13.0"
-
-[dev-dependencies]
+itertools = "0.13"
+# dev-dependencies
 pretty_assertions = "1.4"
 insta = { version = "1.42", features = ["filters"] }
-
-[lints.clippy]
-[workspace.lints.clippy]
-all = { level = "deny", priority = -1 }
-pedantic = { level = "warn", priority = -1 }
-nursery = { level = "warn", priority = -1 }
-unwrap_used = "forbid"
-expect_used = "forbid"

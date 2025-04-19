@@ -102,4 +102,28 @@ mod test {
             }
         }
     }
+
+    #[test]
+    fn cannot_create_from_invalid_face() {
+        let error = Card::try_from("#S").expect_err("invalid face");
+        assert_eq!(error, "unknown face");
+    }
+
+    #[test]
+    fn cannot_create_from_invalid_suit() {
+        let error = Card::try_from("A#").expect_err("invalid suit");
+        assert_eq!(error, "unknown suit");
+    }
+
+    #[test]
+    fn cannot_create_from_empty_str() {
+        let error = Card::try_from("").expect_err("invalid card");
+        assert_eq!(error, "char required for card face");
+    }
+
+    #[test]
+    fn cannot_create_from_short_str() {
+        let error = Card::try_from("A").expect_err("invalid card");
+        assert_eq!(error, "char required for card suit");
+    }
 }

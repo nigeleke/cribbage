@@ -1,3 +1,5 @@
+#![forbid(clippy::expect_used)]
+
 use std::collections::HashMap;
 
 use thiserror::*;
@@ -345,7 +347,9 @@ impl Game<Playing> {
         self.validate_can_play(player, card)?;
 
         let (mut scores, roles, mut hands, mut play_state, cut, crib) = self.state.into_parts();
-        let hand = hands.get_mut(&player).expect("hands.get_mut");
+        let hand = hands
+            .get_mut(&player)
+            .ok_or(GameError::InvalidPlayer(player))?;
         hand.remove(card);
 
         play_state.play(card);

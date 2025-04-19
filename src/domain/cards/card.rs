@@ -66,8 +66,8 @@ impl From<&str> for Card {
     fn from(cid: &str) -> Self {
         let mut chars = cid.chars();
         Self {
-            face: Face::from(chars.next().unwrap()),
-            suit: Suit::from(chars.next().unwrap()),
+            face: Face::from(chars.next().expect("face chars next")),
+            suit: Suit::from(chars.next().expect("suit chars next")),
         }
     }
 }

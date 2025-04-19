@@ -1,6 +1,4 @@
-#![allow(unused)]
-
-use cribbage::prelude::*;
+use crate::domain::*;
 
 use std::collections::HashMap;
 
@@ -174,7 +172,7 @@ impl GameBuilder {
         self.previous_plays
             .iter()
             .for_each(|p| play_state.force_previous_play(p.player(), p.card()));
-        let cut = self.cut.unwrap();
+        let cut = self.cut.expect("cut");
         let crib = self.crib.clone();
         let playing_state = Playing::new(scores, roles, hands, play_state, cut, crib);
         Game::<_>::new(playing_state)
@@ -189,7 +187,7 @@ impl GameBuilder {
         let roles = Roles::new(players[self.dealer], players[1 - self.dealer]);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
-        let cut = self.cut.unwrap();
+        let cut = self.cut.expect("cut");
         let crib = self.crib.clone();
         let scoring_state = ScoringPone::new(scores, roles, hands, cut, crib);
         Game::<_>::new(scoring_state)
@@ -204,7 +202,7 @@ impl GameBuilder {
         let roles = Roles::new(players[self.dealer], players[1 - self.dealer]);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
-        let cut = self.cut.unwrap();
+        let cut = self.cut.expect("cut");
         let crib = self.crib.clone();
         let scoring_state = ScoringDealer::new(scores, roles, hands, cut, crib);
         Game::<_>::new(scoring_state)
@@ -219,7 +217,7 @@ impl GameBuilder {
         let roles = Roles::new(players[self.dealer], players[1 - self.dealer]);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
-        let cut = self.cut.unwrap();
+        let cut = self.cut.expect("cut");
         let crib = self.crib.clone();
         let scoring_state = ScoringCrib::new(scores, roles, hands, cut, crib);
         Game::<_>::new(scoring_state)
@@ -229,7 +227,8 @@ impl GameBuilder {
         let players = self.players.clone();
         let peggings = self.peggings.clone();
         let peggings = self.merged(peggings);
-        let finished_state = Finished::new(players[self.winner], peggings);
+        let cut = self.cut.expect("cut defined");
+        let finished_state = Finished::new(players[self.winner], peggings, cut);
         Game::<_>::new(finished_state)
     }
 

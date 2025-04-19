@@ -1,21 +1,16 @@
-use crate::components::cards::Cards;
 use crate::components::Context;
-use crate::services::{score_dealer};
+use crate::components::cards::Cards;
+use crate::services::score_dealer;
 use crate::view::Hand;
 
 use leptos::*;
 use thaw::*;
 
 #[component]
-pub fn Scoring(
-
-    cards: Hand,
-
-) -> impl IntoView {
-
+pub fn Scoring(cards: Hand) -> impl IntoView {
     let cards = move || cards.clone();
 
-    let context = use_context::<Context>().unwrap();
+    let context = use_context::<Context>().expect("context available");
 
     let on_score_next = {
         let context = context.clone();
@@ -27,7 +22,7 @@ pub fn Scoring(
                     state.set(Some(game.clone()));
                 }
             });
-        }    
+        }
     };
 
     view! {
@@ -38,6 +33,5 @@ pub fn Scoring(
             }}
             <Button on_click=on_score_next>"Score next"</Button>
         </div>
-    }    
+    }
 }
-

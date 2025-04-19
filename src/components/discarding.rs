@@ -1,6 +1,6 @@
-use crate::constants::*;
 use crate::components::Context;
 use crate::components::cards::Cards;
+use crate::constants::*;
 use crate::services::discard;
 use crate::view::{CardSlot, Hand};
 
@@ -8,12 +8,7 @@ use leptos::*;
 use thaw::*;
 
 #[component]
-pub fn Discarding(
-    
-    current_player_hand: Hand
-
-) -> impl IntoView {
-
+pub fn Discarding(current_player_hand: Hand) -> impl IntoView {
     let (current_player_cards, _) = create_signal(current_player_hand);
 
     let (selected, set_selected) = create_signal(Vec::<bool>::new());
@@ -28,12 +23,12 @@ pub fn Discarding(
                 } else {
                     None
                 }
-        })
-        .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
     };
     let disabled = (move || selected_count() != CARDS_DISCARDED_TO_CRIB).into_signal();
 
-    let context = use_context::<Context>().unwrap();
+    let context = use_context::<Context>().expect("context available");
 
     let on_discard = {
         let context = context.clone();
@@ -57,5 +52,5 @@ pub fn Discarding(
             }}
             <Button on_click=on_discard disabled>"Discard"</Button>
         </Space>
-    }    
+    }
 }

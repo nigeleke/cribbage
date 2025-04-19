@@ -1,3 +1,27 @@
+#![feature(coverage_attribute)]
+
+// mod app;
+mod constants;
+// mod components;
+mod display;
+mod domain;
+// mod error_template;
+// mod pages;
+// mod services;
+// mod view;
+
+// pub use crate::app::App;
+
+#[cfg(test)]
+mod test_modules;
+
+pub mod prelude {
+    pub use super::constants::*;
+    pub use super::domain::*;
+    #[cfg(test)]
+    pub use super::test_modules::*;
+}
+
 // #[cfg(feature = "ssr")]
 // #[tokio::main]
 // async fn main() {
@@ -16,7 +40,7 @@
 //     let session_config = SessionConfig::default().with_table_name("session_table");
 //     let session_store = SessionStore::<SessionNullPool>::new(None, session_config)
 //         .await
-//         .unwrap();
+//         .expect("sessopn sorte");
 
 //     init_database()
 //         .await
@@ -40,4 +64,6 @@
 //         .await
 //         .unwrap();
 // }
+//
+#[coverage(off)]
 pub fn main() {}

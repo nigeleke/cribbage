@@ -1,5 +1,5 @@
-use crate::components::cards::Cards;
 use crate::components::Context;
+use crate::components::cards::Cards;
 use crate::services::{pass, play, score_pone};
 use crate::view::{CardSlot, Hand, PlayState};
 
@@ -7,13 +7,7 @@ use leptos::*;
 use thaw::*;
 
 #[component]
-pub fn Playing(
-
-    current_player_hand: Hand,
-    play_state: PlayState
-
-) -> impl IntoView {
-
+pub fn Playing(current_player_hand: Hand, play_state: PlayState) -> impl IntoView {
     let (current_player_cards, _) = create_signal(current_player_hand.clone());
 
     let (legal_plays, _) = create_signal(play_state.legal_plays().clone());
@@ -29,16 +23,19 @@ pub fn Playing(
                 } else {
                     None
                 }
-        })
-        .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
     };
     let selected_play = move || {
-        let cards = selected_cards().into_iter().filter(|c| legal_plays().contains(c)).collect::<Vec<_>>();
+        let cards = selected_cards()
+            .into_iter()
+            .filter(|c| legal_plays().contains(c))
+            .collect::<Vec<_>>();
         (cards.len() == 1).then(|| cards[0])
     };
-    let disabled = (move || { selected_play().is_none() }).into_signal();
+    let disabled = (move || selected_play().is_none()).into_signal();
 
-    let context = use_context::<Context>().unwrap();
+    let context = use_context::<Context>().expect("context available");
 
     let on_play = {
         let context = context.clone();
@@ -46,7 +43,7 @@ pub fn Playing(
             let id = context.id.clone();
             let state = context.state;
             let selected_play = selected_play();
-            let cards = selected_play.unwrap();
+            let cards = selected_play.expect("selected_play");
             spawn_local(async move {
                 if let Ok(game) = play(id, cards).await {
                     state.set(Some(game.clone()));
@@ -78,7 +75,7 @@ pub fn Playing(
                     state.set(Some(game.clone()));
                 }
             });
-        }    
+        }
     };
 
     view! {
@@ -97,6 +94,5 @@ pub fn Playing(
                 }
             }
         </Space>
-    }    
+    }
 }
-

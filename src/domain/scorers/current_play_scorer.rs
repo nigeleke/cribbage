@@ -37,7 +37,7 @@ impl CurrentPlayScorer {
             .map(|p| p.card())
             .rev();
 
-        let first = cards.next().unwrap();
+        let first = cards.next().expect("cards.next");
         let matching = cards.take_while(|c| c.face() == first.face());
 
         let mut cards = Vec::from_iter(matching);

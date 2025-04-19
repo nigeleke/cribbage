@@ -30,6 +30,10 @@ impl Roles {
     pub fn pone(&self) -> Player {
         self.pone
     }
+
+    pub fn swap(&mut self) {
+        std::mem::swap(&mut self.dealer, &mut self.pone);
+    }
 }
 
 impl TryFrom<&Cuts> for Roles {

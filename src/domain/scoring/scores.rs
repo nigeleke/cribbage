@@ -50,7 +50,6 @@ impl Scores {
 
 pub trait HasScores {
     fn scores(&self) -> &Scores;
-    fn scores_mut(&mut self) -> &mut Scores;
 
     fn peggings(&self) -> &Peggings {
         self.scores().peggings()

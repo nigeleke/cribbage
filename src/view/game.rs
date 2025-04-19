@@ -109,8 +109,12 @@ impl From<(DomainGame, Player)> for Game {
 fn partition_for<T: Clone>(player: Player, map: &HashMap<Player, T>) -> (T, T) {
     let (players, opponents): (HashMap<&Player, &T>, HashMap<&Player, &T>) =
         map.iter().partition(|(p, _)| **p == player);
-    let players_t = players.into_values().next().unwrap();
-    let opponents_t = opponents.into_values().take(1).next().unwrap();
+    let players_t = players.into_values().next().expect("players next");
+    let opponents_t = opponents
+        .into_values()
+        .take(1)
+        .next()
+        .expect("opponents next");
     (players_t.clone(), opponents_t.clone())
 }
 

@@ -29,7 +29,10 @@ impl CardsScorer {
 
         for combination in cards.as_ref().iter().combinations(2) {
             let mut combination = combination.into_iter();
-            let (one, two) = (combination.next().unwrap(), combination.next().unwrap());
+            let (one, two) = (
+                combination.next().expect("combination next"),
+                combination.next().expect("combination next"),
+            );
             if one.face() == two.face() {
                 reasons.with_pairs(&[*one, *two], SCORE_PAIR.into());
             }
@@ -73,7 +76,7 @@ impl CardsScorer {
     pub fn flush(cards: &[Card]) -> ScoreReasons {
         let mut reasons = ScoreReasons::default();
 
-        let suit = cards.first().map(|c| c.suit()).unwrap();
+        let suit = cards.first().map(|c| c.suit()).expect("cards.first");
         let same_suit = cards.iter().all(|c| c.suit() == suit);
         if same_suit {
             reasons.with_flush(cards, cards.len().into())

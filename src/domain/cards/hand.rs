@@ -12,5 +12,4 @@ pub type Hands = HashMap<Player, Hand>;
 
 pub trait HasHands {
     fn hands(&self) -> &Hands;
-    fn hands_mut(&mut self) -> &mut Hands;
 }

@@ -67,7 +67,7 @@ impl PlayState {
 
         let legal_plays = &mut self.legal_plays;
 
-        let legal_cards = legal_plays.get_mut(&player).unwrap();
+        let legal_cards = legal_plays.get_mut(&player).expect("hand.get_mut");
         legal_cards.remove(card);
 
         let play = Play::new(player, card);
@@ -163,7 +163,6 @@ impl PlayState {
 
 pub trait HasPlayState {
     fn play_state(&self) -> &PlayState;
-    fn play_state_mut(&mut self) -> &mut PlayState;
 }
 
 impl std::fmt::Display for PlayState {

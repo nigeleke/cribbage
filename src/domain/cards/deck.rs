@@ -15,7 +15,6 @@ pub type Deck = CardStock<DeckType>;
 
 pub trait HasDeck {
     fn deck(&self) -> &Deck;
-    fn deck_mut(&mut self) -> &mut Deck;
 }
 
 impl Deck {

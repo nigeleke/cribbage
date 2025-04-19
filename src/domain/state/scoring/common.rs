@@ -49,10 +49,6 @@ impl<T> HasScores for Scoring<T> {
     fn scores(&self) -> &Scores {
         &self.scores
     }
-
-    fn scores_mut(&mut self) -> &mut Scores {
-        &mut self.scores
-    }
 }
 
 impl<T> HasRoles for Scoring<T> {
@@ -64,10 +60,6 @@ impl<T> HasRoles for Scoring<T> {
 impl<T> HasHands for Scoring<T> {
     fn hands(&self) -> &Hands {
         &self.hands
-    }
-
-    fn hands_mut(&mut self) -> &mut Hands {
-        &mut self.hands
     }
 }
 
@@ -81,16 +73,12 @@ impl<T> HasCrib for Scoring<T> {
     fn crib(&self) -> &Crib {
         &self.crib
     }
-
-    fn crib_mut(&mut self) -> &mut Crib {
-        &mut self.crib
-    }
 }
 
 impl<T> std::fmt::Display for Scoring<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = std::any::type_name::<T>();
-        let name = name.rsplit("::").next().unwrap();
+        let name = name.rsplit("::").next().expect("name.rsplit.next");
         let name = name
             .strip_prefix("Scoring")
             .and_then(|s| s.strip_suffix("Type"))

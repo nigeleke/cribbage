@@ -23,7 +23,7 @@ pub fn CuttingForStart(cuts: Cuts) -> impl IntoView {
         _ => "Redraw",
     };
 
-    let context = use_context::<Context>().unwrap();
+    let context = use_context::<Context>().expect("context available");
 
     let on_redraw = {
         let context = context.clone();

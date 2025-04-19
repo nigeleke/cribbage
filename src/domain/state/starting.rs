@@ -23,10 +23,6 @@ impl HasDeck for Starting {
     fn deck(&self) -> &Deck {
         &self.deck
     }
-
-    fn deck_mut(&mut self) -> &mut Deck {
-        &mut self.deck
-    }
 }
 
 impl HasCuts for Starting {

@@ -32,14 +32,6 @@ impl std::ops::Add for Points {
     }
 }
 
-impl std::ops::Rem for Points {
-    type Output = Points;
-
-    fn rem(self, rhs: Self) -> Self::Output {
-        Points(self.0 % rhs.0)
-    }
-}
-
 impl std::iter::Sum for Points {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.map(|p| p.0).sum::<usize>().into()

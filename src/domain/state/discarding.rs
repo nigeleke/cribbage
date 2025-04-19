@@ -69,10 +69,6 @@ impl HasScores for Discarding {
     fn scores(&self) -> &Scores {
         &self.scores
     }
-
-    fn scores_mut(&mut self) -> &mut Scores {
-        &mut self.scores
-    }
 }
 
 impl HasRoles for Discarding {
@@ -85,29 +81,17 @@ impl HasHands for Discarding {
     fn hands(&self) -> &Hands {
         &self.hands
     }
-
-    fn hands_mut(&mut self) -> &mut Hands {
-        &mut self.hands
-    }
 }
 
 impl HasCrib for Discarding {
     fn crib(&self) -> &Crib {
         &self.crib
     }
-
-    fn crib_mut(&mut self) -> &mut Crib {
-        &mut self.crib
-    }
 }
 
 impl HasDeck for Discarding {
     fn deck(&self) -> &Deck {
         &self.deck
-    }
-
-    fn deck_mut(&mut self) -> &mut Deck {
-        &mut self.deck
     }
 }
 

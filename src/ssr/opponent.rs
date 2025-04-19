@@ -25,7 +25,11 @@ impl Opponent {
                         game.pass(opponent).unwrap
                     } else {
                         // TODO: Analyse
-                        let card = legal_plays.as_ref().into_iter().next().unwrap();
+                        let card = legal_plays
+                            .as_ref()
+                            .into_iter()
+                            .next()
+                            .expect("legal_plays next");
                         let mut game = game.play(opponent, *card).unwrap;
 
                         let still_playing = matches!(game, Game::Playing(_, _, _, _, _, _));

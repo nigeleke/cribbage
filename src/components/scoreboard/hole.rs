@@ -5,8 +5,8 @@ use leptos::*;
 /// Show a single hole in the scoreboard.
 #[component]
 pub fn Hole(x_offset: usize, y_offset: usize, representation: usize) -> impl IntoView {
-    let role = use_context::<Role>().unwrap();
-    let scores = use_context::<Peggings>().unwrap();
+    let role = use_context::<Role>().expect("role context available");
+    let scores = use_context::<Peggings>().expect("peggings context available");
     let default_score = Pegging::default();
     let score = scores.get(&role).unwrap_or(&default_score);
 

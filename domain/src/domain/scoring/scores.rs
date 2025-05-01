@@ -3,9 +3,9 @@ use super::{
     pegging::{Pegging, Peggings},
 };
 use crate::{
+    constants::WINNING_SCORE,
     display::format_hashmap,
     domain::{Player, Players},
-    prelude::WINNING_SCORE,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -38,14 +38,14 @@ impl Scores {
     pub const fn peggings(&self) -> &Peggings {
         &self.peggings
     }
+
+    pub fn pegging(&self, player: Player) -> &Pegging {
+        &self.peggings[&player]
+    }
 }
 
 pub trait HasScores {
     fn scores(&self) -> &Scores;
-
-    fn peggings(&self) -> &Peggings {
-        self.scores().peggings()
-    }
 }
 
 impl std::fmt::Display for Scores {

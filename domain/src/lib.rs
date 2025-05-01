@@ -1,3 +1,5 @@
+#![feature(coverage_attribute)]
+
 mod constants;
 mod display;
 mod domain;
@@ -5,6 +7,4 @@ mod domain;
 #[cfg(test)]
 mod test_modules;
 
-pub mod prelude {
-    pub use super::{constants::*, domain::*};
-}
+pub use domain::{Card, Crib, Cut, Deck, Game, GameError, Hand, Pegging, PlayState, Player};

@@ -11,4 +11,7 @@ pub type Hands = HashMap<Player, Hand>;
 
 pub trait HasHands {
     fn hands(&self) -> &Hands;
+    fn hand(&self, player: Player) -> &Hand {
+        self.hands().get(&player).expect("valid player with hand")
+    }
 }

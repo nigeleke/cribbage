@@ -160,10 +160,6 @@ impl PlayState {
     }
 }
 
-pub trait HasPlayState {
-    fn play_state(&self) -> &PlayState;
-}
-
 impl std::fmt::Display for PlayState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(

@@ -36,6 +36,7 @@ impl Players {
 
     pub fn opponent(&self, player: Player) -> Player {
         let (player1, player2) = self.players_1_2();
+
         if player == player1 { player2 } else { player1 }
     }
 }

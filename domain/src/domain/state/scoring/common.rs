@@ -1,43 +1,26 @@
 use crate::{
     display::format_hashmap,
-    domain::{
-        Crib, Cut, Hands, HasCrib, HasCut, HasHands, HasPlayers, HasRoles, HasScores, Players,
-        Roles, Scores,
-    },
+    domain::{Crib, Cut, Hands, HasHands, HasPlayers, HasRoles, HasScores, Players, Roles, Scores},
 };
 
 #[derive(Debug)]
 pub struct Scoring<T> {
-    scores: Scores,
-    roles: Roles,
-    hands: Hands,
-    cut: Cut,
-    crib: Crib,
+    pub scores: Scores,
+    pub roles: Roles,
+    pub hands: Hands,
+    pub crib: Crib,
+    pub cut: Cut,
     _marker: std::marker::PhantomData<T>,
 }
 
 impl<T> Scoring<T> {
-    pub const fn new(scores: Scores, roles: Roles, hands: Hands, cut: Cut, crib: Crib) -> Self {
-        Self {
-            scores,
-            roles,
-            hands,
-            cut,
-            crib,
-            _marker: std::marker::PhantomData,
-        }
+    #[rustfmt::skip]
+    pub const fn new(scores: Scores, roles: Roles, hands: Hands, crib: Crib, cut: Cut) -> Self {
+        Self { scores, roles, hands, crib, cut, _marker: std::marker::PhantomData, }
     }
 
-    pub fn into_parts(self) -> (Scores, Roles, Hands, Cut, Crib) {
-        let Self {
-            scores,
-            roles,
-            hands,
-            cut,
-            crib,
-            _marker,
-        } = self;
-        (scores, roles, hands, cut, crib)
+    pub fn into_parts(self) -> (Scores, Roles, Hands, Crib, Cut) {
+        (self.scores, self.roles, self.hands, self.crib, self.cut)
     }
 }
 
@@ -65,18 +48,6 @@ impl<T> HasHands for Scoring<T> {
     }
 }
 
-impl<T> HasCut for Scoring<T> {
-    fn cut(&self) -> Cut {
-        self.cut
-    }
-}
-
-impl<T> HasCrib for Scoring<T> {
-    fn crib(&self) -> &Crib {
-        &self.crib
-    }
-}
-
 impl<T> std::fmt::Display for Scoring<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = std::any::type_name::<T>();
@@ -88,7 +59,13 @@ impl<T> std::fmt::Display for Scoring<T> {
 
         write!(
             f,
-            "Scoring{}(scores: {}, roles: {}, hands: {}, cut: {}, crib: {})",
+            r#"Scoring{}(
+    scores: {},
+    roles: {},
+    hands: {},
+    cut: {},
+    crib: {}
+)"#,
             name,
             self.scores,
             self.roles,

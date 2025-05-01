@@ -1,33 +1,25 @@
 use crate::{
     display::format_hashmap,
-    domain::{Cut, Peggings, Player},
+    domain::{Crib, Cut, Hands, HasCut, HasScores, Roles, Scores},
 };
 
 #[derive(Debug)]
 pub struct Finished {
-    winner: Player,
-    peggings: Peggings,
-    cut: Cut,
+    pub scores: Scores,
+    pub roles: Roles,
+    pub hands: Hands,
+    pub crib: Crib,
+    pub cut: Cut,
 }
 
-impl Finished {
-    pub const fn new(winner: Player, peggings: Peggings, cut: Cut) -> Self {
-        Self {
-            winner,
-            peggings,
-            cut,
-        }
+impl HasScores for Finished {
+    fn scores(&self) -> &Scores {
+        &self.scores
     }
+}
 
-    pub const fn winner(&self) -> Player {
-        self.winner
-    }
-
-    pub const fn peggings(&self) -> &Peggings {
-        &self.peggings
-    }
-
-    pub const fn cut(&self) -> Cut {
+impl HasCut for Finished {
+    fn cut(&self) -> Cut {
         self.cut
     }
 }
@@ -36,9 +28,17 @@ impl std::fmt::Display for Finished {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Finished(winner: {}, peggings: {}, cut: {})",
-            self.winner,
-            format_hashmap(&self.peggings),
+            r#"Finished(
+    scores: {},
+    roles: {},
+    hands: {},
+    crib: {},
+    cut: {}
+)"#,
+            self.scores,
+            self.roles,
+            format_hashmap(&self.hands),
+            self.crib,
             self.cut
         )
     }

@@ -1,6 +1,4 @@
-use super::constants::*;
-use super::scorer::Scorer;
-
+use super::{constants::*, scorer::Scorer};
 use crate::domain::{PlayState, Points, ScoreReasons};
 
 pub struct CurrentPlayScorer(PlayState);
@@ -48,7 +46,7 @@ impl CurrentPlayScorer {
             2 => SCORE_PAIR.into(),
             3 => SCORE_ROYAL_PAIR.into(),
             4 => SCORE_DOUBLE_ROYAL_PAIR.into(),
-            _ => unreachable!(),
+            _ => unreachable!("never >4 cards with same face"),
         };
 
         if points != 0.into() {
@@ -93,5 +91,30 @@ impl CurrentPlayScorer {
 impl Scorer for CurrentPlayScorer {
     fn score(&self) -> ScoreReasons {
         self.fifteens() + self.pairs() + self.runs()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::domain::{
+        Card, Hand, Hands, PlayState, Player,
+        scorers::{CurrentPlayScorer, Scorer},
+    };
+
+    #[test]
+    #[should_panic]
+    fn impossible_pairs_will_panic() {
+        let player = Player::new();
+        let hand = Hand::try_from("AHACADASAH").expect("valid hand");
+        let hands = Hands::from([(player, hand), (Player::default(), Hand::default())]);
+
+        let mut play_state = PlayState::new(player, &hands);
+        play_state.play(Card::try_from("AH").expect("valid card"));
+        play_state.play(Card::try_from("AC").expect("valid card"));
+        play_state.play(Card::try_from("AD").expect("valid card"));
+        play_state.play(Card::try_from("AS").expect("valid card"));
+        play_state.play(Card::try_from("AH").expect("valid card"));
+
+        let _ = CurrentPlayScorer::new(&play_state).score();
     }
 }

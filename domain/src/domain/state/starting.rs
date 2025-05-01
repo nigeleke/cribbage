@@ -1,18 +1,12 @@
 use crate::{
     display::format_hashmap,
-    domain::{Cuts, Deck, HasCuts, HasDeck, HasPlayers, Players},
+    domain::{Cuts, Deck, HasDeck, HasPlayers, Players},
 };
 
 #[derive(Debug)]
 pub struct Starting {
-    cuts: Cuts,
-    deck: Deck,
-}
-
-impl Starting {
-    pub const fn new(cuts: Cuts, deck: Deck) -> Self {
-        Self { cuts, deck }
-    }
+    pub cuts: Cuts,
+    pub deck: Deck,
 }
 
 impl HasPlayers for Starting {
@@ -27,17 +21,14 @@ impl HasDeck for Starting {
     }
 }
 
-impl HasCuts for Starting {
-    fn cuts(&self) -> &Cuts {
-        &self.cuts
-    }
-}
-
 impl std::fmt::Display for Starting {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Starting(cuts: {}, deck: {})",
+            r#"Starting(
+    cuts: {},
+    deck: {}
+)"#,
             format_hashmap(&self.cuts),
             self.deck
         )

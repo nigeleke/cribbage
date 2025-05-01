@@ -1,22 +1,16 @@
 #![forbid(clippy::expect_used)]
 
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 
 use thiserror::*;
 
 use super::{
-    HandScorer, HasPlayState, Peggings,
-    cards::{
-        Card, Crib, Cut, Cuts, Deck, Hand, Hands, HasCrib, HasCut, HasCuts, HasDeck, HasHands,
-    },
-    players::{HasPlayers, HasRoles, Player, Players, Roles, RolesError},
+    cards::{Card, Crib, Cut, Cuts, Deck, HasCrib, HasCut, HasDeck, HasHands},
+    players::{HasPlayers, HasRoles, Player, Players, Roles},
     plays::PlayState,
-    scorers::{CribScorer, CurrentPlayScorer, CutScorer, EndOfPlayScorer, Scorer},
-    scoring::{HasScores, Pegging, ScoreReasons, Scores},
-    state::{
-        Discarding, DiscardingState, Finished, Playing, ScoringCrib, ScoringDealer, ScoringPone,
-        Starting,
-    },
+    scorers::{CribScorer, CurrentPlayScorer, CutScorer, EndOfPlayScorer, HandScorer, Scorer},
+    scoring::{HasScores, ScoreReasons, Scores},
+    state::{Discarding, Finished, Playing, ScoringCrib, ScoringDealer, ScoringPone, Starting},
 };
 use crate::constants::*;
 
@@ -34,11 +28,11 @@ pub enum GameError {
     #[error("only two cards can be discarded to the crib")]
     TooManyDiscards,
 
-    #[error("cannot redraw for start of game as cut for dealer was decisive")]
-    CutForStartDecided,
+    #[error("cannot start; cut for dealer is not decisive")]
+    CannotStart,
 
-    #[error("error determining roles: {0}")]
-    CannotDetermineRoles(#[from] RolesError),
+    #[error("cannot redraw; cut for dealer was decisive")]
+    CannotRedraw,
 
     #[error("player {0} is not a participant of the current game")]
     InvalidPlayer(Player),
@@ -83,33 +77,15 @@ impl<T: HasPlayers> HasPlayers for Game<T> {
     }
 }
 
-impl<T: HasDeck> HasDeck for Game<T> {
-    fn deck(&self) -> &Deck {
-        self.state.deck()
-    }
-}
-
-impl<T: HasCuts> HasCuts for Game<T> {
-    fn cuts(&self) -> &Cuts {
-        self.state.cuts()
-    }
-}
-
-impl<T: HasRoles> HasRoles for Game<T> {
-    fn roles(&self) -> &Roles {
-        self.state.roles()
+impl<T: HasScores> HasScores for Game<T> {
+    fn scores(&self) -> &Scores {
+        self.state.scores()
     }
 }
 
 impl<T: HasHands> HasHands for Game<T> {
-    fn hands(&self) -> &Hands {
+    fn hands(&self) -> &super::Hands {
         self.state.hands()
-    }
-}
-
-impl<T: HasScores> HasScores for Game<T> {
-    fn scores(&self) -> &Scores {
-        self.state.scores()
     }
 }
 
@@ -119,9 +95,9 @@ impl<T: HasCrib> HasCrib for Game<T> {
     }
 }
 
-impl<T: HasPlayState> HasPlayState for Game<T> {
-    fn play_state(&self) -> &PlayState {
-        self.state.play_state()
+impl<T: HasDeck> HasDeck for Game<T> {
+    fn deck(&self) -> &Deck {
+        self.state.deck()
     }
 }
 
@@ -131,15 +107,58 @@ impl<T: HasCut> HasCut for Game<T> {
     }
 }
 
+// impl<T: HasCuts> HasCuts for Game<T> {
+//     fn cuts(&self) -> &Cuts {
+//         self.state.cuts()
+//     }
+// }
+
+impl<T: HasRoles> HasRoles for Game<T> {
+    fn roles(&self) -> &Roles {
+        self.state.roles()
+    }
+}
+
+// impl<T: HasHands> HasHands for Game<T> {
+//     fn hands(&self) -> &Hands {
+//         self.state.hands()
+//     }
+// }
+
+// impl<T: HasScores> HasScores for Game<T> {
+//     fn scores(&self) -> &Scores {
+//         self.state.scores()
+//     }
+// }
+
+// impl<T: HasCrib> HasCrib for Game<T> {
+//     fn crib(&self) -> &Crib {
+//         self.state.crib()
+//     }
+// }
+
+// impl<T: HasPlayState> HasPlayState for Game<T> {
+//     fn play_state(&self) -> &PlayState {
+//         self.state.play_state()
+//     }
+// }
+
+// impl<T: HasCut> HasCut for Game<T> {
+//     fn cut(&self) -> Cut {
+//         self.state.cut()
+//     }
+// }
+
 impl<T: HasPlayers> Game<T> {
     fn validate_player(&self, player: Player) -> Result<()> {
-        if self.players().contains(&player) {
+        if self.state.players().contains(&player) {
             Ok(())
         } else {
             Err(GameError::InvalidPlayer(player))
         }
     }
 
+    #[cfg(test)]
     pub fn player_1_2(&self) -> Result<(Player, Player)> {
         let players = self.state.players();
         let players_count = players.len();
@@ -148,102 +167,49 @@ impl<T: HasPlayers> Game<T> {
             .ok_or(GameError::IncorrectNumberOfPlayers(players_count))
     }
 
+    #[cfg(test)]
     pub fn opponent(&self, player: Player) -> Result<Player> {
         self.validate_player(player)?;
+
         Ok(self.state.players().opponent(player))
     }
 }
 
-impl<T: HasCuts> Game<T> {
-    pub fn cut(&self, player: Player) -> Result<Cut> {
-        self.state
-            .cuts()
-            .get(&player)
-            .copied()
-            .ok_or(GameError::InvalidPlayer(player))
-    }
-}
-
-impl<T: HasHands> Game<T> {
+impl<T: HasHands + HasPlayers> Game<T> {
     fn validate_player_card(&self, player: Player, card: Card) -> Result<()> {
-        self.hands()
-            .get(&player)
-            .map_or(Err(GameError::InvalidPlayer(player)), |hand| {
-                if hand.contains(&card) {
-                    Ok(())
-                } else {
-                    Err(GameError::InvalidCard(card))
-                }
-            })
+        self.validate_player(player)?;
+
+        let hand = self.state.hand(player);
+
+        if hand.contains(&card) {
+            Ok(())
+        } else {
+            Err(GameError::InvalidCard(card))
+        }
     }
 
     fn validate_player_cards(&self, player: Player, cards: &[Card]) -> Result<()> {
-        self.hands()
-            .get(&player)
-            .map_or(Err(GameError::InvalidPlayer(player)), |hand| {
-                if hand.contains_all(cards) {
-                    Ok(())
-                } else {
-                    Err(GameError::InvalidCards)
-                }
-            })
+        self.validate_player(player)?;
+
+        let hand = self.state.hand(player);
+
+        if hand.contains_all(cards) {
+            Ok(())
+        } else {
+            Err(GameError::InvalidCards)
+        }
     }
 
     fn validate_player_discards(&self, player: Player, discards: &[Card]) -> Result<()> {
+        self.validate_player(player)?;
         self.validate_player_cards(player, discards)?;
-        let hand = self.hand(player)?;
+
+        let hand = self.state.hand(player);
+
         if hand.len() - discards.len() >= CARDS_KEPT_PER_HAND {
             Ok(())
         } else {
             Err(GameError::TooManyDiscards)
-        }
-    }
-
-    pub fn hand(&self, player: Player) -> Result<&Hand> {
-        self.hands()
-            .get(&player)
-            .ok_or(GameError::InvalidPlayer(player))
-    }
-}
-
-impl<T: HasScores> Game<T> {
-    pub fn pegging(&self, player: Player) -> Result<&Pegging> {
-        self.peggings()
-            .get(&player)
-            .ok_or(GameError::InvalidPlayer(player))
-    }
-}
-
-impl<T: HasPlayState> Game<T> {
-    fn validate_next_to_play(&self, player: Player) -> Result<()> {
-        if self.play_state().next_to_play() == player {
-            Ok(())
-        } else {
-            Err(GameError::PlayOrPassNotPermittedByPlayer)
-        }
-    }
-
-    fn validate_can_play(&self, player: Player, card: Card) -> Result<()> {
-        self.validate_next_to_play(player)?;
-
-        let legal_plays = self.play_state().legal_plays(player);
-
-        if legal_plays.contains(&card) {
-            Ok(())
-        } else {
-            Err(GameError::CannotPlayCard)
-        }
-    }
-
-    fn validate_can_pass(&self, player: Player) -> Result<()> {
-        self.validate_next_to_play(player)?;
-
-        let legal_plays = self.play_state().legal_plays(player);
-
-        if legal_plays.is_empty() {
-            Ok(())
-        } else {
-            Err(GameError::CannotPass)
         }
     }
 }
@@ -258,34 +224,60 @@ impl Game<Starting> {
                 cuts
             };
             let cuts = value.iter().fold(HashMap::new(), make_cut);
-            Ok(Self::new(Starting::new(cuts, deck)))
+            Ok(Self::new(Starting { cuts, deck }))
         } else {
             Err(GameError::IncorrectNumberOfPlayers(value.len()))
         }
     }
 
-    pub fn start(self) -> Result<Game<Discarding>> {
-        let initial_discarding = |roles: Roles| {
-            let mut deck = Deck::shuffled_pack();
-            let players = self.players();
-            let scores = Scores::new(&players);
-            let hands = deck.deal(&players);
-            let crib = Crib::default();
+    pub fn cut(&self, player: Player) -> Result<Cut> {
+        self.state
+            .cuts
+            .get(&player)
+            .copied()
+            .ok_or(GameError::InvalidPlayer(player))
+    }
 
-            let discarding = Discarding::new(scores, roles, hands, crib, deck);
-
-            Game::<_>::new(discarding)
+    fn draw(&self) -> Result<Option<Roles>> {
+        let mut player_cuts = self.state.cuts.iter();
+        let mut get_cut = || {
+            let (player, cut) = player_cuts
+                .next()
+                .ok_or_else(|| GameError::InternalError(stringify!(Game<Starting>::draw).into()))?;
+            let rank = cut.rank();
+            Ok((player, rank))
         };
 
-        Roles::try_from(self.cuts())
-            .map(initial_discarding)
-            .map_err(GameError::from)
+        let (player1, rank1) = get_cut()?;
+        let (player2, rank2) = get_cut()?;
+
+        let roles = match rank1.cmp(&rank2) {
+            Ordering::Less => Some(Roles::new(*player1, *player2)),
+            Ordering::Greater => Some(Roles::new(*player2, *player1)),
+            Ordering::Equal => None,
+        };
+
+        Ok(roles)
+    }
+
+    pub fn start(self) -> Result<Game<Discarding>> {
+        let roles = self.draw()?.ok_or(GameError::CannotStart)?;
+
+        let mut deck = Deck::shuffled_pack();
+        let players = self.state.players();
+        let scores = Scores::new(&players);
+        let hands = deck.deal(&players);
+        let crib = Crib::default();
+
+        #[rustfmt::skip]
+        let discarding = Discarding { scores, roles, hands, crib, deck,};
+        Ok(Game::<_>::new(discarding))
     }
 
     pub fn redraw(self) -> Result<Self> {
-        match Roles::try_from(self.cuts()) {
-            Ok(_) => Err(GameError::CutForStartDecided),
-            Err(_) => Self::try_new(&self.players()),
+        match self.draw()? {
+            Some(_) => Err(GameError::CannotRedraw),
+            None => Self::try_new(&self.state.players()),
         }
     }
 }
@@ -298,30 +290,44 @@ pub enum DiscardResult {
 }
 
 impl Game<Discarding> {
-    pub fn discard(mut self, player: Player, discards: &[Card]) -> Result<DiscardResult> {
+    pub fn discard(self, player: Player, discards: &[Card]) -> Result<DiscardResult> {
         self.validate_player_discards(player, discards)?;
 
-        let discard_state = self.state.discard(player, discards);
-        let (mut scores, roles, hands, crib, mut deck) = self.state.into_parts();
-        let result = match discard_state {
-            DiscardingState::StillDiscarding => {
-                let discarding_state = Discarding::new(scores, roles, hands, crib, deck);
-                DiscardResult::Discarding(Box::new(Self::new(discarding_state)))
+        let Discarding {
+            mut scores,
+            roles,
+            mut hands,
+            mut crib,
+            mut deck,
+        } = self.state;
+
+        let hand = hands
+            .get_mut(&player)
+            .ok_or(GameError::InvalidPlayer(player))?;
+        hand.remove_all(discards);
+
+        crib.add(discards);
+
+        let result = if crib.len() == CARDS_REQUIRED_IN_CRIB {
+            let cut = deck.cut();
+            let score = CutScorer::new(cut).score();
+            scores.score_points(roles.dealer(), &score);
+
+            if scores.winner().is_some() {
+                #[rustfmt::skip]
+                let finished_state = Finished { scores, roles, hands, crib, cut, };
+                DiscardResult::Finished(Box::new(Game::<_>::new(finished_state)))
+            } else {
+                let pone = roles.pone();
+                let play_state = PlayState::new(pone, &hands);
+                #[rustfmt::skip]
+                let playing_state = Playing { scores, roles, hands, play_state, crib, cut, };
+                DiscardResult::Playing(Box::new(Game::<_>::new(playing_state)))
             }
-            DiscardingState::ReadyToCut => {
-                let cut = deck.cut();
-                let score = CutScorer::new(cut).score();
-                scores.score_points(roles.dealer(), &score);
-                if let Some(winner) = scores.winner() {
-                    let finished_state = Finished::new(winner, scores.peggings().clone(), cut);
-                    DiscardResult::Finished(Box::new(Game::<_>::new(finished_state)))
-                } else {
-                    let pone = roles.pone();
-                    let play_state = PlayState::new(pone, &hands);
-                    let playing_state = Playing::new(scores, roles, hands, play_state, cut, crib);
-                    DiscardResult::Playing(Box::new(Game::<_>::new(playing_state)))
-                }
-            }
+        } else {
+            #[rustfmt::skip]
+            let discarding_state = Discarding { scores, roles, hands, crib, deck, };
+            DiscardResult::Discarding(Box::new(Self::new(discarding_state)))
         };
 
         Ok(result)
@@ -342,11 +348,54 @@ pub enum PassResult {
 }
 
 impl Game<Playing> {
+    fn validate_next_to_play(&self, player: Player) -> Result<()> {
+        if self.state.play_state.next_to_play() == player {
+            Ok(())
+        } else {
+            Err(GameError::PlayOrPassNotPermittedByPlayer)
+        }
+    }
+
+    fn validate_can_play(&self, player: Player, card: Card) -> Result<()> {
+        self.validate_next_to_play(player)?;
+
+        let legal_plays = self.state.play_state.legal_plays(player);
+
+        if legal_plays.contains(&card) {
+            Ok(())
+        } else {
+            Err(GameError::CannotPlayCard)
+        }
+    }
+
+    fn validate_can_pass(&self, player: Player) -> Result<()> {
+        self.validate_next_to_play(player)?;
+
+        let legal_plays = self.state.play_state.legal_plays(player);
+
+        if legal_plays.is_empty() {
+            Ok(())
+        } else {
+            Err(GameError::CannotPass)
+        }
+    }
+
+    pub const fn play_state(&self) -> &PlayState {
+        &self.state.play_state
+    }
+
     pub fn play(self, player: Player, card: Card) -> Result<PlayResult> {
         self.validate_player_card(player, card)?;
         self.validate_can_play(player, card)?;
 
-        let (mut scores, roles, mut hands, mut play_state, cut, crib) = self.state.into_parts();
+        let Playing {
+            mut scores,
+            roles,
+            mut hands,
+            mut play_state,
+            cut,
+            crib,
+        } = self.state;
         let hand = hands
             .get_mut(&player)
             .ok_or(GameError::InvalidPlayer(player))?;
@@ -371,14 +420,17 @@ impl Game<Playing> {
         scores.score_points(player, &score_current_play);
         scores.score_points(player, &score_end_of_play);
 
-        let result = if let Some(winner) = scores.winner() {
-            let finished_state = Finished::new(winner, scores.peggings().clone(), cut);
+        let result = if scores.winner().is_some() {
+            #[rustfmt::skip]
+            let finished_state = Finished { scores, roles, hands, crib, cut } ;
             PlayResult::Finished(Box::new(Game::<_>::new(finished_state)))
         } else if all_cards_are_played {
-            let scoring_state = ScoringPone::new(scores, roles, hands, cut, crib);
+            #[rustfmt::skip]
+            let scoring_state = ScoringPone::new(scores, roles, hands, crib, cut);
             PlayResult::Scoring(Box::new(Game::<_>::new(scoring_state)))
         } else {
-            let playing_state = Playing::new(scores, roles, hands, play_state, cut, crib);
+            #[rustfmt::skip]
+            let playing_state = Playing { scores, roles, hands, play_state, crib, cut };
             PlayResult::Playing(Box::new(Self::new(playing_state)))
         };
 
@@ -386,13 +438,17 @@ impl Game<Playing> {
     }
 
     pub fn pass(self, player: Player) -> Result<PassResult> {
-        println!("pass: player: {} self: {}", player, self);
         self.validate_player(player)?;
-        println!("pass2");
         self.validate_can_pass(player)?;
-        println!("pass3");
 
-        let (mut scores, roles, hands, mut play_state, cut, crib) = self.state.into_parts();
+        let Playing {
+            mut scores,
+            roles,
+            hands,
+            mut play_state,
+            cut,
+            crib,
+        } = self.state;
 
         play_state.pass();
 
@@ -405,11 +461,13 @@ impl Game<Playing> {
 
         scores.score_points(player, &reasons);
 
-        let result = if let Some(winner) = scores.winner() {
-            let finished_state = Finished::new(winner, scores.peggings().clone(), cut);
+        let result = if scores.winner().is_some() {
+            #[rustfmt::skip]
+            let finished_state = Finished { scores, roles, hands, crib, cut };
             PassResult::Finished(Box::new(Game::<_>::new(finished_state)))
         } else {
-            let playing_state = Playing::new(scores, roles, hands, play_state, cut, crib);
+            #[rustfmt::skip]
+            let playing_state = Playing { scores, roles, hands, play_state, crib, cut };
             PassResult::Playing(Box::new(Self::new(playing_state)))
         };
 
@@ -424,29 +482,29 @@ pub enum ScorePoneResult {
 
 impl Game<ScoringPone> {
     pub fn reasons(&self) -> Result<ScoreReasons> {
-        let hand = self.hand(self.pone())?;
-        Ok(HandScorer::new(hand, self.cut()).score())
+        let hand = self.state.hand(self.state.pone());
+        Ok(HandScorer::new(hand, self.state.cut).score())
     }
 
     pub fn score_hand(self) -> Result<ScorePoneResult> {
         let reasons = self.reasons()?;
 
-        let (mut scores, roles, hands, cut, crib) = self.state.into_parts();
+        let (mut scores, roles, hands, crib, cut) = self.state.into_parts();
 
         scores.score_points(roles.pone(), &reasons);
 
-        let result = if let Some(winner) = scores.winner() {
-            let finished_state = Finished::new(winner, scores.peggings().clone(), cut);
+        let result = if scores.winner().is_some() {
+            #[rustfmt::skip]
+            let finished_state = Finished { scores, roles, hands, crib, cut };
             ScorePoneResult::Finished(Box::new(Game::<_>::new(finished_state)))
         } else {
-            let scoring_state = ScoringDealer::new(scores, roles, hands, cut, crib);
+            let scoring_state = ScoringDealer::new(scores, roles, hands, crib, cut);
             ScorePoneResult::Scoring(Box::new(Game::<_>::new(scoring_state)))
         };
 
         Ok(result)
     }
 }
-
 pub enum ScoreDealerResult {
     Scoring(Box<Game<ScoringCrib>>),
     Finished(Box<Game<Finished>>),
@@ -454,22 +512,23 @@ pub enum ScoreDealerResult {
 
 impl Game<ScoringDealer> {
     pub fn reasons(&self) -> Result<ScoreReasons> {
-        let hand = self.hand(self.dealer())?;
-        Ok(HandScorer::new(hand, self.cut()).score())
+        let hand = self.state.hand(self.state.dealer());
+        Ok(HandScorer::new(hand, self.state.cut).score())
     }
 
     pub fn score_hand(self) -> Result<ScoreDealerResult> {
         let reasons = self.reasons()?;
 
-        let (mut scores, roles, hands, cut, crib) = self.state.into_parts();
+        let (mut scores, roles, hands, crib, cut) = self.state.into_parts();
 
         scores.score_points(roles.dealer(), &reasons);
 
-        let result = if let Some(winner) = scores.winner() {
-            let finished_state = Finished::new(winner, scores.peggings().clone(), cut);
+        let result = if scores.winner().is_some() {
+            #[rustfmt::skip]
+            let finished_state = Finished { scores, roles, hands, crib, cut };
             ScoreDealerResult::Finished(Box::new(Game::<_>::new(finished_state)))
         } else {
-            let scoring_state = ScoringCrib::new(scores, roles, hands, cut, crib);
+            let scoring_state = ScoringCrib::new(scores, roles, hands, crib, cut);
             ScoreDealerResult::Scoring(Box::new(Game::<_>::new(scoring_state)))
         };
 
@@ -484,27 +543,28 @@ pub enum ScoreCribResult {
 
 impl Game<ScoringCrib> {
     pub fn reasons(&self) -> Result<ScoreReasons> {
-        let crib = self.crib();
-        Ok(CribScorer::new(crib, self.cut()).score())
+        Ok(CribScorer::new(&self.state.crib, self.state.cut).score())
     }
 
     pub fn score_crib(self) -> Result<ScoreCribResult> {
         let reasons = self.reasons()?;
-        let players = self.players();
+        let players = self.state.players();
 
-        let (mut scores, mut roles, _, cut, _) = self.state.into_parts();
+        let (mut scores, mut roles, hands, crib, cut) = self.state.into_parts();
 
         scores.score_points(roles.dealer(), &reasons);
 
-        let result = if let Some(winner) = scores.winner() {
-            let finished_state = Finished::new(winner, scores.peggings().clone(), cut);
+        let result = if scores.winner().is_some() {
+            #[rustfmt::skip]
+            let finished_state = Finished { scores, roles, hands, crib, cut };
             ScoreCribResult::Finished(Box::new(Game::<_>::new(finished_state)))
         } else {
             let mut deck = Deck::shuffled_pack();
             let hands = deck.deal(&players);
             let crib = Crib::default();
             roles.swap();
-            let discarding_state = Discarding::new(scores, roles, hands, crib, deck);
+            #[rustfmt::skip]
+            let discarding_state = Discarding { scores, roles, hands, crib, deck };
             ScoreCribResult::Discarding(Box::new(Game::<_>::new(discarding_state)))
         };
 
@@ -513,16 +573,11 @@ impl Game<ScoringCrib> {
 }
 
 impl Game<Finished> {
-    pub const fn winner(&self) -> Player {
-        self.state.winner()
-    }
-
-    pub const fn peggings(&self) -> &Peggings {
-        self.state.peggings()
-    }
-
-    pub const fn cut(&self) -> Cut {
-        self.state.cut()
+    pub fn winner(&self) -> Player {
+        let Some(winner) = self.state.scores().winner() else {
+            unreachable!("expect winner in finished game")
+        };
+        winner
     }
 }
 
@@ -532,10 +587,10 @@ impl<T: std::fmt::Display> std::fmt::Display for Game<T> {
     }
 }
 
+/// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
 #[cfg(test)]
 mod test {
-    /// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
-    use crate::prelude::*;
+    use super::*;
     use crate::test_modules::*;
 
     /// ## Number of Players
@@ -590,7 +645,7 @@ mod test {
     ///
     /// Rank of Cards: K (high), Q, J, 10, 9, 8, 7, 6, 5, 4, 3, 2, A.
     mod deck {
-        use super::*;
+        use super::{HasDeck, *};
 
         #[test]
         fn use_a_standard_pack_of_cards() {
@@ -622,15 +677,10 @@ mod test {
             for (expected_dealer, cuts) in [(0, "ASKS"), (1, "KSAS")] {
                 let builder = GameBuilder::default().with_cuts(cuts);
                 let players = builder.players();
-                let cuts = builder.cuts();
                 let game = builder.into_starting();
                 let game = game.start().expect("valid start");
-                let roles = Roles::try_from(&cuts).expect("valid try_from");
-
                 assert_eq!(game.dealer(), players[expected_dealer]);
                 assert_eq!(game.pone(), players[1 - expected_dealer]);
-                assert_eq!(game.dealer(), roles.dealer());
-                assert_eq!(game.pone(), roles.pone());
             }
         }
 
@@ -638,7 +688,7 @@ mod test {
         fn fail_to_start_game_if_cuts_are_the_same_value() {
             let game = GameBuilder::default().with_cuts("ASAC").into_starting();
             let error = game.start().expect_err("invalid start");
-            assert!(matches!(error, GameError::CannotDetermineRoles(_)));
+            assert!(matches!(error, GameError::CannotStart));
         }
 
         #[test]
@@ -655,7 +705,7 @@ mod test {
         fn fail_to_redraw_if_cuts_are_not_the_same_value() {
             let game = GameBuilder::default().with_cuts("ASKS").into_starting();
             let error = game.redraw().expect_err("invalid redraw");
-            assert_eq!(error, GameError::CutForStartDecided);
+            assert_eq!(error, GameError::CannotRedraw);
         }
 
         #[test]
@@ -682,12 +732,9 @@ mod test {
             let players = game.players();
             assert_eq!(players.len(), 2);
 
-            players.into_iter().for_each(|p| {
-                assert_eq!(
-                    game.hand(p).expect("valid hand").len(),
-                    CARDS_DEALT_PER_HAND
-                )
-            });
+            players
+                .into_iter()
+                .for_each(|p| assert_eq!(game.hand(p).len(), CARDS_DEALT_PER_HAND));
         }
 
         #[test]
@@ -697,25 +744,12 @@ mod test {
             let players = game.players();
 
             players.iter().for_each(|p| {
-                assert_eq!(
-                    *game.pegging(*p).expect("valid pegging").back_peg().points(),
-                    0
-                );
-                assert_eq!(
-                    *game
-                        .pegging(*p)
-                        .expect("valid pegging")
-                        .front_peg()
-                        .points(),
-                    0
-                );
+                assert_eq!(*game.scores().pegging(*p).back_peg().points(), 0);
+                assert_eq!(*game.scores().pegging(*p).front_peg().points(), 0);
             });
 
             players.iter().for_each(|p| {
-                assert_eq!(
-                    game.hand(*p).expect("valid hand").len(),
-                    CARDS_DEALT_PER_HAND
-                );
+                assert_eq!(game.hand(*p).len(), CARDS_DEALT_PER_HAND);
             });
 
             assert_eq!(game.crib().len(), 0);
@@ -750,10 +784,10 @@ mod test {
 
             let (player0, opponent0) = game0.player_1_2().expect("valid player_1_2");
 
-            let player_hand0 = game0.hand(player0).expect("valid hand");
+            let player_hand0 = game0.hand(player0);
             let player_discard = player_hand0.get(&[0]);
 
-            let opponent_hand0 = game0.hand(opponent0).expect("valid hand").clone();
+            let opponent_hand0 = game0.hand(opponent0).clone();
             let scores0 = game0.scores().clone();
             let dealer0 = game0.dealer();
             let deck0 = game0.deck().clone();
@@ -765,8 +799,8 @@ mod test {
                 panic!("unexpected state")
             };
 
-            let player_hand1 = game1.hand(player0).expect("valid hand");
-            let opponent_hand1 = game1.hand(opponent0).expect("valid hand");
+            let player_hand1 = game1.hand(player0);
+            let opponent_hand1 = game1.hand(opponent0);
 
             assert_eq!(game1.scores(), &scores0);
             assert_eq!(game1.dealer(), dealer0);
@@ -886,6 +920,7 @@ mod test {
     /// svarious card combinations that score points.
     mod before_the_play {
         use super::*;
+        use crate::domain::Face;
 
         fn after_discards_common_tests() -> (Scores, Scores, Cut, Player, Player) {
             let game0 = GameBuilder::default()
@@ -990,7 +1025,7 @@ mod test {
                 let player_discard = player_hand0.get(&[0, 1]);
                 let opponent_hand0 = hands0[&opponent0].clone();
                 let opponent_discard = opponent_hand0.get(&[0, 1]);
-                let peggings0 = game0.peggings().clone();
+                let peggings0 = game0.scores().peggings().clone();
 
                 let DiscardResult::Discarding(game1) = game0
                     .discard(player0, &player_discard)
@@ -1011,7 +1046,7 @@ mod test {
                         } else {
                             player0
                         };
-                        let peggings1 = game1.peggings();
+                        let peggings1 = game1.scores().peggings();
                         assert_eq!(peggings1[&winner1], peggings0[&winner1].add(2.into()));
                         assert_eq!(peggings1[&loser1], peggings0[&loser1]);
                         break;
@@ -1036,6 +1071,7 @@ mod test {
     /// count 10 each; every other card counts its pip value (the ace counts one).
     mod the_play {
         use super::*;
+        use crate::domain::{Hand, Play};
 
         #[test]
         fn accept_valid_play() {
@@ -1083,6 +1119,58 @@ mod test {
             assert_eq!(pone_hand1, Hand::default());
             assert_eq!(play_state1.next_to_play(), dealer1);
             assert_eq!(play_state1.legal_plays(dealer1), dealer_hand1);
+            assert_eq!(cut1, cut0);
+            assert_eq!(crib1, &crib0);
+        }
+
+        #[test]
+        fn accept_valid_play_after_opponent_passed() {
+            let game0 = GameBuilder::default()
+                .with_peggings(0, 0)
+                .with_hands("9S", "4SAS")
+                .with_cut("AS")
+                .with_current_plays(&[(1, "TC"), (0, "TD"), (1, "5C")])
+                .with_pass()
+                .into_playing(1);
+            let pone0 = game0.pone();
+            let scores0 = game0.scores();
+            let dealer0 = game0.dealer();
+            let hands0 = game0.hands();
+            let play_state0 = game0.play_state();
+            let cut0 = game0.cut();
+            let crib0 = game0.crib().clone();
+            let dealer_hand0 = hands0[&dealer0].clone();
+            let dealer_score0 = scores0.peggings()[&dealer0];
+            let pone_score0 = scores0.peggings()[&pone0];
+
+            assert_eq!(play_state0.legal_plays(dealer0), Hand::default());
+            assert_eq!(play_state0.legal_plays(pone0), valid_hand("4SAS"));
+
+            let PlayResult::Playing(game1) =
+                game0.play(pone0, valid_card("4S")).expect("valid play")
+            else {
+                panic!("unexpected state")
+            };
+
+            let scores1 = game1.scores();
+            let dealer1 = game1.dealer();
+            let pone1 = game1.pone();
+            let hands1 = game1.hands();
+            let play_state1 = game1.play_state();
+            let cut1 = game1.cut();
+            let crib1 = game1.crib();
+            let dealer_hand1 = hands1[&dealer1].clone();
+            let pone_hand1 = hands1[&pone1].clone();
+            let dealer_score1 = scores1.peggings()[&dealer1];
+            let pone_score1 = scores1.peggings()[&pone1];
+
+            assert_eq!(dealer_score1, dealer_score0);
+            assert_eq!(pone_score1, pone_score0);
+            assert_eq!(dealer1, dealer0);
+            assert_eq!(dealer_hand1, dealer_hand0);
+            assert_eq!(pone_hand1, Hand::try_from("AS").expect("valid hand"));
+            assert_eq!(play_state1.next_to_play(), pone1);
+            assert_eq!(play_state1.legal_plays(dealer1), Hand::default());
             assert_eq!(cut1, cut0);
             assert_eq!(crib1, &crib0);
         }
@@ -1228,7 +1316,7 @@ mod test {
             };
 
             let winner1 = game1.winner();
-            let peggings1 = game1.peggings();
+            let peggings1 = game1.scores().peggings();
             let score1_pone = peggings1[&pone0];
 
             assert_eq!(winner1, pone0);
@@ -1327,7 +1415,7 @@ mod test {
             };
 
             let winner1 = game1.winner();
-            let peggings1 = game1.peggings();
+            let peggings1 = game1.scores().peggings();
 
             assert_eq!(winner1, pone0);
             assert_eq!(peggings1[&pone0], scores0.peggings()[&pone0].add(2.into()));
@@ -1353,7 +1441,7 @@ mod test {
                 panic!("unexpected state")
             };
 
-            let peggings1 = game1.peggings();
+            let peggings1 = game1.scores().peggings();
             assert_eq!(peggings1[&pone0], scores0.peggings()[&pone0].add(1.into()));
             assert_eq!(peggings1[&dealer0], scores0.peggings()[&dealer0]);
         }
@@ -1378,7 +1466,7 @@ mod test {
             };
 
             let winner1 = game1.winner();
-            let peggings1 = game1.peggings();
+            let peggings1 = game1.scores().peggings();
 
             assert_eq!(winner1, pone0);
             assert_eq!(peggings1[&pone0], scores0.peggings()[&pone0].add(1.into()));
@@ -1898,7 +1986,7 @@ mod test {
             };
 
             let winner1 = game1.winner();
-            let peggings1 = game1.peggings();
+            let peggings1 = game1.scores().peggings();
 
             assert_eq!(winner1, dealer0);
             assert_eq!(peggings1[&pone0], scores0.peggings()[&pone0]);
@@ -2297,7 +2385,7 @@ mod test {
             };
 
             let winner2 = game2.winner();
-            let peggings2 = game2.peggings();
+            let peggings2 = game2.scores().peggings();
 
             assert_eq!(winner2, pone0);
             assert_eq!(peggings2[&dealer0], scores1.peggings()[&dealer0]);
@@ -2362,7 +2450,7 @@ mod test {
             };
 
             let winner2 = game2.winner();
-            let peggings2 = game2.peggings();
+            let peggings2 = game2.scores().peggings();
 
             assert_eq!(winner2, dealer0);
             assert_eq!(
@@ -2462,7 +2550,7 @@ mod test {
             };
 
             let winner2 = game2.winner();
-            let peggings2 = game2.peggings();
+            let peggings2 = game2.scores().peggings();
 
             assert_eq!(winner2, dealer0);
             assert_eq!(
@@ -2815,7 +2903,16 @@ mod test {
     /// for the winner if the losing player fails to pass the three-quarter mark - 91 points or more -
     /// and it is a "double skunk" (quadruple game) if the loser fails to pass the halfway mark (61
     /// or more points).
-    mod game {}
+    mod game {
+        use crate::test_modules::GameBuilder;
+
+        #[test]
+        #[should_panic]
+        fn impossible_no_winner_in_finished_state() {
+            let game = GameBuilder::default().into_finished();
+            let _ = game.winner();
+        }
+    }
 
     /// ## The Cribbage Board
     ///
@@ -2875,6 +2972,7 @@ mod test {
     /// ## Internal
     mod display {
         use super::*;
+        use crate::domain::{ScoreReason, ScoreReasonType};
 
         fn common_filters() -> insta::Settings {
             let mut settings = insta::Settings::new();
@@ -2888,7 +2986,14 @@ mod test {
         #[test]
         fn should_output_user_readable_starting_game_in_logs() {
             let game = GameBuilder::default().with_cuts("ASAC").into_starting();
-            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @"Starting(cuts: <playerid> -> <card>, <playerid> -> <card>, deck: [<cards>])"));
+            common_filters().bind(|| {
+                insta::assert_snapshot!(game.to_string(), @r"
+                                     Starting(
+                                         cuts: <playerid> -> <card>, <playerid> -> <card>,
+                                         deck: [<cards>]
+                                     )
+                                     ")
+            });
         }
 
         #[test]
@@ -2897,7 +3002,15 @@ mod test {
                 .with_peggings(0, 0)
                 .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
                 .into_discarding();
-            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @"Discarding(scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([]), roles: Roles(dealer: <playerid>, pone: <playerid>), hands: <playerid> -> [<cards>], <playerid> -> [<cards>], crib: [], deck: [<cards>])"));
+            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @r"
+                                     Discarding(
+                                         scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([]),
+                                         roles: Roles(dealer: <playerid>, pone: <playerid>),
+                                         hands: <playerid> -> [<cards>], <playerid> -> [<cards>],
+                                         crib: [],
+                                         deck: [<cards>]
+                                     )
+                                     "));
         }
 
         #[test]
@@ -2913,7 +3026,16 @@ mod test {
                 .with_cut("AS")
                 .with_current_plays(&[(0, "AH")])
                 .into_playing(1);
-            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @"Playing(scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([Fifteen: [<cards>] => 2]), roles: Roles(dealer: <playerid>, pone: <playerid>), hands: <playerid> -> [<cards>], <playerid> -> [<cards>], play_state: Next(<playerid>), Legal(<playerid> -> [<cards>], <playerid> -> [<cards>]), Passes(0), Current((<playerid> -> <card>)), Previous(), cut: <card>, crib: [])"));
+            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @r"
+                                     Playing(
+                                         scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([Fifteen: [<cards>] => 2]),
+                                         roles: Roles(dealer: <playerid>, pone: <playerid>),
+                                         hands: <playerid> -> [<cards>], <playerid> -> [<cards>],
+                                         play_state: Next(<playerid>), Legal(<playerid> -> [<cards>], <playerid> -> [<cards>]), Passes(0), Current((<playerid> -> <card>)), Previous(),
+                                         cut: <card>,
+                                         crib: []
+                                     )
+                                     "));
         }
 
         #[test]
@@ -2924,7 +3046,15 @@ mod test {
                 .with_cut("JH")
                 .with_crib("TSJSQSKS")
                 .into_scoring_pone();
-            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @"ScoringPone(scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([]), roles: Roles(dealer: <playerid>, pone: <playerid>), hands: <playerid> -> [<cards>], <playerid> -> [<cards>], cut: <card>, crib: [<cards>])"));
+            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @r"
+                                     ScoringPone(
+                                         scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([]),
+                                         roles: Roles(dealer: <playerid>, pone: <playerid>),
+                                         hands: <playerid> -> [<cards>], <playerid> -> [<cards>],
+                                         cut: <card>,
+                                         crib: [<cards>]
+                                     )
+                                     "));
         }
 
         #[test]
@@ -2935,7 +3065,15 @@ mod test {
                 .with_cut("JH")
                 .with_crib("TSJSQSKS")
                 .into_scoring_dealer();
-            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @"ScoringDealer(scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([]), roles: Roles(dealer: <playerid>, pone: <playerid>), hands: <playerid> -> [<cards>], <playerid> -> [<cards>], cut: <card>, crib: [<cards>])"));
+            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @r"
+                                     ScoringDealer(
+                                         scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([]),
+                                         roles: Roles(dealer: <playerid>, pone: <playerid>),
+                                         hands: <playerid> -> [<cards>], <playerid> -> [<cards>],
+                                         cut: <card>,
+                                         crib: [<cards>]
+                                     )
+                                     "));
         }
 
         #[test]
@@ -2946,7 +3084,15 @@ mod test {
                 .with_cut("JH")
                 .with_crib("TSJSQSKS")
                 .into_scoring_crib();
-            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @"ScoringCrib(scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([]), roles: Roles(dealer: <playerid>, pone: <playerid>), hands: <playerid> -> [<cards>], <playerid> -> [<cards>], cut: <card>, crib: [<cards>])"));
+            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @r"
+                                     ScoringCrib(
+                                         scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([]),
+                                         roles: Roles(dealer: <playerid>, pone: <playerid>),
+                                         hands: <playerid> -> [<cards>], <playerid> -> [<cards>],
+                                         cut: <card>,
+                                         crib: [<cards>]
+                                     )
+                                     "));
         }
 
         #[test]
@@ -2957,7 +3103,15 @@ mod test {
                 .with_cut("JH")
                 .with_crib("TSJSQSKS")
                 .into_finished();
-            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @"Finished(winner: <playerid>, peggings: <playerid> -> <score>, <playerid> -> <score>, cut: <card>)"));
+            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @r"
+                                     Finished(
+                                         scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([]),
+                                         roles: Roles(dealer: <playerid>, pone: <playerid>),
+                                         hands: <playerid> -> [<cards>], <playerid> -> [<cards>],
+                                         crib: [<cards>],
+                                         cut: <card>
+                                     )
+                                     "));
         }
     }
 }

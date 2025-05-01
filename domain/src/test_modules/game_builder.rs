@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::domain::*;
 
+#[cfg(test)]
 #[derive(Debug)]
 pub struct GameBuilder {
     players: Vec<Player>,
@@ -16,7 +17,6 @@ pub struct GameBuilder {
     crib: Crib,
     cut: Option<Card>,
     deck: Deck,
-    winner: usize,
 }
 
 pub fn valid_card(s: &str) -> Card {
@@ -35,6 +35,7 @@ pub fn valid_crib(s: &str) -> Crib {
     Crib::try_from(s).expect("valid crib")
 }
 
+#[coverage(off)]
 impl GameBuilder {
     pub fn new(player_count: usize) -> Self {
         Self {
@@ -50,7 +51,6 @@ impl GameBuilder {
             crib: Crib::default(),
             cut: None,
             deck: Deck::shuffled_pack(),
-            winner: 0,
         }
     }
 
@@ -125,11 +125,10 @@ impl GameBuilder {
         self
     }
 
-    // pub fn with_pass(mut self) -> Self {
-    //     self.pass_count += 1;
-    //     self
-    // }
-    //
+    pub fn with_pass(mut self) -> Self {
+        self.pass_count += 1;
+        self
+    }
 
     pub fn into_new(self) -> Result<Game<Starting>, GameError> {
         Game::<Starting>::try_new(&Players::from_iter(self.players))
@@ -148,7 +147,7 @@ impl GameBuilder {
         }
 
         let cuts = self.cuts();
-        Game::<_>::new(Starting::new(cuts, Deck::from(deck)))
+        Game::<_>::new(Starting { cuts, deck })
     }
 
     pub fn into_discarding(self) -> Game<Discarding> {
@@ -162,7 +161,9 @@ impl GameBuilder {
         let hands = self.merged(hands);
         let crib = self.crib.clone();
         let deck = self.deck.clone();
-        Game::<_>::new(Discarding::new(scores, roles, hands, crib, deck))
+        #[rustfmt::skip]
+        let discarding_state = Discarding { scores, roles, hands, crib, deck };
+        Game::<_>::new(discarding_state)
     }
 
     pub fn into_playing(self, next_to_play: usize) -> Game<Playing> {
@@ -183,9 +184,10 @@ impl GameBuilder {
         self.previous_plays
             .iter()
             .for_each(|p| play_state.force_previous_play(p.player(), p.card()));
-        let cut = self.cut.expect("cut");
         let crib = self.crib.clone();
-        let playing_state = Playing::new(scores, roles, hands, play_state, cut, crib);
+        let cut = self.cut.expect("cut");
+        #[rustfmt::skip]
+        let playing_state = Playing { scores, roles, hands, play_state, cut, crib };
         Game::<_>::new(playing_state)
     }
 
@@ -198,9 +200,9 @@ impl GameBuilder {
         let roles = Roles::new(players[self.dealer], players[1 - self.dealer]);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
-        let cut = self.cut.expect("cut");
         let crib = self.crib.clone();
-        let scoring_state = ScoringPone::new(scores, roles, hands, cut, crib);
+        let cut = self.cut.expect("cut");
+        let scoring_state = ScoringPone::new(scores, roles, hands, crib, cut);
         Game::<_>::new(scoring_state)
     }
 
@@ -213,9 +215,9 @@ impl GameBuilder {
         let roles = Roles::new(players[self.dealer], players[1 - self.dealer]);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
-        let cut = self.cut.expect("cut");
         let crib = self.crib.clone();
-        let scoring_state = ScoringDealer::new(scores, roles, hands, cut, crib);
+        let cut = self.cut.expect("cut");
+        let scoring_state = ScoringDealer::new(scores, roles, hands, crib, cut);
         Game::<_>::new(scoring_state)
     }
 
@@ -228,9 +230,9 @@ impl GameBuilder {
         let roles = Roles::new(players[self.dealer], players[1 - self.dealer]);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
-        let cut = self.cut.expect("cut");
         let crib = self.crib.clone();
-        let scoring_state = ScoringCrib::new(scores, roles, hands, cut, crib);
+        let cut = self.cut.expect("cut");
+        let scoring_state = ScoringCrib::new(scores, roles, hands, crib, cut);
         Game::<_>::new(scoring_state)
     }
 
@@ -238,8 +240,15 @@ impl GameBuilder {
         let players = self.players.clone();
         let peggings = self.peggings.clone();
         let peggings = self.merged(peggings);
-        let cut = self.cut.expect("cut defined");
-        let finished_state = Finished::new(players[self.winner], peggings, cut);
+        let mut scores = Scores::from(&peggings);
+        scores.score_points(players[0], &self.reasons);
+        let roles = Roles::new(players[self.dealer], players[1 - self.dealer]);
+        let hands = self.hands.clone();
+        let hands = self.merged(hands);
+        let crib = self.crib.clone();
+        let cut = self.cut.expect("cut");
+        #[rustfmt::skip]
+        let finished_state = Finished { scores, roles, hands, crib, cut };
         Game::<_>::new(finished_state)
     }
 

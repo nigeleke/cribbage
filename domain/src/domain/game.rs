@@ -1,4 +1,4 @@
-#![forbid(clippy::expect_used)]
+#![deny(clippy::expect_used)]
 
 use std::{cmp::Ordering, collections::HashMap};
 
@@ -83,6 +83,12 @@ impl<T: HasScores> HasScores for Game<T> {
     }
 }
 
+impl<T: HasRoles> HasRoles for Game<T> {
+    fn roles(&self) -> &Roles {
+        self.state.roles()
+    }
+}
+
 impl<T: HasHands> HasHands for Game<T> {
     fn hands(&self) -> &super::Hands {
         self.state.hands()
@@ -106,48 +112,6 @@ impl<T: HasCut> HasCut for Game<T> {
         self.state.cut()
     }
 }
-
-// impl<T: HasCuts> HasCuts for Game<T> {
-//     fn cuts(&self) -> &Cuts {
-//         self.state.cuts()
-//     }
-// }
-
-impl<T: HasRoles> HasRoles for Game<T> {
-    fn roles(&self) -> &Roles {
-        self.state.roles()
-    }
-}
-
-// impl<T: HasHands> HasHands for Game<T> {
-//     fn hands(&self) -> &Hands {
-//         self.state.hands()
-//     }
-// }
-
-// impl<T: HasScores> HasScores for Game<T> {
-//     fn scores(&self) -> &Scores {
-//         self.state.scores()
-//     }
-// }
-
-// impl<T: HasCrib> HasCrib for Game<T> {
-//     fn crib(&self) -> &Crib {
-//         self.state.crib()
-//     }
-// }
-
-// impl<T: HasPlayState> HasPlayState for Game<T> {
-//     fn play_state(&self) -> &PlayState {
-//         self.state.play_state()
-//     }
-// }
-
-// impl<T: HasCut> HasCut for Game<T> {
-//     fn cut(&self) -> Cut {
-//         self.state.cut()
-//     }
-// }
 
 impl<T: HasPlayers> Game<T> {
     fn validate_player(&self, player: Player) -> Result<()> {
@@ -588,6 +552,7 @@ impl<T: std::fmt::Display> std::fmt::Display for Game<T> {
 }
 
 /// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
+#[allow(clippy::expect_used)]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -744,8 +709,8 @@ mod test {
             let players = game.players();
 
             players.iter().for_each(|p| {
-                assert_eq!(*game.scores().pegging(*p).back_peg().points(), 0);
-                assert_eq!(*game.scores().pegging(*p).front_peg().points(), 0);
+                assert_eq!(*game.pegging(*p).back_peg().points(), 0);
+                assert_eq!(*game.pegging(*p).front_peg().points(), 0);
             });
 
             players.iter().for_each(|p| {
@@ -979,7 +944,7 @@ mod test {
             assert_eq!(play_state1.current_plays(), []);
             assert_eq!(play_state1.previous_plays(), []);
 
-            (scores0.clone(), scores1.clone(), cut1, dealer1, pone0)
+            (scores0, scores1.clone(), cut1, dealer1, pone0)
         }
 
         #[test]
@@ -1025,7 +990,7 @@ mod test {
                 let player_discard = player_hand0.get(&[0, 1]);
                 let opponent_hand0 = hands0[&opponent0].clone();
                 let opponent_discard = opponent_hand0.get(&[0, 1]);
-                let peggings0 = game0.scores().peggings().clone();
+                let peggings0 = game0.peggings().clone();
 
                 let DiscardResult::Discarding(game1) = game0
                     .discard(player0, &player_discard)
@@ -1046,7 +1011,7 @@ mod test {
                         } else {
                             player0
                         };
-                        let peggings1 = game1.scores().peggings();
+                        let peggings1 = game1.peggings();
                         assert_eq!(peggings1[&winner1], peggings0[&winner1].add(2.into()));
                         assert_eq!(peggings1[&loser1], peggings0[&loser1]);
                         break;
@@ -1316,7 +1281,7 @@ mod test {
             };
 
             let winner1 = game1.winner();
-            let peggings1 = game1.scores().peggings();
+            let peggings1 = game1.peggings();
             let score1_pone = peggings1[&pone0];
 
             assert_eq!(winner1, pone0);
@@ -1415,7 +1380,7 @@ mod test {
             };
 
             let winner1 = game1.winner();
-            let peggings1 = game1.scores().peggings();
+            let peggings1 = game1.peggings();
 
             assert_eq!(winner1, pone0);
             assert_eq!(peggings1[&pone0], scores0.peggings()[&pone0].add(2.into()));
@@ -1441,7 +1406,7 @@ mod test {
                 panic!("unexpected state")
             };
 
-            let peggings1 = game1.scores().peggings();
+            let peggings1 = game1.peggings();
             assert_eq!(peggings1[&pone0], scores0.peggings()[&pone0].add(1.into()));
             assert_eq!(peggings1[&dealer0], scores0.peggings()[&dealer0]);
         }
@@ -1466,7 +1431,7 @@ mod test {
             };
 
             let winner1 = game1.winner();
-            let peggings1 = game1.scores().peggings();
+            let peggings1 = game1.peggings();
 
             assert_eq!(winner1, pone0);
             assert_eq!(peggings1[&pone0], scores0.peggings()[&pone0].add(1.into()));
@@ -1547,7 +1512,7 @@ mod test {
             let play_state1 = game1.play_state();
 
             let last_play = Play::new(dealer0, valid_card("8H"));
-            let mut expected_current_plays = play_state0.current_plays().clone();
+            let mut expected_current_plays = play_state0.current_plays();
             expected_current_plays.push(last_play);
 
             assert_eq!(dealer1, dealer0);
@@ -1986,7 +1951,7 @@ mod test {
             };
 
             let winner1 = game1.winner();
-            let peggings1 = game1.scores().peggings();
+            let peggings1 = game1.peggings();
 
             assert_eq!(winner1, dealer0);
             assert_eq!(peggings1[&pone0], scores0.peggings()[&pone0]);
@@ -2385,7 +2350,7 @@ mod test {
             };
 
             let winner2 = game2.winner();
-            let peggings2 = game2.scores().peggings();
+            let peggings2 = game2.peggings();
 
             assert_eq!(winner2, pone0);
             assert_eq!(peggings2[&dealer0], scores1.peggings()[&dealer0]);
@@ -2450,7 +2415,7 @@ mod test {
             };
 
             let winner2 = game2.winner();
-            let peggings2 = game2.scores().peggings();
+            let peggings2 = game2.peggings();
 
             assert_eq!(winner2, dealer0);
             assert_eq!(
@@ -2550,7 +2515,7 @@ mod test {
             };
 
             let winner2 = game2.winner();
-            let peggings2 = game2.scores().peggings();
+            let peggings2 = game2.peggings();
 
             assert_eq!(winner2, dealer0);
             assert_eq!(

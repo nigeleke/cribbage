@@ -87,15 +87,15 @@ mod test {
         let suits = "HCDS";
         let faces = "A23456789TJQK";
 
-        let expected_suit_name = vec!["Hearts", "Clubs", "Diamonds", "Spades"];
-        let expected_face_name = vec![
+        let expected_suit_name = ["Hearts", "Clubs", "Diamonds", "Spades"];
+        let expected_face_name = [
             "Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack",
             "Queen", "King",
         ];
 
         for (si, suit) in suits.chars().enumerate() {
             for (fi, face) in faces.chars().enumerate() {
-                let cid = format!("{}{}", face, suit);
+                let cid = format!("{face}{suit}");
                 let card = Card::try_from(cid.as_str()).expect("valid cards str");
                 assert_eq!(card.suit_name(), expected_suit_name[si]);
                 assert_eq!(card.face_name(), expected_face_name[fi])

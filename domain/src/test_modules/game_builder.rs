@@ -108,18 +108,14 @@ impl GameBuilder {
     }
 
     pub fn with_current_plays(mut self, plays: &[(usize, &str)]) -> Self {
-        let plays = plays
-            .iter()
-            .map(|(p, c)| (self.players[*p], valid_card(*c)));
+        let plays = plays.iter().map(|(p, c)| (self.players[*p], valid_card(c)));
         let plays = plays.map(|(p, c)| Play::new(p, c));
         self.current_plays = Vec::from_iter(plays);
         self
     }
 
     pub fn with_previous_plays(mut self, plays: &[(usize, &str)]) -> Self {
-        let plays = plays
-            .iter()
-            .map(|(p, c)| (self.players[*p], valid_card(*c)));
+        let plays = plays.iter().map(|(p, c)| (self.players[*p], valid_card(c)));
         let plays = plays.map(|(p, c)| Play::new(p, c));
         self.previous_plays = Vec::from_iter(plays);
         self
@@ -261,6 +257,6 @@ impl GameBuilder {
 
 impl Default for GameBuilder {
     fn default() -> Self {
-        GameBuilder::new(2)
+        Self::new(2)
     }
 }

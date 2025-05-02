@@ -107,7 +107,7 @@ mod test {
 
     #[test]
     fn can_create_face_from_valid_char() {
-        for c in "A2345678TJK".as_bytes() {
+        for c in b"A2345678TJK" {
             let _ = Face::try_from(*c as char).expect("valid try_from");
         }
     }

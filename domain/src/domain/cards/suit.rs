@@ -41,7 +41,7 @@ mod test {
 
     #[test]
     fn can_create_suit_from_valid_char() {
-        for c in "HCDS".as_bytes() {
+        for c in b"HCDS" {
             let _ = Suit::try_from(*c as char).expect("valid suit");
         }
     }

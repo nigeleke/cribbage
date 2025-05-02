@@ -46,6 +46,16 @@ impl Scores {
 
 pub trait HasScores {
     fn scores(&self) -> &Scores;
+
+    #[cfg(test)]
+    fn peggings(&self) -> &Peggings {
+        self.scores().peggings()
+    }
+
+    #[cfg(test)]
+    fn pegging(&self, player: Player) -> &Pegging {
+        self.scores().pegging(player)
+    }
 }
 
 impl std::fmt::Display for Scores {

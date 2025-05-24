@@ -1,9 +1,11 @@
+use serde::Serialize;
+
 use crate::{
     display::format_hashmap,
     domain::{Crib, Cut, Hands, HasHands, HasPlayers, HasRoles, HasScores, Players, Roles, Scores},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Scoring<T> {
     pub scores: Scores,
     pub roles: Roles,

@@ -2,6 +2,7 @@
 
 use std::{cmp::Ordering, collections::HashMap};
 
+use serde::{Deserialize, Serialize};
 use thiserror::*;
 
 use super::{
@@ -55,14 +56,14 @@ pub enum GameError {
 
 type Result<T> = std::result::Result<T, GameError>;
 
-/// The game state, waiting for opponent, discarding, playing, scoring, finished.
-#[derive(Clone, Debug)]
+/// The game state, starting, discarding, playing, scoring, finished.
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Game<T> {
     state: T,
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T> Game<T> {
+impl<T: Serialize> Game<T> {
     pub const fn new(state: T) -> Self {
         Self {
             state,
@@ -71,49 +72,49 @@ impl<T> Game<T> {
     }
 }
 
-impl<T: HasPlayers> HasPlayers for Game<T> {
+impl<T: HasPlayers + Serialize> HasPlayers for Game<T> {
     fn players(&self) -> Players {
         self.state.players()
     }
 }
 
-impl<T: HasScores> HasScores for Game<T> {
+impl<T: HasScores + Serialize> HasScores for Game<T> {
     fn scores(&self) -> &Scores {
         self.state.scores()
     }
 }
 
-impl<T: HasRoles> HasRoles for Game<T> {
+impl<T: HasRoles + Serialize> HasRoles for Game<T> {
     fn roles(&self) -> &Roles {
         self.state.roles()
     }
 }
 
-impl<T: HasHands> HasHands for Game<T> {
+impl<T: HasHands + Serialize> HasHands for Game<T> {
     fn hands(&self) -> &super::Hands {
         self.state.hands()
     }
 }
 
-impl<T: HasCrib> HasCrib for Game<T> {
+impl<T: HasCrib + Serialize> HasCrib for Game<T> {
     fn crib(&self) -> &Crib {
         self.state.crib()
     }
 }
 
-impl<T: HasDeck> HasDeck for Game<T> {
+impl<T: HasDeck + Serialize> HasDeck for Game<T> {
     fn deck(&self) -> &Deck {
         self.state.deck()
     }
 }
 
-impl<T: HasCut> HasCut for Game<T> {
+impl<T: HasCut + Serialize> HasCut for Game<T> {
     fn cut(&self) -> Cut {
         self.state.cut()
     }
 }
 
-impl<T: HasPlayers> Game<T> {
+impl<T: HasPlayers + Serialize> Game<T> {
     fn validate_player(&self, player: Player) -> Result<()> {
         if self.state.players().contains(&player) {
             Ok(())
@@ -139,7 +140,7 @@ impl<T: HasPlayers> Game<T> {
     }
 }
 
-impl<T: HasHands + HasPlayers> Game<T> {
+impl<T: HasHands + HasPlayers + Serialize> Game<T> {
     fn validate_player_card(&self, player: Player, card: Card) -> Result<()> {
         self.validate_player(player)?;
 
@@ -545,7 +546,7 @@ impl Game<Finished> {
     }
 }
 
-impl<T: std::fmt::Display> std::fmt::Display for Game<T> {
+impl<T: std::fmt::Display + Serialize> std::fmt::Display for Game<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.state.fmt(f)
     }

@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::domain::{Card, Points};
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReasonType {
     Fifteen,
     Pair,
@@ -10,7 +12,7 @@ pub enum ReasonType {
     EndOfPlay,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Reason {
     typ: ReasonType,
     cards: Vec<Card>,

@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     display::format_hashmap,
     domain::{
@@ -6,7 +8,7 @@ use crate::{
     },
 };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Discarding {
     pub scores: Scores,
     pub roles: Roles,

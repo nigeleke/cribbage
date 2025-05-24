@@ -4,15 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-thiserror = { workspace = true }
-uuid = { workspace = true }
-enum-iterator = { workspace = true }
-rand = { workspace = true }
-itertools = { workspace = true }
+enum-iterator = "2.1.0"
+itertools = "0.14.0"
+rand = "0.9.1"
+serde = { version = "1.0.219", features = ["derive"] }
+thiserror = "2.0.12"
+uuid = { version = "1.16.0", features = ["v4", "serde"] }
 
 [dev-dependencies]
-pretty_assertions = { workspace = true }
-insta = { workspace = true }
+insta = { version = "1.43.1", features = ["filters"] }
+pretty_assertions = "1.4.1"
 
 [lints]
 clippy.all = "deny"

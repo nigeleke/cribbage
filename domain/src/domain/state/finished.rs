@@ -1,9 +1,11 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     display::format_hashmap,
     domain::{Crib, Cut, Hands, HasCut, HasScores, Roles, Scores},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Finished {
     pub scores: Scores,
     pub roles: Roles,

@@ -1,9 +1,11 @@
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
+
 use super::{card::Card, value::Value};
 use crate::display::format_vec;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CardStock<T: Clone> {
     pub cards: Vec<Card>,
     _marker: std::marker::PhantomData<T>,

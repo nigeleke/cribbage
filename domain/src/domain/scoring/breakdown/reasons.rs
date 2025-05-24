@@ -1,7 +1,9 @@
+use serde::{Deserialize, Serialize};
+
 use super::reason::{Reason, ReasonType};
 use crate::domain::{Card, Points};
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Reasons(Vec<Reason>);
 
 impl Reasons {

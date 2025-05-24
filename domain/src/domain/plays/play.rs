@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::domain::{Card, Player};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Play {
     player: Player,
     card: Card,

@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 /// The points score for a player.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Points(usize);
 
 impl From<usize> for Points {

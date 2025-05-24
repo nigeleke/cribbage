@@ -1,0 +1,15 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dioxus = { workspace = true, features = ["fullstack"] }
+api = { path = "../api", optional = true }
+axum = "0.7.9"
+dioxus-cli-config = "0.6.3"
+tokio = { version = "1.45.0", features = ["full"] }
+
+[features]
+default = ["server"]
+server = ["dioxus/server", "api/server"]

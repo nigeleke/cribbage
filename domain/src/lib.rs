@@ -7,4 +7,6 @@ mod domain;
 #[cfg(test)]
 mod test_modules;
 
-pub use domain::{Card, Crib, Cut, Deck, Game, GameError, Hand, Pegging, PlayState, Player};
+pub use domain::{
+    Card, Crib, Cut, Deck, Game, GameError, Hand, Pegging, PlayState, Player, Players,
+};

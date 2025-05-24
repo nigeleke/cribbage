@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::domain::Points;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Peg(Points);
 
 impl Peg {

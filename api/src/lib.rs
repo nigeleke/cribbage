@@ -1,8 +1,11 @@
-//! This crate contains all shared fullstack server functions.
-use dioxus::prelude::*;
+#[cfg(feature = "server")]
+mod api_state;
+#[cfg(feature = "server")]
+mod database;
+mod dto;
+mod services;
 
-/// Echo the user input on the server.
-#[server(Echo)]
-pub async fn echo(input: String) -> Result<String, ServerFnError> {
-    Ok(input)
-}
+pub use dto::*;
+pub use services::*;
+#[cfg(feature = "server")]
+pub use {api_state::ApiState, database::DatabaseError};

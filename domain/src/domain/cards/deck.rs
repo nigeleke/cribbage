@@ -1,4 +1,4 @@
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{rng, seq::SliceRandom};
 
 use super::{
     card::Card,
@@ -20,7 +20,7 @@ pub trait HasDeck {
 impl Deck {
     pub fn shuffled_pack() -> Self {
         let mut cards = Card::all();
-        cards.shuffle(&mut thread_rng());
+        cards.shuffle(&mut rng());
         cards.into()
     }
 

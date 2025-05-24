@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use super::play::Play;
 use crate::{
     constants::*,
@@ -5,7 +7,7 @@ use crate::{
     domain::{Card, Hand, Hands, Player, Players, Value},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayState {
     next_to_play: Player,
     legal_plays: Hands,

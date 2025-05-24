@@ -19,3 +19,17 @@ The project then moved to [Rust](https://www.rust-lang.org/) using [Leptos](http
 The current incarnation is still [Rust](https://www.rust-lang.org/), but using [Dioxus](https://dioxuslabs.com/)
 
 The project is under active development as of Apr 2025.
+
+## Testing
+
+```bash
+docker-compose -f docker/docker_compose.yml up -d
+docker exec -it postgres psql -U postgres -c 'CREATE DATABASE cribbage_db;'
+cargo test --all-features
+cd entrypoint
+dx serve
+```
+
+Navigate to:
+  - [app](http://localhost:8080/)
+  - [pgadmin](http://localhost:8181/)

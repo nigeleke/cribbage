@@ -1,9 +1,10 @@
 use enum_iterator::Sequence;
+use serde::{Deserialize, Serialize};
 
 use super::{rank::Rank, value::Value};
 
 /// A Card face.
-#[derive(Clone, Copy, Debug, Sequence, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Sequence, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Face {
     Ace,
     Two,

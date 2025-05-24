@@ -1,9 +1,10 @@
 use enum_iterator::all;
+use serde::{Deserialize, Serialize};
 
 use super::{face::Face, rank::Rank, suit::Suit, value::Value};
 
 /// A playing card.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Card {
     face: Face,
     suit: Suit,

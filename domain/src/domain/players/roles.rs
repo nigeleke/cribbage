@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use super::player::Player;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Roles {
     dealer: Player,
     pone: Player,

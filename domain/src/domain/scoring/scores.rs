@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use super::{
     breakdown::Reasons,
     pegging::{Pegging, Peggings},
@@ -8,7 +10,7 @@ use crate::{
     domain::{Player, Players},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Scores {
     peggings: Peggings,
     reasons: Reasons,

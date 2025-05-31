@@ -1,5 +1,5 @@
 #[macro_export]
-macro_rules! set_default_cache {
+macro_rules! set_no_cache_response {
     () => {
         if cfg!(debug_assertions) {
             let context = dioxus::prelude::server_context();

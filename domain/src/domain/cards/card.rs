@@ -1,7 +1,6 @@
+use super::{face::Face, rank::Rank, suit::Suit, value::Value};
 use enum_iterator::all;
 use serde::{Deserialize, Serialize};
-
-use super::{face::Face, rank::Rank, suit::Suit, value::Value};
 
 /// A playing card.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
@@ -42,6 +41,10 @@ impl Card {
 
     pub fn value(&self) -> Value {
         self.face.value()
+    }
+
+    pub fn cid(&self) -> String {
+        self.to_string()
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::{UserId, dto::UnstartedGame};
+use crate::{UserId, dto::AvailableGame};
 use chrono::{DateTime, Utc};
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -6,12 +6,8 @@ use std::sync::Arc;
 
 #[cfg(feature = "server")]
 mod server {
-    pub use crate::{api_state::ApiState, database::select_unstarted_games, set_default_cache};
+    pub use crate::{api_state::ApiState, database::select_available_games, set_no_cache_response};
     pub use futures::StreamExt;
-    pub use redis::AsyncCommands;
-    pub use tokio::sync::OnceCell;
-    pub const REDIS_CHANNEL: &str = "unstarted_games_change";
-    pub static DATABASE_LISTENER: OnceCell<()> = OnceCell::const_new();
 }
 
 #[cfg(feature = "server")]
@@ -42,14 +38,14 @@ impl Request {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Response {
-    games: Vec<UnstartedGame>,
+    games: Vec<AvailableGame>,
     has_more: bool,
     #[serde(default)]
     state: State,
 }
 
 impl Response {
-    pub fn games(&self) -> &Vec<UnstartedGame> {
+    pub fn games(&self) -> &Vec<AvailableGame> {
         &self.games
     }
 
@@ -63,17 +59,17 @@ impl Response {
 }
 
 #[server]
-pub async fn fetch_unstarted_games(request: Request) -> Result<Response, ServerFnError> {
+pub async fn fetch_available_games(request: Request) -> Result<Response, ServerFnError> {
     const CHUNK_SIZE: u32 = 20;
 
-    set_default_cache!();
+    set_no_cache_response!();
     let context = server_context()
         .get::<Arc<ApiState>>()
         .expect("server initialised");
     let pool = context.pool();
 
     let filter = (!request.filter.is_empty()).then_some(request.filter);
-    let chunk = select_unstarted_games(
+    let chunk = select_available_games(
         pool,
         CHUNK_SIZE,
         request.state.last_created_at,
@@ -85,7 +81,7 @@ pub async fn fetch_unstarted_games(request: Request) -> Result<Response, ServerF
     let game_dtos = chunk
         .games
         .into_iter()
-        .map(UnstartedGame::from)
+        .map(AvailableGame::from)
         .collect::<Vec<_>>();
 
     let response = Response {

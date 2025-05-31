@@ -1,11 +1,10 @@
-use serde::{Deserialize, Serialize};
-
 use crate::{
     display::format_hashmap,
     domain::{Cuts, Deck, HasDeck, HasPlayers, Players},
 };
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Starting {
     pub cuts: Cuts,
     pub deck: Deck,

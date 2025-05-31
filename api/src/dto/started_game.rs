@@ -9,6 +9,16 @@ pub struct StartedGame {
     pub(crate) active_game_id: ActiveGameId,
 }
 
+impl StartedGame {
+    pub fn unstarted_game_id(&self) -> &UnstartedGameId {
+        &self.unstarted_game_id
+    }
+
+    pub fn active_game_id(&self) -> &ActiveGameId {
+        &self.active_game_id
+    }
+}
+
 #[cfg(feature = "server")]
 impl From<StartedGameRow> for StartedGame {
     fn from(value: StartedGameRow) -> Self {

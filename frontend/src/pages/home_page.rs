@@ -1,15 +1,18 @@
-use crate::{components::DebouncedInput, route::Route};
+use crate::{
+    components::{DebouncedInput, Toast},
+    route::Route,
+};
 use api::{
-    UnstartedGame, UnstartedGamesEvent, UnstartedGamesRequest, UnstartedGamesState, UserId,
-    activate_game, fetch_unstarted_games, new_computer_game, new_human_game,
-    unstarted_games_stream,
+    ActiveGamesEvent, AvailableGame, AvailableGameId, AvailableGamesRequest, AvailableGamesState,
+    UnstartedGamesEvent, UserId, activate_game, active_games_stream, fetch_available_games,
+    new_computer_game, new_human_game, unstarted_games_stream,
 };
 use dioxus::{logger::tracing::warn, prelude::*};
 use futures::stream::StreamExt;
 
 #[component]
 pub fn HomePage() -> Element {
-    let games = use_signal(Vec::<UnstartedGame>::default);
+    let games = use_signal(Vec::<AvailableGame>::default);
     provide_context(games);
 
     rsx! {
@@ -56,7 +59,7 @@ fn NewGameSection() -> Element {
             div {
                 class: "new-game-buttons",
                 button { onclick: start_human_game, "Play with Friends" }
-                button { onclick: start_computer_game, "Play with Computer" }
+                button { disabled: true, onclick: start_computer_game, "Play with Computer" }
             }
         }
     }
@@ -65,21 +68,27 @@ fn NewGameSection() -> Element {
 #[component]
 fn JoinGameSection() -> Element {
     let user_id = use_context::<Signal<UserId>>();
-    let mut games = use_context::<Signal<Vec<UnstartedGame>>>();
+    let mut games = use_context::<Signal<Vec<AvailableGame>>>();
+    let mut toasts = use_signal(Vec::<String>::new);
     let mut filter = use_signal(String::default);
 
     let mut has_more = use_signal(|| false);
-    let mut next_state = use_signal(UnstartedGamesState::default);
+    let mut next_state = use_signal(AvailableGamesState::default);
 
     let fetch_games = {
-        move |state: UnstartedGamesState, replace: bool| async move {
-            let request = UnstartedGamesRequest::new(user_id(), filter(), state);
-            match fetch_unstarted_games(request).await {
+        move |state: AvailableGamesState, replace: bool| async move {
+            let request = AvailableGamesRequest::new(user_id(), filter(), state);
+            match fetch_available_games(request).await {
                 Ok(response) => {
                     if replace {
                         games.set(response.games().clone());
                     } else {
-                        games.write().append(&mut response.games().clone());
+                        let mut new_games = response
+                            .games()
+                            .iter()
+                            .filter_map(|g| (!games.read().contains(g)).then_some(g.clone()))
+                            .collect::<Vec<_>>();
+                        games.write().append(&mut new_games);
                     }
                     next_state.set(response.state().clone());
                     has_more.set(response.has_more());
@@ -91,7 +100,7 @@ fn JoinGameSection() -> Element {
         }
     };
 
-    let _ = use_future(move || fetch_games(UnstartedGamesState::default(), true));
+    let _ = use_future(move || fetch_games(AvailableGamesState::default(), true));
 
     let _ = use_resource(move || async move {
         match unstarted_games_stream().await {
@@ -101,9 +110,40 @@ fn JoinGameSection() -> Element {
                     match event {
                         Ok(event) => match event {
                             UnstartedGamesEvent::NewGame(_) => has_more.set(true),
-                            UnstartedGamesEvent::RemovedGame(deleted_game) => {
-                                games.write().retain(|game| game != &deleted_game)
+                            UnstartedGamesEvent::RemovedGame(deleted_game) => games
+                                .write()
+                                .retain(|game| game.id().value() != deleted_game.id().value()),
+                        },
+                        Err(e) => {
+                            warn!("Stream error: {:?}", e);
+                            break;
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                warn!("Failed to fetch stream: {:?}", e);
+                return;
+            }
+        }
+    });
+
+    let _ = use_resource(move || async move {
+        match active_games_stream(user_id()).await {
+            Ok(stream) => {
+                let mut stream = stream.into_inner();
+                while let Some(event) = stream.next().await {
+                    match event {
+                        Ok(event) => match event {
+                            ActiveGamesEvent::NewGame(new_game) => {
+                                let new_game = AvailableGame::from(new_game);
+                                let game_name = new_game.name().clone();
+                                games.write().insert(0, new_game);
+                                toasts.write().push(format!("Someone joined {}", game_name));
                             }
+                            ActiveGamesEvent::RemovedGame(deleted_game) => games
+                                .write()
+                                .retain(|game| game.id().value() != deleted_game.id().value()),
                         },
                         Err(e) => {
                             warn!("Stream error: {:?}", e);
@@ -128,7 +168,7 @@ fn JoinGameSection() -> Element {
                 value: filter,
                 on_debounced_input: move |value| {
                     filter.set(value);
-                    let state = UnstartedGamesState::default();
+                    let state = AvailableGamesState::default();
                     async move {
                         fetch_games(state, true).await;
                     }
@@ -145,24 +185,33 @@ fn JoinGameSection() -> Element {
                 },
                 "More..."
             }
+            Toast { toasts }
         }
     }
 }
 
 #[component]
-fn GameList(games: ReadOnlySignal<Vec<UnstartedGame>>) -> Element {
+fn GameList(games: ReadOnlySignal<Vec<AvailableGame>>) -> Element {
     let user_id = use_context::<Signal<UserId>>();
     let navigator = use_navigator();
 
-    let create_active_game = move |unstarted_game: UnstartedGame| {
+    let set_active_game = move |available_game: AvailableGame| {
         move |_| {
-            let unstarted_game = unstarted_game.clone();
-            spawn(async move {
-                match activate_game(user_id(), *unstarted_game.id()).await {
-                    Ok(id) => navigator.push(Route::GamePage { id }),
-                    Err(e) => panic!("Unable to start game: {e}"),
-                };
-            });
+            let available_game = available_game.clone();
+            match available_game.id() {
+                AvailableGameId::Unstarted(id) => {
+                    let id = id.clone();
+                    spawn(async move {
+                        match activate_game(user_id(), id).await {
+                            Ok(id) => navigator.push(Route::GamePage { id }),
+                            Err(e) => panic!("Unable to start game: {e}"),
+                        };
+                    });
+                }
+                AvailableGameId::Active(id) => {
+                    navigator.push(Route::GamePage { id: *id });
+                }
+            }
         }
     };
 
@@ -174,8 +223,9 @@ fn GameList(games: ReadOnlySignal<Vec<UnstartedGame>>) -> Element {
                 for game in games().into_iter() {
                     li {
                         class: "game-item",
+                        class: if matches!(game.id(), AvailableGameId::Active(_)) { "active" },
                         key: game.id(),
-                        onclick: create_active_game(game),
+                        onclick: set_active_game(game),
                         span { "{game.to_string()}" }
                     }
                 }

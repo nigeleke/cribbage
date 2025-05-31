@@ -1,11 +1,13 @@
-use serde::Serialize;
-
 use crate::{
     display::format_hashmap,
-    domain::{Crib, Cut, Hands, HasHands, HasPlayers, HasRoles, HasScores, Players, Roles, Scores},
+    domain::{
+        Crib, Cut, Hands, HasCrib, HasCut, HasHands, HasPlayers, HasRoles, HasScores, Players,
+        Roles, Scores,
+    },
 };
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Scoring<T> {
     pub scores: Scores,
     pub roles: Roles,
@@ -47,6 +49,18 @@ impl<T> HasRoles for Scoring<T> {
 impl<T> HasHands for Scoring<T> {
     fn hands(&self) -> &Hands {
         &self.hands
+    }
+}
+
+impl<T> HasCut for Scoring<T> {
+    fn cut(&self) -> Cut {
+        self.cut
+    }
+}
+
+impl<T> HasCrib for Scoring<T> {
+    fn crib(&self) -> &Crib {
+        &self.crib
     }
 }
 

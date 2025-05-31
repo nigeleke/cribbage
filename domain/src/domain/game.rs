@@ -1,10 +1,5 @@
 #![deny(clippy::expect_used)]
 
-use std::{cmp::Ordering, collections::HashMap};
-
-use serde::{Deserialize, Serialize};
-use thiserror::*;
-
 use super::{
     cards::{Card, Crib, Cut, Cuts, Deck, HasCrib, HasCut, HasDeck, HasHands},
     players::{HasPlayers, HasRoles, Player, Players, Roles},
@@ -14,6 +9,9 @@ use super::{
     state::{Discarding, Finished, Playing, ScoringCrib, ScoringDealer, ScoringPone, Starting},
 };
 use crate::constants::*;
+use serde::{Deserialize, Serialize};
+use std::{cmp::Ordering, collections::HashMap};
+use thiserror::*;
 
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum GameError {
@@ -59,64 +57,85 @@ type Result<T> = std::result::Result<T, GameError>;
 /// The game state, starting, discarding, playing, scoring, finished.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Game<T> {
-    state: T,
+    inner: T,
     _marker: std::marker::PhantomData<T>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum State {
+    Starting(Game<Starting>),
+    Discarding(Game<Discarding>),
+    Playing(Game<Playing>),
+    ScoringPone(Game<ScoringPone>),
+    ScoringDealer(Game<ScoringDealer>),
+    ScoringCrib(Game<ScoringCrib>),
+    Finished(Game<Finished>),
+}
+
+pub trait HasState {
+    fn state(&self) -> State;
+}
+
 impl<T: Serialize> Game<T> {
-    pub const fn new(state: T) -> Self {
+    pub const fn new(inner: T) -> Self {
         Self {
-            state,
+            inner,
             _marker: std::marker::PhantomData::<_>,
         }
     }
 }
 
+impl<T: HasState> HasState for Game<T> {
+    fn state(&self) -> State {
+        self.inner.state()
+    }
+}
+
 impl<T: HasPlayers + Serialize> HasPlayers for Game<T> {
     fn players(&self) -> Players {
-        self.state.players()
+        self.inner.players()
     }
 }
 
 impl<T: HasScores + Serialize> HasScores for Game<T> {
     fn scores(&self) -> &Scores {
-        self.state.scores()
+        self.inner.scores()
     }
 }
 
 impl<T: HasRoles + Serialize> HasRoles for Game<T> {
     fn roles(&self) -> &Roles {
-        self.state.roles()
+        self.inner.roles()
     }
 }
 
 impl<T: HasHands + Serialize> HasHands for Game<T> {
     fn hands(&self) -> &super::Hands {
-        self.state.hands()
+        self.inner.hands()
     }
 }
 
 impl<T: HasCrib + Serialize> HasCrib for Game<T> {
     fn crib(&self) -> &Crib {
-        self.state.crib()
+        self.inner.crib()
     }
 }
 
 impl<T: HasDeck + Serialize> HasDeck for Game<T> {
     fn deck(&self) -> &Deck {
-        self.state.deck()
+        self.inner.deck()
     }
 }
 
 impl<T: HasCut + Serialize> HasCut for Game<T> {
     fn cut(&self) -> Cut {
-        self.state.cut()
+        self.inner.cut()
     }
 }
 
 impl<T: HasPlayers + Serialize> Game<T> {
     fn validate_player(&self, player: Player) -> Result<()> {
-        if self.state.players().contains(&player) {
+        if self.inner.players().contains(&player) {
             Ok(())
         } else {
             Err(GameError::InvalidPlayer(player))
@@ -125,18 +144,17 @@ impl<T: HasPlayers + Serialize> Game<T> {
 
     #[cfg(test)]
     pub fn player_1_2(&self) -> Result<(Player, Player)> {
-        let players = self.state.players();
+        let players = self.inner.players();
         let players_count = players.len();
         (players_count == NUMBER_OF_PLAYERS_IN_GAME)
             .then_some(players.players_1_2())
             .ok_or(GameError::IncorrectNumberOfPlayers(players_count))
     }
 
-    #[cfg(test)]
     pub fn opponent(&self, player: Player) -> Result<Player> {
         self.validate_player(player)?;
 
-        Ok(self.state.players().opponent(player))
+        Ok(self.inner.players().opponent(player))
     }
 }
 
@@ -144,7 +162,7 @@ impl<T: HasHands + HasPlayers + Serialize> Game<T> {
     fn validate_player_card(&self, player: Player, card: Card) -> Result<()> {
         self.validate_player(player)?;
 
-        let hand = self.state.hand(player);
+        let hand = self.inner.hand(player);
 
         if hand.contains(&card) {
             Ok(())
@@ -156,7 +174,7 @@ impl<T: HasHands + HasPlayers + Serialize> Game<T> {
     fn validate_player_cards(&self, player: Player, cards: &[Card]) -> Result<()> {
         self.validate_player(player)?;
 
-        let hand = self.state.hand(player);
+        let hand = self.inner.hand(player);
 
         if hand.contains_all(cards) {
             Ok(())
@@ -169,7 +187,7 @@ impl<T: HasHands + HasPlayers + Serialize> Game<T> {
         self.validate_player(player)?;
         self.validate_player_cards(player, discards)?;
 
-        let hand = self.state.hand(player);
+        let hand = self.inner.hand(player);
 
         if hand.len() - discards.len() >= CARDS_KEPT_PER_HAND {
             Ok(())
@@ -196,7 +214,7 @@ impl Game<Starting> {
     }
 
     pub fn cut(&self, player: Player) -> Result<Cut> {
-        self.state
+        self.inner
             .cuts
             .get(&player)
             .copied()
@@ -204,7 +222,7 @@ impl Game<Starting> {
     }
 
     fn draw(&self) -> Result<Option<Roles>> {
-        let mut player_cuts = self.state.cuts.iter();
+        let mut player_cuts = self.inner.cuts.iter();
         let mut get_cut = || {
             let (player, cut) = player_cuts
                 .next()
@@ -229,7 +247,7 @@ impl Game<Starting> {
         let roles = self.draw()?.ok_or(GameError::CannotStart)?;
 
         let mut deck = Deck::shuffled_pack();
-        let players = self.state.players();
+        let players = self.inner.players();
         let scores = Scores::new(&players);
         let hands = deck.deal(&players);
         let crib = Crib::default();
@@ -242,8 +260,14 @@ impl Game<Starting> {
     pub fn redraw(self) -> Result<Self> {
         match self.draw()? {
             Some(_) => Err(GameError::CannotRedraw),
-            None => Self::try_new(&self.state.players()),
+            None => Self::try_new(&self.inner.players()),
         }
+    }
+}
+
+impl HasState for Game<Starting> {
+    fn state(&self) -> State {
+        State::Starting(self.clone())
     }
 }
 
@@ -264,7 +288,7 @@ impl Game<Discarding> {
             mut hands,
             mut crib,
             mut deck,
-        } = self.state;
+        } = self.inner;
 
         let hand = hands
             .get_mut(&player)
@@ -299,6 +323,12 @@ impl Game<Discarding> {
     }
 }
 
+impl HasState for Game<Discarding> {
+    fn state(&self) -> State {
+        State::Discarding(self.clone())
+    }
+}
+
 #[derive(Debug)]
 pub enum PlayResult {
     Playing(Box<Game<Playing>>),
@@ -314,7 +344,7 @@ pub enum PassResult {
 
 impl Game<Playing> {
     fn validate_next_to_play(&self, player: Player) -> Result<()> {
-        if self.state.play_state.next_to_play() == player {
+        if self.inner.play_state.next_to_play() == player {
             Ok(())
         } else {
             Err(GameError::PlayOrPassNotPermittedByPlayer)
@@ -324,7 +354,7 @@ impl Game<Playing> {
     fn validate_can_play(&self, player: Player, card: Card) -> Result<()> {
         self.validate_next_to_play(player)?;
 
-        let legal_plays = self.state.play_state.legal_plays(player);
+        let legal_plays = self.inner.play_state.legal_plays(player);
 
         if legal_plays.contains(&card) {
             Ok(())
@@ -336,7 +366,7 @@ impl Game<Playing> {
     fn validate_can_pass(&self, player: Player) -> Result<()> {
         self.validate_next_to_play(player)?;
 
-        let legal_plays = self.state.play_state.legal_plays(player);
+        let legal_plays = self.inner.play_state.legal_plays(player);
 
         if legal_plays.is_empty() {
             Ok(())
@@ -346,7 +376,7 @@ impl Game<Playing> {
     }
 
     pub const fn play_state(&self) -> &PlayState {
-        &self.state.play_state
+        &self.inner.play_state
     }
 
     pub fn play(self, player: Player, card: Card) -> Result<PlayResult> {
@@ -360,7 +390,7 @@ impl Game<Playing> {
             mut play_state,
             cut,
             crib,
-        } = self.state;
+        } = self.inner;
         let hand = hands
             .get_mut(&player)
             .ok_or(GameError::InvalidPlayer(player))?;
@@ -413,7 +443,7 @@ impl Game<Playing> {
             mut play_state,
             cut,
             crib,
-        } = self.state;
+        } = self.inner;
 
         play_state.pass();
 
@@ -440,6 +470,12 @@ impl Game<Playing> {
     }
 }
 
+impl HasState for Game<Playing> {
+    fn state(&self) -> State {
+        State::Playing(self.clone())
+    }
+}
+
 pub enum ScorePoneResult {
     Scoring(Box<Game<ScoringDealer>>),
     Finished(Box<Game<Finished>>),
@@ -447,14 +483,14 @@ pub enum ScorePoneResult {
 
 impl Game<ScoringPone> {
     pub fn reasons(&self) -> Result<ScoreReasons> {
-        let hand = self.state.hand(self.state.pone());
-        Ok(HandScorer::new(hand, self.state.cut).score())
+        let hand = self.inner.hand(self.inner.pone());
+        Ok(HandScorer::new(hand, self.inner.cut).score())
     }
 
     pub fn score_hand(self) -> Result<ScorePoneResult> {
         let reasons = self.reasons()?;
 
-        let (mut scores, roles, hands, crib, cut) = self.state.into_parts();
+        let (mut scores, roles, hands, crib, cut) = self.inner.into_parts();
 
         scores.score_points(roles.pone(), &reasons);
 
@@ -470,6 +506,13 @@ impl Game<ScoringPone> {
         Ok(result)
     }
 }
+
+impl HasState for Game<ScoringPone> {
+    fn state(&self) -> State {
+        State::ScoringPone(self.clone())
+    }
+}
+
 pub enum ScoreDealerResult {
     Scoring(Box<Game<ScoringCrib>>),
     Finished(Box<Game<Finished>>),
@@ -477,14 +520,14 @@ pub enum ScoreDealerResult {
 
 impl Game<ScoringDealer> {
     pub fn reasons(&self) -> Result<ScoreReasons> {
-        let hand = self.state.hand(self.state.dealer());
-        Ok(HandScorer::new(hand, self.state.cut).score())
+        let hand = self.inner.hand(self.inner.dealer());
+        Ok(HandScorer::new(hand, self.inner.cut).score())
     }
 
     pub fn score_hand(self) -> Result<ScoreDealerResult> {
         let reasons = self.reasons()?;
 
-        let (mut scores, roles, hands, crib, cut) = self.state.into_parts();
+        let (mut scores, roles, hands, crib, cut) = self.inner.into_parts();
 
         scores.score_points(roles.dealer(), &reasons);
 
@@ -501,6 +544,12 @@ impl Game<ScoringDealer> {
     }
 }
 
+impl HasState for Game<ScoringDealer> {
+    fn state(&self) -> State {
+        State::ScoringDealer(self.clone())
+    }
+}
+
 pub enum ScoreCribResult {
     Discarding(Box<Game<Discarding>>),
     Finished(Box<Game<Finished>>),
@@ -508,14 +557,14 @@ pub enum ScoreCribResult {
 
 impl Game<ScoringCrib> {
     pub fn reasons(&self) -> Result<ScoreReasons> {
-        Ok(CribScorer::new(&self.state.crib, self.state.cut).score())
+        Ok(CribScorer::new(&self.inner.crib, self.inner.cut).score())
     }
 
     pub fn score_crib(self) -> Result<ScoreCribResult> {
         let reasons = self.reasons()?;
-        let players = self.state.players();
+        let players = self.inner.players();
 
-        let (mut scores, mut roles, hands, crib, cut) = self.state.into_parts();
+        let (mut scores, mut roles, hands, crib, cut) = self.inner.into_parts();
 
         scores.score_points(roles.dealer(), &reasons);
 
@@ -537,18 +586,30 @@ impl Game<ScoringCrib> {
     }
 }
 
+impl HasState for Game<ScoringCrib> {
+    fn state(&self) -> State {
+        State::ScoringCrib(self.clone())
+    }
+}
+
 impl Game<Finished> {
     pub fn winner(&self) -> Player {
-        let Some(winner) = self.state.scores().winner() else {
+        let Some(winner) = self.inner.scores().winner() else {
             unreachable!("expect winner in finished game")
         };
         winner
     }
 }
 
+impl HasState for Game<Finished> {
+    fn state(&self) -> State {
+        State::Finished(self.clone())
+    }
+}
+
 impl<T: std::fmt::Display + Serialize> std::fmt::Display for Game<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.state.fmt(f)
+        self.inner.fmt(f)
     }
 }
 

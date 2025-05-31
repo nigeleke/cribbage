@@ -60,6 +60,10 @@
     padding: var(--gap) var(--gap);
 }
 
+.game-item.active {
+    font-weight: bold;
+}
+
 .game-item:first-child {
     padding-bottom: var(--gap);
 }

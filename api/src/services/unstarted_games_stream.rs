@@ -9,11 +9,14 @@ mod server {
     pub use crate::{
         api_state::ApiState,
         database::{TableChangeEvent, UnstartedGameRow, listen_unstarted_games_changes},
-        services::error::ServiceError,
-        set_default_cache,
+        services::{
+            error::ServiceError,
+            redis::{XAddEvent, XReadEvent},
+        },
+        set_no_cache_response,
     };
     pub use async_stream::stream;
-    pub use dioxus::logger::tracing::{error, warn};
+    pub use dioxus::logger::tracing::warn;
     pub use futures::StreamExt;
     pub use redis::{AsyncCommands, aio::ConnectionManager};
     pub use sqlx::PgPool;
@@ -34,11 +37,10 @@ pub enum Event {
 
 #[server(output = StreamingJson)]
 pub async fn unstarted_games_stream() -> Result<JsonStream<Event>, ServerFnError> {
-    set_default_cache!();
+    set_no_cache_response!();
     let context = server_context()
         .get::<Arc<ApiState>>()
         .expect("server initialised");
-    let redis_client = context.redis_client().clone();
     let pool = context.pool().clone();
     let redis = context.redis().clone();
 
@@ -46,7 +48,11 @@ pub async fn unstarted_games_stream() -> Result<JsonStream<Event>, ServerFnError
         .get_or_init(|| async {
             tokio::spawn({
                 let pool = pool.clone();
-                let mut redis = redis.clone();
+                let redis = redis.clone();
+                let mut redis = redis
+                    .get_connection_manager()
+                    .await
+                    .expect("redis connection");
                 async move {
                     loop {
                         match listen_and_publish(&pool, &mut redis).await {
@@ -62,39 +68,23 @@ pub async fn unstarted_games_stream() -> Result<JsonStream<Event>, ServerFnError
         })
         .await;
 
-    let mut pubsub = redis_client.get_async_pubsub().await.map_err(|e| {
-        error!("unstarted_games_stream::redis:pubsub init failed - {}", e);
-        e
-    })?;
-    pubsub.subscribe(REDIS_CHANNEL).await.map_err(|e| {
-        error!(
-            "unstarted_games_stream::redis:pubsub subscribe fail - {}",
-            e
-        );
-        e
-    })?;
-
     let stream = stream! {
-        let mut on_msg_stream = pubsub.on_message();
-        while let Some(msg) = on_msg_stream.next().await {
-            match msg.get_payload::<String>() {
-                Ok(text) => {
-                    match serde_json::from_str::<Event>(&text) {
-                        Ok(event) => yield event,
-                        Err(e) => {
-                            warn!("unstarted_games_stream::json_error {}", e.to_string());
-                            continue
-                        },
-                    }
-                },
-                Err(e) => {
-                    warn!("unstarted_games_stream::payload_error {}", e.to_string());
-                    continue
-                }
+        let mut redis = redis.get_connection_manager().await.expect("redis connection");
+        loop {
+            let event = redis.xread_message::<Event>(REDIS_CHANNEL).await?;
+            yield Ok(event)
+        }
+    };
+
+    let stream = stream.filter_map(|res: Result<Event, ServerFnError>| async move {
+        match res {
+            Ok(event) => Some(event),
+            Err(e) => {
+                warn!("stream error: {e}");
+                None
             }
         }
-        warn!("unstarted_games_stream::stream closed");
-    };
+    });
 
     Ok(JsonStream::from(stream))
 }
@@ -112,9 +102,8 @@ async fn listen_and_publish(
     while let Some(result) = table_change_stream.next().await {
         let change = result?;
         let event = transform_table_change_to_event(change)?;
-        let payload =
-            serde_json::to_string(&event).map_err(|e| ServiceError::JsonError(e.to_string()))?;
-        redis.publish(REDIS_CHANNEL, &payload).await?
+
+        let _ = redis.xadd_message(REDIS_CHANNEL, &event).await?;
     }
 
     Ok(())
@@ -127,6 +116,7 @@ fn transform_table_change_to_event(
     if change.table != "unstarted_games" {
         return Err(ServiceError::InvalidTable(change.table));
     }
+
     match change.operation.as_str() {
         "INSERT" => {
             let model = change

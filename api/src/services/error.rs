@@ -10,9 +10,6 @@ pub enum ServiceError {
     #[error("Database error: {0}")]
     DatabaseError(#[from] crate::database::DatabaseError),
 
-    #[error("Unable to deserialise {0}")]
-    JsonError(String),
-
     #[error("Invalid table {0}")]
     InvalidTable(String),
 

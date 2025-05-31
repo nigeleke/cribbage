@@ -8,5 +8,6 @@ mod domain;
 mod test_modules;
 
 pub use domain::{
-    Card, Crib, Cut, Deck, Game, GameError, Hand, Pegging, PlayState, Player, Players,
+    Card, Crib, Cut, Deck, Game, GameError, Hand, HasCrib, HasCut, HasHands, HasPlayers, HasScores,
+    HasState, Pegging, Play, PlayState, Player, Players, State,
 };

@@ -1,10 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashSet, hash_set},
     fmt::Display,
     hash::{Hash, Hasher},
 };
-
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -93,9 +92,8 @@ impl Display for Player {
 
 #[cfg(test)]
 mod test {
-    use pretty_assertions::assert_eq;
-
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn convert_from_uuid_to_player() {

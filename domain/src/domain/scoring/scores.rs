@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use super::{
     breakdown::Reasons,
     pegging::{Pegging, Peggings},
@@ -9,6 +7,7 @@ use crate::{
     display::format_hashmap,
     domain::{Player, Players},
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Scores {
@@ -54,7 +53,6 @@ pub trait HasScores {
         self.scores().peggings()
     }
 
-    #[cfg(test)]
     fn pegging(&self, player: Player) -> &Pegging {
         self.scores().pegging(player)
     }

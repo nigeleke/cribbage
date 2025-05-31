@@ -21,10 +21,11 @@ sqlx = { version = "0.8.5", features = [
 ], optional = true }
 thiserror = "2.0.12"
 chrono = { version = "0.4.41", features = ["serde"] }
-serde_json = { version = "1.0.140", optional = true }
+serde_json = { version = "1.0.140" }
 redis = { version = "0.31", features = [
     "connection-manager",
     "tokio-comp",
+    "json",
 ], optional = true }
 tokio = { version = "1.45.0", features = ["full"], optional = true }
 futures = "0.3.31"
@@ -41,7 +42,6 @@ server = [
     "dep:rand",
     "dep:rand_chacha",
     "dep:redis",
-    "dep:serde_json",
     "dep:sqlx",
     "dep:tokio",
 ]

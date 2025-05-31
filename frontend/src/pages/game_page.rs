@@ -1,53 +1,77 @@
-use api::ActiveGameId;
+use crate::components::CardFace;
+use api::{
+    ActiveGameId, Card, CardState, GameState, PlayerState, Plays, Role, UserId, fetch_game_state,
+};
 use dioxus::prelude::*;
 
 #[component]
 pub fn GamePage(id: ActiveGameId) -> Element {
-    // let game = use_resource(|| get_active_game(id));
+    let user_id = use_context::<Signal<UserId>>();
+    let mut state = use_signal(|| None);
 
-    rsx! { p {"Game page"} }
+    let fetch_state = use_resource(move || fetch_game_state(id, user_id()));
+    use_effect(move || {
+        if let Some(result) = fetch_state() {
+            state.set(result.ok())
+        }
+    });
+
+    rsx! {
+        document::Stylesheet { href: asset!("/assets/css/game_page.css") }
+        if let Some(state) = state() {
+            ActiveGame{ state }
+        } else {
+            div {
+                class: "game-page",
+                "Loading..."
+            }
+        }
+    }
 }
 
-// use crate::components::*;
-// use crate::services::*;
-// use crate::view::Game;
+#[component]
+fn ActiveGame(state: GameState) -> Element {
+    if let GameState::Starting {
+        user_cut,
+        opponent_cut,
+    } = state
+    {
+        rsx! { Starting { user_cut, opponent_cut} }
+    } else if let GameState::InProgress {
+        user_state,
+        opponent_state,
+        crib,
+        cut,
+        plays,
+        winner,
+    } = state
+    {
+        rsx! { InProgress { user_state, opponent_state, crib, cut, plays, winner }}
+    } else {
+        rsx! { p {"Unknown"} }
+    }
+}
 
-// use leptos::*;
-// use leptos_router::*;
+#[component]
+fn Starting(user_cut: Card, opponent_cut: Card) -> Element {
+    rsx! {
+        div {
+            class: "game-page",
+            class: "starting",
+            CardFace { card: user_cut }
+            CardFace { card: opponent_cut }
+        }
+    }
+}
 
-// #[derive(Clone, Default, Params, PartialEq)]
-// pub struct GameParams {
-//     pub id: String,
-// }
-
-// /// The main game page, enables loading of the current state of the game from the server.
-// /// The game must exist, or an error is shown.
-// #[component]
-// pub fn GamePage() -> impl IntoView {
-//     let params = use_params::<GameParams>;
-//     let id = move || params().with(|params| {
-//         params.as_ref().map(|params| params.id.clone()).unwrap_or_default()
-//     });
-
-//     let game_state = create_rw_signal(None::<Game>);
-//     provide_context(Context::new(id(), game_state));
-//     let initial_game = create_resource(id, get_game);
-
-//     view! {
-//         <Suspense fallback=Loading>
-//             {
-//                 create_effect(move |_| {
-//                     if let Some(Ok(game)) = initial_game() {
-//                         game_state.set(Some(game));
-//                     }
-//                 });
-//             }
-//             <ErrorBoundary fallback=|_| Error>
-//                 { move || match game_state() {
-//                     Some(game) => { view! { <Game game /> } },
-//                     None => view! { <Loading /> },
-//                 } }
-//             </ErrorBoundary>
-//         </Suspense>
-//     }
-// }
+#[component]
+fn InProgress(
+    user_state: PlayerState,
+    opponent_state: PlayerState,
+    crib: Vec<CardState>,
+    cut: Option<Card>,
+    plays: Option<Plays>,
+    winner: Option<Role>,
+) -> Element {
+    rsx! { p {"In progress"} }
+}

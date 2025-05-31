@@ -1,6 +1,7 @@
-use std::str::FromStr;
-
+#[cfg(feature = "server")]
+use crate::database::ActiveGameRow;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use uuid::Uuid;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -30,5 +31,31 @@ impl FromStr for ActiveGameId {
 impl std::fmt::Display for ActiveGameId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ActiveGame {
+    id: ActiveGameId,
+    name: String,
+}
+
+impl ActiveGame {
+    pub fn id(&self) -> &ActiveGameId {
+        &self.id
+    }
+
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+}
+
+#[cfg(feature = "server")]
+impl From<ActiveGameRow> for ActiveGame {
+    fn from(value: ActiveGameRow) -> Self {
+        Self {
+            id: ActiveGameId::from(value.id),
+            name: value.name,
+        }
     }
 }

@@ -1,5 +1,7 @@
-mod redis_xadd_event;
-mod redis_xread_event;
+mod channels;
+mod xadd_event;
+mod xread_event;
 
-pub use redis_xadd_event::XAddEvent;
-pub use redis_xread_event::XReadEvent;
+pub use channels::*;
+pub use xadd_event::XAddEvent;
+pub use xread_event::XReadEvent;

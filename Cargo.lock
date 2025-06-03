@@ -55,7 +55,7 @@ dependencies = [
  "chrono",
  "dioxus",
  "domain",
- "futures",
+ "futures-util",
  "goofy-animals",
  "http",
  "rand 0.8.5",
@@ -1347,7 +1347,7 @@ dependencies = [
  "api",
  "dioxus",
  "dioxus-sdk",
- "futures",
+ "futures-util",
  "gloo-timers",
  "insta",
 ]

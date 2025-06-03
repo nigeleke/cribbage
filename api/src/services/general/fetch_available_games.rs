@@ -7,7 +7,7 @@ use std::sync::Arc;
 #[cfg(feature = "server")]
 mod server {
     pub use crate::{api_state::ApiState, database::select_available_games, set_no_cache_response};
-    pub use futures::StreamExt;
+    pub use futures_util::StreamExt;
 }
 
 #[cfg(feature = "server")]

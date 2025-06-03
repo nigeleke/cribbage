@@ -10,7 +10,7 @@ mod user_id;
 pub use active_game::{ActiveGame, ActiveGameId};
 pub use available_game::{AvailableGame, AvailableGameId};
 pub use card::Card;
-pub use error::Error;
+pub use error::DtoError;
 pub use game_state::{CardState, GameState, PlayerState, Plays, Role};
 pub use started_game::StartedGame;
 pub use unstarted_game::{UnstartedGame, UnstartedGameId};

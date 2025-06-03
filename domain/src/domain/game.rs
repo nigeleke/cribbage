@@ -221,7 +221,7 @@ impl Game<Starting> {
             .ok_or(GameError::InvalidPlayer(player))
     }
 
-    fn draw(&self) -> Result<Option<Roles>> {
+    pub fn draw(&self) -> Result<Option<Roles>> {
         let mut player_cuts = self.inner.cuts.iter();
         let mut get_cut = || {
             let (player, cut) = player_cuts

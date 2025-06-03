@@ -1,6 +1,6 @@
-use super::{Card as CardDto, Error, UserId};
+use super::{Card as CardDto, DtoError, UserId};
 #[cfg(feature = "server")]
-use crate::database::ActiveGameRow;
+use crate::database::UserGameRow;
 #[cfg(feature = "server")]
 use domain::{
     Card as DomainCard, HasCrib, HasCut, HasHands, HasScores, Play, PlayState, Player, State,
@@ -57,6 +57,17 @@ pub enum Role {
     Opponent,
 }
 
+impl Role {
+    #[cfg(feature = "server")]
+    pub fn from(user: &Player, player: &Player) -> Self {
+        if player == user {
+            Role::User
+        } else {
+            Role::Opponent
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Plays {
     current: Vec<(Role, CardDto)>,
@@ -69,11 +80,7 @@ fn map_plays(user: Player, plays: &[Play]) -> Vec<(Role, CardDto)> {
         .iter()
         .map(|play| {
             (
-                if play.player() == user {
-                    Role::User
-                } else {
-                    Role::Opponent
-                },
+                Role::from(&user, &play.player()),
                 CardDto::from(&play.card()),
             )
         })
@@ -95,6 +102,7 @@ pub enum GameState {
     Starting {
         user_cut: CardDto,
         opponent_cut: CardDto,
+        dealer: Option<Role>,
     },
     InProgress {
         user_state: PlayerState,
@@ -108,7 +116,7 @@ pub enum GameState {
 
 impl GameState {
     #[cfg(feature = "server")]
-    pub fn try_from(game: ActiveGameRow, for_user: UserId) -> Result<Self, Error> {
+    pub fn try_from(game: UserGameRow, for_user: UserId) -> Result<Self, DtoError> {
         let user = domain::Player::from(*for_user.value());
 
         let state = serde_json::from_value::<State>(game.state.0)?;
@@ -118,9 +126,12 @@ impl GameState {
                 let opponent = game.opponent(user)?;
                 let user_cut = CardDto::from(&game.cut(user)?);
                 let opponent_cut = CardDto::from(&game.cut(opponent)?);
+                let dealer = game.draw()?.map(|p| Role::from(&user, &p.dealer()));
+
                 Ok(GameState::Starting {
                     user_cut,
                     opponent_cut,
+                    dealer,
                 })
             }
             State::Discarding(game) => {

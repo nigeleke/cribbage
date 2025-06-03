@@ -12,6 +12,7 @@ pub struct ActiveGameRow {
     pub user_id2: Uuid,
     pub state: Json<Value>,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl ActiveGameRow {
@@ -24,6 +25,7 @@ impl ActiveGameRow {
         let id = Uuid::new_v4();
         let state = state.into();
         let created_at = Utc::now();
+        let updated_at = created_at;
 
         Self {
             id,
@@ -32,6 +34,7 @@ impl ActiveGameRow {
             user_id2,
             state,
             created_at,
+            updated_at,
         }
     }
 }

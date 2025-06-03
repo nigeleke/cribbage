@@ -11,18 +11,17 @@ mod server {
         database::{TableChangeEvent, UnstartedGameRow, listen_unstarted_games_changes},
         services::{
             error::ServiceError,
-            redis::{XAddEvent, XReadEvent},
+            redis::{XAddEvent, XReadEvent, app_channel},
         },
         set_no_cache_response,
     };
     pub use async_stream::stream;
     pub use dioxus::logger::tracing::warn;
-    pub use futures::StreamExt;
+    pub use futures_util::StreamExt;
     pub use redis::{AsyncCommands, aio::ConnectionManager};
     pub use sqlx::PgPool;
     pub use std::time::Duration;
     pub use tokio::sync::OnceCell;
-    pub const REDIS_CHANNEL: &str = "unstarted_games_change";
     pub static DATABASE_LISTENER: OnceCell<()> = OnceCell::const_new();
 }
 
@@ -30,13 +29,13 @@ mod server {
 use server::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum Event {
+pub enum AppEvent {
     NewGame(UnstartedGame),
     RemovedGame(UnstartedGame),
 }
 
 #[server(output = StreamingJson)]
-pub async fn unstarted_games_stream() -> Result<JsonStream<Event>, ServerFnError> {
+pub async fn app_event_stream() -> Result<JsonStream<AppEvent>, ServerFnError> {
     set_no_cache_response!();
     let context = server_context()
         .get::<Arc<ApiState>>()
@@ -71,12 +70,12 @@ pub async fn unstarted_games_stream() -> Result<JsonStream<Event>, ServerFnError
     let stream = stream! {
         let mut redis = redis.get_connection_manager().await.expect("redis connection");
         loop {
-            let event = redis.xread_message::<Event>(REDIS_CHANNEL).await?;
+            let event = redis.xread_message::<AppEvent>(&app_channel()).await?;
             yield Ok(event)
         }
     };
 
-    let stream = stream.filter_map(|res: Result<Event, ServerFnError>| async move {
+    let stream = stream.filter_map(|res: Result<AppEvent, ServerFnError>| async move {
         match res {
             Ok(event) => Some(event),
             Err(e) => {
@@ -94,7 +93,7 @@ async fn listen_and_publish(
     pool: &PgPool,
     redis: &mut ConnectionManager,
 ) -> Result<(), ServiceError> {
-    use futures::StreamExt;
+    use futures_util::StreamExt;
 
     let table_change_stream = listen_unstarted_games_changes(pool).await?;
     tokio::pin!(table_change_stream);
@@ -103,7 +102,7 @@ async fn listen_and_publish(
         let change = result?;
         let event = transform_table_change_to_event(change)?;
 
-        let _ = redis.xadd_message(REDIS_CHANNEL, &event).await?;
+        let _ = redis.xadd_message(&app_channel(), &event).await?;
     }
 
     Ok(())
@@ -112,7 +111,7 @@ async fn listen_and_publish(
 #[cfg(feature = "server")]
 fn transform_table_change_to_event(
     change: TableChangeEvent<UnstartedGameRow>,
-) -> Result<Event, ServiceError> {
+) -> Result<AppEvent, ServiceError> {
     if change.table != "unstarted_games" {
         return Err(ServiceError::InvalidTable(change.table));
     }
@@ -122,14 +121,14 @@ fn transform_table_change_to_event(
             let model = change
                 .new_row
                 .ok_or(ServiceError::MissingField("new_row".into()))?;
-            Ok(Event::NewGame(UnstartedGame::from(model)))
+            Ok(AppEvent::NewGame(UnstartedGame::from(model)))
         }
         "DELETE" => {
             let model = change
                 .old_row
                 .ok_or(ServiceError::MissingField("old_row".into()))?;
-            Ok(Event::RemovedGame(UnstartedGame::from(model)))
+            Ok(AppEvent::RemovedGame(UnstartedGame::from(model)))
         }
-        _ => Err(ServiceError::InvalidOperation(change.operation)),
+        _ => Err(ServiceError::UnexpectedOperation(change.operation)),
     }
 }

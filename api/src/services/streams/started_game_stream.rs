@@ -17,7 +17,7 @@ mod server {
     };
     pub use async_stream::stream;
     pub use dioxus::logger::tracing::warn;
-    pub use futures::StreamExt;
+    pub use futures_util::StreamExt;
     pub use redis::{AsyncCommands, aio::ConnectionManager};
     pub use sqlx::PgPool;
     pub use std::time::Duration;
@@ -101,7 +101,7 @@ async fn listen_and_publish(
     pool: &PgPool,
     redis: &mut ConnectionManager,
 ) -> Result<(), ServiceError> {
-    use futures::StreamExt;
+    use futures_util::StreamExt;
 
     let table_change_stream = listen_started_games_changes(pool).await?;
     tokio::pin!(table_change_stream);
@@ -134,6 +134,6 @@ fn transform_table_change_to_event(
             let game = StartedGame::from(model);
             Ok((game.unstarted_game_id, Event::NewGame(game)))
         }
-        _ => Err(ServiceError::InvalidOperation(change.operation)),
+        _ => Err(ServiceError::UnexpectedOperation(change.operation)),
     }
 }

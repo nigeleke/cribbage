@@ -1,4 +1,4 @@
-use crate::{UserId, dto::ActiveGame};
+use crate::{ActiveGameId, GameState, UserId};
 use dioxus::prelude::{server_fn::codec::StreamingJson, *};
 use serde::{Deserialize, Serialize};
 use server_fn::codec::JsonStream;
@@ -9,7 +9,7 @@ use uuid::Uuid;
 mod server {
     pub use crate::{
         api_state::ApiState,
-        database::{ActiveGameRow, TableChangeEvent, listen_active_games_changes},
+        database::{TableChangeEvent, UserGameRow, listen_user_games_changes},
         services::{
             error::ServiceError,
             redis::{XAddEvent, XReadEvent},
@@ -18,7 +18,7 @@ mod server {
     };
     pub use async_stream::stream;
     pub use dioxus::logger::tracing::warn;
-    pub use futures::StreamExt;
+    pub use futures_util::StreamExt;
     pub use redis::{AsyncCommands, aio::ConnectionManager};
     pub use sqlx::PgPool;
     pub use std::time::Duration;
@@ -30,18 +30,15 @@ mod server {
 #[cfg(feature = "server")]
 use server::*;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum Event {
-    NewGame(ActiveGame),
-    RemovedGame(ActiveGame),
-}
-
-fn redis_channel(user_id: &Uuid) -> String {
-    format!("active_games_change::user_{}", user_id)
+fn redis_channel(game_id: &Uuid, user_id: &Uuid) -> String {
+    format!("user_game_change::game_{}::user_{}", game_id, user_id)
 }
 
 #[server(output = StreamingJson)]
-pub async fn active_games_stream(user_id: UserId) -> Result<JsonStream<Event>, ServerFnError> {
+pub async fn user_game_state_stream(
+    game_id: ActiveGameId,
+    user_id: UserId,
+) -> Result<JsonStream<GameState>, ServerFnError> {
     set_no_cache_response!();
     let context = server_context()
         .get::<Arc<ApiState>>()
@@ -63,7 +60,7 @@ pub async fn active_games_stream(user_id: UserId) -> Result<JsonStream<Event>, S
                         match listen_and_publish(&pool, &mut redis).await {
                             Ok(_) => break,
                             Err(e) => {
-                                warn!("active_games_stream::listener:error - {}", e.to_string());
+                                warn!("user_game_state_stream::listener:error - {}", e.to_string());
                                 tokio::time::sleep(Duration::from_secs(5)).await;
                             }
                         }
@@ -76,12 +73,12 @@ pub async fn active_games_stream(user_id: UserId) -> Result<JsonStream<Event>, S
     let stream = stream! {
         let mut redis = redis.get_connection_manager().await?;
         loop {
-            let event = redis.xread_message::<Event>(redis_channel(user_id.value()).as_str()).await?;
+            let event = redis.xread_message::<GameState>(redis_channel(game_id.value(), user_id.value()).as_str()).await?;
             yield Ok(event)
         };
     };
 
-    let stream = stream.filter_map(|res: Result<Event, ServerFnError>| async move {
+    let stream = stream.filter_map(|res: Result<GameState, ServerFnError>| async move {
         match res {
             Ok(event) => Some(event),
             Err(e) => {
@@ -99,20 +96,17 @@ async fn listen_and_publish(
     pool: &PgPool,
     redis: &mut ConnectionManager,
 ) -> Result<(), ServiceError> {
-    use futures::StreamExt;
+    use futures_util::StreamExt;
 
-    let table_change_stream = listen_active_games_changes(pool).await?;
+    let table_change_stream = listen_user_games_changes(pool).await?;
     tokio::pin!(table_change_stream);
 
     while let Some(result) = table_change_stream.next().await {
         let change = result?;
-        let (user_id1, user_id2, event) = transform_table_change_to_event(change)?;
+        let (game_id, user_id, event) = transform_table_change_to_event(change)?;
 
         let _ = redis
-            .xadd_message(redis_channel(&user_id1).as_str(), &event)
-            .await?;
-        let _ = redis
-            .xadd_message(redis_channel(&user_id2).as_str(), &event)
+            .xadd_message(redis_channel(&game_id, &user_id).as_str(), &event)
             .await?;
     }
 
@@ -121,33 +115,22 @@ async fn listen_and_publish(
 
 #[cfg(feature = "server")]
 fn transform_table_change_to_event(
-    change: TableChangeEvent<ActiveGameRow>,
-) -> Result<(Uuid, Uuid, Event), ServiceError> {
-    if change.table != "active_games" {
+    change: TableChangeEvent<UserGameRow>,
+) -> Result<(Uuid, Uuid, GameState), ServiceError> {
+    if change.table != "user_games" {
         return Err(ServiceError::InvalidTable(change.table));
     }
 
     match change.operation.as_str() {
-        "INSERT" => {
+        "UPDATE" => {
             let model = change
                 .new_row
                 .ok_or(ServiceError::MissingField("new_row".into()))?;
-            Ok((
-                model.user_id1,
-                model.user_id2,
-                Event::NewGame(ActiveGame::from(model)),
-            ))
+            let game_id = model.game_id;
+            let user_id = model.user_id;
+            let game_dto = GameState::try_from(model, UserId::from(user_id))?;
+            Ok((game_id, user_id, game_dto))
         }
-        "DELETE" => {
-            let model = change
-                .old_row
-                .ok_or(ServiceError::MissingField("old_row".into()))?;
-            Ok((
-                model.user_id1,
-                model.user_id2,
-                Event::RemovedGame(ActiveGame::from(model)),
-            ))
-        }
-        _ => Err(ServiceError::InvalidOperation(change.operation)),
+        _ => Err(ServiceError::UnexpectedOperation(change.operation)),
     }
 }

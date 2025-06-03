@@ -3,10 +3,90 @@
     justify-self: center;
     max-height: 100%;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .starting {
     display: flex;
     flex-direction: row;
-    gap: 3em;
+    justify-content: space-evenly;
+    gap: 1em;
+    align-items: center;
+}
+
+.game-page button {
+    justify-self: center;
+}
+
+.game-page h2 {
+    justify-self: center;
+}
+
+.in-progress {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    height: 100%;
+    width: 100%;
+    gap: 16px;
+    padding: 16px;
+}
+
+.scoreboard {
+    grid-column: 1;
+    grid-row: 1 / 4;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.scoreboard-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 16px;
+}
+.score-text {
+    font-size: 1.125rem;
+    margin: 8px 0;
+}
+.card-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.middle-section {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.crib-cut-container {
+    grid-column: 3;
+    grid-row: 1 / 4;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.section-title {
+    font-size: 1.125rem;
+    font-weight: bold;
+    margin-bottom: 8px;
 }

@@ -1,7 +1,7 @@
 use crate::database::{DatabaseError, StartedGameRow, TableChangeEvent};
 use async_stream::stream;
 use dioxus::logger::tracing::warn;
-use futures::Stream;
+use futures_util::Stream;
 use sqlx::{Executor, PgPool, Postgres, Result, postgres::PgListener};
 use uuid::Uuid;
 

@@ -17,5 +17,14 @@ pub enum ServiceError {
     MissingField(String),
 
     #[error("Invalid operation {0}")]
-    InvalidOperation(String),
+    UnexpectedOperation(String),
+
+    #[error("Game error: {0}")]
+    GameErr(#[from] domain::GameError),
+
+    #[error("Invalid state for action: {0}")]
+    InvalidState(String),
+
+    #[error("Transmission object error: {0}")]
+    DtoError(#[from] crate::dto::DtoError),
 }

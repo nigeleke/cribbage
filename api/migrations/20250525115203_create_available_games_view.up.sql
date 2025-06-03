@@ -1,19 +1,9 @@
 CREATE OR REPLACE VIEW available_games AS
-
-    SELECT
-        game_id as id,
-        user_id,
-        'Active' AS source,
-        name,
-        created_at
-    FROM user_games
-
-UNION
-
-    SELECT
-        id,
-        owner_id AS user_id,
-        'Unstarted' AS source,
-        name,
-        created_at
-    FROM unstarted_games;
+        SELECT id, user_id1 AS user_id, 'Active' AS source, name, created_at
+        FROM active_games
+    UNION ALL
+        SELECT id, user_id2 AS user_id, 'Active' AS source, name, created_at
+        FROM active_games
+    UNION ALL
+        SELECT id, owner_id AS user_id, 'Unstarted' AS source, name, created_at
+        FROM unstarted_games;

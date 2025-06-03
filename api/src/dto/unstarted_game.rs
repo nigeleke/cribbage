@@ -43,8 +43,8 @@ impl std::fmt::Display for UnstartedGameId {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UnstartedGame {
-    pub(crate) id: UnstartedGameId,
-    pub(crate) name: String,
+    id: UnstartedGameId,
+    name: String,
 }
 
 impl UnstartedGame {

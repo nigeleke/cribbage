@@ -3,12 +3,12 @@ use crate::{
     route::Route,
 };
 use api::{
-    ActiveGamesEvent, AvailableGame, AvailableGameId, AvailableGamesRequest, AvailableGamesState,
-    UnstartedGamesEvent, UserId, activate_game, active_games_stream, fetch_available_games,
-    new_computer_game, new_human_game, unstarted_games_stream,
+    AppEvent, AvailableGame, AvailableGameId, AvailableGamesRequest, AvailableGamesState,
+    UserEvent, UserId, activate_game, app_event_stream, fetch_available_games, new_computer_game,
+    new_human_game, user_event_stream,
 };
 use dioxus::{logger::tracing::warn, prelude::*};
-use futures::stream::StreamExt;
+use futures_util::StreamExt;
 
 #[component]
 pub fn HomePage() -> Element {
@@ -100,17 +100,19 @@ fn JoinGameSection() -> Element {
         }
     };
 
-    let _ = use_future(move || fetch_games(AvailableGamesState::default(), true));
-
     let _ = use_resource(move || async move {
-        match unstarted_games_stream().await {
+        fetch_games(AvailableGamesState::default(), true).await;
+    });
+
+    let app_event_handle = use_coroutine(move |_: UnboundedReceiver<()>| async move {
+        match app_event_stream().await {
             Ok(stream) => {
                 let mut stream = stream.into_inner();
                 while let Some(event) = stream.next().await {
                     match event {
                         Ok(event) => match event {
-                            UnstartedGamesEvent::NewGame(_) => has_more.set(true),
-                            UnstartedGamesEvent::RemovedGame(deleted_game) => games
+                            AppEvent::NewGame(_) => has_more.set(true),
+                            AppEvent::RemovedGame(deleted_game) => games
                                 .write()
                                 .retain(|game| game.id().value() != deleted_game.id().value()),
                         },
@@ -128,20 +130,20 @@ fn JoinGameSection() -> Element {
         }
     });
 
-    let _ = use_resource(move || async move {
-        match active_games_stream(user_id()).await {
+    let user_event_handle = use_coroutine(move |_: UnboundedReceiver<()>| async move {
+        match user_event_stream(*user_id.read()).await {
             Ok(stream) => {
                 let mut stream = stream.into_inner();
                 while let Some(event) = stream.next().await {
                     match event {
                         Ok(event) => match event {
-                            ActiveGamesEvent::NewGame(new_game) => {
+                            UserEvent::NewGame(new_game) => {
                                 let new_game = AvailableGame::from(new_game);
                                 let game_name = new_game.name().clone();
                                 games.write().insert(0, new_game);
                                 toasts.write().push(format!("Someone joined {}", game_name));
                             }
-                            ActiveGamesEvent::RemovedGame(deleted_game) => games
+                            UserEvent::RemovedGame(deleted_game) => games
                                 .write()
                                 .retain(|game| game.id().value() != deleted_game.id().value()),
                         },
@@ -157,6 +159,11 @@ fn JoinGameSection() -> Element {
                 return;
             }
         }
+    });
+
+    use_effect(move || {
+        app_event_handle.clear();
+        user_event_handle.clear();
     });
 
     rsx! {

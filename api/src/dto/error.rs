@@ -1,7 +1,7 @@
 use thiserror::*;
 
 #[derive(Debug, Error)]
-pub enum Error {
+pub enum DtoError {
     #[error("Cannot deserialise {0}")]
     CannotDeserialise(#[from] serde_json::Error),
 
@@ -10,8 +10,8 @@ pub enum Error {
 }
 
 #[cfg(feature = "server")]
-impl From<domain::GameError> for Error {
+impl From<domain::GameError> for DtoError {
     fn from(err: domain::GameError) -> Self {
-        Error::GameError(err.to_string())
+        Self::GameError(err.to_string())
     }
 }

@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use crate::domain::*;
+use std::collections::HashMap;
 
 #[cfg(test)]
 #[derive(Debug)]
@@ -143,7 +142,7 @@ impl GameBuilder {
         }
 
         let cuts = self.cuts();
-        Game::<_>::new(Starting { cuts, deck })
+        Game::<_>::new(Starting::new(cuts, deck))
     }
 
     pub fn into_discarding(self) -> Game<Discarding> {
@@ -157,8 +156,7 @@ impl GameBuilder {
         let hands = self.merged(hands);
         let crib = self.crib.clone();
         let deck = self.deck.clone();
-        #[rustfmt::skip]
-        let discarding_state = Discarding { scores, roles, hands, crib, deck };
+        let discarding_state = Discarding::new(scores, roles, hands, crib, deck);
         Game::<_>::new(discarding_state)
     }
 
@@ -182,8 +180,7 @@ impl GameBuilder {
             .for_each(|p| play_state.force_previous_play(p.player(), p.card()));
         let crib = self.crib.clone();
         let cut = self.cut.expect("cut");
-        #[rustfmt::skip]
-        let playing_state = Playing { scores, roles, hands, play_state, cut, crib };
+        let playing_state = Playing::new(scores, roles, hands, play_state, crib, cut);
         Game::<_>::new(playing_state)
     }
 
@@ -238,13 +235,15 @@ impl GameBuilder {
         let peggings = self.merged(peggings);
         let mut scores = Scores::from(&peggings);
         scores.score_points(players[0], &self.reasons);
+        let Some(winner) = scores.winner() else {
+            panic!("must have winner")
+        };
         let roles = Roles::new(players[self.dealer], players[1 - self.dealer]);
         let hands = self.hands.clone();
         let hands = self.merged(hands);
         let crib = self.crib.clone();
         let cut = self.cut.expect("cut");
-        #[rustfmt::skip]
-        let finished_state = Finished { scores, roles, hands, crib, cut };
+        let finished_state = Finished::new(winner, scores, roles, hands, crib, cut);
         Game::<_>::new(finished_state)
     }
 

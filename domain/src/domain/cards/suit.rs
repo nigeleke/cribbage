@@ -1,8 +1,9 @@
 use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
+use strum::AsRefStr;
 
 /// A Card suit.
-#[derive(Clone, Copy, Debug, Sequence, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Sequence, PartialEq, Eq, Serialize, Deserialize, AsRefStr)]
 pub enum Suit {
     Hearts,
     Clubs,

@@ -29,6 +29,7 @@ pub async fn launch_server(app: fn() -> Element) {
     let listener = tokio::net::TcpListener::bind(socket_addr)
         .await
         .expect("bindable socket address");
+
     axum::serve(listener, router)
         .await
         .expect("servable server");

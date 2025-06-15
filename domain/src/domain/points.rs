@@ -10,11 +10,9 @@ impl From<usize> for Points {
     }
 }
 
-impl std::ops::Deref for Points {
-    type Target = usize;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl Points {
+    pub const fn value(&self) -> usize {
+        self.0
     }
 }
 

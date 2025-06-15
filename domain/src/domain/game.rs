@@ -2,6 +2,7 @@
 
 use super::{
     cards::{Card, Crib, Cut, Cuts, Deck, HasCrib, HasCut, HasDeck, HasHands},
+    error::GameError,
     players::{HasPlayers, HasRoles, Player, Players, Roles},
     plays::PlayState,
     scorers::{CribScorer, CurrentPlayScorer, CutScorer, EndOfPlayScorer, HandScorer, Scorer},
@@ -11,46 +12,7 @@ use super::{
 use crate::constants::*;
 use serde::{Deserialize, Serialize};
 use std::{cmp::Ordering, collections::HashMap};
-use thiserror::*;
-
-#[derive(Debug, Error, PartialEq, Eq)]
-pub enum GameError {
-    #[error("internal error")]
-    InternalError(String),
-
-    #[error("incorrect number of players: {0} given, 2 required")]
-    IncorrectNumberOfPlayers(usize),
-
-    #[error("player {0} not in game")]
-    PlayerNotInGame(Player),
-
-    #[error("only two cards can be discarded to the crib")]
-    TooManyDiscards,
-
-    #[error("cannot start; cut for dealer is not decisive")]
-    CannotStart,
-
-    #[error("cannot redraw; cut for dealer was decisive")]
-    CannotRedraw,
-
-    #[error("player {0} is not a participant of the current game")]
-    InvalidPlayer(Player),
-
-    #[error("player does not own card {0}")]
-    InvalidCard(Card),
-
-    #[error("player does not own all cards")]
-    InvalidCards,
-
-    #[error("not this player's turn to play")]
-    PlayOrPassNotPermittedByPlayer,
-
-    #[error("cannot play the desired card")]
-    CannotPlayCard,
-
-    #[error("not this player's turn to pass")]
-    CannotPass,
-}
+use strum::AsRefStr;
 
 type Result<T> = std::result::Result<T, GameError>;
 
@@ -61,7 +23,7 @@ pub struct Game<T> {
     _marker: std::marker::PhantomData<T>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, AsRefStr)]
 pub enum State {
     Starting(Game<Starting>),
     Discarding(Game<Discarding>),
@@ -82,12 +44,6 @@ impl<T: Serialize> Game<T> {
             inner,
             _marker: std::marker::PhantomData::<_>,
         }
-    }
-}
-
-impl<T: HasState> HasState for Game<T> {
-    fn state(&self) -> State {
-        self.inner.state()
     }
 }
 
@@ -184,7 +140,6 @@ impl<T: HasHands + HasPlayers + Serialize> Game<T> {
     }
 
     fn validate_player_discards(&self, player: Player, discards: &[Card]) -> Result<()> {
-        self.validate_player(player)?;
         self.validate_player_cards(player, discards)?;
 
         let hand = self.inner.hand(player);
@@ -207,7 +162,7 @@ impl Game<Starting> {
                 cuts
             };
             let cuts = value.iter().fold(HashMap::new(), make_cut);
-            Ok(Self::new(Starting { cuts, deck }))
+            Ok(Self::new(Starting::new(cuts, deck)))
         } else {
             Err(GameError::IncorrectNumberOfPlayers(value.len()))
         }
@@ -215,20 +170,19 @@ impl Game<Starting> {
 
     pub fn cut(&self, player: Player) -> Result<Cut> {
         self.inner
-            .cuts
+            .cuts()
             .get(&player)
             .copied()
             .ok_or(GameError::InvalidPlayer(player))
     }
 
     pub fn draw(&self) -> Result<Option<Roles>> {
-        let mut player_cuts = self.inner.cuts.iter();
+        let mut player_cuts = self.inner.cuts().iter();
         let mut get_cut = || {
-            let (player, cut) = player_cuts
+            player_cuts
                 .next()
-                .ok_or_else(|| GameError::InternalError(stringify!(Game<Starting>::draw).into()))?;
-            let rank = cut.rank();
-            Ok((player, rank))
+                .map(|(p, c)| (p, c.rank()))
+                .ok_or_else(|| GameError::InternalError(stringify!(Game<Starting>::draw).into()))
         };
 
         let (player1, rank1) = get_cut()?;
@@ -252,8 +206,7 @@ impl Game<Starting> {
         let hands = deck.deal(&players);
         let crib = Crib::default();
 
-        #[rustfmt::skip]
-        let discarding = Discarding { scores, roles, hands, crib, deck,};
+        let discarding = Discarding::new(scores, roles, hands, crib, deck);
         Ok(Game::<_>::new(discarding))
     }
 
@@ -282,17 +235,11 @@ impl Game<Discarding> {
     pub fn discard(self, player: Player, discards: &[Card]) -> Result<DiscardResult> {
         self.validate_player_discards(player, discards)?;
 
-        let Discarding {
-            mut scores,
-            roles,
-            mut hands,
-            mut crib,
-            mut deck,
-        } = self.inner;
+        let (mut scores, roles, mut hands, mut crib, mut deck) = self.inner.into_parts();
 
         let hand = hands
             .get_mut(&player)
-            .ok_or(GameError::InvalidPlayer(player))?;
+            .ok_or_else(|| GameError::InvalidPlayer(player))?;
         hand.remove_all(discards);
 
         crib.add(discards);
@@ -302,20 +249,17 @@ impl Game<Discarding> {
             let score = CutScorer::new(cut).score();
             scores.score_points(roles.dealer(), &score);
 
-            if scores.winner().is_some() {
-                #[rustfmt::skip]
-                let finished_state = Finished { scores, roles, hands, crib, cut, };
+            if let Some(winner) = scores.winner() {
+                let finished_state = Finished::new(winner, scores, roles, hands, crib, cut);
                 DiscardResult::Finished(Box::new(Game::<_>::new(finished_state)))
             } else {
                 let pone = roles.pone();
                 let play_state = PlayState::new(pone, &hands);
-                #[rustfmt::skip]
-                let playing_state = Playing { scores, roles, hands, play_state, crib, cut, };
+                let playing_state = Playing::new(scores, roles, hands, play_state, crib, cut);
                 DiscardResult::Playing(Box::new(Game::<_>::new(playing_state)))
             }
         } else {
-            #[rustfmt::skip]
-            let discarding_state = Discarding { scores, roles, hands, crib, deck, };
+            let discarding_state = Discarding::new(scores, roles, hands, crib, deck);
             DiscardResult::Discarding(Box::new(Self::new(discarding_state)))
         };
 
@@ -344,7 +288,7 @@ pub enum PassResult {
 
 impl Game<Playing> {
     fn validate_next_to_play(&self, player: Player) -> Result<()> {
-        if self.inner.play_state.next_to_play() == player {
+        if self.play_state().next_to_play() == player {
             Ok(())
         } else {
             Err(GameError::PlayOrPassNotPermittedByPlayer)
@@ -354,7 +298,7 @@ impl Game<Playing> {
     fn validate_can_play(&self, player: Player, card: Card) -> Result<()> {
         self.validate_next_to_play(player)?;
 
-        let legal_plays = self.inner.play_state.legal_plays(player);
+        let legal_plays = self.play_state().legal_plays(player);
 
         if legal_plays.contains(&card) {
             Ok(())
@@ -366,7 +310,7 @@ impl Game<Playing> {
     fn validate_can_pass(&self, player: Player) -> Result<()> {
         self.validate_next_to_play(player)?;
 
-        let legal_plays = self.inner.play_state.legal_plays(player);
+        let legal_plays = self.play_state().legal_plays(player);
 
         if legal_plays.is_empty() {
             Ok(())
@@ -376,21 +320,14 @@ impl Game<Playing> {
     }
 
     pub const fn play_state(&self) -> &PlayState {
-        &self.inner.play_state
+        &self.inner.play_state()
     }
 
     pub fn play(self, player: Player, card: Card) -> Result<PlayResult> {
         self.validate_player_card(player, card)?;
         self.validate_can_play(player, card)?;
 
-        let Playing {
-            mut scores,
-            roles,
-            mut hands,
-            mut play_state,
-            cut,
-            crib,
-        } = self.inner;
+        let (mut scores, roles, mut hands, mut play_state, cut, crib) = self.inner.into_parts();
         let hand = hands
             .get_mut(&player)
             .ok_or(GameError::InvalidPlayer(player))?;
@@ -415,17 +352,14 @@ impl Game<Playing> {
         scores.score_points(player, &score_current_play);
         scores.score_points(player, &score_end_of_play);
 
-        let result = if scores.winner().is_some() {
-            #[rustfmt::skip]
-            let finished_state = Finished { scores, roles, hands, crib, cut } ;
+        let result = if let Some(winner) = scores.winner() {
+            let finished_state = Finished::new(winner, scores, roles, hands, cut, crib);
             PlayResult::Finished(Box::new(Game::<_>::new(finished_state)))
         } else if all_cards_are_played {
-            #[rustfmt::skip]
-            let scoring_state = ScoringPone::new(scores, roles, hands, crib, cut);
+            let scoring_state = ScoringPone::new(scores, roles, hands, cut, crib);
             PlayResult::Scoring(Box::new(Game::<_>::new(scoring_state)))
         } else {
-            #[rustfmt::skip]
-            let playing_state = Playing { scores, roles, hands, play_state, crib, cut };
+            let playing_state = Playing::new(scores, roles, hands, play_state, cut, crib);
             PlayResult::Playing(Box::new(Self::new(playing_state)))
         };
 
@@ -436,14 +370,7 @@ impl Game<Playing> {
         self.validate_player(player)?;
         self.validate_can_pass(player)?;
 
-        let Playing {
-            mut scores,
-            roles,
-            hands,
-            mut play_state,
-            cut,
-            crib,
-        } = self.inner;
+        let (mut scores, roles, hands, mut play_state, cut, crib) = self.inner.into_parts();
 
         play_state.pass();
 
@@ -456,13 +383,11 @@ impl Game<Playing> {
 
         scores.score_points(player, &reasons);
 
-        let result = if scores.winner().is_some() {
-            #[rustfmt::skip]
-            let finished_state = Finished { scores, roles, hands, crib, cut };
+        let result = if let Some(winner) = scores.winner() {
+            let finished_state = Finished::new(winner, scores, roles, hands, cut, crib);
             PassResult::Finished(Box::new(Game::<_>::new(finished_state)))
         } else {
-            #[rustfmt::skip]
-            let playing_state = Playing { scores, roles, hands, play_state, crib, cut };
+            let playing_state = Playing::new(scores, roles, hands, play_state, cut, crib);
             PassResult::Playing(Box::new(Self::new(playing_state)))
         };
 
@@ -484,7 +409,7 @@ pub enum ScorePoneResult {
 impl Game<ScoringPone> {
     pub fn reasons(&self) -> Result<ScoreReasons> {
         let hand = self.inner.hand(self.inner.pone());
-        Ok(HandScorer::new(hand, self.inner.cut).score())
+        Ok(HandScorer::new(hand, self.inner.cut()).score())
     }
 
     pub fn score_hand(self) -> Result<ScorePoneResult> {
@@ -494,9 +419,8 @@ impl Game<ScoringPone> {
 
         scores.score_points(roles.pone(), &reasons);
 
-        let result = if scores.winner().is_some() {
-            #[rustfmt::skip]
-            let finished_state = Finished { scores, roles, hands, crib, cut };
+        let result = if let Some(winner) = scores.winner() {
+            let finished_state = Finished::new(winner, scores, roles, hands, crib, cut);
             ScorePoneResult::Finished(Box::new(Game::<_>::new(finished_state)))
         } else {
             let scoring_state = ScoringDealer::new(scores, roles, hands, crib, cut);
@@ -521,7 +445,7 @@ pub enum ScoreDealerResult {
 impl Game<ScoringDealer> {
     pub fn reasons(&self) -> Result<ScoreReasons> {
         let hand = self.inner.hand(self.inner.dealer());
-        Ok(HandScorer::new(hand, self.inner.cut).score())
+        Ok(HandScorer::new(hand, self.inner.cut()).score())
     }
 
     pub fn score_hand(self) -> Result<ScoreDealerResult> {
@@ -531,9 +455,8 @@ impl Game<ScoringDealer> {
 
         scores.score_points(roles.dealer(), &reasons);
 
-        let result = if scores.winner().is_some() {
-            #[rustfmt::skip]
-            let finished_state = Finished { scores, roles, hands, crib, cut };
+        let result = if let Some(winner) = scores.winner() {
+            let finished_state = Finished::new(winner, scores, roles, hands, crib, cut);
             ScoreDealerResult::Finished(Box::new(Game::<_>::new(finished_state)))
         } else {
             let scoring_state = ScoringCrib::new(scores, roles, hands, crib, cut);
@@ -557,7 +480,7 @@ pub enum ScoreCribResult {
 
 impl Game<ScoringCrib> {
     pub fn reasons(&self) -> Result<ScoreReasons> {
-        Ok(CribScorer::new(&self.inner.crib, self.inner.cut).score())
+        Ok(CribScorer::new(self.inner.crib(), self.inner.cut()).score())
     }
 
     pub fn score_crib(self) -> Result<ScoreCribResult> {
@@ -568,17 +491,15 @@ impl Game<ScoringCrib> {
 
         scores.score_points(roles.dealer(), &reasons);
 
-        let result = if scores.winner().is_some() {
-            #[rustfmt::skip]
-            let finished_state = Finished { scores, roles, hands, crib, cut };
+        let result = if let Some(winner) = scores.winner() {
+            let finished_state = Finished::new(winner, scores, roles, hands, crib, cut);
             ScoreCribResult::Finished(Box::new(Game::<_>::new(finished_state)))
         } else {
             let mut deck = Deck::shuffled_pack();
             let hands = deck.deal(&players);
             let crib = Crib::default();
             roles.swap();
-            #[rustfmt::skip]
-            let discarding_state = Discarding { scores, roles, hands, crib, deck };
+            let discarding_state = Discarding::new(scores, roles, hands, crib, deck);
             ScoreCribResult::Discarding(Box::new(Game::<_>::new(discarding_state)))
         };
 
@@ -594,10 +515,7 @@ impl HasState for Game<ScoringCrib> {
 
 impl Game<Finished> {
     pub fn winner(&self) -> Player {
-        let Some(winner) = self.inner.scores().winner() else {
-            unreachable!("expect winner in finished game")
-        };
-        winner
+        self.inner.winner()
     }
 }
 
@@ -683,6 +601,7 @@ mod test {
             let (player1, player2) = game.player_1_2().expect("valid player_1_2");
             assert!(!deck.contains(&game.cut(player1).expect("valid cut")));
             assert!(!deck.contains(&game.cut(player2).expect("valid cut")));
+            assert!(matches!(game.state(), State::Starting(_)));
         }
     }
 
@@ -708,6 +627,7 @@ mod test {
                 let game = game.start().expect("valid start");
                 assert_eq!(game.dealer(), players[expected_dealer]);
                 assert_eq!(game.pone(), players[1 - expected_dealer]);
+                assert!(matches!(game.state(), State::Discarding(_)));
             }
         }
 
@@ -726,6 +646,7 @@ mod test {
             let game1 = game0.redraw().expect("valid redraw");
             assert_eq!(game1.type_id(), TypeId::of::<Game<Starting>>());
             assert_eq!(game1.players(), game0_players);
+            assert!(matches!(game1.state(), State::Starting(_)));
         }
 
         #[test]
@@ -771,8 +692,8 @@ mod test {
             let players = game.players();
 
             players.iter().for_each(|p| {
-                assert_eq!(*game.pegging(*p).back_peg().points(), 0);
-                assert_eq!(*game.pegging(*p).front_peg().points(), 0);
+                assert_eq!(game.pegging(*p).back_peg().points(), 0.into());
+                assert_eq!(game.pegging(*p).front_peg().points(), 0.into());
             });
 
             players.iter().for_each(|p| {
@@ -799,6 +720,7 @@ mod test {
     /// reduce the hand to four. The four cards laid away together constitute "the crib". The crib
     /// belongs to the dealer, but these cards are not exposed or used until after the hands have
     /// been played.
+    #[coverage(off)]
     mod the_crib {
         use super::*;
 
@@ -945,6 +867,7 @@ mod test {
     /// the starter is a jack, it is called "His Heels," and the dealer pegs (scores) 2 points at
     /// once. The starter is not used in the play phase of Cribbage , but is used later for making
     /// svarious card combinations that score points.
+    #[coverage(off)]
     mod before_the_play {
         use super::*;
         use crate::domain::Face;
@@ -1005,6 +928,7 @@ mod test {
             assert_eq!(play_state1.pass_count(), 0);
             assert_eq!(play_state1.current_plays(), []);
             assert_eq!(play_state1.previous_plays(), []);
+            assert!(matches!(game1.state(), State::Playing(_)));
 
             (scores0, scores1.clone(), cut1, dealer1, pone0)
         }
@@ -1076,6 +1000,7 @@ mod test {
                         let peggings1 = game1.peggings();
                         assert_eq!(peggings1[&winner1], peggings0[&winner1].add(2.into()));
                         assert_eq!(peggings1[&loser1], peggings0[&loser1]);
+                        assert!(matches!(game1.state(), State::Finished(_)));
                         break;
                     }
                     DiscardResult::Playing(_) => {}
@@ -1096,6 +1021,7 @@ mod test {
     /// last card to all those previously2 played. (Example: The non-dealer begins with a four,
     /// saying "Four." The dealer plays a nine, saying "Thirteen".) The kings, queens and jacks
     /// count 10 each; every other card counts its pip value (the ace counts one).
+    #[coverage(off)]
     mod the_play {
         use super::*;
         use crate::domain::{Hand, Play};
@@ -1332,9 +1258,14 @@ mod test {
                 .with_current_plays(&[(0, "JH")])
                 .with_previous_plays(&[(0, "9H"), (0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
                 .into_playing(1);
+            let players0 = game0.players();
             let scores0 = game0.scores();
+            let dealer0 = game0.dealer();
             let pone0 = game0.pone();
             let score0_pone = scores0.peggings()[&pone0];
+            let hand0_pone = game0.hand(pone0).clone();
+            let hand0_dealer = game0.hand(dealer0).clone();
+            let crib0 = game0.crib().clone();
 
             let PlayResult::Finished(game1) =
                 game0.play(pone0, valid_card("5H")).expect("valid play")
@@ -1342,12 +1273,24 @@ mod test {
                 panic!("unexpected state")
             };
 
+            let players1 = game1.players();
             let winner1 = game1.winner();
             let peggings1 = game1.peggings();
             let score1_pone = peggings1[&pone0];
+            let mut hand1_pone = game1.hand(pone0).clone();
+            let hand1_dealer = game1.hand(dealer0);
+            let crib1 = game1.crib();
 
+            assert_eq!(players1, players0);
             assert_eq!(winner1, pone0);
             assert_eq!(score1_pone, score0_pone.add(2.into()));
+            assert!(!hand1_pone.contains_all(hand0_pone.as_ref()));
+            hand1_pone.add(&[valid_card("5H")]);
+            assert!(hand1_pone.contains_all(hand0_pone.as_ref()));
+            assert!(hand1_dealer.contains_all(hand0_dealer.as_ref()));
+            assert!(hand0_dealer.contains_all(hand1_dealer.as_ref()));
+            assert!(crib1.contains_all(crib0.as_ref()));
+            assert!(crib0.contains_all(crib1.as_ref()));
         }
 
         #[test]
@@ -1856,6 +1799,7 @@ mod test {
     /// The person who plays the last card pegs one for Go, plus one extra if the card brings the
     /// count to exactly 31. The dealer is sure to peg at least one point in every hand, for he will
     /// have a Go on the last card if not earlier.
+    #[coverage(off)]
     mod the_go {
         use super::*;
 
@@ -2163,6 +2107,7 @@ mod test {
     /// dealer pegs 2 for fifteen when he plays the six and pegs 4 for run when he plays the seven
     /// (the 6, 7, 8, 9 sequence). The cards were not played in sequential order, but they form a
     /// true run with no foreign card.
+    #[coverage(off)]
     mod pegging {
         use super::*;
 
@@ -2336,6 +2281,7 @@ mod test {
     ///     - Four cards in hand or crib of the same 5 suit as the starter. (There is no count for
     ///       four-flush in the crib that is not of same suit as the starter)
     ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
+    #[coverage(off)]
     mod counting_the_hands {
         use super::*;
 
@@ -2376,6 +2322,7 @@ mod test {
                 scores1.peggings()[&pone1],
                 scores0.peggings()[&pone0].add(1.into())
             );
+            assert!(matches!(game1.state(), State::ScoringPone(_)));
         }
 
         #[test]
@@ -2435,6 +2382,7 @@ mod test {
             };
 
             let scores1 = game1.scores().clone();
+            assert!(matches!(game1.state(), State::ScoringDealer(_)));
 
             let ScoreDealerResult::Scoring(game2) = game1.score_hand().expect("valid score_hand")
             else {
@@ -2452,6 +2400,7 @@ mod test {
                 scores1.peggings()[&dealer0].add(4.into())
             );
             assert_eq!(scores2.peggings()[&pone2], scores1.peggings()[&pone0]);
+            assert!(matches!(game2.state(), State::ScoringCrib(_)));
         }
 
         #[test]
@@ -2590,224 +2539,224 @@ mod test {
         #[test]
         fn hand_should_score_fifteens() {
             assert_eq!(
-                *HandScorer::new(&valid_hand("7H8CAC2C"), valid_card("4H"))
+                HandScorer::new(&valid_hand("7H8CAC2C"), valid_card("4H"))
                     .score()
                     .points(),
-                4
+                4.into()
             );
             assert_eq!(
-                *HandScorer::new(&valid_hand("THJCKS5H"), valid_card("4H"))
+                HandScorer::new(&valid_hand("THJCKS5H"), valid_card("4H"))
                     .score()
                     .points(),
-                6
+                6.into()
             );
         }
 
         #[test]
         fn hand_should_score_pairs() {
             assert_eq!(
-                *HandScorer::new(&valid_hand("2H4C5C2C"), valid_card("AH"))
+                HandScorer::new(&valid_hand("2H4C5C2C"), valid_card("AH"))
                     .score()
                     .points(),
-                2
+                2.into()
             );
             assert_eq!(
-                *HandScorer::new(&valid_hand("TCASADTH"), valid_card("AH"))
+                HandScorer::new(&valid_hand("TCASADTH"), valid_card("AH"))
                     .score()
                     .points(),
-                8
+                8.into()
             );
         }
 
         #[test]
         fn hand_should_score_royal_pairs() {
             assert_eq!(
-                *HandScorer::new(&valid_hand("2H2D5C2C"), valid_card("AH"))
+                HandScorer::new(&valid_hand("2H2D5C2C"), valid_card("AH"))
                     .score()
                     .points(),
-                6
+                6.into()
             );
             assert_eq!(
-                *HandScorer::new(&valid_hand("TCASADTH"), valid_card("AH"))
+                HandScorer::new(&valid_hand("TCASADTH"), valid_card("AH"))
                     .score()
                     .points(),
-                8
+                8.into()
             );
         }
 
         #[test]
         fn hand_should_score_double_royal_pairs() {
             assert_eq!(
-                *HandScorer::new(&valid_hand("2H2C2D2S"), valid_card("AH"))
+                HandScorer::new(&valid_hand("2H2C2D2S"), valid_card("AH"))
                     .score()
                     .points(),
-                12
+                12.into()
             );
             assert_eq!(
-                *HandScorer::new(&valid_hand("TCASADTH"), valid_card("AH"))
+                HandScorer::new(&valid_hand("TCASADTH"), valid_card("AH"))
                     .score()
                     .points(),
-                8
+                8.into()
             );
         }
 
         #[test]
         fn hand_should_score_runs() {
             assert_eq!(
-                *HandScorer::new(&valid_hand("JDQCKC2C"), valid_card("AH"))
+                HandScorer::new(&valid_hand("JDQCKC2C"), valid_card("AH"))
                     .score()
                     .points(),
-                3
+                3.into()
             );
             assert_eq!(
-                *HandScorer::new(&valid_hand("3C3S2D5H"), valid_card("AH"))
+                HandScorer::new(&valid_hand("3C3S2D5H"), valid_card("AH"))
                     .score()
                     .points(),
-                8
+                8.into()
             );
         }
 
         #[test]
         fn hand_should_score_flushes() {
             assert_eq!(
-                *HandScorer::new(&valid_hand("2H4H6H8H"), valid_card("TH"))
+                HandScorer::new(&valid_hand("2H4H6H8H"), valid_card("TH"))
                     .score()
                     .points(),
-                5
+                5.into()
             );
             assert_eq!(
-                *HandScorer::new(&valid_hand("2D4D6D8D"), valid_card("TH"))
+                HandScorer::new(&valid_hand("2D4D6D8D"), valid_card("TH"))
                     .score()
                     .points(),
-                4
+                4.into()
             );
         }
 
         #[test]
         fn hand_should_score_his_heels() {
             assert_eq!(
-                *HandScorer::new(&valid_hand("2D4H6HJH"), valid_card("TH"))
+                HandScorer::new(&valid_hand("2D4H6HJH"), valid_card("TH"))
                     .score()
                     .points(),
-                1
+                1.into()
             );
             assert_eq!(
-                *HandScorer::new(&valid_hand("2H4D6DJD"), valid_card("TH"))
+                HandScorer::new(&valid_hand("2H4D6DJD"), valid_card("TH"))
                     .score()
                     .points(),
-                0
+                0.into()
             );
         }
 
         #[test]
         fn crib_should_score_fifteens() {
             assert_eq!(
-                *CribScorer::new(&valid_crib("7H8CAC2C"), valid_card("4H"))
+                CribScorer::new(&valid_crib("7H8CAC2C"), valid_card("4H"))
                     .score()
                     .points(),
-                4
+                4.into()
             );
             assert_eq!(
-                *CribScorer::new(&valid_crib("THJCKS5H"), valid_card("4H"))
+                CribScorer::new(&valid_crib("THJCKS5H"), valid_card("4H"))
                     .score()
                     .points(),
-                6
+                6.into()
             );
         }
 
         #[test]
         fn crib_should_score_pairs() {
             assert_eq!(
-                *CribScorer::new(&valid_crib("2H4C5C2C"), valid_card("AH"))
+                CribScorer::new(&valid_crib("2H4C5C2C"), valid_card("AH"))
                     .score()
                     .points(),
-                2
+                2.into()
             );
             assert_eq!(
-                *CribScorer::new(&valid_crib("TCASADTH"), valid_card("AH"))
+                CribScorer::new(&valid_crib("TCASADTH"), valid_card("AH"))
                     .score()
                     .points(),
-                8
+                8.into()
             );
         }
 
         #[test]
         fn crib_should_score_royal_pairs() {
             assert_eq!(
-                *CribScorer::new(&valid_crib("2H2D5C2C"), valid_card("AH"))
+                CribScorer::new(&valid_crib("2H2D5C2C"), valid_card("AH"))
                     .score()
                     .points(),
-                6
+                6.into()
             );
             assert_eq!(
-                *CribScorer::new(&valid_crib("TCASADTH"), valid_card("AH"))
+                CribScorer::new(&valid_crib("TCASADTH"), valid_card("AH"))
                     .score()
                     .points(),
-                8
+                8.into()
             );
         }
 
         #[test]
         fn crib_should_score_double_royal_pairs() {
             assert_eq!(
-                *CribScorer::new(&valid_crib("2H2C2D2S"), valid_card("AH"))
+                CribScorer::new(&valid_crib("2H2C2D2S"), valid_card("AH"))
                     .score()
                     .points(),
-                12
+                12.into()
             );
             assert_eq!(
-                *CribScorer::new(&valid_crib("TCASADTH"), valid_card("AH"))
+                CribScorer::new(&valid_crib("TCASADTH"), valid_card("AH"))
                     .score()
                     .points(),
-                8
+                8.into()
             );
         }
 
         #[test]
         fn crib_should_score_runs() {
             assert_eq!(
-                *CribScorer::new(&valid_crib("JDQCKC2C"), valid_card("AH"))
+                CribScorer::new(&valid_crib("JDQCKC2C"), valid_card("AH"))
                     .score()
                     .points(),
-                3
+                3.into()
             );
             assert_eq!(
-                *CribScorer::new(&valid_crib("3C3S2D5H"), valid_card("AH"))
+                CribScorer::new(&valid_crib("3C3S2D5H"), valid_card("AH"))
                     .score()
                     .points(),
-                8
+                8.into()
             );
         }
 
         #[test]
         fn crib_should_score_flushes() {
             assert_eq!(
-                *CribScorer::new(&valid_crib("2H4H6H8H"), valid_card("TH"))
+                CribScorer::new(&valid_crib("2H4H6H8H"), valid_card("TH"))
                     .score()
                     .points(),
-                5
+                5.into()
             );
             assert_eq!(
-                *CribScorer::new(&valid_crib("2D4D6D8D"), valid_card("TH"))
+                CribScorer::new(&valid_crib("2D4D6D8D"), valid_card("TH"))
                     .score()
                     .points(),
-                0
+                0.into()
             );
         }
 
         #[test]
         fn crib_should_score_his_heels() {
             assert_eq!(
-                *CribScorer::new(&valid_crib("2D4H6HJH"), valid_card("TH"))
+                CribScorer::new(&valid_crib("2D4H6HJH"), valid_card("TH"))
                     .score()
                     .points(),
-                1
+                1.into()
             );
             assert_eq!(
-                *CribScorer::new(&valid_crib("2H4D6DJD"), valid_card("TH"))
+                CribScorer::new(&valid_crib("2H4D6DJD"), valid_card("TH"))
                     .score()
                     .points(),
-                0
+                0.into()
             );
         }
     }
@@ -2840,42 +2789,42 @@ mod test {
         #[test]
         fn should_score_rules_example_eights_sevens_sixes() {
             assert_eq!(
-                *HandScorer::new(&valid_hand("8H7C7D6S"), valid_card("2H"))
+                HandScorer::new(&valid_hand("8H7C7D6S"), valid_card("2H"))
                     .score()
                     .points(),
-                16
+                16.into()
             );
         }
 
         #[test]
         fn should_score_rules_example_runs() {
             assert_eq!(
-                *HandScorer::new(&valid_hand("JHQCKDAS"), valid_card("2D"))
+                HandScorer::new(&valid_hand("JHQCKDAS"), valid_card("2D"))
                     .score()
                     .points(),
-                3
+                3.into()
             );
         }
 
         #[test]
         fn should_score_rules_example_flush() {
             assert_eq!(
-                *HandScorer::new(&valid_hand("THQHKHAH"), valid_card("2H"))
+                HandScorer::new(&valid_hand("THQHKHAH"), valid_card("2H"))
                     .score()
                     .points(),
-                5
+                5.into()
             );
             assert_eq!(
-                *HandScorer::new(&valid_hand("THQHKHAH"), valid_card("2S"))
+                HandScorer::new(&valid_hand("THQHKHAH"), valid_card("2S"))
                     .score()
                     .points(),
-                4
+                4.into()
             );
             assert_eq!(
-                *HandScorer::new(&valid_hand("THQHKHAS"), valid_card("2H"))
+                HandScorer::new(&valid_hand("THQHKHAS"), valid_card("2H"))
                     .score()
                     .points(),
-                0
+                0.into()
             );
         }
     }
@@ -2895,10 +2844,10 @@ mod test {
         #[test]
         fn should_score_rules_example_perfect_29() {
             assert_eq!(
-                *HandScorer::new(&valid_hand("5H5C5DJS"), valid_card("5S"))
+                HandScorer::new(&valid_hand("5H5C5DJS"), valid_card("5S"))
                     .score()
                     .points(),
-                29
+                29.into()
             );
         }
     }
@@ -2997,7 +2946,7 @@ mod test {
     mod the_strategy {}
 
     /// ## Internal
-    mod display {
+    mod internal {
         use super::*;
         use crate::domain::{ScoreReason, ScoreReasonType};
 
@@ -3125,13 +3074,14 @@ mod test {
         #[test]
         fn should_output_user_readable_finished_game_in_logs() {
             let game = GameBuilder::default()
-                .with_peggings(0, 0)
+                .with_peggings(0, 121)
                 .with_hands("AS2S3S4S", "AC2C3C4C")
                 .with_cut("JH")
                 .with_crib("TSJSQSKS")
                 .into_finished();
             common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @r"
                                      Finished(
+                                         winner: <playerid>,
                                          scores: Peggings(<playerid> -> <score>, <playerid> -> <score>) Reasons([]),
                                          roles: Roles(dealer: <playerid>, pone: <playerid>),
                                          hands: <playerid> -> [<cards>], <playerid> -> [<cards>],
@@ -3139,6 +3089,46 @@ mod test {
                                          cut: <card>
                                      )
                                      "));
+        }
+
+        #[test]
+        fn starting_a_game_with_single_player_is_not_possible() {
+            let game = GameBuilder::new(1).with_cuts("AS").into_starting();
+            let error = game.start().unwrap_err();
+            assert_eq!(
+                error,
+                GameError::InternalError("Game<Starting>::draw".into())
+            );
+        }
+
+        #[test]
+        fn starting_a_game_without_players_is_not_possible() {
+            let game = GameBuilder::new(0).with_cuts("").into_starting();
+            let error = game.start().unwrap_err();
+            assert_eq!(
+                error,
+                GameError::InternalError("Game<Starting>::draw".into())
+            );
+        }
+
+        #[test]
+        fn redraw_on_a_game_with_single_player_is_not_possible() {
+            let game = GameBuilder::new(1).with_cuts("AS").into_starting();
+            let error = game.redraw().unwrap_err();
+            assert_eq!(
+                error,
+                GameError::InternalError("Game<Starting>::draw".into())
+            );
+        }
+
+        #[test]
+        fn redraw_on_a_game_without_players_is_not_possible() {
+            let game = GameBuilder::new(0).with_cuts("").into_starting();
+            let error = game.redraw().unwrap_err();
+            assert_eq!(
+                error,
+                GameError::InternalError("Game<Starting>::draw".into())
+            );
         }
     }
 }

@@ -1,46 +1,58 @@
-use crate::{UserId, dto::ActiveGameId};
+use crate::{UserId, dto::GameId};
 use dioxus::prelude::*;
 
 #[cfg(feature = "server")]
 mod server {
     pub use crate::{
         ApiState, ServiceError,
-        database::{select_user_game, update_active_game_state, update_user_game_state},
+        database::{select_active_game, update_active_game_state},
+        services::redis::game_redraw_state_key,
     };
-    pub use domain::HasState;
-    pub use std::sync::Arc;
+    pub use deadpool_redis::redis::{AsyncCommands, Commands};
+    pub use domain::{HasState, State};
+    pub use std::{collections::HashMap, sync::Arc};
 }
 
 #[cfg(feature = "server")]
 use server::*;
 
 #[server]
-pub async fn redraw(game_id: ActiveGameId, user_id: UserId) -> Result<(), ServerFnError> {
-    use domain::State;
+pub async fn redraw(game_id: GameId, user_id: UserId) -> Result<bool, ServerFnError> {
+    use crate::services::redis::{HDeleteEvents, HGetEvents, HSetEvent};
 
     let context = server_context()
         .get::<Arc<ApiState>>()
         .expect("server initialised");
     let pool = context.pool();
+    let redis = context.redis();
 
-    let mut tx = pool.begin().await?;
-    let game = select_user_game(tx.as_mut(), game_id.value(), user_id.value()).await?;
-    let state = serde_json::from_value::<State>(game.state.0)?;
+    let key = game_redraw_state_key(game_id);
 
-    let game = match state {
-        State::Starting(game) => {
-            println!("Redrawing for user {user_id} on game: {:?}", game);
-            Ok(game.redraw()?)
-        }
-        _ => Err(ServiceError::InvalidState("start".to_string())),
-    }?;
+    redis.hset_event(&key, &user_id.to_string(), &true).await?;
 
-    let state = serde_json::to_value(game.state())?;
+    let redraw_statuses: HashMap<String, bool> = redis.hget_events(&key).await?;
 
-    let _ = update_active_game_state(tx.as_mut(), game_id.value(), &state).await?;
-    let _ = update_user_game_state(tx.as_mut(), game_id.value(), user_id.value(), &state).await?;
+    let all_ready = redraw_statuses.len() == domain::NUMBER_OF_PLAYERS_IN_GAME
+        && redraw_statuses.values().all(|&status| status);
 
-    let _ = tx.commit().await?;
+    if all_ready {
+        let mut tx = pool.begin().await?;
+        let game = select_active_game(tx.as_mut(), game_id.value()).await?;
+        let state = serde_json::from_value::<State>(game.state.0)?;
 
-    Ok(())
+        let game = match state {
+            State::Starting(game) => Ok(game.redraw()?),
+            other => Err(ServiceError::InvalidState(other.as_ref().to_string())),
+        }?;
+
+        let state = serde_json::to_value(game.state())?;
+
+        let _ = update_active_game_state(tx.as_mut(), game_id.value(), &state).await?;
+
+        redis.hdelete_events(&key).await?;
+
+        tx.commit().await?;
+    }
+
+    Ok(all_ready)
 }

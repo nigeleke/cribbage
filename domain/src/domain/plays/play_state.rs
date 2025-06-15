@@ -1,11 +1,10 @@
-use serde::{Deserialize, Serialize};
-
 use super::play::Play;
 use crate::{
     constants::*,
     display::{format_hashmap, format_vec},
     domain::{Card, Hand, Hands, Player, Players, Value},
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayState {
@@ -42,7 +41,7 @@ impl PlayState {
         let legal_plays: Hand = self.legal_plays[&player]
             .as_ref()
             .iter()
-            .filter_map(|c| (*running_total + *c.value() <= PLAY_TARGET).then_some(*c))
+            .filter_map(|c| ((running_total + c.value()).value() <= PLAY_TARGET).then_some(*c))
             .collect::<Vec<_>>()
             .into();
         legal_plays
@@ -101,7 +100,7 @@ impl PlayState {
         legal_plays.iter().all(|(_, hand)| {
             hand.as_ref()
                 .iter()
-                .all(|c| *c.value() + *running_total > PLAY_TARGET)
+                .all(|c| (c.value() + running_total).value() > PLAY_TARGET)
         })
     }
 
@@ -111,7 +110,7 @@ impl PlayState {
     }
 
     pub fn target_reached(&self) -> bool {
-        *self.running_total() == PLAY_TARGET
+        self.running_total().value() == PLAY_TARGET
     }
 
     pub fn all_are_cards_played(&self) -> bool {

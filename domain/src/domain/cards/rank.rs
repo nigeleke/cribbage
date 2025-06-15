@@ -4,16 +4,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Rank(usize);
 
-impl From<usize> for Rank {
-    fn from(value: usize) -> Self {
-        Self(value)
+impl Rank {
+    pub const fn value(&self) -> usize {
+        self.0
     }
 }
 
-impl std::ops::Deref for Rank {
-    type Target = usize;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl From<usize> for Rank {
+    fn from(value: usize) -> Self {
+        Self(value)
     }
 }

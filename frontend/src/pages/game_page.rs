@@ -1,12 +1,12 @@
-use crate::{components::CardFace, route::Route};
+use crate::components::CardFace;
 use api::{
-    ActiveGameId, Card, CardState, GameState, PlayerState, Plays, Role, UserId, fetch_game_state,
+    Card, CardState, GameId, PlayerState, Plays, Role, UserGameState, UserId, fetch_game_state,
     redraw, start,
 };
 use dioxus::prelude::*;
 
 #[component]
-pub fn GamePage(id: ActiveGameId) -> Element {
+pub fn GamePage(id: GameId) -> Element {
     let user_id = use_context::<Signal<UserId>>();
     provide_context(id);
 
@@ -33,16 +33,16 @@ pub fn GamePage(id: ActiveGameId) -> Element {
 }
 
 #[component]
-fn ActiveGame(state: GameState) -> Element {
+fn ActiveGame(state: UserGameState) -> Element {
     match state {
-        GameState::Starting {
+        UserGameState::Starting {
             user_cut,
             opponent_cut,
             dealer,
         } => {
             rsx! { Starting { user_cut, opponent_cut, dealer } }
         }
-        GameState::InProgress {
+        UserGameState::InProgress {
             user_state,
             opponent_state,
             crib,
@@ -58,14 +58,17 @@ fn ActiveGame(state: GameState) -> Element {
 #[component]
 fn Starting(user_cut: Card, opponent_cut: Card, dealer: Option<Role>) -> Element {
     let user_id = use_context::<Signal<UserId>>();
-    let game_id = use_context::<ActiveGameId>();
-    let navigator = use_navigator();
+    let game_id = use_context::<GameId>();
+
+    let mut waiting = use_signal(|| false);
 
     let on_start = move |_| {
         spawn(async move {
             match start(game_id, user_id()).await {
-                Ok(_) => {
-                    navigator.replace(Route::GamePage { id: game_id });
+                Ok(ready) => {
+                    if !ready {
+                        waiting.set(true);
+                    }
                 }
                 Err(e) => panic!("start game failed: {}", e.to_string()),
             }
@@ -75,8 +78,10 @@ fn Starting(user_cut: Card, opponent_cut: Card, dealer: Option<Role>) -> Element
     let on_redraw = move |_| {
         spawn(async move {
             match redraw(game_id, user_id()).await {
-                Ok(_) => {
-                    navigator.replace(Route::GamePage { id: game_id });
+                Ok(ready) => {
+                    if !ready {
+                        waiting.set(true);
+                    }
                 }
                 Err(e) => panic!("redraw game failed: {}", e.to_string()),
             }

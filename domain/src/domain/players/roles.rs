@@ -1,6 +1,5 @@
+use super::Player;
 use serde::{Deserialize, Serialize};
-
-use super::player::Player;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Roles {
@@ -40,6 +39,7 @@ pub trait HasRoles {
 
 impl std::fmt::Display for Roles {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Roles(dealer: {}, pone: {})", self.dealer, self.pone)
+        let Self { dealer, pone } = self;
+        write!(f, "Roles(dealer: {dealer}, pone: {pone})")
     }
 }

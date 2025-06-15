@@ -1,13 +1,14 @@
 use crate::route::Route;
-use api::{StartedGameEvent, UnstartedGameId, fetch_unstarted_game, started_game_stream};
+use api::{GameId, UserEvent, UserId, fetch_lobby_game, user_event_stream};
 use dioxus::{logger::tracing::warn, prelude::*};
-use futures::StreamExt;
+use futures_util::StreamExt;
 
 #[component]
-pub fn LobbyPage(id: UnstartedGameId) -> Element {
+pub fn LobbyPage(id: GameId) -> Element {
+    let user_id = use_context::<Signal<UserId>>();
     let mut game = use_signal(|| None);
 
-    let fetch_game = use_resource(move || async move { fetch_unstarted_game(id).await });
+    let fetch_game = use_resource(move || async move { fetch_lobby_game(id).await });
     use_effect(move || {
         if let Some(result) = fetch_game() {
             game.set(result.ok());
@@ -16,30 +17,36 @@ pub fn LobbyPage(id: UnstartedGameId) -> Element {
 
     let navigator = use_navigator();
 
-    let _ = use_resource(move || async move {
-        if let Some(game) = game() {
-            match started_game_stream(*game.id()).await {
-                Ok(stream) => {
-                    let mut stream = stream.into_inner();
-                    while let Some(event) = stream.next().await {
-                        match event {
-                            Ok(event) => match event {
-                                StartedGameEvent::NewGame(game) => {
-                                    let active_game_id = *game.active_game_id();
-                                    navigator.replace(Route::GamePage { id: active_game_id });
+    use_coroutine(move |_: UnboundedReceiver<()>| async move {
+        match user_event_stream(user_id()).await {
+            Ok(stream) => {
+                let mut stream = stream.into_inner();
+                while let Some(event) = stream.next().await {
+                    println!("*()*** On lobby page: received event {:?}", event);
+                    match event {
+                        Ok(event) => match event {
+                            UserEvent::NewActiveGame(game) => {
+                                println!(
+                                    "*()*** On lobby page: received new active game {:?}",
+                                    game
+                                );
+                                if game.id() == &id {
+                                    println!("*()*** Matched");
+                                    navigator.replace(Route::GamePage { id });
                                 }
-                            },
-                            Err(e) => {
-                                warn!("Stream error: {:?}", e);
-                                break;
                             }
+                            _ => {}
+                        },
+                        Err(e) => {
+                            warn!("Stream error: {:?}", e);
+                            break;
                         }
                     }
                 }
-                Err(e) => {
-                    warn!("Failed to fetch stream: {:?}", e);
-                    return;
-                }
+            }
+            Err(e) => {
+                warn!("Failed to fetch stream: {:?}", e);
+                return;
             }
         }
     });

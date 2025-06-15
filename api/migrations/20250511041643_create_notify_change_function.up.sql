@@ -4,7 +4,8 @@ BEGIN
         TG_ARGV[0],
         json_build_object(
             'operation', TG_OP,
-            'table', TG_TABLE_NAME,
+            'table_name', TG_TABLE_NAME,
+            'timing', TG_WHEN,
             'new_row', row_to_json(NEW),
             'old_row', row_to_json(OLD)
         )::text

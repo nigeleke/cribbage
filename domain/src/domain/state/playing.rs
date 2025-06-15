@@ -9,12 +9,29 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Playing {
-    pub scores: Scores,
-    pub roles: Roles,
-    pub hands: Hands,
-    pub play_state: PlayState,
-    pub crib: Crib,
-    pub cut: Cut,
+    scores: Scores,
+    roles: Roles,
+    hands: Hands,
+    play_state: PlayState,
+    crib: Crib,
+    cut: Cut,
+}
+
+impl Playing {
+    #[rustfmt::skip]
+    pub fn new(scores: Scores, roles: Roles, hands: Hands, play_state: PlayState, crib: Crib, cut: Cut) -> Self {
+        Self { scores, roles, hands, play_state, crib, cut }
+    }
+
+    pub fn into_parts(self) -> (Scores, Roles, Hands, PlayState, Crib, Cut) {
+        #[rustfmt::skip]
+        let Self { scores, roles, hands, play_state, crib, cut } = self;
+        (scores, roles, hands, play_state, crib, cut)
+    }
+
+    pub const fn play_state(&self) -> &PlayState {
+        &self.play_state
+    }
 }
 
 impl HasPlayers for Playing {
@@ -55,22 +72,20 @@ impl HasCut for Playing {
 
 impl std::fmt::Display for Playing {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        #[rustfmt::skip]
+        let Self { scores, roles, hands, play_state, cut, crib } = self;
+        let hands = format_hashmap(hands);
+
         write!(
             f,
             r#"Playing(
-    scores: {},
-    roles: {},
-    hands: {},
-    play_state: {},
-    cut: {},
-    crib: {}
-)"#,
-            self.scores,
-            self.roles,
-            format_hashmap(&self.hands),
-            self.play_state,
-            self.cut,
-            self.crib
+    scores: {scores},
+    roles: {roles},
+    hands: {hands},
+    play_state: {play_state},
+    cut: {cut},
+    crib: {crib}
+)"#
         )
     }
 }

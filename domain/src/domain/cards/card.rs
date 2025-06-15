@@ -44,13 +44,14 @@ impl Card {
     }
 
     pub fn cid(&self) -> String {
-        self.to_string()
+        let Self { face, suit } = self;
+        format!("{face}{suit}")
     }
 }
 
 impl std::fmt::Display for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}{}", self.face, self.suit)
+        self.cid().fmt(f)
     }
 }
 
@@ -87,7 +88,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn cards_have_definitive_names() {
+    fn cards_have_definitive_names_and_id() {
         let suits = "HCDS";
         let faces = "A23456789TJQK";
 
@@ -102,7 +103,8 @@ mod test {
                 let cid = format!("{face}{suit}");
                 let card = Card::try_from(cid.as_str()).expect("valid cards str");
                 assert_eq!(card.suit_name(), expected_suit_name[si]);
-                assert_eq!(card.face_name(), expected_face_name[fi])
+                assert_eq!(card.face_name(), expected_face_name[fi]);
+                assert_eq!(card.cid(), cid);
             }
         }
     }

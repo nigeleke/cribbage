@@ -32,7 +32,9 @@ impl Scores {
     pub fn winner(&self) -> Option<Player> {
         self.peggings
             .iter()
-            .filter_map(|(player, score)| (*score.points() >= WINNING_SCORE).then_some(*player))
+            .filter_map(|(player, score)| {
+                (score.points().value() >= WINNING_SCORE).then_some(*player)
+            })
             .next()
     }
 

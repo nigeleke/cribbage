@@ -3,24 +3,22 @@ use dioxus::prelude::{server_fn::codec::StreamingJson, *};
 use serde::{Deserialize, Serialize};
 use server_fn::codec::JsonStream;
 use std::sync::Arc;
-use uuid::Uuid;
 
 #[cfg(feature = "server")]
 mod server {
     pub use crate::{
         api_state::ApiState,
-        database::{ActiveGameRow, TableChangeEvent, listen_active_games_changes},
+        database::{ActiveGameRow, TableChangeEvent},
         services::{
             error::ServiceError,
-            redis::{XAddEvent, XReadEvent, user_channel},
+            listen_and_publish,
+            redis::{XReadEvent, user_channel},
         },
         set_no_cache_response,
     };
     pub use async_stream::stream;
     pub use dioxus::logger::tracing::warn;
     pub use futures_util::StreamExt;
-    pub use redis::{AsyncCommands, aio::ConnectionManager};
-    pub use sqlx::PgPool;
     pub use std::time::Duration;
     pub use tokio::sync::OnceCell;
 
@@ -32,8 +30,8 @@ use server::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum UserEvent {
-    NewGame(ActiveGame),
-    RemovedGame(ActiveGame),
+    NewActiveGame(ActiveGame),
+    RemovedActiveGame(ActiveGame),
 }
 
 #[server(output = StreamingJson)]
@@ -49,15 +47,21 @@ pub async fn user_event_stream(user_id: UserId) -> Result<JsonStream<UserEvent>,
         .get_or_init(|| async {
             tokio::spawn({
                 let pool = pool.clone();
-                let redis = redis.clone();
-                let mut redis = redis
-                    .get_connection_manager()
-                    .await
-                    .expect("redis connection");
+                let mut redis = redis.clone();
                 async move {
                     loop {
-                        match listen_and_publish(&pool, &mut redis).await {
-                            Ok(_) => break,
+                        match listen_and_publish(
+                            "active_games",
+                            &pool,
+                            transform_to_events,
+                            &mut redis,
+                        )
+                        .await
+                        {
+                            Ok(game) => {
+                                println!("****** active_games_stream: {:?}", game);
+                                break;
+                            }
                             Err(e) => {
                                 warn!("active_games_stream::listener:error - {}", e.to_string());
                                 tokio::time::sleep(Duration::from_secs(5)).await;
@@ -70,16 +74,20 @@ pub async fn user_event_stream(user_id: UserId) -> Result<JsonStream<UserEvent>,
         .await;
 
     let stream = stream! {
-        let mut redis = redis.get_connection_manager().await?;
+        let mut redis = redis.clone();
         loop {
             let event = redis.xread_message::<UserEvent>(&user_channel(&user_id)).await?;
+            println!("stream BANG loop {:?}", event);
             yield Ok(event)
         };
     };
 
     let stream = stream.filter_map(|res: Result<UserEvent, ServerFnError>| async move {
         match res {
-            Ok(event) => Some(event),
+            Ok(event) => {
+                println!("stream filter_map loop {:?}", event);
+                Some(event)
+            }
             Err(e) => {
                 warn!("stream error: {e}");
                 None
@@ -91,55 +99,28 @@ pub async fn user_event_stream(user_id: UserId) -> Result<JsonStream<UserEvent>,
 }
 
 #[cfg(feature = "server")]
-async fn listen_and_publish(
-    pool: &PgPool,
-    redis: &mut ConnectionManager,
-) -> Result<(), ServiceError> {
-    use futures_util::StreamExt;
-
-    let table_change_stream = listen_active_games_changes(pool).await?;
-    tokio::pin!(table_change_stream);
-
-    while let Some(result) = table_change_stream.next().await {
-        let change = result?;
-        let (user_id1, user_id2, event) = transform_table_change_to_event(change)?;
-
-        let _ = redis.xadd_message(&user_channel(user_id1), &event).await?;
-        let _ = redis.xadd_message(&user_channel(user_id2), &event).await?;
-    }
-
-    Ok(())
-}
-
-#[cfg(feature = "server")]
-fn transform_table_change_to_event(
+fn transform_to_events(
     change: TableChangeEvent<ActiveGameRow>,
-) -> Result<(UserId, UserId, UserEvent), ServiceError> {
-    if change.table != "active_games" {
-        return Err(ServiceError::InvalidTable(change.table));
-    }
-
-    match change.operation.as_str() {
-        "INSERT" => {
-            let model = change
-                .new_row
-                .ok_or(ServiceError::MissingField("new_row".into()))?;
-            Ok((
-                UserId::from(model.user_id1),
-                UserId::from(model.user_id2),
-                UserEvent::NewGame(ActiveGame::from(model)),
-            ))
+) -> Result<Vec<(String, UserEvent)>, ServiceError> {
+    match change {
+        TableChangeEvent::InsertAfter {
+            table_name: _,
+            new_row,
+        } => {
+            let channel1 = user_channel(UserId::from(new_row.user_id1));
+            let channel2 = user_channel(UserId::from(new_row.user_id2));
+            let event = UserEvent::NewActiveGame(ActiveGame::from(new_row));
+            Ok(vec![(channel1, event.clone()), (channel2, event)])
         }
-        "DELETE" => {
-            let model = change
-                .old_row
-                .ok_or(ServiceError::MissingField("old_row".into()))?;
-            Ok((
-                UserId::from(model.user_id1),
-                UserId::from(model.user_id2),
-                UserEvent::RemovedGame(ActiveGame::from(model)),
-            ))
+        TableChangeEvent::DeleteAfter {
+            table_name: _,
+            old_row,
+        } => {
+            let channel1 = user_channel(UserId::from(old_row.user_id1));
+            let channel2 = user_channel(UserId::from(old_row.user_id2));
+            let event = UserEvent::RemovedActiveGame(ActiveGame::from(old_row));
+            Ok(vec![(channel1, event.clone()), (channel2, event)])
         }
-        _ => Err(ServiceError::UnexpectedOperation(change.operation)),
+        other => Err(ServiceError::UnexpectedOperation(other.to_string())),
     }
 }

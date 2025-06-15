@@ -1,7 +1,5 @@
 use super::constants::*;
-
 use crate::domain::{Card, Face, ScoreReasons, Value};
-
 use itertools::*;
 
 pub(super) struct CardsScorer;
@@ -55,7 +53,7 @@ impl CardsScorer {
             for combination in ranks.iter().combinations(len) {
                 let differences = combination
                     .windows(2)
-                    .map(|w| **w[1] - **w[0])
+                    .map(|w| w[1].value() - w[0].value())
                     .collect::<Vec<_>>();
 
                 let sequential = differences.iter().all(|d| *d == 1);

@@ -92,28 +92,6 @@ pub async fn user_game_state_stream(
 }
 
 #[cfg(feature = "server")]
-async fn listen_and_publish(
-    pool: &PgPool,
-    redis: &mut ConnectionManager,
-) -> Result<(), ServiceError> {
-    use futures_util::StreamExt;
-
-    let table_change_stream = listen_user_games_changes(pool).await?;
-    tokio::pin!(table_change_stream);
-
-    while let Some(result) = table_change_stream.next().await {
-        let change = result?;
-        let (game_id, user_id, event) = transform_table_change_to_event(change)?;
-
-        let _ = redis
-            .xadd_message(redis_channel(&game_id, &user_id).as_str(), &event)
-            .await?;
-    }
-
-    Ok(())
-}
-
-#[cfg(feature = "server")]
 fn transform_table_change_to_event(
     change: TableChangeEvent<UserGameRow>,
 ) -> Result<(Uuid, Uuid, GameState), ServiceError> {

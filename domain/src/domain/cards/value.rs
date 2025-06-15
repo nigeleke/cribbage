@@ -2,17 +2,23 @@
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Value(usize);
 
+impl Value {
+    pub const fn value(&self) -> usize {
+        self.0
+    }
+}
+
 impl From<usize> for Value {
     fn from(value: usize) -> Self {
         Self(value)
     }
 }
 
-impl std::ops::Deref for Value {
-    type Target = usize;
+impl std::ops::Add for Value {
+    type Output = Self;
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0)
     }
 }
 
@@ -30,9 +36,8 @@ impl std::fmt::Display for Value {
 
 #[cfg(test)]
 mod test {
-    use pretty_assertions::assert_eq;
-
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn array_of_values_can_be_summed() {

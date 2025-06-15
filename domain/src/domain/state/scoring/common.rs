@@ -1,19 +1,13 @@
-use crate::{
-    display::format_hashmap,
-    domain::{
-        Crib, Cut, Hands, HasCrib, HasCut, HasHands, HasPlayers, HasRoles, HasScores, Players,
-        Roles, Scores,
-    },
-};
+use crate::{display::format_hashmap, domain::*};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Scoring<T> {
-    pub scores: Scores,
-    pub roles: Roles,
-    pub hands: Hands,
-    pub crib: Crib,
-    pub cut: Cut,
+    scores: Scores,
+    roles: Roles,
+    hands: Hands,
+    crib: Crib,
+    cut: Cut,
     _marker: std::marker::PhantomData<T>,
 }
 
@@ -24,7 +18,9 @@ impl<T> Scoring<T> {
     }
 
     pub fn into_parts(self) -> (Scores, Roles, Hands, Crib, Cut) {
-        (self.scores, self.roles, self.hands, self.crib, self.cut)
+        #[rustfmt::skip]
+        let Self { scores, roles, hands, crib, cut, _marker } = self;
+        (scores, roles, hands, crib, cut)
     }
 }
 
@@ -73,21 +69,19 @@ impl<T> std::fmt::Display for Scoring<T> {
             .and_then(|s| s.strip_suffix("Type"))
             .unwrap_or(name);
 
+        #[rustfmt::skip]
+        let Self { scores, roles, hands, crib, cut, _marker } = self;
+        let hands = format_hashmap(hands);
+
         write!(
             f,
-            r#"Scoring{}(
-    scores: {},
-    roles: {},
-    hands: {},
-    cut: {},
-    crib: {}
-)"#,
-            name,
-            self.scores,
-            self.roles,
-            format_hashmap(&self.hands),
-            self.cut,
-            self.crib
+            r#"Scoring{name}(
+    scores: {scores},
+    roles: {roles},
+    hands: {hands},
+    cut: {cut},
+    crib: {crib}
+)"#
         )
     }
 }

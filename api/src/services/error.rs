@@ -4,11 +4,17 @@ use thiserror::*;
 #[cfg(feature = "server")]
 #[derive(Debug, Error)]
 pub enum ServiceError {
+    #[error("Redis pool error: {0}")]
+    DeadpoolRedis(#[from] deadpool_redis::PoolError),
+
     #[error("Redis error: {0}")]
-    RedisError(#[from] redis::RedisError),
+    Redis(#[from] deadpool_redis::redis::RedisError),
 
     #[error("Database error: {0}")]
-    DatabaseError(#[from] crate::database::DatabaseError),
+    Database(#[from] crate::database::DatabaseError),
+
+    #[error("Json error: {0}")]
+    Json(#[from] serde_json::Error),
 
     #[error("Invalid table {0}")]
     InvalidTable(String),

@@ -1,18 +1,31 @@
 use crate::{
     display::format_hashmap,
     domain::{
-        Crib, Cut, Hands, HasCrib, HasCut, HasHands, HasPlayers, HasScores, Players, Roles, Scores,
+        Crib, Cut, Hands, HasCrib, HasCut, HasHands, HasPlayers, HasScores, Player, Players, Roles,
+        Scores,
     },
 };
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Finished {
-    pub scores: Scores,
-    pub roles: Roles,
-    pub hands: Hands,
-    pub crib: Crib,
-    pub cut: Cut,
+    winner: Player,
+    scores: Scores,
+    roles: Roles,
+    hands: Hands,
+    crib: Crib,
+    cut: Cut,
+}
+
+impl Finished {
+    #[rustfmt::skip]
+    pub fn new(winner: Player, scores: Scores, roles: Roles, hands: Hands, crib: Crib, cut: Cut) -> Self {
+        Self { winner, scores, roles, hands, crib, cut }
+    }
+
+    pub fn winner(&self) -> Player {
+        self.winner
+    }
 }
 
 impl HasPlayers for Finished {
@@ -47,20 +60,20 @@ impl HasCut for Finished {
 
 impl std::fmt::Display for Finished {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        #[rustfmt::skip]
+        let Self { winner, scores, roles, hands, crib, cut } = self;
+        let hands = format_hashmap(hands);
+
         write!(
             f,
             r#"Finished(
-    scores: {},
-    roles: {},
-    hands: {},
-    crib: {},
-    cut: {}
-)"#,
-            self.scores,
-            self.roles,
-            format_hashmap(&self.hands),
-            self.crib,
-            self.cut
+    winner: {winner},
+    scores: {scores},
+    roles: {roles},
+    hands: {hands},
+    crib: {crib},
+    cut: {cut}
+)"#
         )
     }
 }

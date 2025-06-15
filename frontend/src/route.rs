@@ -1,5 +1,5 @@
 use crate::pages::*;
-use api::{ActiveGameId, UnstartedGameId, UserId};
+use api::{GameId, UserId};
 use dioxus::prelude::*;
 use dioxus_sdk::storage::use_persistent;
 
@@ -10,10 +10,10 @@ pub enum Route {
     HomePage {},
 
     #[route("/lobby/:id")]
-    LobbyPage { id: UnstartedGameId },
+    LobbyPage { id: GameId },
 
     #[route("/game/:id")]
-    GamePage { id: ActiveGameId },
+    GamePage { id: GameId },
 
     #[route("/:..segments")]
     NotFoundPage { segments: Vec<String> },

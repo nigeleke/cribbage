@@ -3,9 +3,9 @@ use crate::{
     route::Route,
 };
 use api::{
-    AppEvent, AvailableGame, AvailableGameId, AvailableGamesRequest, AvailableGamesState,
-    UserEvent, UserId, activate_game, app_event_stream, fetch_available_games, new_computer_game,
-    new_human_game, user_event_stream,
+    AppEvent, AvailableGame, AvailableGamesRequest, AvailableGamesState, UserEvent, UserId,
+    activate_game, app_event_stream, fetch_available_games, new_computer_game, new_human_game,
+    user_event_stream,
 };
 use dioxus::{logger::tracing::warn, prelude::*};
 use futures_util::StreamExt;
@@ -34,6 +34,7 @@ fn NewGameSection() -> Element {
         spawn(async move {
             match new_human_game(*user_id.read()).await {
                 Ok(game) => {
+                    println!("Navigating to LobbyPage with id: {}", game.id());
                     navigator.push(Route::LobbyPage { id: *game.id() });
                 }
                 Err(e) => panic!("start game failed: {}", e.to_string()),
@@ -45,6 +46,7 @@ fn NewGameSection() -> Element {
         spawn(async move {
             match new_computer_game(*user_id.read()).await {
                 Ok(id) => {
+                    println!("Navigating to GamePage with id: {}", id);
                     navigator.push(Route::GamePage { id });
                 }
                 Err(e) => panic!("start game failed: {}", e.to_string()),
@@ -104,15 +106,17 @@ fn JoinGameSection() -> Element {
         fetch_games(AvailableGamesState::default(), true).await;
     });
 
-    let app_event_handle = use_coroutine(move |_: UnboundedReceiver<()>| async move {
+    use_coroutine(move |_: UnboundedReceiver<()>| async move {
         match app_event_stream().await {
             Ok(stream) => {
+                println!("HomePage:: Recevied app_event");
                 let mut stream = stream.into_inner();
                 while let Some(event) = stream.next().await {
+                    println!("HomePage:: Recevied app_event: event: {:?}", event);
                     match event {
                         Ok(event) => match event {
-                            AppEvent::NewGame(_) => has_more.set(true),
-                            AppEvent::RemovedGame(deleted_game) => games
+                            AppEvent::NewLobbyGame(_) => has_more.set(true),
+                            AppEvent::RemovedLobbyGame(deleted_game) => games
                                 .write()
                                 .retain(|game| game.id().value() != deleted_game.id().value()),
                         },
@@ -130,20 +134,22 @@ fn JoinGameSection() -> Element {
         }
     });
 
-    let user_event_handle = use_coroutine(move |_: UnboundedReceiver<()>| async move {
+    use_coroutine(move |_: UnboundedReceiver<()>| async move {
         match user_event_stream(*user_id.read()).await {
             Ok(stream) => {
+                println!("HomePage:: Recevied user_event");
                 let mut stream = stream.into_inner();
                 while let Some(event) = stream.next().await {
+                    println!("HomePage:: Recevied user_event: event: {:?}", event);
                     match event {
                         Ok(event) => match event {
-                            UserEvent::NewGame(new_game) => {
+                            UserEvent::NewActiveGame(new_game) => {
                                 let new_game = AvailableGame::from(new_game);
                                 let game_name = new_game.name().clone();
                                 games.write().insert(0, new_game);
                                 toasts.write().push(format!("Someone joined {}", game_name));
                             }
-                            UserEvent::RemovedGame(deleted_game) => games
+                            UserEvent::RemovedActiveGame(deleted_game) => games
                                 .write()
                                 .retain(|game| game.id().value() != deleted_game.id().value()),
                         },
@@ -159,11 +165,6 @@ fn JoinGameSection() -> Element {
                 return;
             }
         }
-    });
-
-    use_effect(move || {
-        app_event_handle.clear();
-        user_event_handle.clear();
     });
 
     rsx! {
@@ -205,9 +206,8 @@ fn GameList(games: ReadOnlySignal<Vec<AvailableGame>>) -> Element {
     let set_active_game = move |available_game: AvailableGame| {
         move |_| {
             let available_game = available_game.clone();
-            match available_game.id() {
-                AvailableGameId::Unstarted(id) => {
-                    let id = id.clone();
+            match available_game {
+                AvailableGame::Lobby { id, name: _ } => {
                     spawn(async move {
                         match activate_game(user_id(), id).await {
                             Ok(id) => navigator.push(Route::GamePage { id }),
@@ -215,8 +215,8 @@ fn GameList(games: ReadOnlySignal<Vec<AvailableGame>>) -> Element {
                         };
                     });
                 }
-                AvailableGameId::Active(id) => {
-                    navigator.push(Route::GamePage { id: *id });
+                AvailableGame::Active { id, name: _ } => {
+                    navigator.push(Route::GamePage { id });
                 }
             }
         }
@@ -230,7 +230,7 @@ fn GameList(games: ReadOnlySignal<Vec<AvailableGame>>) -> Element {
                 for game in games().into_iter() {
                     li {
                         class: "game-item",
-                        class: if matches!(game.id(), AvailableGameId::Active(_)) { "active" },
+                        class: if matches!(game, AvailableGame::Active { id: _, name: _ }) { "active" },
                         key: game.id(),
                         onclick: set_active_game(game),
                         span { "{game.to_string()}" }

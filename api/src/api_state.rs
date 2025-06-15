@@ -1,10 +1,12 @@
-use redis::Client;
+#[cfg(feature = "server")]
+use deadpool_redis::{Config as RedisConfig, Pool as RedisPool, Runtime};
+#[cfg(feature = "server")]
 use sqlx::{migrate, postgres::*};
 
 #[derive(Clone)]
 pub struct ApiState {
     pool: PgPool,
-    redis: Client,
+    redis: RedisPool,
 }
 
 impl ApiState {
@@ -19,7 +21,7 @@ impl ApiState {
         &self.pool
     }
 
-    pub fn redis(&self) -> &Client {
+    pub fn redis(&self) -> &RedisPool {
         &self.redis
     }
 }
@@ -39,8 +41,11 @@ async fn create_database_pool() -> Result<PgPool, Error> {
     Ok(pool)
 }
 
-async fn create_redis_client() -> Result<Client, Error> {
+async fn create_redis_client() -> Result<RedisPool, Error> {
     let redis_url = std::env::var("REDIS_URL")?;
-    let redis = redis::Client::open(redis_url)?;
-    Ok(redis)
+
+    let config = RedisConfig::from_url(redis_url);
+    let pool = config.create_pool(Some(Runtime::Tokio1))?;
+
+    Ok(pool)
 }

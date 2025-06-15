@@ -74,7 +74,7 @@ impl CurrentPlayScorer {
 
             let differences = cards
                 .windows(2)
-                .map(|w| *w[1].rank() - *w[0].rank())
+                .map(|w| w[1].rank().value() - w[0].rank().value())
                 .collect::<Vec<_>>();
 
             let sequential = differences.iter().all(|d| *d == 1);

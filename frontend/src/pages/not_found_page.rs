@@ -2,10 +2,9 @@ use dioxus::prelude::*;
 
 #[component]
 pub fn NotFoundPage(segments: Vec<String>) -> Element {
+    let path = segments.join("/");
+
     rsx! {
-        p {"Not Found page"}
-        ul {
-            {segments.iter().map(|s| rsx! { li { {s.to_string()} } })}
-        }
+        p { "Page Not Found " {path} }
     }
 }

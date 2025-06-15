@@ -18,7 +18,7 @@ The project then moved to [Rust](https://www.rust-lang.org/) using [Leptos](http
 
 The current incarnation is still [Rust](https://www.rust-lang.org/), but using [Dioxus](https://dioxuslabs.com/)
 
-The project is under active development as of Apr 2025.
+The project is under active development as of Jun 2025.
 
 ## Testing
 

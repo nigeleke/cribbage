@@ -1,8 +1,7 @@
+use crate::dto::{GameId, UserId};
 use dioxus::prelude::*;
 
-use crate::dto::{ActiveGameId, UserId};
-
 #[server]
-pub async fn new_computer_game(_user_id: UserId) -> Result<ActiveGameId, ServerFnError> {
+pub async fn new_computer_game(_user_id: UserId) -> Result<GameId, ServerFnError> {
     unimplemented!()
 }

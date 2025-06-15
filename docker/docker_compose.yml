@@ -13,6 +13,8 @@ services:
     pgadmin:
         image: dpage/pgadmin4
         container_name: pgadmin
+        depends_on:
+            - postgres
         environment:
             PGADMIN_DEFAULT_EMAIL: admin@admin.com
             PGADMIN_DEFAULT_PASSWORD: admin
@@ -22,9 +24,9 @@ services:
             - dbnw
         restart: unless-stopped
 
-    redis:
-        image: redis/redis-stack:latest
-        container_name: redis
+    valkey:
+        image: valkey/valkey:latest
+        container_name: valkey
         ports:
             - "6379:6379"
             - "8001:8001"

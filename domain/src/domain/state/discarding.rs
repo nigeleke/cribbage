@@ -9,11 +9,24 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Discarding {
-    pub scores: Scores,
-    pub roles: Roles,
-    pub hands: Hands,
-    pub crib: Crib,
-    pub deck: Deck,
+    scores: Scores,
+    roles: Roles,
+    hands: Hands,
+    crib: Crib,
+    deck: Deck,
+}
+
+impl Discarding {
+    #[rustfmt::skip]
+    pub fn new(scores: Scores, roles: Roles, hands: Hands, crib: Crib, deck: Deck) -> Self {
+        Self { scores, roles, hands, crib, deck }
+    }
+
+    pub fn into_parts(self) -> (Scores, Roles, Hands, Crib, Deck) {
+        #[rustfmt::skip]
+        let Self { scores, roles, hands, crib, deck } = self;
+        (scores, roles, hands, crib, deck)
+    }
 }
 
 impl HasPlayers for Discarding {
@@ -54,20 +67,19 @@ impl HasDeck for Discarding {
 
 impl std::fmt::Display for Discarding {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        #[rustfmt::skip]
+        let Self { scores, roles, hands, crib, deck } = self;
+        let hands = format_hashmap(hands);
+
         write!(
             f,
             r#"Discarding(
-    scores: {},
-    roles: {},
-    hands: {},
-    crib: {},
-    deck: {}
-)"#,
-            self.scores,
-            self.roles,
-            format_hashmap(&self.hands),
-            self.crib,
-            self.deck
+    scores: {scores},
+    roles: {roles},
+    hands: {hands},
+    crib: {crib},
+    deck: {deck}
+)"#
         )
     }
 }

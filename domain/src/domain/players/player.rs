@@ -13,7 +13,7 @@ pub struct Player(Uuid);
 pub struct Players(HashSet<Player>);
 
 impl Players {
-    pub fn iter(&self) -> hash_set::Iter<Player> {
+    pub fn iter<'a>(&'a self) -> hash_set::Iter<'a, Player> {
         self.0.iter()
     }
 

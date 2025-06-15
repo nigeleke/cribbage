@@ -1,74 +1,37 @@
-use super::{ActiveGame, ActiveGameId, UnstartedGameId};
-#[cfg(feature = "server")]
-use crate::database::AvailableGameRow;
+use super::GameId;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum AvailableGameId {
-    Unstarted(UnstartedGameId),
-    Active(ActiveGameId),
-}
-
-impl AvailableGameId {
-    pub fn value(&self) -> &Uuid {
-        match self {
-            Self::Unstarted(id) => id.value(),
-            Self::Active(id) => id.value(),
-        }
-    }
-}
-
-impl std::fmt::Display for AvailableGameId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Unstarted(id) => id.fmt(f),
-            Self::Active(id) => id.fmt(f),
-        }
-    }
-}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct AvailableGame {
-    pub(crate) id: AvailableGameId,
-    pub(crate) name: String,
+pub enum AvailableGame {
+    Lobby { id: GameId, name: String },
+    Active { id: GameId, name: String },
 }
 
 impl AvailableGame {
-    pub fn id(&self) -> &AvailableGameId {
-        &self.id
+    pub fn id(&self) -> &GameId {
+        match self {
+            Self::Lobby { id, name: _ } | Self::Active { id, name: _ } => id,
+        }
     }
 
     pub fn name(&self) -> &String {
-        &self.name
-    }
-}
-
-impl From<ActiveGame> for AvailableGame {
-    fn from(value: ActiveGame) -> Self {
-        Self {
-            id: AvailableGameId::Active(*value.id()),
-            name: value.name().clone(),
+        match self {
+            Self::Lobby { id: _, name } | Self::Active { id: _, name } => name,
         }
     }
 }
 
-#[cfg(feature = "server")]
-impl From<AvailableGameRow> for AvailableGame {
-    fn from(value: AvailableGameRow) -> Self {
-        Self {
-            id: if value.source == "Active" {
-                AvailableGameId::Active(ActiveGameId::from(value.id))
-            } else {
-                AvailableGameId::Unstarted(UnstartedGameId::from(value.id))
-            },
-            name: value.name,
-        }
-    }
-}
+// impl From<ActiveGame> for AvailableGame {
+//     fn from(value: ActiveGame) -> Self {
+//         Self::Active {
+//             id: *value.id(),
+//             name: value.name().clone(),
+//         }
+//     }
+// }
 
-impl std::fmt::Display for AvailableGame {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.name.fmt(f)
-    }
-}
+// impl std::fmt::Display for AvailableGame {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         self.name().fmt(f)
+//     }
+// }

@@ -1,27 +1,34 @@
-use crate::{display::format_vec, domain::*};
+use crate::{Crib, Cut, Hands, Pending, Roles, Scoreboard, display::format_vec};
 use serde::{Deserialize, Serialize};
+
+pub type WaitingForScoresViewed = Pending;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Scoring<T> {
-    scoreboard: ScoreBoard,
+    scoreboard: Scoreboard,
     roles: Roles,
     hands: Hands,
     crib: Crib,
     cut: Cut,
-    pending_status: PendingStatus,
+    pending: WaitingForScoresViewed,
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: PartialEq + Eq> Scoring<T> {
+impl<T> Scoring<T> {
     #[rustfmt::skip]
-    pub const fn new(scoreboard: ScoreBoard, roles: Roles, hands: Hands, crib: Crib, cut: Cut, pending_status: PendingStatus) -> Self {
-        Self { scoreboard, roles, hands, crib, cut, pending_status, _marker: std::marker::PhantomData, }
+    pub const fn new(scoreboard: Scoreboard, roles: Roles, hands: Hands, crib: Crib, cut: Cut, pending: WaitingForScoresViewed) -> Self {
+        Self { scoreboard, roles, hands, crib, cut, pending, _marker: std::marker::PhantomData, }
     }
 
-    pub fn into_parts(self) -> (ScoreBoard, Roles, Hands, Crib, Cut, PendingStatus) {
+    pub fn into_parts(self) -> (Scoreboard, Roles, Hands, Crib, Cut, WaitingForScoresViewed) {
         #[rustfmt::skip]
-        let Self { scoreboard, roles, hands, crib, cut, pending_status, _marker } = self;
-        (scoreboard, roles, hands, crib, cut, pending_status)
+        let Self { scoreboard, roles, hands, crib, cut, pending, _marker } = self;
+        (scoreboard, roles, hands, crib, cut, pending)
+    }
+
+    #[cfg(test)]
+    pub fn scoreboard(&self) -> &Scoreboard {
+        &self.scoreboard
     }
 }
 
@@ -35,7 +42,7 @@ impl<T> std::fmt::Display for Scoring<T> {
             .unwrap_or(name);
 
         #[rustfmt::skip]
-        let Self { scoreboard, roles, hands, crib, cut, pending_status, _marker } = self;
+        let Self { scoreboard, roles, hands, crib, cut, pending, _marker } = self;
         let hands = format_vec(hands);
 
         write!(
@@ -46,7 +53,7 @@ impl<T> std::fmt::Display for Scoring<T> {
     hands: {hands},
     cut: {cut},
     crib: {crib},
-    pending: {pending_status}
+    pending: {pending}
 )"#
         )
     }

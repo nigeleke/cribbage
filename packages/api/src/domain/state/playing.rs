@@ -72,11 +72,9 @@ impl EventSourced for Playing {
         match event {
             Event::CardCutAtStartOfPlay { game_id: _, cut } => {
                 println!("**** CardCutAtStartOfPlay: {}", self);
-                if cut.face().is_jack() {
-                    let player = self.dealer().player();
-                    let scoreboard = &mut self.scoreboard;
-                    scoreboard.peg(player, &ScoreBreakdown::default().his_heels(cut));
-                };
+                let player = self.dealer().player();
+                let scoreboard = &mut self.scoreboard;
+                scoreboard.peg(player, &ScoreBreakdown::his_heels(cut));
             }
             Event::CardPlayed {
                 game_id: _,
@@ -87,6 +85,11 @@ impl EventSourced for Playing {
                 let hand = &mut self.hands[player];
                 hand.remove(card);
                 self.play_state.play(card);
+                let scoreboard = &mut self.scoreboard;
+                scoreboard.peg(player, &ScoreBreakdown::play_card(&self.play_state));
+                if self.play_state.target_reached() {
+                    self.play_state.start_new_play();
+                }
             }
             _ => {}
         }

@@ -98,7 +98,7 @@ impl PlayState {
         self.running_total() == Value::from(PLAY_TARGET)
     }
 
-    pub const fn all_are_cards_played(&self) -> bool {
+    pub const fn all_cards_are_played(&self) -> bool {
         self.pending_plays.is_empty()
     }
 

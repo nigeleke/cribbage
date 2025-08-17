@@ -1,4 +1,6 @@
-use crate::{Crib, Cut, Event, GameId, Hands, Player, Roles, Scoreboard, display::format_vec};
+use crate::{
+    Crib, Cut, Event, GameId, Hand, Hands, Player, Roles, Scoreboard, display::format_vec,
+};
 use eventsourced::EventSourced;
 use serde::{Deserialize, Serialize};
 
@@ -24,6 +26,16 @@ impl Finished {
 
     pub fn scoreboard(&self) -> &Scoreboard {
         &self.scoreboard
+    }
+
+    #[cfg(test)]
+    pub fn hand(&self, player: Player) -> &Hand {
+        &self.hands[player]
+    }
+
+    #[cfg(test)]
+    pub fn crib(&self) -> &Crib {
+        &self.crib
     }
 }
 

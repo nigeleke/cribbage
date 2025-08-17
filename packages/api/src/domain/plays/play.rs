@@ -13,11 +13,11 @@ impl Play {
         Self { player, card }
     }
 
-    pub const fn player(self) -> Player {
+    pub const fn player(&self) -> Player {
         self.player
     }
 
-    pub const fn card(self) -> Card {
+    pub const fn card(&self) -> Card {
         self.card
     }
 }

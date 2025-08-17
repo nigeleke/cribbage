@@ -10,7 +10,6 @@ pub struct CardCutForDealReactor;
 
 impl Reactor<Game> for CardCutForDealReactor {
     fn apply(&self, mut context: Game, id: &GameId, event: Event) -> Game {
-        println!("CardCutForDealReactor {event:?}");
         if let Event::CardCutForDeal {
             game_id,
             player,

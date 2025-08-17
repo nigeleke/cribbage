@@ -40,7 +40,6 @@ impl EventSourced for Starting {
     const TYPE_NAME: &'static str = stringify!(Starting);
 
     fn handle_event(mut self, event: Self::Event) -> Self {
-        println!("Starting::handle_event: {event:?}");
         match event {
             Event::CardCutForDeal {
                 game_id: _,

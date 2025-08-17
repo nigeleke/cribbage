@@ -6,7 +6,6 @@ pub struct CardsDiscardedToCribReactor;
 
 impl Reactor<Game> for CardsDiscardedToCribReactor {
     fn apply(&self, mut context: Game, id: &GameId, event: Event) -> Game {
-        println!("CardsDiscardedToCribReactor {event:?}");
         if let Event::CardsDiscardedToCrib {
             game_id,
             player: _,

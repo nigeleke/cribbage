@@ -53,7 +53,6 @@ impl EventSourced for Game {
     const TYPE_NAME: &'static str = stringify!(Game);
 
     fn handle_event(mut self, event: Self::Event) -> Self {
-        println!("Game::handle_event: {event:?}");
         match event {
             Self::Event::LobbyGameCreated {
                 game_id,
@@ -104,7 +103,6 @@ impl EventSourced for Game {
                 card: _,
             } => {
                 self = self.apply_event(event);
-                println!("Game::CardPlayed {}", self.state);
                 if let State::Playing(ref playing) = self.state {
                     if playing.play_state().all_cards_are_played() {
                         let (scoreboard, roles, _, mut play_state, crib, cut) =
@@ -156,7 +154,6 @@ impl Game {
     }
 
     fn apply_event(mut self, event: Event) -> Self {
-        println!("**** Applying {event:?} to substate {}", self.state);
         match &mut self.state {
             State::Starting(starting) => *starting = starting.clone().handle_event(event),
             State::Discarding(discarding) => *discarding = discarding.clone().handle_event(event),

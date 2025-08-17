@@ -67,7 +67,6 @@ impl EventSourced for Discarding {
     const TYPE_NAME: &'static str = stringify!(Discarding);
 
     fn handle_event(mut self, event: Self::Event) -> Self {
-        println!("Discarding::handle_event: {event:?}");
         match event {
             Event::CardsDiscardedToCrib {
                 game_id: _,

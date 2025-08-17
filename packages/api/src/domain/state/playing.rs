@@ -68,10 +68,8 @@ impl EventSourced for Playing {
     const TYPE_NAME: &'static str = stringify!(Playing);
 
     fn handle_event(mut self, event: Self::Event) -> Self {
-        println!("Playing::handle_event: {event:?}");
         match event {
             Event::CardCutAtStartOfPlay { game_id: _, cut } => {
-                println!("**** CardCutAtStartOfPlay: {}", self);
                 let player = self.dealer().player();
                 let scoreboard = &mut self.scoreboard;
                 scoreboard.peg(player, &ScoreBreakdown::his_heels(cut));
@@ -81,7 +79,6 @@ impl EventSourced for Playing {
                 player,
                 card,
             } => {
-                println!("**** CardPlayed: {}", self);
                 let hand = &mut self.hands[player];
                 hand.remove(card);
                 self.play_state.play(card);

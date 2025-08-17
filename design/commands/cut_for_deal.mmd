@@ -1,0 +1,28 @@
+sequenceDiagram
+
+    actor Client1
+    actor Client2
+
+    Client1 ->> CommandHandler: CutForDeal
+    CommandHandler ->> GameEntity: handle(CutForDeal)
+    GameEntity ->> GameEntity: emit(CardCutForDeal)
+    GameEntity ->> CardCutForDealReactor: apply(CardCutForDeal)
+    GameEntity ->> Client1: reply(PendingStatus)
+
+    Client2 ->> CommandHandler: CutForDeal
+    CommandHandler ->> GameEntity: handle(CutForDeal)
+    GameEntity ->> GameEntity: emit(CardCutForDeal)
+    GameEntity ->> CardCutForDealReactor: apply(CardCutForDeal)
+    GameEntity ->> Client2: reply(PendingStatus)
+
+    opt Cuts Different
+    CardCutForDealReactor ->> CommandHandler: StartRound
+    CommandHandler ->> GameEntity: handle(StartRound)
+    GameEntity ->> GameEntity: emit(RoundStarted)
+    end
+
+    opt Cuts Same
+    CardCutForDealReactor ->> CommandHandler: RequestRedraw
+    CommandHandler ->> GameEntity: handle(RequestRedraw)
+    GameEntity ->> GameEntity: emit(RedrawRequested)
+    end

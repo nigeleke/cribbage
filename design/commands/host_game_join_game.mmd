@@ -1,0 +1,16 @@
+sequenceDiagram
+
+    actor Client1
+    actor Client2
+
+    Client1 ->> CommandHandler: HostGame
+    create participant GameEntity
+    CommandHandler ->> GameEntity: handle(HostGame)
+    GameEntity ->> GameEntity: emit(LobbyGameHosted)
+    GameEntity ->> Client1: reply(GameId)
+
+    Client2 ->> CommandHandler: JoinGame
+    CommandHandler ->> GameEntity: handle(JoinGame)
+    GameEntity ->> GameEntity: emit(LobbyGameJoined)
+    GameEntity ->> Client2: reply(GameId)
+

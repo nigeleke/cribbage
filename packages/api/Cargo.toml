@@ -1,0 +1,22 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dioxus = { workspace = true, features = ["fullstack"] }
+goofy-animals = "0.0.2"
+rand = "0.8.5"
+rand_chacha = { version = "0.3.1" }
+serde = { version = "1.0.219", features = ["derive"] }
+strum = { version = "0.27.1", features = ["derive"] }
+thiserror = "2.0.12"
+itertools = "0.14.0"
+ulid = { version = "1.2.1", features = ["serde"] }
+eventsourced = "0.27.0"
+eventsourced_ext = { path = "../eventsourced_ext" }
+
+[dev-dependencies]
+insta = "1.43.1"
+tokio = "1.46.1"
+chrono = "0.4.41"

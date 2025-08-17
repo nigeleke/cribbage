@@ -1,7 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["domain"]
-# , "api", "frontend", "backend", "entrypoint"]
+members = ["packages/auth", "packages/eventsourced_ext", "packages/api"]
 
 [workspace.dependencies]
 dioxus = { version = "0.6.3" }

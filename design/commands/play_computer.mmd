@@ -1,0 +1,12 @@
+sequenceDiagram
+
+    actor Client
+
+    Client ->> CommandHandler: PlayComputer
+    create participant GameEntity
+    CommandHandler ->> GameEntity: handle(PlayComputer)
+    GameEntity ->>+ GameEntity: emit(GameStarted)
+    GameEntity ->> GameStartedReactor: apply(GameStarted)
+    create participant ComputerPlayer
+    GameStartedReactor ->> ComputerPlayer:
+    GameEntity ->> Client: reply(GameId)

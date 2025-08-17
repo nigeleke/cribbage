@@ -14,11 +14,11 @@
 
 This project has had many flavours over time. It is being used as a learning platform, initially to implement a practical example using [Akka](https://akka.io/), [CQRS](https://martinfowler.com/bliki/CQRS.html), [Domain Driven Design](https://martinfowler.com/tags/domain%20driven%20design.html), [Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html), and [Event Storming](https://www.eventstorming.com/). Later I applied pure functional programming using the [Cats Effects](https://typelevel.org/cats-effect/) stack.
 
-The project then moved to [Rust](https://www.rust-lang.org/) using [Leptos](https://www.leptos.dev/).
+The project then moved to [Rust](https://www.rust-lang.org/) using [Leptos](https://www.leptos.dev/). then moved to [Rust](https://www.rust-lang.org/) and [Dioxus](https://dioxuslabs.com/).
 
-The current incarnation is still [Rust](https://www.rust-lang.org/), but using [Dioxus](https://dioxuslabs.com/)
+The current incarnation continues with [Dioxus](https://dioxuslabs.com/), and re-introduces [CQRS](https://martinfowler.com/bliki/CQRS.html) and [Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html) using the [cqrs-rs](https://crates.io/crates/cqrs-es) crate.
 
-The project is under active development as of Jun 2025.
+The project is under active development as of Jul 2025.
 
 ## Testing
 

@@ -7,7 +7,7 @@ services:
         ports:
             - "5432:5432"
         networks:
-            - dbnw
+            - cribbagenw
         restart: unless-stopped
 
     pgadmin:
@@ -21,7 +21,7 @@ services:
         ports:
             - "8181:80"
         networks:
-            - dbnw
+            - cribbagenw
         restart: unless-stopped
 
     valkey:
@@ -31,9 +31,9 @@ services:
             - "6379:6379"
             - "8001:8001"
         networks:
-            - dbnw
+            - cribbagenw
         restart: unless-stopped
 
 networks:
-    dbnw:
+    cribbagenw:
         driver: bridge

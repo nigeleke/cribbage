@@ -121,12 +121,20 @@ impl Breakdown {
                     Points::from(SCORE_THIRTY_ONE),
                 );
             } else {
-                self.add_event(
-                    ScoreKind::Go,
-                    cards.as_slice(),
-                    Points::from(SCORE_UNDER_THIRTY_ONE),
-                );
+                self.add_event(ScoreKind::Go, &[], Points::from(SCORE_UNDER_THIRTY_ONE));
             }
+        }
+
+        self
+    }
+
+    pub fn pass(play_state: &PlayState) -> Self {
+        Self::default().pass_last_card(play_state)
+    }
+
+    fn pass_last_card(mut self, play_state: &PlayState) -> Self {
+        if play_state.is_current_play_finished() && play_state.all_players_passed() {
+            self.add_event(ScoreKind::Go, &[], Points::from(SCORE_UNDER_THIRTY_ONE))
         }
 
         self

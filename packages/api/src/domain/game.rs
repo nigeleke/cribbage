@@ -123,6 +123,10 @@ impl EventSourced for Game {
                 }
                 self
             }
+            Self::Event::Passed {
+                game_id: _,
+                player: _,
+            } => self.apply_event(event),
             Self::Event::WinnerDeclared { game_id: _, winner } => {
                 if let Some((scoreboard, roles, hands, crib, cut)) =
                     if let State::Playing(ref playing) = self.state {
@@ -813,7 +817,7 @@ mod test {
                 play_state1.legal_plays(dealer0.player()).as_slice(),
                 playing1.hand(dealer0.player()).as_ref()
             );
-            assert_eq!(play_state1.pass_count(), 0);
+            assert!(!play_state1.all_players_passed());
             assert_eq!(play_state1.current_plays(), []);
             assert_eq!(play_state1.previous_plays(), []);
 
@@ -1449,7 +1453,7 @@ mod test {
             assert_eq!(play_state1.next_to_play(), pone0);
             assert_eq!(play_state1.previous_plays(), expected_current_plays);
             assert!(play_state1.current_plays().is_empty());
-            assert_eq!(play_state1.pass_count(), 0);
+            assert!(!play_state1.all_players_passed());
         }
 
         #[test]
@@ -1723,302 +1727,363 @@ mod test {
         }
     }
 
-    // /// ## The Go
-    // ///
-    // /// During play, the running total of cards may never be carried beyond 31. If a player cannot
-    // /// add another card without exceeding 31, he or she says "Go" and the opponent pegs 1. After
-    // /// gaining the Go, the opponent must first lay down any additional cards he can without
-    // /// exceeding 31. Besides the point for Go, he may then score any additional points that can be
-    // /// made through pairs and runs (described later). If a player reaches exactly 31, he pegs two
-    // /// instead of one for Go.
-    // ///
-    // /// The player who called Go leads for the next series of plays, with the count starting at
-    // /// zero. The lead may not be combined with any cards previously played to form a scoring
-    // /// combination; the Go has interrupted the sequence.
-    // ///
-    // /// The person who plays the last card pegs one for Go, plus one extra if the card brings the
-    // /// count to exactly 31. The dealer is sure to peg at least one point in every hand, for he will
-    // /// have a Go on the last card if not earlier.
-    // // #[coverage(off)]
-    // // mod the_go {
-    // //     use super::*;
+    /// ## The Go
+    ///
+    /// During play, the running total of cards may never be carried beyond 31. If a player cannot
+    /// add another card without exceeding 31, he or she says "Go" and the opponent pegs 1. After
+    /// gaining the Go, the opponent must first lay down any additional cards he can without
+    /// exceeding 31. Besides the point for Go, he may then score any additional points that can be
+    /// made through pairs and runs (described later). If a player reaches exactly 31, he pegs two
+    /// instead of one for Go.
+    ///
+    /// The player who called Go leads for the next series of plays, with the count starting at
+    /// zero. The lead may not be combined with any cards previously played to form a scoring
+    /// combination; the Go has interrupted the sequence.
+    ///
+    /// The person who plays the last card pegs one for Go, plus one extra if the card brings the
+    /// count to exactly 31. The dealer is sure to peg at least one point in every hand, for he will
+    /// have a Go on the last card if not earlier.
+    #[coverage(off)]
+    mod the_go {
+        use crate::{
+            Error, Event, Game, GameBuilder, GameTestFramework, PLAYER0, PLAYER1, Pass, Points,
+            State,
+        };
 
-    // //     #[test]
-    // //     fn accept_pass_when_pone_has_no_valid_card() {
-    // //         let game0 = GameBuilder::default()
-    // //             .with_peggings(0, 0)
-    // //             .with_cut("AS")
-    // //             .with_hands("AH", "KH")
-    // //             .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "QH")])
-    // //             .into_playing(1);
-    // //         let scoreboard0 = game0.scoreboard().clone();
-    // //         let dealer0 = game0.dealer().player();
-    // //         let pone0 = game0.pone().player();
-    // //         let hands0 = game0.hands().clone();
-    // //         let play_state0 = game0.play_state().clone();
+        #[test]
+        fn accept_pass_when_pone_has_no_valid_card() {
+            let playing0 = GameBuilder::default()
+                .with_peggings(0, 0)
+                .with_cut("AS")
+                .with_hands("AH", "KH")
+                .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "QH")])
+                .into_playing(1);
+            let scoreboard0 = playing0.scoreboard().clone();
+            let dealer0 = playing0.dealer().player();
+            let dealer_hand0 = playing0.hand(dealer0).clone();
+            let pone0 = playing0.pone().player();
+            let pone_hand0 = playing0.hand(pone0).clone();
+            let play_state0 = playing0.play_state().clone();
 
-    // //         let PassResult::Playing(game1) = game0.pass(pone0).expect("valid pass") else {
-    // //             panic!("unexpected result")
-    // //         };
+            let entity = Game::from(State::Playing(playing0));
+            let command = Pass::new(entity.id, PLAYER1);
+            let test = GameTestFramework::new(entity.id, entity).when(command);
 
-    // //         let scoreboard1 = game1.scoreboard();
-    // //         let dealer1 = game1.dealer().player();
-    // //         let hands1 = game1.hands();
-    // //         let play_state1 = game1.play_state();
+            let State::Playing(playing1) = &test.entity().state else {
+                panic!("unexpected state");
+            };
 
-    // //         assert_eq!(scoreboard1, &scoreboard0);
-    // //         assert_eq!(dealer1, dealer0);
-    // //         assert_eq!(hands1, &hands0);
-    // //         assert_eq!(play_state1.next_to_play(), dealer0);
-    // //         assert_eq!(play_state1.pass_count(), 1);
-    // //         assert_eq!(play_state1.current_plays(), play_state0.current_plays());
-    // //         assert_eq!(play_state1.previous_plays(), play_state0.previous_plays());
-    // //     }
+            let scoreboard1 = playing1.scoreboard();
+            let dealer1 = playing1.dealer().player();
+            let dealer_hand1 = playing1.hand(dealer1);
+            let pone1 = playing1.pone().player();
+            let pone_hand1 = playing1.hand(pone1);
+            let play_state1 = playing1.play_state();
 
-    // //     #[test]
-    // //     fn accept_pass_when_dealer_has_no_valid_card() {
-    // //         let game0 = GameBuilder::default()
-    // //             .with_peggings(0, 0)
-    // //             .with_cut("AS")
-    // //             .with_hands("KH", "KS")
-    // //             .with_current_plays(&[(0, "TH"), (0, "JH"), (1, "QH")])
-    // //             .into_playing(1);
-    // //         let scoreboard0 = game0.scoreboard().clone();
-    // //         let dealer0 = game0.dealer().player();
-    // //         let pone0 = game0.pone().player();
-    // //         let hands0 = game0.hands().clone();
-    // //         let play_state0 = game0.play_state().clone();
+            assert_eq!(scoreboard1, &scoreboard0);
+            assert_eq!(dealer1, dealer0);
+            assert_eq!(dealer_hand1, &dealer_hand0);
+            assert_eq!(pone1, pone0);
+            assert_eq!(pone_hand1, &pone_hand0);
+            assert_eq!(play_state1.next_to_play(), dealer0);
+            assert!(!play_state1.all_players_passed());
+            assert_eq!(play_state1.current_plays(), play_state0.current_plays());
+            assert_eq!(play_state1.previous_plays(), play_state0.previous_plays());
+        }
 
-    // //         let PassResult::Playing(game1) = game0.pass(pone0).expect("valid pass") else {
-    // //             panic!("unexpected state")
-    // //         };
+        #[test]
+        fn accept_pass_when_dealer_has_no_valid_card() {
+            let playing0 = GameBuilder::default()
+                .with_peggings(0, 0)
+                .with_cut("AS")
+                .with_hands("KH", "KS")
+                .with_current_plays(&[(0, "TH"), (0, "JH"), (1, "QH")])
+                .into_playing(1);
+            let scoreboard0 = playing0.scoreboard().clone();
+            let dealer0 = playing0.dealer().player();
+            let dealer_hand0 = playing0.hand(dealer0).clone();
+            let pone0 = playing0.pone().player();
+            let pone_hand0 = playing0.hand(pone0).clone();
+            let play_state0 = playing0.play_state().clone();
 
-    // //         let PassResult::Playing(game1) = game1.pass(dealer0).expect("valid pass") else {
-    // //             panic!("unexpected state")
-    // //         };
+            let entity = Game::from(State::Playing(playing0));
+            let preconditions = vec![Event::Passed {
+                game_id: entity.id,
+                player: PLAYER1,
+            }];
+            let command = Pass::new(entity.id, PLAYER0);
+            let test = GameTestFramework::new(entity.id, entity)
+                .given(preconditions)
+                .when(command);
 
-    // //         let scoreboard1 = game1.scoreboard();
-    // //         let dealer1 = game1.dealer().player();
-    // //         let hands1 = game1.hands();
-    // //         let play_state1 = game1.play_state();
+            let State::Playing(playing1) = &test.entity().state else {
+                panic!("unexpected state");
+            };
 
-    // //         assert_eq!(scoreboard1.score(pone0), scoreboard0.score(pone0));
-    // //         assert_eq!(
-    // //             *scoreboard1.score(dealer1),
-    // //             scoreboard0.score(dealer0).clone() + Points::from(1)
-    // //         );
-    // //         assert_eq!(dealer1, dealer0);
-    // //         assert_eq!(hands1, &hands0);
-    // //         assert_eq!(play_state1.next_to_play(), pone0.into());
-    // //         assert_eq!(play_state1.pass_count(), 0);
-    // //         assert!(play_state1.current_plays().is_empty());
-    // //         for p in play_state0.current_plays().into_iter() {
-    // //             assert!(play_state1.previous_plays().contains(&p))
-    // //         }
-    // //     }
+            let scoreboard1 = playing1.scoreboard();
+            let dealer1 = playing1.dealer().player();
+            let dealer_hand1 = playing1.hand(dealer1);
+            let pone1 = playing1.pone().player();
+            let pone_hand1 = playing1.hand(pone1);
+            let play_state1 = playing1.play_state();
 
-    // //     #[test]
-    // //     fn cannot_pass_when_valid_card_held() {
-    // //         let game0 = GameBuilder::default()
-    // //             .with_peggings(0, 0)
-    // //             .with_cut("AC")
-    // //             .with_hands("AH", "AS")
-    // //             .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "8H")])
-    // //             .into_playing(1);
-    // //         let pone0 = game0.pone().player();
+            assert_eq!(scoreboard1.pegging(pone0), scoreboard0.pegging(pone0));
+            assert_eq!(
+                *scoreboard1.pegging(dealer1),
+                scoreboard0.pegging(dealer0).clone() + Points::from(1)
+            );
+            assert_eq!(dealer1, dealer0);
+            assert_eq!(dealer_hand1, &dealer_hand0);
+            assert_eq!(pone1, pone0);
+            assert_eq!(pone_hand1, &pone_hand0);
+            assert_eq!(play_state1.next_to_play(), pone0.into());
+            assert!(!play_state1.all_players_passed());
+            assert!(play_state1.current_plays().is_empty());
+            for p in play_state0.current_plays().into_iter() {
+                assert!(play_state1.previous_plays().contains(&p))
+            }
+        }
 
-    // //         let error = game0.pass(pone0).expect_err("invalid pass");
-    // //         assert_eq!(error, GameError::CannotPass);
-    // //     }
+        #[test]
+        fn cannot_pass_when_valid_card_held() {
+            let playing0 = GameBuilder::default()
+                .with_peggings(0, 0)
+                .with_cut("AC")
+                .with_hands("AH", "AS")
+                .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "8H")])
+                .into_playing(1);
 
-    // //     #[test]
-    // //     fn cannot_pass_when_not_turn() {
-    // //         let game0 = GameBuilder::default()
-    // //             .with_peggings(0, 0)
-    // //             .with_cut("AC")
-    // //             .with_hands("AH", "AS")
-    // //             .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "8H")])
-    // //             .into_playing(1);
-    // //         let dealer0 = game0.dealer().player();
+            let entity = Game::from(State::Playing(playing0));
+            let command = Pass::new(entity.id, PLAYER1);
 
-    // //         let error = game0.pass(dealer0).expect_err("invalid pass");
-    // //         assert_eq!(error, GameError::PlayOrPassNotPermittedByPlayer);
-    // //     }
+            GameTestFramework::new(entity.id, entity)
+                .when(command)
+                .expect_error(Error::InvalidPass);
+        }
 
-    // //     #[test]
-    // //     fn score_pass_when_both_players_passed_playing() {
-    // //         let game0 = GameBuilder::default()
-    // //             .with_peggings(0, 0)
-    // //             .with_cut("AS")
-    // //             .with_hands("KH", "KS")
-    // //             .with_current_plays(&[(0, "TH"), (0, "JH"), (1, "QH")])
-    // //             .into_playing(1);
-    // //         let scoreboard0 = game0.scoreboard().clone();
-    // //         let dealer0 = game0.dealer().player();
-    // //         let pone0 = game0.pone().player();
+        #[test]
+        fn cannot_pass_when_not_turn() {
+            let playing0 = GameBuilder::default()
+                .with_peggings(0, 0)
+                .with_cut("AC")
+                .with_hands("AH", "AS")
+                .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "8H")])
+                .into_playing(1);
 
-    // //         let PassResult::Playing(game1) = game0.pass(pone0).expect("valid pass") else {
-    // //             panic!("unexpected state")
-    // //         };
+            let entity = Game::from(State::Playing(playing0));
+            let command = Pass::new(entity.id, PLAYER0);
 
-    // //         let PassResult::Playing(game1) = game1.pass(dealer0).expect("valid pass") else {
-    // //             panic!("unexpectd state")
-    // //         };
+            GameTestFramework::new(entity.id, entity)
+                .when(command)
+                .expect_error(Error::NotPlayersTurn(PLAYER0));
+        }
 
-    // //         let scoreboard1 = game1.scoreboard();
-    // //         let dealer1 = game1.dealer().player();
-    // //         let pone1 = game1.pone().player();
+        #[test]
+        fn score_pass_when_both_players_passed_playing() {
+            let playing0 = GameBuilder::default()
+                .with_peggings(0, 0)
+                .with_cut("AS")
+                .with_hands("KH", "KS")
+                .with_current_plays(&[(0, "TH"), (0, "JH"), (1, "QH")])
+                .into_playing(1);
+            let scoreboard0 = playing0.scoreboard().clone();
+            let dealer0 = playing0.dealer().player();
+            let pone0 = playing0.pone().player();
 
-    // //         assert_eq!(scoreboard1.score(pone1), scoreboard0.score(pone0));
-    // //         assert_eq!(
-    // //             *scoreboard1.score(dealer1),
-    // //             scoreboard0.score(dealer0).clone() + Points::from(1)
-    // //         );
-    // //     }
+            let entity = Game::from(State::Playing(playing0));
+            let preconditions = vec![Event::Passed {
+                game_id: entity.id,
+                player: PLAYER1,
+            }];
+            let command = Pass::new(entity.id, PLAYER0);
+            let test = GameTestFramework::new(entity.id, entity)
+                .given(preconditions)
+                .when(command);
 
-    // //     #[test]
-    // //     fn score_pass_when_both_players_passed_finished() {
-    // //         let game0 = GameBuilder::default()
-    // //             .with_peggings(120, 0)
-    // //             .with_cut("AS")
-    // //             .with_hands("KH", "KS")
-    // //             .with_current_plays(&[(0, "TH"), (0, "JH"), (1, "QH")])
-    // //             .into_playing(1);
-    // //         let scoreboard0 = game0.scoreboard().clone();
-    // //         let dealer0 = game0.dealer().player();
-    // //         let pone0 = game0.pone().player();
+            let State::Playing(playing1) = &test.entity().state else {
+                panic!("unexpected state");
+            };
 
-    // //         let PassResult::Playing(game1) = game0.pass(pone0).expect("valid pass") else {
-    // //             panic!("unexpected state")
-    // //         };
+            let scoreboard1 = playing1.scoreboard();
+            let dealer1 = playing1.dealer().player();
+            let pone1 = playing1.pone().player();
 
-    // //         let PassResult::Finished(game1) = game1.pass(dealer0).expect("valid pass") else {
-    // //             panic!("unexpected state")
-    // //         };
+            assert_eq!(scoreboard1.pegging(pone1), scoreboard0.pegging(pone0));
+            assert_eq!(
+                *scoreboard1.pegging(dealer1),
+                scoreboard0.pegging(dealer0).clone() + Points::from(1)
+            );
+        }
 
-    // //         let winner1 = game1.winner();
-    // //         let scoreboard1 = game1.scoreboard();
+        #[test]
+        fn score_pass_when_both_players_passed_finished() {
+            let playing0 = GameBuilder::default()
+                .with_peggings(120, 0)
+                .with_cut("AS")
+                .with_hands("KH", "KS")
+                .with_current_plays(&[(0, "TH"), (0, "JH"), (1, "QH")])
+                .into_playing(1);
+            let scoreboard0 = playing0.scoreboard().clone();
+            let dealer0 = playing0.dealer().player();
+            let pone0 = playing0.pone().player();
 
-    // //         assert_eq!(winner1, dealer0.into());
-    // //         assert_eq!(scoreboard1.score(pone0), scoreboard0.score(pone0));
-    // //         assert_eq!(
-    // //             *scoreboard1.score(dealer0),
-    // //             scoreboard0.score(dealer0).clone() + Points::from(1)
-    // //         );
-    // //     }
+            let entity = Game::from(State::Playing(playing0));
+            let preconditions = vec![Event::Passed {
+                game_id: entity.id,
+                player: PLAYER1,
+            }];
+            let command = Pass::new(entity.id, PLAYER0);
+            let test = GameTestFramework::new(entity.id, entity)
+                .given(preconditions)
+                .when(command);
 
-    // //     #[test]
-    // //     fn swap_player_after_pone_pass() {
-    // //         let game0 = GameBuilder::default()
-    // //             .with_peggings(0, 0)
-    // //             .with_cut("AS")
-    // //             .with_hands("8H8D", "5SJH")
-    // //             .with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
-    // //             .into_playing(1);
-    // //         let dealer0 = game0.dealer().player();
-    // //         let pone0 = game0.pone().player();
+            let State::Finished(finished1) = &test.entity().state else {
+                panic!("unexpected state");
+            };
 
-    // //         let PassResult::Playing(game1) = game0.pass(pone0).expect("valid pass") else {
-    // //             panic!("unexpected event")
-    // //         };
+            let winner1 = finished1.winner();
+            let scoreboard1 = finished1.scoreboard();
 
-    // //         let dealer1 = game1.dealer().player();
-    // //         let pone1 = game1.pone().player();
-    // //         let play_state1 = game1.play_state();
+            assert_eq!(winner1, dealer0.into());
+            assert_eq!(scoreboard1.pegging(pone0), scoreboard0.pegging(pone0));
+            assert_eq!(
+                *scoreboard1.pegging(dealer0),
+                scoreboard0.pegging(dealer0).clone() + Points::from(1)
+            );
+        }
 
-    // //         assert_eq!(dealer1, dealer0);
-    // //         assert_eq!(pone1, pone0);
-    // //         assert_eq!(play_state1.next_to_play(), dealer1.into());
-    // //     }
+        #[test]
+        fn swap_player_after_pone_pass() {
+            let playing0 = GameBuilder::default()
+                .with_peggings(0, 0)
+                .with_cut("AS")
+                .with_hands("8H8D", "5SJH")
+                .with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
+                .into_playing(1);
+            let dealer0 = playing0.dealer().player();
+            let pone0 = playing0.pone().player();
 
-    // //     #[test]
-    // //     fn swap_player_after_dealer_pass() {
-    // //         let game0 = GameBuilder::default()
-    // //             .with_peggings(0, 0)
-    // //             .with_cut("AS")
-    // //             .with_hands("7H8H8D", "4S5S")
-    // //             .with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
-    // //             .into_playing(0);
-    // //         let dealer0 = game0.dealer().player();
-    // //         let pone0 = game0.pone().player();
+            let entity = Game::from(State::Playing(playing0));
+            let command = Pass::new(entity.id, PLAYER1);
+            let test = GameTestFramework::new(entity.id, entity).when(command);
 
-    // //         let PassResult::Playing(game1) = game0.pass(dealer0).expect("valid pass") else {
-    // //             panic!("unexpected state")
-    // //         };
+            let State::Playing(playing1) = &test.entity().state else {
+                panic!("unexpected state");
+            };
 
-    // //         let dealer1 = game1.dealer().player();
-    // //         let pone1 = game1.pone().player();
-    // //         let play_state1 = game1.play_state();
+            let dealer1 = playing1.dealer().player();
+            let pone1 = playing1.pone().player();
+            let play_state1 = playing1.play_state();
 
-    // //         assert_eq!(dealer1, dealer0);
-    // //         assert_eq!(pone1, pone0);
-    // //         assert_eq!(play_state1.next_to_play(), pone0.into());
-    // //     }
+            assert_eq!(dealer1, dealer0);
+            assert_eq!(pone1, pone0);
+            assert_eq!(play_state1.next_to_play(), dealer1.into());
+        }
 
-    // //     #[test]
-    // //     fn reset_play_after_pone_then_dealer_pass() {
-    // //         let game0 = GameBuilder::default()
-    // //             .with_peggings(0, 0)
-    // //             .with_cut("AS")
-    // //             .with_hands("8H8D", "5SJH")
-    // //             .with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
-    // //             .into_playing(1);
-    // //         let dealer0 = game0.dealer().player();
-    // //         let pone0 = game0.pone().player();
-    // //         let play_state0 = game0.play_state().clone();
+        #[test]
+        fn swap_player_after_dealer_pass() {
+            let playing0 = GameBuilder::default()
+                .with_peggings(0, 0)
+                .with_cut("AS")
+                .with_hands("7H8H8D", "4S5S")
+                .with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
+                .into_playing(0);
+            let dealer0 = playing0.dealer().player();
+            let pone0 = playing0.pone().player();
 
-    // //         let PassResult::Playing(game1) = game0.pass(pone0).expect("valid pass") else {
-    // //             panic!("unexpected state")
-    // //         };
+            let entity = Game::from(State::Playing(playing0));
+            let command = Pass::new(entity.id, PLAYER0);
+            let test = GameTestFramework::new(entity.id, entity).when(command);
 
-    // //         let PassResult::Playing(game1) = game1.pass(dealer0).expect("valid pass") else {
-    // //             panic!("unexpected state")
-    // //         };
+            let State::Playing(playing1) = &test.entity().state else {
+                panic!("unexpected state");
+            };
 
-    // //         let dealer1 = game1.dealer().player();
-    // //         let pone1 = game1.pone().player();
-    // //         let play_state1 = game1.play_state();
+            let dealer1 = playing1.dealer().player();
+            let pone1 = playing1.pone().player();
+            let play_state1 = playing1.play_state();
 
-    // //         assert_eq!(dealer1, dealer0);
-    // //         assert_eq!(pone1, pone0);
-    // //         assert_eq!(play_state1.next_to_play(), pone1.into());
-    // //         assert_eq!(play_state1.previous_plays(), play_state0.current_plays());
-    // //         assert!(play_state1.current_plays().is_empty());
-    // //         assert_eq!(play_state1.pass_count(), 0);
-    // //     }
+            assert_eq!(dealer1, dealer0);
+            assert_eq!(pone1, pone0);
+            assert_eq!(play_state1.next_to_play(), pone0.into());
+        }
 
-    // //     #[test]
-    // //     fn reset_play_after_after_dealer_then_pone_pass() {
-    // //         let game0 = GameBuilder::default()
-    // //             .with_peggings(0, 0)
-    // //             .with_cut("AS")
-    // //             .with_hands("7H8H8D", "4S5S")
-    // //             .with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
-    // //             .into_playing(0);
-    // //         let dealer0 = game0.dealer().player();
-    // //         let pone0 = game0.pone().player();
-    // //         let play_state0 = game0.play_state().clone();
+        #[test]
+        fn reset_play_after_pone_then_dealer_pass() {
+            let playing0 = GameBuilder::default()
+                .with_peggings(0, 0)
+                .with_cut("AS")
+                .with_hands("8H8D", "5SJH")
+                .with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
+                .into_playing(1);
+            let dealer0 = playing0.dealer().player();
+            let pone0 = playing0.pone().player();
+            let play_state0 = playing0.play_state().clone();
 
-    // //         let PassResult::Playing(game1) = game0.pass(dealer0).expect("valid pass") else {
-    // //             panic!("unexpected state")
-    // //         };
+            let entity = Game::from(State::Playing(playing0));
+            let preconditions = vec![Event::Passed {
+                game_id: entity.id,
+                player: PLAYER1,
+            }];
+            let command = Pass::new(entity.id, PLAYER0);
+            let test = GameTestFramework::new(entity.id, entity)
+                .given(preconditions)
+                .when(command);
 
-    // //         let PassResult::Playing(game1) = game1.pass(pone0).expect("valid pass") else {
-    // //             panic!("unexpected state")
-    // //         };
+            let State::Playing(playing1) = &test.entity().state else {
+                panic!("unexpected state");
+            };
 
-    // //         let dealer1 = game1.dealer().player();
-    // //         let pone1 = game1.pone().player();
-    // //         let play_state1 = game1.play_state();
+            let dealer1 = playing1.dealer().player();
+            let pone1 = playing1.pone().player();
+            let play_state1 = playing1.play_state();
 
-    // //         assert_eq!(dealer1, dealer0);
-    // //         assert_eq!(pone1, pone0);
-    // //         assert_eq!(play_state1.next_to_play(), dealer1.into());
-    // //         assert_eq!(play_state1.previous_plays(), play_state0.current_plays());
-    // //         assert!(play_state1.current_plays().is_empty());
-    // //         assert_eq!(play_state1.pass_count(), 0);
-    // //     }
-    // // }
+            assert_eq!(dealer1, dealer0);
+            assert_eq!(pone1, pone0);
+            assert_eq!(play_state1.next_to_play(), pone1.into());
+            assert_eq!(play_state1.previous_plays(), play_state0.current_plays());
+            assert!(play_state1.current_plays().is_empty());
+            assert!(!play_state1.all_players_passed());
+        }
+
+        #[test]
+        fn reset_play_after_after_dealer_then_pone_pass() {
+            let playing0 = GameBuilder::default()
+                .with_peggings(0, 0)
+                .with_cut("AS")
+                .with_hands("7H8H8D", "4S5S")
+                .with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
+                .into_playing(0);
+            let dealer0 = playing0.dealer().player();
+            let pone0 = playing0.pone().player();
+            let play_state0 = playing0.play_state().clone();
+
+            let entity = Game::from(State::Playing(playing0));
+            let preconditions = vec![Event::Passed {
+                game_id: entity.id,
+                player: PLAYER0,
+            }];
+            let command = Pass::new(entity.id, PLAYER1);
+            let test = GameTestFramework::new(entity.id, entity)
+                .given(preconditions)
+                .when(command);
+
+            let State::Playing(playing1) = &test.entity().state else {
+                panic!("unexpected state");
+            };
+
+            let dealer1 = playing1.dealer().player();
+            let pone1 = playing1.pone().player();
+            let play_state1 = playing1.play_state();
+
+            assert_eq!(dealer1, dealer0);
+            assert_eq!(pone1, pone0);
+            assert_eq!(play_state1.next_to_play(), dealer1.into());
+            assert_eq!(play_state1.previous_plays(), play_state0.current_plays());
+            assert!(play_state1.current_plays().is_empty());
+            assert!(!play_state1.all_players_passed());
+        }
+    }
 
     // /// ## Pegging
     // ///

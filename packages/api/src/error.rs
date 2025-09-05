@@ -30,4 +30,7 @@ pub enum Error {
 
     #[error("invalid play: {0}")]
     InvalidPlay(Card),
+
+    #[error("invalid pass: some cards are playable")]
+    InvalidPass,
 }

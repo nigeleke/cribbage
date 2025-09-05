@@ -88,6 +88,14 @@ impl EventSourced for Playing {
                     self.play_state.start_new_play();
                 }
             }
+            Event::Passed { game_id: _, player } => {
+                self.play_state.pass();
+                if self.play_state.all_players_passed() {
+                    let scoreboard = &mut self.scoreboard;
+                    scoreboard.peg(player, &ScoreBreakdown::pass(&self.play_state));
+                    self.play_state.start_new_play();
+                }
+            }
             _ => {}
         }
         self

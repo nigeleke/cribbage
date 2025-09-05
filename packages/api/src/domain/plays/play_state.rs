@@ -49,8 +49,8 @@ impl PlayState {
             .collect()
     }
 
-    pub const fn pass_count(&self) -> usize {
-        self.pass_count
+    pub const fn all_players_passed(&self) -> bool {
+        self.pass_count == PLAYER_COUNT
     }
 
     pub fn current_plays(&self) -> Vec<Play> {
@@ -63,7 +63,7 @@ impl PlayState {
 
     pub fn play(&mut self, card: Card) {
         let player = self.next_to_play;
-        if self.pass_count() == 0 {
+        if self.pass_count == 0 {
             self.make_opponent_next_player();
         }
 

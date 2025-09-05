@@ -1,6 +1,4 @@
-use crate::{
-    Card, Cut, Dealer, GameId, JoinGame, Player, ScoreBreakdown, Scoreboard, UserId, Users,
-};
+use crate::{Card, Cut, Dealer, GameId, Player, ScoreBreakdown, Scoreboard, UserId, Users};
 use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 
@@ -84,6 +82,11 @@ pub enum Event {
         game_id: GameId,
         player: Player,
         card: Card,
+    },
+
+    Passed {
+        game_id: GameId,
+        player: Player,
     }
 
 }

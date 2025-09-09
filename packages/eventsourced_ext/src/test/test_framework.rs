@@ -41,6 +41,19 @@ where
         }
     }
 
+    /// Assert conditions (using supplied function) on an entity.
+    ///
+    /// # Parameters
+    /// - `f` function predicating on current entity. The function must
+    /// panic if predicates fail.
+    ///
+    /// # Returns
+    /// Self to enable chaining.
+    pub fn assert_entity(self, f: impl Fn(&E)) -> Self {
+        f(&self.entity);
+        self
+    }
+
     /// The current entity.
     /// If `given` has been called this will have those events applied.
     pub fn entity(&self) -> &E {

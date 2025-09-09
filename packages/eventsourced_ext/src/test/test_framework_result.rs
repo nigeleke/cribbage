@@ -83,6 +83,19 @@ where
         }
     }
 
+    /// Assert conditions (using supplied function) on an entity.
+    ///
+    /// # Parameters
+    /// - `f` function predicating on current entity. The function must
+    /// panic if predicates fail.
+    ///
+    /// # Returns
+    /// Self to enable chaining.
+    pub fn assert_entity(self, f: impl Fn(&E)) -> Self {
+        f(&self.entity);
+        self
+    }
+
     /// Return the resultant entity, before the emitted events have been applied.
     pub fn entity(&self) -> &E {
         &self.entity
@@ -105,6 +118,26 @@ where
     pub fn expect_event(self, expected_event: E::Event) -> Self {
         let actual_event = self.event();
         assert_eq!(actual_event, &expected_event);
+        self
+    }
+
+    /// Asserts (using supplied function) that the effect emitted
+    /// the expected event.
+    ///
+    /// # Parameters
+    /// - `f`: A function predicating the actual event. This function should
+    /// panic if the predicate fails.
+    ///
+    /// # Panics
+    /// - Panics if no event was emitted (i.e. `self.event()` is `None`).
+    ///
+    /// # Returns
+    /// Returns `self`, allowing this method to be chained with other expectations.
+    ///
+    /// # Requirements
+    /// The `E::Event` type must implement [`PartialEq`] and [`Debug`] for `assert_eq!`.
+    pub fn assert_event(self, f: impl Fn(&E::Event)) -> Self {
+        f(self.event());
         self
     }
 
@@ -142,6 +175,23 @@ where
         self
     }
 
+    /// Asserts (based on the provided function) that the command produced
+    /// the expected reply.
+    ///
+    /// # Parameters
+    /// - `f`: The function predicating the actual reply. The function must
+    /// panic if the predicate fails.
+    ///
+    /// # Panics
+    /// - Panics if no reply was produced.
+    ///
+    /// # Returns
+    /// Returns `self` to allow method chaining.
+    pub fn assert_reply(self, f: impl Fn(&R)) -> Self {
+        f(self.reply());
+        self
+    }
+
     /// Returns a reference to the reply produced by the command.
     ///
     /// # Panics
@@ -170,6 +220,23 @@ where
     pub fn expect_error(self, expected_error: ER) -> Self {
         let actual_error = self.error();
         assert_eq!(actual_error, &expected_error);
+        self
+    }
+
+    /// Asserts (using the supplied function) that the command resulted
+    /// in the expected error.
+    ///
+    /// # Panics
+    /// - Panics if no error is present in the result.
+    ///
+    /// # Parameters
+    /// - `f`: The function predicating the actual error. The function must
+    /// panic indicating predicate failure.
+    ///
+    /// # Returns
+    /// Returns `self` to allow method chaining.
+    pub fn assert_error(self, f: impl Fn(&ER)) -> Self {
+        f(self.error());
         self
     }
 

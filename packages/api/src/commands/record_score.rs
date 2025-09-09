@@ -1,18 +1,25 @@
-use crate::{Error, Event, Game, GameId, Player, ScoreBreakdown};
+use crate::{Error, Event, EventKind, Game, GameId, Player, ScoreBreakdown, ScorePhase};
 use eventsourced::{Command, CommandEffect};
 
 #[derive(Debug)]
 pub struct RecordScore {
     game_id: GameId,
     player: Player,
+    phase: ScorePhase,
     breakdown: ScoreBreakdown,
 }
 
 impl RecordScore {
-    pub fn new(game_id: GameId, player: Player, breakdown: ScoreBreakdown) -> Self {
+    pub fn new(
+        game_id: GameId,
+        player: Player,
+        phase: ScorePhase,
+        breakdown: ScoreBreakdown,
+    ) -> Self {
         Self {
             game_id,
             player,
+            phase,
             breakdown,
         }
     }
@@ -26,18 +33,19 @@ impl Command<Game> for RecordScore {
     fn handle_command(
         self,
         id: &GameId,
-        state: &Game,
+        _state: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
-        panic!("boom");
-        let RecordScore {
-            game_id,
-            player,
-            breakdown,
-        } = self;
-        CommandEffect::emit(Event::ScoreRecorded {
-            game_id,
-            player,
-            breakdown,
-        })
+        let player = self.player;
+        let phase = self.phase;
+        let breakdown = self.breakdown;
+
+        CommandEffect::emit(Event::new(
+            *id,
+            EventKind::ScoreRecorded {
+                player,
+                phase,
+                breakdown,
+            },
+        ))
     }
 }

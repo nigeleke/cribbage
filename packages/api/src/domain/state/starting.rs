@@ -1,4 +1,4 @@
-use crate::{Cut, Cuts, Deck, Event, GameId, Pending, display::format_vec};
+use crate::{Cut, Cuts, Deck, Event, EventKind, GameId, Pending, display::format_vec};
 use eventsourced::EventSourced;
 use serde::{Deserialize, Serialize};
 
@@ -18,10 +18,8 @@ impl Starting {
         Self { cuts, deck, pending }
     }
 
-    pub fn into_parts(self) -> (Cuts, Deck, WaitingForCuts) {
-        #[rustfmt::skip]
-        let Self { cuts, deck, pending } = self;
-        (cuts, deck, pending)
+    pub fn cuts(&self) -> &Cuts {
+        &self.cuts
     }
 
     pub fn deck(&self) -> &Deck {
@@ -40,15 +38,11 @@ impl EventSourced for Starting {
     const TYPE_NAME: &'static str = stringify!(Starting);
 
     fn handle_event(mut self, event: Self::Event) -> Self {
-        match event {
-            Event::CardCutForDeal {
-                game_id: _,
-                player,
-                cut,
-            } => {
-                self.deck.remove(cut);
-                self.cuts[player] = cut;
-                self.pending.acknowledge(player);
+        match event.kind() {
+            EventKind::CardCutForDeal { player, cut } => {
+                self.deck.remove(*cut);
+                self.cuts[*player] = *cut;
+                self.pending.acknowledge(*player);
                 self
             }
             _ => self,

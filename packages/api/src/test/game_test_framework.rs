@@ -1,5 +1,6 @@
 use crate::{
-    CardCutForDealReactor, CardsDiscardedToCribReactor, Event, Game, GameId, ScoringReactor,
+    AdvanceScoring, CheckForWinner, CutStarterCardAfterDiscards, Event, Game, GameId,
+    RedrawOrStartGame,
 };
 use eventsourced::Command;
 use eventsourced_ext::{TestFramework, TestFrameworkResult};
@@ -11,11 +12,17 @@ pub struct GameTestFramework {
 impl GameTestFramework {
     pub fn new(id: GameId, entity: Game) -> Self {
         let inner = TestFramework::new(id, entity).with_reactors(vec![
-            Box::new(CardCutForDealReactor),
-            Box::new(CardsDiscardedToCribReactor),
-            Box::new(ScoringReactor),
+            Box::new(RedrawOrStartGame),
+            Box::new(CutStarterCardAfterDiscards),
+            Box::new(AdvanceScoring),
+            Box::new(CheckForWinner),
         ]);
         Self { inner }
+    }
+
+    pub fn assert_entity(mut self, f: impl Fn(&Game)) -> Self {
+        self.inner = self.inner.assert_entity(f);
+        self
     }
 
     pub fn entity(&self) -> &Game {

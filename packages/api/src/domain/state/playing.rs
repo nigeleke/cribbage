@@ -1,7 +1,7 @@
 #[cfg(test)]
 use crate::Pone;
 use crate::{
-    Crib, Cut, Dealer, Event, GameId, Hand, Hands, HasFace, PlayState, Player, Roles,
+    Crib, Cut, Dealer, Event, EventKind, GameId, Hand, Hands, PlayState, Player, Roles,
     ScoreBreakdown, Scoreboard, display::format_vec,
 };
 use eventsourced::EventSourced;
@@ -68,31 +68,27 @@ impl EventSourced for Playing {
     const TYPE_NAME: &'static str = stringify!(Playing);
 
     fn handle_event(mut self, event: Self::Event) -> Self {
-        match event {
-            Event::CardCutAtStartOfPlay { game_id: _, cut } => {
+        match event.kind() {
+            EventKind::StarterCardCut { cut } => {
                 let player = self.dealer().player();
                 let scoreboard = &mut self.scoreboard;
-                scoreboard.peg(player, &ScoreBreakdown::his_heels(cut));
+                scoreboard.peg(player, &ScoreBreakdown::his_heels(*cut));
             }
-            Event::CardPlayed {
-                game_id: _,
-                player,
-                card,
-            } => {
-                let hand = &mut self.hands[player];
-                hand.remove(card);
-                self.play_state.play(card);
+            EventKind::CardPlayed { player, card } => {
+                let hand = &mut self.hands[*player];
+                hand.remove(*card);
+                self.play_state.play(*card);
                 let scoreboard = &mut self.scoreboard;
-                scoreboard.peg(player, &ScoreBreakdown::play_card(&self.play_state));
+                scoreboard.peg(*player, &ScoreBreakdown::play_card(&self.play_state));
                 if self.play_state.target_reached() {
                     self.play_state.start_new_play();
                 }
             }
-            Event::Passed { game_id: _, player } => {
+            EventKind::Passed { player } => {
                 self.play_state.pass();
                 if self.play_state.all_players_passed() {
                     let scoreboard = &mut self.scoreboard;
-                    scoreboard.peg(player, &ScoreBreakdown::pass(&self.play_state));
+                    scoreboard.peg(*player, &ScoreBreakdown::pass(&self.play_state));
                     self.play_state.start_new_play();
                 }
             }

@@ -1,10 +1,12 @@
 mod breakdown;
 mod event;
 mod kind;
+mod phase;
 
 pub use breakdown::Breakdown as ScoreBreakdown;
 pub use event::Event as ScoreEvent;
 pub use kind::Kind as ScoreKind;
+pub use phase::Phase as ScorePhase;
 
 mod constants {
     pub const SCORE_HIS_HEELS: usize = 2;

@@ -1,4 +1,4 @@
-use crate::{Error, Event, Game, GameId, Player, Starting, State, prettify};
+use crate::{Error, Event, EventKind, Game, GameId, Player, Starting, State, prettify};
 use eventsourced::*;
 use eventsourced_ext::lift_effect;
 
@@ -28,16 +28,13 @@ impl Command<Starting> for CutForDeal {
         let mut deck = state.deck().clone();
         let cut = deck.cut();
 
-        let event = Event::CardCutForDeal {
-            game_id: *id,
-            player,
-            cut,
-        };
-
-        CommandEffect::emit_and_reply(event, move |s: &Starting| {
-            let mut pending = s.pending().clone();
-            pending.acknowledge(player)
-        })
+        CommandEffect::emit_and_reply(
+            Event::new(*id, EventKind::CardCutForDeal { player, cut }),
+            move |s: &Starting| {
+                let mut pending = s.pending().clone();
+                pending.acknowledge(player)
+            },
+        )
     }
 }
 

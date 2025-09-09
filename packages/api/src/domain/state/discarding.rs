@@ -1,6 +1,6 @@
 use crate::{
-    Crib, Dealer, Deck, Event, GameId, Hand, Hands, Pending, Player, Pone, Roles, Scoreboard,
-    display::format_vec,
+    Crib, Dealer, Deck, Event, EventKind, GameId, Hand, Hands, Pending, Player, Pone, Roles,
+    Scoreboard, display::format_vec,
 };
 use eventsourced::EventSourced;
 use serde::{Deserialize, Serialize};
@@ -67,15 +67,11 @@ impl EventSourced for Discarding {
     const TYPE_NAME: &'static str = stringify!(Discarding);
 
     fn handle_event(mut self, event: Self::Event) -> Self {
-        match event {
-            Event::CardsDiscardedToCrib {
-                game_id: _,
-                player,
-                discards,
-            } => {
-                self.hands[player].remove_all(&discards);
-                self.crib.add_all(&discards);
-                self.pending.acknowledge(player);
+        match event.kind() {
+            EventKind::CardsDiscardedToCrib { player, discards } => {
+                self.hands[*player].remove_all(discards);
+                self.crib.add_all(discards);
+                self.pending.acknowledge(*player);
                 self
             }
             _ => self,

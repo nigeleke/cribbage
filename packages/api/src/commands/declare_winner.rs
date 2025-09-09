@@ -1,4 +1,4 @@
-use crate::{Error, Event, Game, GameId, Player, Playing, State, prettify};
+use crate::{Error, Event, EventKind, Game, GameId, Player, Playing, State, prettify};
 use eventsourced::*;
 use eventsourced_ext::lift_effect;
 
@@ -43,10 +43,6 @@ impl Command<Playing> for DeclareWinner {
         _state: &Playing,
     ) -> CommandEffect<Playing, Self::Reply, Self::Error> {
         let DeclareWinner { game_id: _, winner } = self;
-        let event = Event::WinnerDeclared {
-            game_id: *id,
-            winner,
-        };
-        CommandEffect::emit(event)
+        CommandEffect::emit(Event::new(*id, EventKind::WinnerDeclared { winner }))
     }
 }

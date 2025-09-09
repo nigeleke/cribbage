@@ -1,6 +1,7 @@
 use super::constants::*;
 use crate::{
-    Card, HasFace, HasRank, PlayState, Points, ScoreEvent, ScoreKind, Value, constants::*,
+    Card, Cut, Hand, HasFace, HasRank, PlayState, Points, ScoreEvent, ScoreKind, Value,
+    constants::*,
 };
 use serde::{Deserialize, Serialize};
 
@@ -137,6 +138,47 @@ impl Breakdown {
             self.add_event(ScoreKind::Go, &[], Points::from(SCORE_UNDER_THIRTY_ONE))
         }
 
+        self
+    }
+
+    pub fn hand(hand: &Hand, cut: Cut) -> Self {
+        let mut all = hand.clone();
+        all.add(cut);
+
+        Self::default()
+            .fifteens(all.as_ref())
+            .pairs(all.as_ref())
+            .runs(all.as_ref())
+            .flush(hand.as_ref(), cut)
+            .his_nob(hand.as_ref(), cut)
+    }
+
+    fn fifteens(mut self, cards: &[Card]) -> Self {
+        self
+    }
+
+    fn pairs(mut self, cards: &[Card]) -> Self {
+        self
+    }
+
+    fn runs(mut self, cards: &[Card]) -> Self {
+        self
+    }
+
+    fn flush(mut self, hand: &[Card], cut: Cut) -> Self {
+        // let flush_all = Self::default().flush(all.as_ref());
+        // let flush_hand = Self::default().flush(hand.as_ref());
+
+        // let with_flush = if flush_all.points() > Points::from(0) {
+        //     base + flush_all
+        // } else if flush_hand.points() > Points::from(0) {
+        //     base + flush_hand
+        // } else {
+        //     base
+        // };
+        self
+    }
+    fn his_nob(mut self, hand: &[Card], cut: Cut) -> Self {
         self
     }
 }

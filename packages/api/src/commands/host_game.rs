@@ -1,7 +1,8 @@
 use crate::{
-    Event, Game, GameId, Player, UserId, domain::PLAYER0, name_builder::generate_game_name,
+    Event, EventKind, Game, GameId, Player, UserId, domain::PLAYER0,
+    name_builder::generate_game_name,
 };
-use eventsourced::{Command, CommandEffect, EventSourced};
+use eventsourced::{Command, CommandEffect};
 
 #[derive(Debug)]
 pub struct HostGame {
@@ -27,12 +28,9 @@ impl Command<Game> for HostGame {
         let host = self.host;
         let name = generate_game_name();
 
-        let event = Event::LobbyGameCreated {
-            game_id,
-            host,
-            name,
-        };
-
-        CommandEffect::emit_and_reply(event, move |_| (game_id, PLAYER0))
+        CommandEffect::emit_and_reply(
+            Event::new(game_id, EventKind::LobbyGameCreated { host, name }),
+            move |_| (game_id, PLAYER0),
+        )
     }
 }

@@ -1,4 +1,4 @@
-use crate::{Error, Event, Game, GameId, Player, Starting, UserId, domain::PLAYER1, prettify};
+use crate::{Error, Event, EventKind, Game, GameId, Player, UserId, domain::PLAYER1, prettify};
 use eventsourced::{Command, CommandEffect};
 
 #[derive(Debug)]
@@ -31,12 +31,10 @@ impl Command<Game> for JoinGame {
         } else {
             let guest = self.guest;
 
-            let event = Event::LobbyGameJoined {
-                game_id: *id,
-                guest,
-            };
-
-            CommandEffect::emit_and_reply(event, move |_| PLAYER1)
+            CommandEffect::emit_and_reply(
+                Event::new(*id, EventKind::LobbyGameJoined { guest }),
+                move |_| PLAYER1,
+            )
         }
     }
 }

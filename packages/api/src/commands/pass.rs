@@ -1,4 +1,4 @@
-use crate::{Card, Error, Event, Game, GameId, Player, Playing, State, prettify};
+use crate::{Error, Event, EventKind, Game, GameId, Player, Playing, State, prettify};
 use eventsourced::{Command, CommandEffect};
 use eventsourced_ext::lift_effect;
 
@@ -20,18 +20,17 @@ impl Command<Playing> for Pass {
 
     fn handle_command(
         self,
-        _id: &GameId,
+        id: &GameId,
         state: &Playing,
     ) -> CommandEffect<Playing, Self::Reply, Self::Error> {
-        let Pass { game_id, player } = self;
+        let player = self.player;
 
         if state.play_state().next_to_play() != player {
             CommandEffect::reject(Error::NotPlayersTurn(player))
         } else if !state.play_state().legal_plays(player).is_empty() {
             CommandEffect::reject(Error::InvalidPass)
         } else {
-            let event = Event::Passed { game_id, player };
-            CommandEffect::emit(event)
+            CommandEffect::emit(Event::new(*id, EventKind::Passed { player }))
         }
     }
 }

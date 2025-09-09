@@ -1,4 +1,6 @@
-use crate::{Crib, Cut, Hands, Pending, Roles, Scoreboard, display::format_vec};
+use crate::{Crib, Cut, Hand, Hands, Pending, Player, Roles, Scoreboard, display::format_vec};
+#[cfg(test)]
+use crate::{Dealer, Pone};
 use serde::{Deserialize, Serialize};
 
 pub type WaitingForScoresViewed = Pending;
@@ -26,9 +28,34 @@ impl<T> Scoring<T> {
         (scoreboard, roles, hands, crib, cut, pending)
     }
 
-    #[cfg(test)]
     pub fn scoreboard(&self) -> &Scoreboard {
         &self.scoreboard
+    }
+
+    #[cfg(test)]
+    pub fn dealer(&self) -> &Dealer {
+        self.roles.dealer()
+    }
+
+    #[cfg(test)]
+    pub fn pone(&self) -> &Pone {
+        self.roles.pone()
+    }
+
+    pub fn hand(&self, player: Player) -> &Hand {
+        &self.hands[player]
+    }
+
+    pub fn crib(&self) -> &Crib {
+        &self.crib
+    }
+
+    pub fn cut(&self) -> Cut {
+        self.cut
+    }
+
+    pub fn pending(&self) -> &WaitingForScoresViewed {
+        &self.pending
     }
 }
 

@@ -13,7 +13,7 @@ impl EventSourced for ScoringPone {
 
     const TYPE_NAME: &'static str = stringify!(ScoringPone);
 
-    fn handle_event(self, event: Self::Event) -> Self {
+    fn handle_event(self, _event: Self::Event) -> Self {
         todo!()
     }
 }

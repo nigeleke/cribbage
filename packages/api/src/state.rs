@@ -1,4 +1,4 @@
-use crate::{Discarding, Finished, Playing, ScoringPone, Starting};
+use crate::{Discarding, Finished, Playing, ScoringCrib, ScoringDealer, ScoringPone, Starting};
 use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 
@@ -8,8 +8,8 @@ pub enum State {
     Discarding(Discarding),
     Playing(Playing),
     ScoringPone(ScoringPone),
-    // ScoringDealer(ScoringDealer),
-    // ScoringCrib(ScoringCrib),
+    ScoringDealer(ScoringDealer),
+    ScoringCrib(ScoringCrib),
     Finished(Finished),
 }
 
@@ -27,6 +27,8 @@ impl std::fmt::Display for State {
             Self::Discarding(state) => state.fmt(f),
             Self::Playing(state) => state.fmt(f),
             Self::ScoringPone(state) => state.fmt(f),
+            Self::ScoringDealer(state) => state.fmt(f),
+            Self::ScoringCrib(state) => state.fmt(f),
             Self::Finished(state) => state.fmt(f),
         }
     }

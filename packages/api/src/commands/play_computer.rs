@@ -1,5 +1,6 @@
 use crate::{
-    Event, Game, GameId, Player, UserId, domain::PLAYER0, name_builder::generate_game_name,
+    Event, EventKind, Game, GameId, Player, UserId, domain::PLAYER0,
+    name_builder::generate_game_name,
 };
 use eventsourced::{Command, CommandEffect, EventSourced};
 
@@ -30,12 +31,9 @@ impl Command<Game> for PlayComputer {
         let users = [host, computer];
         let name = generate_game_name();
 
-        let event = Event::ComputerGameStarted {
-            game_id,
-            users,
-            name,
-        };
-
-        CommandEffect::emit_and_reply(event, move |_| (game_id, PLAYER0))
+        CommandEffect::emit_and_reply(
+            Event::new(game_id, EventKind::ComputerGameStarted { users, name }),
+            move |_| (game_id, PLAYER0),
+        )
     }
 }

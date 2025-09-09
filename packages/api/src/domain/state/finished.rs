@@ -1,6 +1,6 @@
-use crate::{
-    Crib, Cut, Event, GameId, Hand, Hands, Player, Roles, Scoreboard, display::format_vec,
-};
+#[cfg(test)]
+use crate::Hand;
+use crate::{Crib, Cut, Event, GameId, Hands, Player, Roles, Scoreboard, display::format_vec};
 use eventsourced::EventSourced;
 use serde::{Deserialize, Serialize};
 

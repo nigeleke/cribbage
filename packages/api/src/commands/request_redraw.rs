@@ -1,4 +1,4 @@
-use crate::{Event, Game, GameId};
+use crate::{Event, EventKind, Game, GameId};
 use eventsourced::{Command, CommandEffect};
 use std::convert::Infallible;
 
@@ -23,6 +23,6 @@ impl Command<Game> for RequestRedraw {
         id: &GameId,
         _state: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
-        CommandEffect::emit(Event::RedrawRequested { game_id: *id })
+        CommandEffect::emit(Event::new(*id, EventKind::RedrawRequested))
     }
 }

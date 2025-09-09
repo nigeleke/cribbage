@@ -1,19 +1,19 @@
-use crate::{Discarding, Error, Event, Game, GameId, State, prettify};
+use crate::{Discarding, Error, Event, EventKind, Game, GameId, State, prettify};
 use eventsourced::{Command, CommandEffect};
 use eventsourced_ext::lift_effect;
 
 #[derive(Debug)]
-pub struct CutCardAtStartOfPlay {
+pub struct CutStarterCard {
     game_id: GameId,
 }
 
-impl CutCardAtStartOfPlay {
+impl CutStarterCard {
     pub fn new(game_id: GameId) -> Self {
         Self { game_id }
     }
 }
 
-impl Command<Discarding> for CutCardAtStartOfPlay {
+impl Command<Discarding> for CutStarterCard {
     type Reply = ();
     type Error = Error;
 
@@ -24,12 +24,11 @@ impl Command<Discarding> for CutCardAtStartOfPlay {
     ) -> CommandEffect<Discarding, Self::Reply, Self::Error> {
         let mut deck = state.deck().clone();
         let cut = deck.cut();
-        let event = Event::CardCutAtStartOfPlay { game_id: *id, cut };
-        CommandEffect::emit(event)
+        CommandEffect::emit(Event::new(*id, EventKind::StarterCardCut { cut }))
     }
 }
 
-impl Command<Game> for CutCardAtStartOfPlay {
+impl Command<Game> for CutStarterCard {
     type Reply = ();
     type Error = Error;
 
@@ -42,7 +41,7 @@ impl Command<Game> for CutCardAtStartOfPlay {
             State::Discarding(discarding) => {
                 lift_effect!(
                     discarding,
-                    CutCardAtStartOfPlay::new(*id).handle_command(id, discarding)
+                    CutStarterCard::new(*id).handle_command(id, discarding)
                 )
             }
             _ => CommandEffect::reject(Self::Error::NotPermitted(prettify!(CutCardAtStartOfPlay))),

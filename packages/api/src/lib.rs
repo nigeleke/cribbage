@@ -12,7 +12,6 @@ mod error;
 mod events;
 mod macros;
 mod name_builder;
-mod reactors;
 mod state;
 mod types;
 
@@ -21,9 +20,7 @@ mod test;
 
 #[cfg(test)]
 pub(crate) use self::test::{GameBuilder, GameTestFramework};
-pub(crate) use self::{
-    commands::*, domain::*, error::*, events::*, reactors::*, state::*, types::*,
-};
+pub(crate) use self::{commands::*, domain::*, error::*, events::*, state::*, types::*};
 
 pub(crate) mod constants {
     /** Cribbage can be a two, three or (at a push) four player game. This implementation is for two

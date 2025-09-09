@@ -1,5 +1,5 @@
 use crate::{
-    Card, Discarding, Error, Event, Game, GameId, Player, State,
+    Card, Discarding, Error, Event, EventKind, Game, GameId, Player, State,
     constants::CARDS_DISCARDED_TO_CRIB, display::format_vec, prettify,
 };
 use eventsourced::{Command, CommandEffect};
@@ -45,16 +45,13 @@ impl Command<Discarding> for DiscardCardsToCrib {
         if !valid {
             CommandEffect::reject(Error::InvalidDiscards(format_vec(&discards)))
         } else {
-            let event = Event::CardsDiscardedToCrib {
-                game_id: *id,
-                player,
-                discards,
-            };
-
-            CommandEffect::emit_and_reply(event, move |d: &Discarding| {
-                let mut pending = d.pending().clone();
-                pending.acknowledge(player)
-            })
+            CommandEffect::emit_and_reply(
+                Event::new(*id, EventKind::CardsDiscardedToCrib { player, discards }),
+                move |d: &Discarding| {
+                    let mut pending = d.pending().clone();
+                    pending.acknowledge(player)
+                },
+            )
         }
     }
 }

@@ -1,5 +1,4 @@
-use crate::{Cut, Cuts, Deck, Event, EventKind, GameId, Pending, display::format_vec};
-use eventsourced::EventSourced;
+use crate::{Cut, Cuts, Deck, Pending, Player, display::format_vec};
 use serde::{Deserialize, Serialize};
 
 pub type WaitingForCuts = Pending;
@@ -18,6 +17,12 @@ impl Starting {
         Self { cuts, deck, pending }
     }
 
+    pub fn record_cut_for_player(&mut self, player: Player, cut: Cut) {
+        self.deck.remove(cut);
+        self.cuts[player] = cut;
+        self.pending.acknowledge(player);
+    }
+
     pub fn cuts(&self) -> &Cuts {
         &self.cuts
     }
@@ -28,25 +33,6 @@ impl Starting {
 
     pub fn pending(&self) -> &WaitingForCuts {
         &self.pending
-    }
-}
-
-impl EventSourced for Starting {
-    type Id = GameId;
-    type Event = Event;
-
-    const TYPE_NAME: &'static str = stringify!(Starting);
-
-    fn handle_event(mut self, event: Self::Event) -> Self {
-        match event.kind() {
-            EventKind::CardCutForDeal { player, cut } => {
-                self.deck.remove(*cut);
-                self.cuts[*player] = *cut;
-                self.pending.acknowledge(*player);
-                self
-            }
-            _ => self,
-        }
     }
 }
 

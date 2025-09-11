@@ -4,10 +4,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Rank(usize);
 
-pub trait HasRank {
-    fn rank(&self) -> Rank;
-}
-
 impl From<usize> for Rank {
     fn from(value: usize) -> Self {
         Self(value)

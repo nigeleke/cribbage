@@ -1,7 +1,4 @@
-use crate::{
-    Dealer, Event, EventKind, Game, GameId, HasFace, HasValue, RequestRedraw, Scoreboard,
-    StartGame, State,
-};
+use crate::{Dealer, Event, EventKind, Game, GameId, RequestRedraw, Scoreboard, StartGame, State};
 use eventsourced::{Command, CommandEffect, EventSourced};
 use eventsourced_ext::Reactor;
 use std::cmp::{Ord, Ordering};
@@ -19,7 +16,7 @@ impl Reactor<Game> for RedrawOrStartGame {
                 if proceed {
                     let opponent = player.opponent();
                     let opponent_cut = cuts[opponent];
-                    let dealer = match cut.face().value().cmp(&opponent_cut.face().value()) {
+                    let dealer = match cut.value().cmp(&opponent_cut.value()) {
                         Ordering::Less => Some(Dealer::from(*player)),
                         Ordering::Greater => Some(Dealer::from(opponent)),
                         Ordering::Equal => None,

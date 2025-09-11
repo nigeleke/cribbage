@@ -76,11 +76,13 @@ pub enum EventKind {
         player: Player,
     },
 
+    PlaysFinished,
+
     PoneHandScored {
         breakdown: ScoreBreakdown,
     },
 
-    PoneScoreAcknowledged {
+    PoneHandScoreAcknowledged {
         player: Player,
     },
 
@@ -88,7 +90,7 @@ pub enum EventKind {
         breakdown: ScoreBreakdown,
     },
 
-    DealerScoreAcknowledged {
+    DealerHandScoreAcknowledged {
         player: Player,
     },
     CribScored {

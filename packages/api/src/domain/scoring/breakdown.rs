@@ -1,8 +1,5 @@
 use super::constants::*;
-use crate::{
-    Card, Cut, Hand, HasFace, HasRank, PlayState, Points, ScoreEvent, ScoreKind, Value,
-    constants::*,
-};
+use crate::{Card, Cut, Hand, PlayState, Points, ScoreEvent, ScoreKind, Value, constants::*};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -21,7 +18,7 @@ impl Breakdown {
     pub fn his_heels(cut: Card) -> Self {
         let mut breakdown = Self::default();
 
-        if cut.face().is_jack() {
+        if cut.is_jack() {
             breakdown.add_event(ScoreKind::HisHeels, &[cut], Points::from(SCORE_HIS_HEELS));
         }
 

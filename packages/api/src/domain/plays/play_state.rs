@@ -1,5 +1,5 @@
 use crate::{
-    Card, Hand, Hands, HasValue, PLAYER0, PLAYER1, PLAYERS, Play, Player, Value, constants::*,
+    Card, Hand, Hands, PLAYER0, PLAYER1, PLAYERS, Play, Player, Value, constants::*,
     display::format_vec,
 };
 use serde::{Deserialize, Serialize};

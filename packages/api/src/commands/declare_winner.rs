@@ -1,6 +1,5 @@
-use crate::{Error, Event, EventKind, Game, GameId, Player, Playing, State, prettify};
+use crate::{Error, Event, EventKind, Game, GameId, Player};
 use eventsourced::*;
-use eventsourced_ext::lift_effect;
 
 #[derive(Debug)]
 pub struct DeclareWinner {
@@ -21,27 +20,8 @@ impl Command<Game> for DeclareWinner {
     fn handle_command(
         self,
         id: &GameId,
-        state: &Game,
+        _state: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
-        match state.state() {
-            State::Playing(playing) => lift_effect!(
-                playing,
-                DeclareWinner::new(*id, self.winner).handle_command(id, playing)
-            ),
-            _ => CommandEffect::reject(Error::NotPermitted(prettify!(DeclareWinner))),
-        }
-    }
-}
-
-impl Command<Playing> for DeclareWinner {
-    type Reply = ();
-    type Error = Error;
-
-    fn handle_command(
-        self,
-        id: &GameId,
-        _state: &Playing,
-    ) -> CommandEffect<Playing, Self::Reply, Self::Error> {
         let DeclareWinner { game_id: _, winner } = self;
         CommandEffect::emit(Event::new(*id, EventKind::WinnerDeclared { winner }))
     }

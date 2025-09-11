@@ -5,6 +5,6 @@ pub enum CardsError {
     #[error("card {0} not found")]
     CardNotFound(String),
 
-    #[error("not enough cards available to take")]
-    CardsNotAvailable,
+    #[error("cannot take cards required {0} of cards")]
+    CardsNotAvailable(u8),
 }

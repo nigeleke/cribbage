@@ -1,6 +1,7 @@
 use crate::{
-    Crib, Deck, Discarding, Event, EventKind, Finished, GameId, PLAYER0, PLAYER1, Pending,
-    PlayState, Playing, Roles, ScoringPone, Starting, State, UserId, constants::PLAYER_COUNT,
+    Card, Crib, Cut, Dealer, Deck, Discarding, Event, EventKind, Finished, GameId, PLAYER0,
+    PLAYER1, Pending, PlayState, Player, Playing, Roles, ScoreBreakdown, ScorePhase, Scoreboard,
+    ScoringPone, Starting, State, UserId, Users, constants::PLAYER_COUNT,
 };
 use eventsourced::EventSourced;
 use serde::{Deserialize, Serialize};
@@ -53,86 +54,54 @@ impl EventSourced for Game {
     const TYPE_NAME: &'static str = stringify!(Game);
 
     fn handle_event(mut self, event: Self::Event) -> Self {
+        println!("*** Event: {:?}", event.kind());
         let id = *event.id();
-        match event.kind() {
-            EventKind::LobbyGameCreated { host, name } => {
-                self.initial(id, *host, None, name.clone())
-            }
-            EventKind::LobbyGameJoined { guest } => {
-                self.guest = Some(*guest);
-                self
-            }
-            EventKind::ComputerGameStarted { users, name } => {
-                self.initial(id, users[0], Some(users[1]), name.clone())
-            }
-            EventKind::RoundStarted { dealer, scoreboard } => {
-                let pone = dealer.opponent();
-                let roles = Roles::new(*dealer, pone);
-                let mut deck = Deck::shuffled_pack();
-                let hands = deck.deal(PLAYER_COUNT);
-                let hands = [hands[0].clone(), hands[1].clone()];
-                let crib = Crib::default();
-                let discarding = Discarding::new(scoreboard.clone(), roles, hands, crib, deck);
-                self.state = State::Discarding(discarding);
-                self
-            }
-            EventKind::StarterCardCut { cut } => {
-                if let State::Discarding(discarding) = self.state {
-                    let (scoreboard, roles, hands, crib, mut deck, _pending) =
-                        discarding.into_parts();
-                    deck.remove(*cut);
-                    let next_to_play = roles.pone().player();
-                    let play_state = PlayState::new(next_to_play)
-                        .with_pending_plays(PLAYER0, hands[PLAYER0].as_ref())
-                        .with_pending_plays(PLAYER1, hands[PLAYER1].as_ref());
-                    let playing = Playing::new(scoreboard, roles, hands, play_state, crib, *cut);
-                    self.state = State::Playing(playing);
-                }
-                self.apply_event(event)
-            }
-            EventKind::CardPlayed { player, card } => {
-                self = self.apply_event(event);
-                if let State::Playing(ref playing) = self.state
-                    && playing.play_state().all_cards_are_played()
-                {
-                    let (scoreboard, roles, _, mut play_state, crib, cut) =
-                        playing.clone().into_parts();
-                    let hands = play_state.finish_plays();
-                    let pending = Pending::default();
+        let kind = event.kind().to_owned();
 
-                    if let Some(winner) = scoreboard.winner() {
-                        let finished = Finished::new(winner, scoreboard, roles, hands, crib, cut);
-                        self.state = State::Finished(finished);
-                    } else {
-                        let scoring =
-                            ScoringPone::new(scoreboard, roles, hands, crib, cut, pending);
-                        self.state = State::ScoringPone(scoring);
-                    }
-                }
-                self
+        match kind {
+            EventKind::LobbyGameCreated { host, name } => {
+                self.handle_lobby_game_created(id, host, name)
             }
-            EventKind::Passed { player } => self.apply_event(event),
-            EventKind::WinnerDeclared { winner } => {
-                if let Some((scoreboard, roles, hands, crib, cut)) =
-                    if let State::Playing(ref playing) = self.state {
-                        let (scoreboard, roles, hands, _, crib, cut) = playing.clone().into_parts();
-                        Some((scoreboard, roles, hands, crib, cut))
-                    } else {
-                        None
-                    }
-                {
-                    let finished = Finished::new(*winner, scoreboard, roles, hands, crib, cut);
-                    self.state = State::Finished(finished);
-                }
-                self
+            EventKind::LobbyGameJoined { guest } => self.handle_lobby_game_joined(guest),
+            EventKind::ComputerGameStarted { users, name } => {
+                self.handle_computer_game_started(id, users, name)
             }
-            _ => self.apply_event(event),
+            EventKind::CardCutForDeal { player, cut } => self.handle_card_cut_for_deal(player, cut),
+            EventKind::RedrawRequested => self.handle_redraw_requested(),
+            EventKind::RoundStarted { dealer, scoreboard } => {
+                self.handle_round_started(dealer, scoreboard)
+            }
+            EventKind::CardsDiscardedToCrib { player, discards } => {
+                self.handle_cards_discarded_to_crib(player, &discards)
+            }
+            EventKind::StarterCardCut { cut } => self.handle_starter_card_cut(cut),
+            EventKind::ScoreRecorded {
+                player,
+                phase,
+                breakdown,
+            } => self.handle_score_recorded(player, phase, breakdown),
+            EventKind::CardPlayed { player, card } => self.handle_card_played(player, card),
+            EventKind::Passed { player } => self.handle_passed(player),
+            EventKind::PlaysFinished => self.handle_plays_finished(),
+            EventKind::PoneHandScored { breakdown } => self.handle_pone_hand_scored(breakdown),
+            EventKind::PoneHandScoreAcknowledged { player } => {
+                self.handle_pone_hand_score_acknowledged(player)
+            }
+            EventKind::DealerHandScored { breakdown } => self.handle_dealer_hand_scored(breakdown),
+            EventKind::DealerHandScoreAcknowledged { player } => {
+                self.handle_dealer_hand_score_acknowledged(player)
+            }
+            EventKind::CribScored { breakdown } => self.handle_crib_scored(breakdown),
+            EventKind::CribScoreAcknowledged { player } => {
+                self.handle_crib_score_acknowledged(player)
+            }
+            EventKind::WinnerDeclared { winner } => self.handle_winner_declared(winner),
         }
     }
 }
 
 impl Game {
-    fn initial(mut self, id: GameId, host: UserId, guest: Option<UserId>, name: String) -> Self {
+    fn init(mut self, id: GameId, host: UserId, guest: Option<UserId>, name: String) -> Self {
         self.id = id;
         self.host = host;
         self.guest = guest;
@@ -142,17 +111,143 @@ impl Game {
         self
     }
 
-    fn apply_event(mut self, event: Event) -> Self {
-        match &mut self.state {
-            State::Starting(starting) => *starting = starting.clone().handle_event(event),
-            State::Discarding(discarding) => *discarding = discarding.clone().handle_event(event),
-            State::Playing(playing) => *playing = playing.clone().handle_event(event),
-            State::ScoringPone(scoring) => *scoring = scoring.clone().handle_event(event),
-            State::ScoringDealer(scoring) => *scoring = scoring.clone().handle_event(event),
-            State::ScoringCrib(scoring) => *scoring = scoring.clone().handle_event(event),
-            State::Finished(finished) => *finished = finished.clone().handle_event(event),
-        };
+    fn handle_lobby_game_created(self, id: GameId, host: UserId, name: String) -> Self {
+        self.init(id, host, None, name.clone())
+    }
 
+    fn handle_lobby_game_joined(mut self, guest: UserId) -> Self {
+        self.guest = Some(guest);
+        self
+    }
+
+    fn handle_computer_game_started(self, id: GameId, users: Users, name: String) -> Self {
+        self.init(id, users[0], Some(users[1]), name.clone())
+    }
+
+    fn handle_card_cut_for_deal(mut self, player: Player, cut: Cut) -> Self {
+        if let State::Starting(starting) = &mut self.state {
+            starting.record_cut_for_player(player, cut);
+        }
+        self
+    }
+
+    fn handle_redraw_requested(mut self) -> Self {
+        self
+    }
+
+    fn handle_round_started(mut self, dealer: Dealer, scoreboard: Scoreboard) -> Self {
+        let pone = dealer.opponent();
+        let roles = Roles::new(dealer, pone);
+        let mut deck = Deck::shuffled_pack();
+        let hands = deck.deal(PLAYER_COUNT);
+        let hands = [hands[0].clone(), hands[1].clone()];
+        let crib = Crib::default();
+        let discarding = Discarding::new(scoreboard.clone(), roles, hands, crib, deck);
+        self.state = State::Discarding(discarding);
+        self
+    }
+
+    fn handle_cards_discarded_to_crib(mut self, player: Player, discards: &[Card]) -> Self {
+        if let State::Discarding(discarding) = &mut self.state {
+            discarding.discard_cards_to_crib(player, discards);
+        }
+        self
+    }
+
+    fn handle_starter_card_cut(mut self, cut: Cut) -> Self {
+        println!("=== StarterCardCut {:?}", self.state);
+        if let State::Discarding(discarding) = self.state {
+            let (mut scoreboard, roles, hands, crib, mut deck, _pending) = discarding.into_parts();
+            deck.remove(cut);
+            let next_to_play = roles.pone().player();
+            let play_state = PlayState::new(next_to_play)
+                .with_pending_plays(PLAYER0, hands[PLAYER0].as_ref())
+                .with_pending_plays(PLAYER1, hands[PLAYER1].as_ref());
+
+            let playing = Playing::new(scoreboard, roles, hands, play_state, crib, cut);
+            self.state = State::Playing(playing);
+        }
+        self
+    }
+
+    fn handle_score_recorded(
+        mut self,
+        player: Player,
+        phase: ScorePhase,
+        breakdown: ScoreBreakdown,
+    ) -> Self {
+        todo!();
+        self
+    }
+
+    fn handle_card_played(mut self, player: Player, card: Card) -> Self {
+        if let State::Playing(playing) = &mut self.state
+            && playing.play_state().all_cards_are_played()
+        {
+            playing.play_card(player, card);
+
+            let (scoreboard, roles, _, mut play_state, crib, cut) = playing.clone().into_parts();
+            let hands = play_state.finish_plays();
+            let pending = Pending::default();
+
+            if let Some(winner) = scoreboard.winner() {
+                let finished = Finished::new(winner, scoreboard, roles, hands, crib, cut);
+                self.state = State::Finished(finished);
+            } else {
+                let scoring = ScoringPone::new(scoreboard, roles, hands, crib, cut, pending);
+                self.state = State::ScoringPone(scoring);
+            }
+        }
+        self
+    }
+
+    fn handle_passed(mut self, player: Player) -> Self {
+        if let State::Playing(playing) = &mut self.state {
+            playing.pass(player);
+        }
+        self
+    }
+
+    fn handle_plays_finished(mut self) -> Self {
+        todo!()
+    }
+
+    fn handle_pone_hand_scored(mut self, breakdown: ScoreBreakdown) -> Self {
+        todo!()
+    }
+
+    fn handle_pone_hand_score_acknowledged(mut self, player: Player) -> Self {
+        todo!()
+    }
+
+    fn handle_dealer_hand_scored(mut self, breakdown: ScoreBreakdown) -> Self {
+        todo!()
+    }
+
+    fn handle_dealer_hand_score_acknowledged(mut self, player: Player) -> Self {
+        todo!()
+    }
+
+    fn handle_crib_scored(mut self, breakdown: ScoreBreakdown) -> Self {
+        todo!()
+    }
+
+    fn handle_crib_score_acknowledged(mut self, player: Player) -> Self {
+        todo!()
+    }
+
+    fn handle_winner_declared(mut self, winner: Player) -> Self {
+        if let Some((scoreboard, roles, hands, crib, cut)) =
+            if let State::Playing(ref playing) = self.state {
+                let (scoreboard, roles, hands, _, crib, cut) = playing.clone().into_parts();
+                Some((scoreboard, roles, hands, crib, cut))
+            } else {
+                None
+            }
+        {
+            let finished = Finished::new(winner, scoreboard, roles, hands, crib, cut);
+            self.state = State::Finished(finished);
+        }
         self
     }
 }
@@ -336,8 +431,8 @@ mod test {
     mod deal_cut {
         use super::*;
         use crate::{
-            CutForDeal, Dealer, Deck, HasFace, HasValue, PLAYER0, PLAYER1, RequestRedraw,
-            Scoreboard, StartGame, test::GameTestFramework,
+            CutForDeal, Dealer, Deck, PLAYER0, PLAYER1, RequestRedraw, Scoreboard, StartGame,
+            test::GameTestFramework,
         };
         use std::cmp::Ordering;
 
@@ -700,7 +795,7 @@ mod test {
     mod before_the_play {
         use super::*;
         use crate::{
-            Cut, Dealer, HasFace, Points, Pone, Scoreboard, State,
+            Cut, Dealer, Points, Pone, Scoreboard, State,
             constants::*,
             test::{GameBuilder, GameTestFramework},
         };
@@ -852,6 +947,8 @@ mod test {
                     },
                 ];
 
+                println!("\n\ntest  test\n\n");
+
                 let test = GameTestFramework::new(entity.id, entity)
                     .given(kinds_to_events(game_id, &preconditions))
                     .assert_entity(|entity| {
@@ -889,8 +986,8 @@ mod test {
     mod the_play {
         use super::*;
         use crate::{
-            Card, Error, Event, EventKind, Game, GameBuilder, GameTestFramework, Hand, PLAYER0,
-            PLAYER1, Play, PlayCard, Points, State, card, hand,
+            Card, Error, Event, Game, GameBuilder, GameTestFramework, Hand, PLAYER0, PLAYER1, Play,
+            PlayCard, Points, State, card, hand,
         };
         use std::str::FromStr;
 
@@ -2317,9 +2414,10 @@ mod test {
     ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
     #[coverage(off)]
     mod counting_the_hands {
+        use super::*;
         use crate::{
             AcknowledgePoneScore, Card, Event, Game, GameBuilder, GameTestFramework, PLAYER0,
-            PLAYER1, PlayCard, Points, State, card, crib, domain::scoreboard, hand,
+            PLAYER1, PlayCard, Points, State, card, crib, hand,
         };
         use std::str::FromStr;
 
@@ -2364,61 +2462,71 @@ mod test {
             );
         }
 
-        // #[test]
-        // fn score_winning_pone_when_plays_finished() {
-        //     let playing0 = GameBuilder::default()
-        //         .with_peggings(0, 115)
-        //         .with_hands("", "TH")
-        //         .with_cut("4H")
-        //         .with_previous_plays(&[
-        //             (0, "7H"),
-        //             (0, "8C"),
-        //             (0, "AC"),
-        //             (0, "2C"),
-        //             (1, "JH"),
-        //             (1, "KS"),
-        //             (1, "5H"),
-        //         ])
-        //         .into_playing(1);
+        #[test]
+        fn score_winning_pone_when_plays_finished() {
+            let playing0 = GameBuilder::default()
+                .with_peggings(0, 115)
+                .with_hands("", "TH")
+                .with_cut("4H")
+                .with_previous_plays(&[
+                    (0, "7H"),
+                    (0, "8C"),
+                    (0, "AC"),
+                    (0, "2C"),
+                    (1, "JH"),
+                    (1, "KS"),
+                    (1, "5H"),
+                ])
+                .into_playing(1);
 
-        //     let dealer0 = playing0.dealer().player();
-        //     let pone0 = playing0.pone().player();
-        //     let scoreboard0 = playing0.scoreboard().clone();
+            let dealer0 = playing0.dealer().player();
+            let pone0 = playing0.pone().player();
+            let scoreboard0 = playing0.scoreboard().clone();
 
-        //     let entity = Game::from(State::Playing(playing0));
-        //     let preconditions = vec![Event::CardPlayed {
-        //         game_id: entity.id,
-        //         player: PLAYER0,
-        //         card: card!("TH"),
-        //     }];
-        //     let command = AcknowledgePoneScore::new(entity.id, PLAYER1);
-        //     let expected_event = Event::PoneScoreAcknowledged { game_id: entity.id, player: PLAYER1, breakdown: () }
-        //     let test = GameTestFramework::new(entity.id, entity)
-        //         .given(preconditions)
-        //         .when(command).expect_event(expected_event);
+            let entity = Game::from(State::Playing(playing0));
+            let game_id = entity.id;
 
-        //     let State::ScoringPone(scoring1) = &test.entity().state else {
-        //         panic!("unexpected state")
-        //     };
+            let preconditions = vec![
+                EventKind::CardPlayed {
+                    player: PLAYER0,
+                    card: card!("TH"),
+                },
+                EventKind::PoneHandScoreAcknowledged { player: PLAYER0 },
+            ];
+            let command = AcknowledgePoneScore::new(entity.id, PLAYER1);
 
-        //     let scoreboard1 = scoring1.scoreboard();
+            GameTestFramework::new(entity.id, entity)
+                .given(kinds_to_events(game_id, &preconditions))
+                .when(command)
+                .assert_event(|event| {
+                    assert_eq!(
+                        event.kind(),
+                        &EventKind::PoneHandScoreAcknowledged { player: PLAYER1 }
+                    )
+                })
+                .assert_entity(|entity| {
+                    let State::ScoringPone(scoring1) = &entity.state else {
+                        panic!("unexpected state")
+                    };
+                    let scoreboard1 = scoring1.scoreboard();
+                });
 
-        //     // let entity = Game::from(State::ScoringPone(*scoring1));
-        //     // let preconditions = vec![Event::PoneScoreAcknowledged { game_id, player: (), breakdown: () }]
-        //     // let command = PlayCard::new(entity.id, PLAYER1, card!("TH"));
-        //     // let test = GameTestFramework::new(entity.id, entity).when(command);
+            // let entity = Game::from(State::ScoringPone(*scoring1));
+            // let preconditions = vec![EventKind::PoneScoreAcknowledged { game_id, player: (), breakdown: () }]
+            // let command = PlayCard::new(entity.id, PLAYER1, card!("TH"));
+            // let test = GameTestFramework::new(entity.id, entity).when(command);
 
-        //     // let State::ScoringPone(scoring1) = &test.entity().state else {
-        //     //     panic!("unexpected state")
-        //     // };
+            // let State::ScoringPone(scoring1) = &test.entity().state else {
+            //     panic!("unexpected state")
+            // };
 
-        //     // assert_eq!(winner1, pone0.into());
-        //     // assert_eq!(scoreboard1.pegging(dealer0), scoreboard0.pegging(dealer0));
-        //     // assert_eq!(
-        //     //     *scoreboard1.pegging(pone0),
-        //     //     scoreboard0.pegging(pone0).clone() + Points::from(7)
-        //     // );
-        // }
+            // assert_eq!(winner1, pone0.into());
+            // assert_eq!(scoreboard1.pegging(dealer0), scoreboard0.pegging(dealer0));
+            // assert_eq!(
+            //     *scoreboard1.pegging(pone0),
+            //     scoreboard0.pegging(pone0).clone() + Points::from(7)
+            // );
+        }
 
         // //     #[test]
         // //     fn score_dealer_after_pone_scored() {

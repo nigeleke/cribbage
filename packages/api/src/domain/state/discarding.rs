@@ -1,8 +1,7 @@
 use crate::{
-    Crib, Dealer, Deck, Event, EventKind, GameId, Hand, Hands, Pending, Player, Pone, Roles,
-    Scoreboard, display::format_vec,
+    Card, Crib, Dealer, Deck, Hand, Hands, Pending, Player, Pone, Roles, Scoreboard,
+    display::format_vec,
 };
-use eventsourced::EventSourced;
 use serde::{Deserialize, Serialize};
 
 pub type WaitingForDiscards = Pending;
@@ -22,6 +21,12 @@ impl Discarding {
     pub fn new(scoreboard: Scoreboard, roles: Roles, hands: Hands, crib: Crib, deck: Deck) -> Self {
         let pending = WaitingForDiscards::default();
         Self { scoreboard, roles, hands, crib, deck, pending }
+    }
+
+    pub fn discard_cards_to_crib(&mut self, player: Player, discards: &[Card]) {
+        self.hands[player].remove_all(discards);
+        self.crib.add_all(discards);
+        self.pending.acknowledge(player);
     }
 
     pub fn into_parts(self) -> (Scoreboard, Roles, Hands, Crib, Deck, WaitingForDiscards) {
@@ -57,25 +62,6 @@ impl Discarding {
 
     pub fn pending(&self) -> &WaitingForDiscards {
         &self.pending
-    }
-}
-
-impl EventSourced for Discarding {
-    type Id = GameId;
-    type Event = Event;
-
-    const TYPE_NAME: &'static str = stringify!(Discarding);
-
-    fn handle_event(mut self, event: Self::Event) -> Self {
-        match event.kind() {
-            EventKind::CardsDiscardedToCrib { player, discards } => {
-                self.hands[*player].remove_all(discards);
-                self.crib.add_all(discards);
-                self.pending.acknowledge(*player);
-                self
-            }
-            _ => self,
-        }
     }
 }
 

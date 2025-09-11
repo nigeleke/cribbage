@@ -1,7 +1,6 @@
 #[cfg(test)]
 use crate::Hand;
-use crate::{Crib, Cut, Event, GameId, Hands, Player, Roles, Scoreboard, display::format_vec};
-use eventsourced::EventSourced;
+use crate::{Crib, Cut, Hands, Player, Roles, Scoreboard, display::format_vec};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -36,17 +35,6 @@ impl Finished {
     #[cfg(test)]
     pub fn crib(&self) -> &Crib {
         &self.crib
-    }
-}
-
-impl EventSourced for Finished {
-    type Id = GameId;
-    type Event = Event;
-
-    const TYPE_NAME: &'static str = stringify!(Finished);
-
-    fn handle_event(self, _event: Self::Event) -> Self {
-        todo!()
     }
 }
 

@@ -1,6 +1,5 @@
-use crate::{Error, Event, EventKind, Game, GameId, Player, Starting, State, prettify};
+use crate::{Error, Event, EventKind, Game, GameId, Player, State, prettify};
 use eventsourced::*;
-use eventsourced_ext::lift_effect;
 
 #[derive(Debug)]
 pub struct CutForDeal {
@@ -14,30 +13,6 @@ impl CutForDeal {
     }
 }
 
-impl Command<Starting> for CutForDeal {
-    type Reply = bool;
-    type Error = Error;
-
-    fn handle_command(
-        self,
-        id: &GameId,
-        state: &Starting,
-    ) -> CommandEffect<Starting, Self::Reply, Self::Error> {
-        let player = self.player;
-
-        let mut deck = state.deck().clone();
-        let cut = deck.cut();
-
-        CommandEffect::emit_and_reply(
-            Event::new(*id, EventKind::CardCutForDeal { player, cut }),
-            move |s: &Starting| {
-                let mut pending = s.pending().clone();
-                pending.acknowledge(player)
-            },
-        )
-    }
-}
-
 impl Command<Game> for CutForDeal {
     type Reply = bool;
     type Error = Error;
@@ -48,10 +23,20 @@ impl Command<Game> for CutForDeal {
         state: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
         match state.state() {
-            State::Starting(starting) => lift_effect!(
-                starting,
-                CutForDeal::new(*id, self.player).handle_command(id, starting)
-            ),
+            State::Starting(starting) => {
+                let player = self.player;
+
+                let mut deck = starting.deck().clone();
+                let cut = deck.cut();
+
+                let mut pending = starting.pending().clone();
+                let proceed = pending.acknowledge(player);
+
+                CommandEffect::emit_and_reply(
+                    Event::new(*id, EventKind::CardCutForDeal { player, cut }),
+                    move |_| proceed,
+                )
+            }
             _ => CommandEffect::reject(Error::NotPermitted(prettify!(CutForDeal))),
         }
     }

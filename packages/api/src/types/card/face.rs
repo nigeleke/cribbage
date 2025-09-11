@@ -1,7 +1,4 @@
-use super::{
-    rank::{HasRank, Rank},
-    value::{HasValue, Value},
-};
+use super::{rank::Rank, value::Value};
 use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, EnumIter};
 
@@ -31,18 +28,8 @@ impl Face {
     pub fn is_jack(&self) -> bool {
         self == &Self::Jack
     }
-}
 
-pub trait HasFace {
-    fn face(&self) -> Face;
-
-    fn face_name(&self) -> String {
-        self.face().name()
-    }
-}
-
-impl HasRank for Face {
-    fn rank(&self) -> Rank {
+    pub fn rank(&self) -> Rank {
         let rank = match self {
             Self::Ace => 1,
             Self::Two => 2,
@@ -61,10 +48,8 @@ impl HasRank for Face {
 
         Rank::from(rank)
     }
-}
 
-impl HasValue for Face {
-    fn value(&self) -> Value {
+    pub fn value(&self) -> Value {
         let value = match self {
             Self::Ace => 1,
             Self::Two => 2,

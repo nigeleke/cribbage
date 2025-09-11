@@ -2,10 +2,6 @@
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Value(usize);
 
-pub trait HasValue {
-    fn value(&self) -> Value;
-}
-
 impl From<usize> for Value {
     fn from(value: usize) -> Self {
         Self(value)

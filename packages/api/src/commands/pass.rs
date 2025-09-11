@@ -1,6 +1,5 @@
-use crate::{Error, Event, EventKind, Game, GameId, Player, Playing, State, prettify};
+use crate::{Error, Event, EventKind, Game, GameId, Player, State, prettify};
 use eventsourced::{Command, CommandEffect};
-use eventsourced_ext::lift_effect;
 
 #[derive(Debug)]
 pub struct Pass {
@@ -14,27 +13,6 @@ impl Pass {
     }
 }
 
-impl Command<Playing> for Pass {
-    type Reply = ();
-    type Error = Error;
-
-    fn handle_command(
-        self,
-        id: &GameId,
-        state: &Playing,
-    ) -> CommandEffect<Playing, Self::Reply, Self::Error> {
-        let player = self.player;
-
-        if state.play_state().next_to_play() != player {
-            CommandEffect::reject(Error::NotPlayersTurn(player))
-        } else if !state.play_state().legal_plays(player).is_empty() {
-            CommandEffect::reject(Error::InvalidPass)
-        } else {
-            CommandEffect::emit(Event::new(*id, EventKind::Passed { player }))
-        }
-    }
-}
-
 impl Command<Game> for Pass {
     type Reply = ();
     type Error = Error;
@@ -45,10 +23,17 @@ impl Command<Game> for Pass {
         state: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
         match state.state() {
-            State::Playing(playing) => lift_effect!(
-                playing,
-                Pass::new(*id, self.player).handle_command(id, playing)
-            ),
+            State::Playing(playing) => {
+                let player = self.player;
+
+                if playing.play_state().next_to_play() != player {
+                    CommandEffect::reject(Error::NotPlayersTurn(player))
+                } else if !playing.play_state().legal_plays(player).is_empty() {
+                    CommandEffect::reject(Error::InvalidPass)
+                } else {
+                    CommandEffect::emit(Event::new(*id, EventKind::Passed { player }))
+                }
+            }
             _ => CommandEffect::reject(Self::Error::NotPermitted(prettify!(CutCardAtStartOfPlay))),
         }
     }

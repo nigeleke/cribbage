@@ -6,12 +6,7 @@ mod rank;
 mod suit;
 mod value;
 
-pub use self::{
-    face::{Face, HasFace},
-    rank::{HasRank, Rank},
-    suit::{HasSuit, Suit},
-    value::{HasValue, Value},
-};
+pub use self::{face::Face, rank::Rank, suit::Suit, value::Value};
 
 /// A playing card.
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -45,28 +40,20 @@ impl Card {
         let Self { face, suit } = self;
         format!("{} of {}", face.name(), suit.name())
     }
-}
 
-impl HasFace for Card {
-    fn face(&self) -> Face {
+    pub fn face(&self) -> Face {
         self.face
     }
-}
 
-impl HasSuit for Card {
-    fn suit(&self) -> Suit {
-        self.suit
+    pub fn is_jack(&self) -> bool {
+        self.face.is_jack()
     }
-}
 
-impl HasRank for Card {
-    fn rank(&self) -> Rank {
+    pub fn rank(&self) -> Rank {
         self.face.rank()
     }
-}
 
-impl HasValue for Card {
-    fn value(&self) -> Value {
+    pub fn value(&self) -> Value {
         self.face.value()
     }
 }
@@ -120,8 +107,10 @@ mod test {
                 let cid = format!("{face}{suit}");
                 let face = Face::try_from(face).expect("valid face");
                 let card = Card::from_str(cid.as_str()).expect("valid cards str");
-                assert_eq!(card.suit_name(), expected_suit_name[si]);
-                assert_eq!(card.face_name(), expected_face_name[fi]);
+                assert_eq!(
+                    card.name(),
+                    format!("{} of {}", expected_face_name[fi], expected_suit_name[si])
+                );
                 assert_eq!(card.cid(), cid);
                 assert_eq!(card.rank(), face.rank());
                 assert_eq!(card.value(), face.value());

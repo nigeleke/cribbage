@@ -6,16 +6,11 @@ pub struct AdvanceScoring;
 
 impl Reactor<Game> for AdvanceScoring {
     fn apply(&self, mut context: Game, id: &GameId, event: Event) -> Game {
-        println!(
-            "***** PlayingReactor {} {:?}",
-            event.kind().as_ref(),
-            context.state()
-        );
         match (event.kind(), context.state()) {
             (EventKind::PoneHandScored { breakdown }, State::ScoringPone(scoring)) => {}
-            (EventKind::PoneScoreAcknowledged { player }, State::ScoringPone(scoring)) => {}
+            (EventKind::PoneHandScoreAcknowledged { player }, State::ScoringPone(scoring)) => {}
             (EventKind::DealerHandScored { breakdown }, State::ScoringDealer(scoring)) => {}
-            (EventKind::DealerScoreAcknowledged { player }, State::ScoringDealer(scoring)) => {}
+            (EventKind::DealerHandScoreAcknowledged { player }, State::ScoringDealer(scoring)) => {}
             (EventKind::CribScored { breakdown }, State::ScoringCrib(scoring)) => {}
             (EventKind::CribScoreAcknowledged { player }, State::ScoringCrib(scoring)) => {}
             _ => {}

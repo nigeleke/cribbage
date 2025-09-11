@@ -27,7 +27,6 @@ impl RecordScore {
 
 impl Command<Game> for RecordScore {
     type Reply = ();
-
     type Error = Error;
 
     fn handle_command(

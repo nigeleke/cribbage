@@ -1,5 +1,4 @@
-use super::CardsError;
-use crate::{Card, HasRank, display::format_vec};
+use crate::{Card, display::format_vec};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
@@ -22,7 +21,7 @@ impl<T: Clone> Pile<T> {
         self.cards.push(card);
     }
 
-    pub fn add_all(&mut self, cards: &Vec<Card>) {
+    pub fn add_all(&mut self, cards: &[Card]) {
         self.cards.extend(cards);
     }
 

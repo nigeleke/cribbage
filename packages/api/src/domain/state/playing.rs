@@ -1,10 +1,9 @@
 #[cfg(test)]
 use crate::Pone;
 use crate::{
-    Crib, Cut, Dealer, Event, EventKind, GameId, Hand, Hands, PlayState, Player, Roles,
-    ScoreBreakdown, Scoreboard, display::format_vec,
+    Card, Crib, Cut, Dealer, Hand, Hands, PlayState, Player, Roles, ScoreBreakdown, Scoreboard,
+    display::format_vec,
 };
-use eventsourced::EventSourced;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -21,6 +20,26 @@ impl Playing {
     #[rustfmt::skip]
     pub const fn new(scoreboard: Scoreboard, roles: Roles, hands: Hands, play_state: PlayState, crib: Crib, cut: Cut) -> Self {
         Self { scoreboard, roles, hands, play_state, crib, cut }
+    }
+
+    pub fn play_card(&mut self, player: Player, card: Card) {
+        let hand = &mut self.hands[player];
+        hand.remove(card);
+        self.play_state.play(card);
+        let scoreboard = &mut self.scoreboard;
+        scoreboard.peg(player, &ScoreBreakdown::play_card(&self.play_state));
+        if self.play_state.target_reached() {
+            self.play_state.start_new_play();
+        }
+    }
+
+    pub fn pass(&mut self, player: Player) {
+        self.play_state.pass();
+        if self.play_state.all_players_passed() {
+            let scoreboard = &mut self.scoreboard;
+            scoreboard.peg(player, &ScoreBreakdown::pass(&self.play_state));
+            self.play_state.start_new_play();
+        }
     }
 
     pub fn into_parts(self) -> (Scoreboard, Roles, Hands, PlayState, Crib, Cut) {
@@ -58,43 +77,6 @@ impl Playing {
 
     pub fn scoreboard(&self) -> &Scoreboard {
         &self.scoreboard
-    }
-}
-
-impl EventSourced for Playing {
-    type Id = GameId;
-    type Event = Event;
-
-    const TYPE_NAME: &'static str = stringify!(Playing);
-
-    fn handle_event(mut self, event: Self::Event) -> Self {
-        match event.kind() {
-            EventKind::StarterCardCut { cut } => {
-                let player = self.dealer().player();
-                let scoreboard = &mut self.scoreboard;
-                scoreboard.peg(player, &ScoreBreakdown::his_heels(*cut));
-            }
-            EventKind::CardPlayed { player, card } => {
-                let hand = &mut self.hands[*player];
-                hand.remove(*card);
-                self.play_state.play(*card);
-                let scoreboard = &mut self.scoreboard;
-                scoreboard.peg(*player, &ScoreBreakdown::play_card(&self.play_state));
-                if self.play_state.target_reached() {
-                    self.play_state.start_new_play();
-                }
-            }
-            EventKind::Passed { player } => {
-                self.play_state.pass();
-                if self.play_state.all_players_passed() {
-                    let scoreboard = &mut self.scoreboard;
-                    scoreboard.peg(*player, &ScoreBreakdown::pass(&self.play_state));
-                    self.play_state.start_new_play();
-                }
-            }
-            _ => {}
-        }
-        self
     }
 }
 

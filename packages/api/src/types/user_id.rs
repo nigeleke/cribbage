@@ -26,3 +26,17 @@ impl std::fmt::Display for UserId {
 }
 
 pub type Users = [UserId; PLAYER_COUNT];
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::test::filtered_assert;
+
+    #[test]
+    fn user_id_is_displayable() {
+        filtered_assert(
+            UserId::new().to_string(),
+            |actual| insta::assert_snapshot!(actual, @"<userid>"),
+        );
+    }
+}

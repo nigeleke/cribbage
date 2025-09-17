@@ -17,3 +17,16 @@ impl std::fmt::Display for GameId {
         write!(f, "GameId({})", self.0)
     }
 }
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::test::filtered_assert;
+
+    #[test]
+    fn game_id_is_displayable() {
+        filtered_assert(
+            GameId::new().to_string(),
+            |actual| insta::assert_snapshot!(actual, @"<gameid>"),
+        );
+    }
+}

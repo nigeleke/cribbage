@@ -10,6 +10,14 @@ impl From<usize> for Points {
     }
 }
 
+impl std::ops::Add<Points> for Points {
+    type Output = Points;
+
+    fn add(self, rhs: Points) -> Self::Output {
+        Points::from(self.0 + rhs.0)
+    }
+}
+
 impl std::ops::AddAssign for Points {
     fn add_assign(&mut self, rhs: Self) {
         self.0 += rhs.0

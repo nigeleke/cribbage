@@ -22,6 +22,14 @@ impl<T> std::ops::Index<Pone> for [T] {
     }
 }
 
+impl<T> std::ops::Index<&Pone> for [T] {
+    type Output = T;
+
+    fn index(&self, index: &Pone) -> &Self::Output {
+        &self[index.0]
+    }
+}
+
 impl From<Player> for Pone {
     fn from(value: Player) -> Self {
         Self(value)

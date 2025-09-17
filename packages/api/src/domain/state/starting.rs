@@ -11,16 +11,21 @@ pub struct Starting {
 }
 
 impl Starting {
-    #[cfg(test)]
-    #[rustfmt::skip]
     pub fn new(cuts: Cuts, deck: Deck, pending: WaitingForCuts) -> Self {
-        Self { cuts, deck, pending }
+        Self {
+            cuts,
+            deck,
+            pending,
+        }
     }
 
-    pub fn record_cut_for_player(&mut self, player: Player, cut: Cut) {
-        self.deck.remove(cut);
-        self.cuts[player] = cut;
-        self.pending.acknowledge(player);
+    pub fn into_parts(self) -> (Cuts, Deck, WaitingForCuts) {
+        let Self {
+            cuts,
+            deck,
+            pending,
+        } = self;
+        (cuts, deck, pending)
     }
 
     pub fn cuts(&self) -> &Cuts {

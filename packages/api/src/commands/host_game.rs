@@ -1,6 +1,5 @@
 use crate::{
-    Event, EventKind, Game, GameId, Player, UserId, domain::PLAYER0,
-    name_builder::generate_game_name,
+    Error, Event, Game, GameId, Player, UserId, domain::PLAYER0, name_builder::generate_game_name,
 };
 use eventsourced::{Command, CommandEffect};
 
@@ -17,20 +16,23 @@ impl HostGame {
 
 impl Command<Game> for HostGame {
     type Reply = (GameId, Player);
-    type Error = std::convert::Infallible;
+    type Error = Error;
 
     fn handle_command(
         self,
-        _id: &GameId,
-        _state: &Game,
+        id: &GameId,
+        game: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
-        let game_id = GameId::new();
+        if game.id() != &GameId::default() {
+            return CommandEffect::reject(Error::InvalidGame(*id));
+        };
+
+        let game_id = *id;
         let host = self.host;
         let name = generate_game_name();
 
-        CommandEffect::emit_and_reply(
-            Event::new(game_id, EventKind::LobbyGameCreated { host, name }),
-            move |_| (game_id, PLAYER0),
-        )
+        CommandEffect::emit_and_reply(Event::lobby_game_created(game_id, host, name), move |_| {
+            (game_id, PLAYER0)
+        })
     }
 }

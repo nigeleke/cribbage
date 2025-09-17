@@ -1,4 +1,4 @@
-use crate::{Card, Points, ScoreKind};
+use crate::{Card, Points, ScoreKind, display::format_vec};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -19,5 +19,17 @@ impl Event {
 
     pub fn points(&self) -> Points {
         self.points
+    }
+}
+
+impl std::fmt::Display for Event {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}: ({}) -> {}",
+            self.kind.as_ref(),
+            format_vec(self.cards.as_slice()),
+            self.points
+        )
     }
 }

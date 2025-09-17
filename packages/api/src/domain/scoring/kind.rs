@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use strum::AsRefStr;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, AsRefStr)]
 pub enum Kind {
     Fifteen,
     Pair,
@@ -11,5 +12,5 @@ pub enum Kind {
     Go,
     ThirtyOne,
     HisHeels,
-    HisNobs,
+    Nobs,
 }

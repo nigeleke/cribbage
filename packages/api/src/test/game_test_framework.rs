@@ -1,8 +1,5 @@
-use crate::{
-    AdvanceScoring, CheckForWinner, CutStarterCardAfterDiscards, Event, Game, GameId,
-    RedrawOrStartGame,
-};
-use eventsourced::Command;
+use crate::{Event, Game, GameId};
+use eventsourced::{Command, CommandEffect};
 use eventsourced_ext::{TestFramework, TestFrameworkResult};
 
 pub struct GameTestFramework {
@@ -10,13 +7,8 @@ pub struct GameTestFramework {
 }
 
 impl GameTestFramework {
-    pub fn new(id: GameId, entity: Game) -> Self {
-        let inner = TestFramework::new(id, entity).with_reactors(vec![
-            Box::new(RedrawOrStartGame),
-            Box::new(CutStarterCardAfterDiscards),
-            Box::new(AdvanceScoring),
-            Box::new(CheckForWinner),
-        ]);
+    pub fn new(id: GameId, game: Game) -> Self {
+        let inner = TestFramework::new(id, game);
         Self { inner }
     }
 
@@ -32,6 +24,36 @@ impl GameTestFramework {
     pub fn given(mut self, events: Vec<Event>) -> Self {
         self.inner = self.inner.given(events);
         self
+    }
+
+    pub fn execute_using_result<C>(mut self, command: C, f: impl Fn(&C::Reply)) -> Self
+    where
+        C: Command<Game>,
+        C::Error: std::fmt::Debug,
+    {
+        let effect = command.handle_command(self.entity().id(), self.entity());
+        match effect {
+            CommandEffect::EmitAndReply(event, reply) => {
+                let updated = self.given(vec![event]);
+                let entity = updated.entity();
+                let reply = reply(&entity);
+                f(&reply);
+                updated
+            }
+            CommandEffect::Reply(reply) => {
+                f(&reply);
+                self
+            }
+            CommandEffect::Reject(error) => panic!("failed to execute command - {error:?}"),
+        }
+    }
+
+    pub fn execute<C>(self, command: C) -> Self
+    where
+        C: Command<Game>,
+        C::Error: std::fmt::Debug,
+    {
+        self.execute_using_result(command, |_| {})
     }
 
     pub fn when<R, ER>(

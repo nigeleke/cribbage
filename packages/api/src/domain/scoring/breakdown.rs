@@ -1,5 +1,9 @@
 use super::constants::*;
-use crate::{Card, Cut, Hand, PlayState, Points, ScoreEvent, ScoreKind, Value, constants::*};
+use crate::{
+    Card, Crib, Cut, Hand, PlayState, Points, ScoreEvent, ScoreKind, Value, constants::*,
+    display::format_vec,
+};
+use itertools::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -146,37 +150,119 @@ impl Breakdown {
             .fifteens(all.as_ref())
             .pairs(all.as_ref())
             .runs(all.as_ref())
-            .flush(hand.as_ref(), cut)
-            .his_nob(hand.as_ref(), cut)
+            .flush(hand.as_ref(), cut, 4)
+            .nobs(hand.as_ref(), cut)
+    }
+
+    pub fn crib(hand: &Crib, cut: Cut) -> Self {
+        let mut all = hand.clone();
+        all.add(cut);
+
+        Self::default()
+            .fifteens(all.as_ref())
+            .pairs(all.as_ref())
+            .runs(all.as_ref())
+            .flush(hand.as_ref(), cut, 5)
+            .nobs(hand.as_ref(), cut)
     }
 
     fn fifteens(mut self, cards: &[Card]) -> Self {
+        for n in 2..=cards.len() {
+            for combination in cards.as_ref().iter().combinations(n) {
+                let combination_total: Value = combination.iter().map(|c| c.value()).sum();
+
+                if combination_total == 15.into() {
+                    let cards = combination.iter().map(|c| **c).collect::<Vec<_>>();
+                    self.add_event(ScoreKind::Fifteen, &cards, Points::from(SCORE_FIFTEEN));
+                }
+            }
+        }
+
         self
     }
 
     fn pairs(mut self, cards: &[Card]) -> Self {
+        for combination in cards.as_ref().iter().combinations(2) {
+            let mut combination = combination.into_iter();
+            let (one, two) = (combination.next().unwrap(), combination.next().unwrap());
+            if one.face() == two.face() {
+                self.add_event(ScoreKind::Pair, &[*one, *two], Points::from(SCORE_PAIR));
+            }
+        }
+
         self
     }
 
     fn runs(mut self, cards: &[Card]) -> Self {
+        let mut cards = Vec::from(cards);
+        cards.sort_by(|c1, c2| c1.rank().cmp(&c2.rank()));
+
+        for len in (MINIMUM_RUN_LENGTH..=cards.len()).rev() {
+            let mut points = Points::default();
+
+            for combination in cards.iter().combinations(len) {
+                let differences = combination
+                    .windows(2)
+                    .map(|cs| cs[1].rank() - cs[0].rank())
+                    .collect::<Vec<_>>();
+
+                let sequential = differences.iter().all(|d| *d == 1);
+                if sequential {
+                    let combination = combination.into_iter().cloned().collect::<Vec<_>>();
+                    points = Points::from(combination.len());
+                    self.add_event(ScoreKind::Run, &combination, points);
+                }
+            }
+
+            if points != Points::default() {
+                break;
+            }
+        }
+
         self
     }
 
-    fn flush(mut self, hand: &[Card], cut: Cut) -> Self {
-        // let flush_all = Self::default().flush(all.as_ref());
-        // let flush_hand = Self::default().flush(hand.as_ref());
+    fn flush(mut self, cards: &[Card], cut: Cut, constaint: usize) -> Self {
+        let flush = |cards: &[Card]| {
+            let suit = cards.first().map(|c| c.suit()).unwrap();
+            let same_suit = cards.iter().all(|c| c.suit() == suit);
+            if same_suit {
+                Points::from(cards.len())
+            } else {
+                Points::default()
+            }
+        };
 
-        // let with_flush = if flush_all.points() > Points::from(0) {
-        //     base + flush_all
-        // } else if flush_hand.points() > Points::from(0) {
-        //     base + flush_hand
-        // } else {
-        //     base
-        // };
+        let mut all = Vec::from(cards);
+        all.push(cut);
+
+        let flush_all = flush(&all);
+        let flush_cards = flush(cards);
+
+        if flush_all >= Points::from(constaint) {
+            self.add_event(ScoreKind::Flush, &all, flush_all);
+        } else if flush_cards >= Points::from(constaint) {
+            self.add_event(ScoreKind::Fifteen, cards, flush_cards);
+        }
+
         self
     }
-    fn his_nob(mut self, hand: &[Card], cut: Cut) -> Self {
+
+    fn nobs(mut self, cards: &[Card], cut: Cut) -> Self {
+        for card in cards {
+            if card.is_jack() && card.suit() == cut.suit() {
+                self.add_event(ScoreKind::Nobs, cards, Points::from(SCORE_NOBS));
+            }
+        }
+
         self
+    }
+}
+
+impl std::fmt::Display for Breakdown {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let events = format_vec(self.0.as_slice());
+        events.fmt(f)
     }
 }
 

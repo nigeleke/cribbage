@@ -16,7 +16,7 @@ mod constants {
     pub const SCORE_PAIR: usize = 2;
     pub const SCORE_ROYAL_PAIR: usize = 6;
     pub const SCORE_DOUBLE_ROYAL_PAIR: usize = 12;
-    pub const SCORE_HIS_NOB: usize = 1;
+    pub const SCORE_NOBS: usize = 1;
 
     pub const MINIMUM_RUN_LENGTH: usize = 3;
 }

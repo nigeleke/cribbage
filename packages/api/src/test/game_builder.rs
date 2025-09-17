@@ -140,15 +140,13 @@ impl GameBuilder {
         let hands = [self.hands[0].clone(), self.hands[1].clone()];
         let crib = self.crib.clone();
         let deck = self.deck.clone();
-        Discarding::new(scoreboard, roles, hands, crib, deck)
+        let pending = Pending::default();
+        Discarding::new(scoreboard, roles, hands, crib, deck, pending)
     }
 
     pub fn into_playing(self, next_to_play: usize) -> Playing {
         let player = PLAYERS[next_to_play];
         let scoreboard = self.scoreboard.clone();
-
-        // TOOD: Remove??
-        // scoreboard.peg(PLAYER0, &self.composition);
 
         let roles = Roles::new(
             Dealer::from(PLAYERS[self.dealer]),
@@ -175,59 +173,63 @@ impl GameBuilder {
         Playing::new(scoreboard, roles, hands, play_state, crib, cut)
     }
 
-    // pub fn into_scoring_pone(self) -> ScoringPone {
-    //     let mut scoreboard = self.scoreboard.clone();
-    //     scoreboard.peg_score(PLAYER0, &self.composition);
-    //     let roles = Roles::new(
-    //         Dealer::from(Player::from(self.dealer)),
-    //         Pone::from(Player::from(1 - self.dealer)),
-    //     );
-    //     let hands = self.hands.as_slice();
-    //     let crib = self.crib.clone();
-    //     let cut = self.cut.expect("cut");
+    pub fn into_scoring_pone(self) -> ScoringPone {
+        let scoreboard = self.scoreboard;
 
-    //     let hands = [hands[PLAYER0].clone(), hands[PLAYER1].clone()];
+        let roles = Roles::new(
+            Dealer::from(Player::from(self.dealer)),
+            Pone::from(Player::from(1 - self.dealer)),
+        );
+        let hands = self.hands.as_slice();
+        let crib = self.crib.clone();
+        let cut = self.cut.expect("cut");
 
-    //     let pending_status = PendingStatus::default();
+        let hands = [hands[PLAYER0].clone(), hands[PLAYER1].clone()];
 
-    //     ScoringPone::new(scoreboard, roles, hands, crib, cut, pending_status)
-    // }
+        let breakdown = ScoreBreakdown::hand(&hands[roles.pone()], cut);
+        let pending = Pending::default();
 
-    // pub fn into_scoring_dealer(self) -> ScoringDealer {
-    //     let mut scoreboard = self.scoreboard.clone();
-    //     scoreboard.peg_score(PLAYER0, &self.composition);
-    //     let roles = Roles::new(
-    //         Dealer::from(Player::from(self.dealer)),
-    //         Pone::from(Player::from(1 - self.dealer)),
-    //     );
-    //     let hands = self.hands.as_slice();
-    //     let crib = self.crib.clone();
-    //     let cut = self.cut.expect("cut");
+        ScoringPone::new(scoreboard, roles, hands, crib, cut, breakdown, pending)
+    }
 
-    //     let hands = [hands[PLAYER0].clone(), hands[PLAYER1].clone()];
+    pub fn into_scoring_dealer(self) -> ScoringDealer {
+        let scoreboard = self.scoreboard;
 
-    //     let pending_status = PendingStatus::default();
+        let roles = Roles::new(
+            Dealer::from(Player::from(self.dealer)),
+            Pone::from(Player::from(1 - self.dealer)),
+        );
+        let hands = self.hands.as_slice();
+        let crib = self.crib.clone();
+        let cut = self.cut.expect("cut");
 
-    //     ScoringDealer::new(scoreboard, roles, hands, crib, cut, pending_status)
-    // }
+        let hands = [hands[PLAYER0].clone(), hands[PLAYER1].clone()];
 
-    // pub fn into_scoring_crib(self) -> ScoringCrib {
-    //     let mut scoreboard = self.scoreboard.clone();
-    //     scoreboard.peg_score(PLAYER0, &self.composition);
-    //     let roles = Roles::new(
-    //         Dealer::from(Player::from(self.dealer)),
-    //         Pone::from(Player::from(1 - self.dealer)),
-    //     );
-    //     let hands = self.hands.as_slice();
-    //     let crib = self.crib.clone();
-    //     let cut = self.cut.expect("cut");
+        let breakdown = ScoreBreakdown::hand(&hands[roles.dealer()], cut);
+        let pending = Pending::default();
 
-    //     let hands = [hands[PLAYER0].clone(), hands[PLAYER1].clone()];
+        ScoringDealer::new(scoreboard, roles, hands, crib, cut, breakdown, pending)
+    }
 
-    //     let pending_status = PendingStatus::default();
+    pub fn into_scoring_crib(self) -> ScoringCrib {
+        let mut scoreboard = self.scoreboard.clone();
 
-    //     ScoringCrib::new(scoreboard, roles, hands, crib, cut, pending_status)
-    // }
+        let roles = Roles::new(
+            Dealer::from(Player::from(self.dealer)),
+            Pone::from(Player::from(1 - self.dealer)),
+        );
+        let hands = self.hands.as_slice();
+        let crib = self.crib.clone();
+        let cut = self.cut.expect("cut");
+
+        let hands = [hands[PLAYER0].clone(), hands[PLAYER1].clone()];
+
+        let breakdown = ScoreBreakdown::crib(&crib, cut);
+
+        let pending = Pending::default();
+
+        ScoringCrib::new(scoreboard, roles, hands, crib, cut, breakdown, pending)
+    }
 
     // pub fn into_finished(self) -> Finished {
     //     let mut scoreboard = self.scoreboard.clone();

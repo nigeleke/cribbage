@@ -1,22 +1,22 @@
 use crate::{
-    Error, Event, Finished, Game, GameId, Pending, Player, ScoreBreakdown, ScoringDealer,
-    ScoringPone, State, prettify,
+    Deck, Discarding, Error, Event, Finished, Game, GameId, Pending, Player, ScoringCrib, State,
+    constants::PLAYER_COUNT, prettify,
 };
 use eventsourced::{Command, CommandEffect};
 
 #[derive(Debug)]
-pub struct AcknowledgePoneScore {
+pub struct AcknowledgeCribScore {
     game_id: GameId,
     player: Player,
 }
 
-impl AcknowledgePoneScore {
+impl AcknowledgeCribScore {
     pub fn new(game_id: GameId, player: Player) -> Self {
         Self { game_id, player }
     }
 }
 
-impl Command<Game> for AcknowledgePoneScore {
+impl Command<Game> for AcknowledgeCribScore {
     type Reply = bool;
     type Error = Error;
 
@@ -26,15 +26,16 @@ impl Command<Game> for AcknowledgePoneScore {
         state: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
         let player = self.player;
+
         match state.state() {
-            State::ScoringPone(scoring) => {
-                let (mut scoreboard, roles, hands, crib, cut, breakdown, mut pending) =
+            State::ScoringCrib(scoring) => {
+                let (mut scoreboard, mut roles, hands, crib, cut, breakdown, mut pending) =
                     scoring.clone().into_parts();
 
                 let proceeding = pending.acknowledge(player);
 
                 if proceeding {
-                    scoreboard.peg(roles.pone().player(), &breakdown);
+                    scoreboard.peg(roles.dealer().player(), &breakdown);
                     if let Some(winner) = scoreboard.winner() {
                         let finished = Finished::new(winner, scoreboard, roles, hands, crib, cut);
                         let state = State::Finished(finished);
@@ -42,13 +43,14 @@ impl Command<Game> for AcknowledgePoneScore {
                             proceeding
                         })
                     } else {
+                        roles.swap();
+                        let mut deck = Deck::shuffled_pack();
+                        let hands = deck.deal(PLAYER_COUNT);
+                        let hands = [hands[0].clone(), hands[1].clone()];
                         let pending = Pending::default();
-                        let breakdown = ScoreBreakdown::hand(&hands[roles.dealer()], cut);
-
-                        let scoring = ScoringDealer::new(
-                            scoreboard, roles, hands, crib, cut, breakdown, pending,
-                        );
-                        let state = State::ScoringDealer(scoring);
+                        let discarding =
+                            Discarding::new(scoreboard, roles, hands, crib, deck, pending);
+                        let state = State::Discarding(discarding);
 
                         CommandEffect::emit_and_reply(Event::state_updated(*id, state), move |_| {
                             proceeding
@@ -56,14 +58,14 @@ impl Command<Game> for AcknowledgePoneScore {
                     }
                 } else {
                     let scoring =
-                        ScoringPone::new(scoreboard, roles, hands, crib, cut, breakdown, pending);
-                    let state = State::ScoringPone(scoring);
+                        ScoringCrib::new(scoreboard, roles, hands, crib, cut, breakdown, pending);
+                    let state = State::ScoringCrib(scoring);
                     CommandEffect::emit_and_reply(Event::state_updated(*id, state), move |_| {
                         proceeding
                     })
                 }
             }
-            _ => CommandEffect::reject(Error::NotPermitted(prettify!(AcknowledgePoneScore))),
+            _ => CommandEffect::reject(Error::NotPermitted(prettify!(AcknowledgeCribScore))),
         }
     }
 }

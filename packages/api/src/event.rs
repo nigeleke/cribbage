@@ -1,8 +1,5 @@
-use crate::{
-    Card, Cut, Dealer, GameId, Player, ScoreBreakdown, ScorePhase, Scoreboard, UserId, Users,
-};
+use crate::{GameId, State, UserId};
 use serde::{Deserialize, Serialize};
-use strum::AsRefStr;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Event {
@@ -15,6 +12,30 @@ impl Event {
         Self { game_id, kind }
     }
 
+    pub fn lobby_game_created(id: GameId, host: UserId, name: String) -> Self {
+        Self::new(id, EventKind::LobbyGameCreated { id, host, name })
+    }
+
+    pub fn computer_game_created(id: GameId, host: UserId, guest: UserId, name: String) -> Self {
+        Self::new(
+            id,
+            EventKind::ComputerGameCreated {
+                id,
+                host,
+                guest,
+                name,
+            },
+        )
+    }
+
+    pub fn lobby_game_joined(id: GameId, guest: UserId) -> Self {
+        Self::new(id, EventKind::LobbyGameJoined { id, guest })
+    }
+
+    pub fn state_updated(id: GameId, state: State) -> Self {
+        Self::new(id, EventKind::StateUpdated { id, state })
+    }
+
     pub fn id(&self) -> &GameId {
         &self.game_id
     }
@@ -24,82 +45,25 @@ impl Event {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, AsRefStr)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EventKind {
     LobbyGameCreated {
+        id: GameId,
         host: UserId,
         name: String,
     },
-
-    LobbyGameJoined {
+    ComputerGameCreated {
+        id: GameId,
+        host: UserId,
         guest: UserId,
-    },
-
-    ComputerGameStarted {
-        users: Users,
         name: String,
     },
-
-    CardCutForDeal {
-        player: Player,
-        cut: Cut,
+    LobbyGameJoined {
+        id: GameId,
+        guest: UserId,
     },
-
-    RedrawRequested,
-
-    RoundStarted {
-        dealer: Dealer,
-        scoreboard: Scoreboard,
-    },
-
-    CardsDiscardedToCrib {
-        player: Player,
-        discards: Vec<Card>,
-    },
-
-    StarterCardCut {
-        cut: Cut,
-    },
-
-    ScoreRecorded {
-        player: Player,
-        phase: ScorePhase,
-        breakdown: ScoreBreakdown,
-    },
-
-    CardPlayed {
-        player: Player,
-        card: Card,
-    },
-
-    Passed {
-        player: Player,
-    },
-
-    PlaysFinished,
-
-    PoneHandScored {
-        breakdown: ScoreBreakdown,
-    },
-
-    PoneHandScoreAcknowledged {
-        player: Player,
-    },
-
-    DealerHandScored {
-        breakdown: ScoreBreakdown,
-    },
-
-    DealerHandScoreAcknowledged {
-        player: Player,
-    },
-    CribScored {
-        breakdown: ScoreBreakdown,
-    },
-    CribScoreAcknowledged {
-        player: Player,
-    },
-    WinnerDeclared {
-        winner: Player,
+    StateUpdated {
+        id: GameId,
+        state: State,
     },
 }

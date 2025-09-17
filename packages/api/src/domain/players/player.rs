@@ -23,8 +23,22 @@ impl<T> std::ops::Index<Player> for [T] {
     }
 }
 
+impl<T> std::ops::Index<&Player> for [T] {
+    type Output = T;
+
+    fn index(&self, index: &Player) -> &Self::Output {
+        &self[index.0]
+    }
+}
+
 impl<T> std::ops::IndexMut<Player> for [T] {
     fn index_mut(&mut self, index: Player) -> &mut Self::Output {
+        &mut self[index.0]
+    }
+}
+
+impl<T> std::ops::IndexMut<&Player> for [T] {
+    fn index_mut(&mut self, index: &Player) -> &mut Self::Output {
         &mut self[index.0]
     }
 }

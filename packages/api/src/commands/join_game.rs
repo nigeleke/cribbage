@@ -1,4 +1,4 @@
-use crate::{Error, Event, EventKind, Game, GameId, Player, UserId, domain::PLAYER1, prettify};
+use crate::{Error, Event, Game, GameId, Player, UserId, domain::PLAYER1, prettify};
 use eventsourced::{Command, CommandEffect};
 
 #[derive(Debug)]
@@ -20,21 +20,19 @@ impl Command<Game> for JoinGame {
     fn handle_command(
         self,
         id: &GameId,
-        state: &Game,
+        game: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
-        assert_eq!(id, state.id());
+        if game.id() != id {
+            return CommandEffect::reject(Error::InvalidGame(*id));
+        };
 
-        if state.guest().is_some() {
+        if game.guest().is_some() {
             CommandEffect::reject(Error::NotPermitted(prettify!(JoinGame)))
-        } else if state.host() == &self.guest {
+        } else if game.host() == &self.guest {
             CommandEffect::reject(Error::InvalidOpponent(self.guest))
         } else {
             let guest = self.guest;
-
-            CommandEffect::emit_and_reply(
-                Event::new(*id, EventKind::LobbyGameJoined { guest }),
-                move |_| PLAYER1,
-            )
+            CommandEffect::emit_and_reply(Event::lobby_game_joined(*id, guest), move |_| PLAYER1)
         }
     }
 }

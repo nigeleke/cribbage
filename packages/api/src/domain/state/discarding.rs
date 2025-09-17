@@ -18,8 +18,7 @@ pub struct Discarding {
 
 impl Discarding {
     #[rustfmt::skip]
-    pub fn new(scoreboard: Scoreboard, roles: Roles, hands: Hands, crib: Crib, deck: Deck) -> Self {
-        let pending = WaitingForDiscards::default();
+    pub fn new(scoreboard: Scoreboard, roles: Roles, hands: Hands, crib: Crib, deck: Deck, pending: WaitingForDiscards) -> Self {
         Self { scoreboard, roles, hands, crib, deck, pending }
     }
 

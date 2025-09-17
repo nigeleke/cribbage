@@ -86,8 +86,8 @@ where
     /// Assert conditions (using supplied function) on an entity.
     ///
     /// # Parameters
-    /// - `f` function predicating on current entity. The function must
-    /// panic if predicates fail.
+    /// - `f` function predicating on the entity after events have been applied.
+    /// The function must panic if predicates fail.
     ///
     /// # Returns
     /// Self to enable chaining.

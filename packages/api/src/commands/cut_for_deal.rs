@@ -1,5 +1,9 @@
-use crate::{Error, Event, EventKind, Game, GameId, Player, State, prettify};
-use eventsourced::*;
+use crate::{
+    Crib, Cut, Dealer, Deck, Discarding, Error, Event, Game, GameId, PLAYER0, PLAYER1, Pending,
+    Player, Roles, Scoreboard, Starting, State, constants::PLAYER_COUNT, prettify,
+};
+use eventsourced::{Command, CommandEffect};
+use std::cmp::Ordering;
 
 #[derive(Debug)]
 pub struct CutForDeal {
@@ -13,29 +17,80 @@ impl CutForDeal {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct CutForDealReply {
+    cut: Cut,
+    proceeding: bool,
+}
+
+impl CutForDealReply {
+    pub fn cut(&self) -> Cut {
+        self.cut
+    }
+
+    pub fn proceeding(&self) -> bool {
+        self.proceeding
+    }
+}
+
 impl Command<Game> for CutForDeal {
-    type Reply = bool;
+    type Reply = CutForDealReply;
     type Error = Error;
 
     fn handle_command(
         self,
         id: &GameId,
-        state: &Game,
+        game: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
-        match state.state() {
+        if game.id() != id {
+            return CommandEffect::reject(Error::InvalidGame(*id));
+        };
+
+        match game.state() {
             State::Starting(starting) => {
+                let (cuts, deck, pending) = &mut starting.clone().into_parts();
+
                 let player = self.player;
-
-                let mut deck = starting.deck().clone();
                 let cut = deck.cut();
+                cuts[player] = cut;
+                let proceeding = pending.acknowledge(player);
 
-                let mut pending = starting.pending().clone();
-                let proceed = pending.acknowledge(player);
+                let as_starting = |cuts, deck, pending| {
+                    let starting = Starting::new(cuts, deck, pending);
+                    State::Starting(starting)
+                };
 
-                CommandEffect::emit_and_reply(
-                    Event::new(*id, EventKind::CardCutForDeal { player, cut }),
-                    move |_| proceed,
-                )
+                let as_discarding = |dealer| {
+                    let scoreboard = Scoreboard::default();
+                    let roles = Roles::new(dealer, dealer.opponent());
+                    let crib = Crib::default();
+                    let mut deck = Deck::shuffled_pack();
+                    let hands = deck.deal(PLAYER_COUNT);
+                    let hands = [hands[0].clone(), hands[1].clone()];
+                    let discarding =
+                        Discarding::new(scoreboard, roles, hands, crib, deck, pending.clone());
+                    State::Discarding(discarding)
+                };
+
+                let state = if proceeding {
+                    match cuts[PLAYER0]
+                        .face()
+                        .rank()
+                        .cmp(&cuts[PLAYER1].face().rank())
+                    {
+                        Ordering::Less => as_discarding(Dealer::from(PLAYER0)),
+                        Ordering::Greater => as_discarding(Dealer::from(PLAYER1)),
+                        Ordering::Equal => {
+                            as_starting(cuts.clone(), Deck::default(), Pending::default())
+                        }
+                    }
+                } else {
+                    as_starting(cuts.clone(), deck.clone(), pending.clone())
+                };
+
+                CommandEffect::emit_and_reply(Event::state_updated(*id, state), move |_| {
+                    CutForDealReply { cut, proceeding }
+                })
             }
             _ => CommandEffect::reject(Error::NotPermitted(prettify!(CutForDeal))),
         }

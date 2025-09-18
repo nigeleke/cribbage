@@ -87,7 +87,7 @@ where
     ///
     /// # Parameters
     /// - `f` function predicating on the entity after events have been applied.
-    /// The function must panic if predicates fail.
+    ///   The function must panic if predicates fail.
     ///
     /// # Returns
     /// Self to enable chaining.
@@ -126,7 +126,7 @@ where
     ///
     /// # Parameters
     /// - `f`: A function predicating the actual event. This function should
-    /// panic if the predicate fails.
+    ///   panic if the predicate fails.
     ///
     /// # Panics
     /// - Panics if no event was emitted (i.e. `self.event()` is `None`).
@@ -180,7 +180,7 @@ where
     ///
     /// # Parameters
     /// - `f`: The function predicating the actual reply. The function must
-    /// panic if the predicate fails.
+    ///   panic if the predicate fails.
     ///
     /// # Panics
     /// - Panics if no reply was produced.
@@ -231,7 +231,7 @@ where
     ///
     /// # Parameters
     /// - `f`: The function predicating the actual error. The function must
-    /// panic indicating predicate failure.
+    ///   panic indicating predicate failure.
     ///
     /// # Returns
     /// Returns `self` to allow method chaining.

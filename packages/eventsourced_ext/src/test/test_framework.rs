@@ -46,7 +46,7 @@ where
     ///
     /// # Parameters
     /// - `f` function predicating on current entity. The function must
-    /// panic if predicates fail.
+    ///   panic if predicates fail.
     ///
     /// # Returns
     /// Self to enable chaining.

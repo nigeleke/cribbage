@@ -83,12 +83,10 @@ impl Command<Game> for CutForDeal {
                     {
                         Ordering::Less => as_discarding(Dealer::from(PLAYER0)),
                         Ordering::Greater => as_discarding(Dealer::from(PLAYER1)),
-                        Ordering::Equal => {
-                            as_starting(cuts.clone(), Deck::default(), Pending::default())
-                        }
+                        Ordering::Equal => as_starting(*cuts, Deck::default(), Pending::default()),
                     }
                 } else {
-                    as_starting(cuts.clone(), deck.clone(), pending.clone())
+                    as_starting(*cuts, deck.clone(), pending.clone())
                 };
 
                 CommandEffect::emit_and_reply(Event::state_updated(*id, state), move |_| {

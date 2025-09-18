@@ -195,7 +195,7 @@ impl Breakdown {
 
     fn runs(mut self, cards: &[Card]) -> Self {
         let mut cards = Vec::from(cards);
-        cards.sort_by(|c1, c2| c1.rank().cmp(&c2.rank()));
+        cards.sort_by_key(|c| c.rank());
 
         for len in (MINIMUM_RUN_LENGTH..=cards.len()).rev() {
             let mut points = Points::default();

@@ -1,6 +1,8 @@
-use goofy_animals::GoofyAnimals;
-use rand_chacha::{ChaCha20Rng, rand_core::SeedableRng};
 use std::sync::LazyLock;
+
+use goofy_animals::GoofyAnimals;
+use rand_chacha::ChaCha20Rng;
+use rand_chacha::rand_core::SeedableRng;
 
 pub fn generate_game_name() -> String {
     let mut rng = ChaCha20Rng::from_entropy();

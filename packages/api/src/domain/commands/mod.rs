@@ -1,6 +1,7 @@
-mod acknowledge_crib_score;
-mod acknowledge_dealer_score;
-mod acknowledge_pone_score;
+// mod acknowledge_crib_score;
+// mod acknowledge_dealer_score;
+// mod acknowledge_pone_score;
+mod acknowledge_score;
 mod cut_for_deal;
 mod discard_cards_to_crib;
 mod host_game;
@@ -9,9 +10,7 @@ mod pass;
 mod play_card;
 mod play_computer;
 
-pub use acknowledge_crib_score::AcknowledgeCribScore;
-pub use acknowledge_dealer_score::AcknowledgeDealerScore;
-pub use acknowledge_pone_score::AcknowledgePoneScore;
+pub use acknowledge_score::{AcknowledgeCribScore, AcknowledgeDealerScore, AcknowledgePoneScore};
 pub use cut_for_deal::{CutForDeal, CutForDealReply};
 pub use discard_cards_to_crib::DiscardCardsToCrib;
 pub use host_game::HostGame;

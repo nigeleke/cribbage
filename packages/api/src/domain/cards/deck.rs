@@ -1,6 +1,9 @@
+use rand::seq::SliceRandom;
+use rand::thread_rng;
+
 use super::{Hand, Pile};
-use crate::{Card, Cut, constants::*};
-use rand::{seq::SliceRandom, thread_rng};
+use crate::constants::*;
+use crate::{Card, Cut};
 
 /// A deck of cards.
 #[derive(Clone, Debug, PartialEq, Eq)]

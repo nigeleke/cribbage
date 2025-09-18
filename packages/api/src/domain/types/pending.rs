@@ -1,10 +1,10 @@
-use crate::{
-    Player,
-    domain::{PLAYER0, PLAYER1},
-};
+use std::collections::HashSet;
+
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+
+use crate::Player;
+use crate::domain::{PLAYER0, PLAYER1};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Pending(HashSet<Player>);

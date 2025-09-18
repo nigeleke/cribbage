@@ -1,5 +1,6 @@
-use super::Points;
 use serde::{Deserialize, Serialize};
+
+use super::Points;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Pegging {

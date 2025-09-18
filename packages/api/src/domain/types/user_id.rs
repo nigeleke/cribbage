@@ -1,6 +1,7 @@
-use crate::constants::*;
 use serde::{Deserialize, Serialize};
 use ulid::Ulid;
+
+use crate::constants::*;
 
 /// A unique identifier for a user, internally represented as a ULID.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]

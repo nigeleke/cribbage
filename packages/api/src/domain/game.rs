@@ -1,10 +1,12 @@
+use eventsourced::EventSourced;
+use serde::{Deserialize, Serialize};
+
+use crate::constants::PLAYER_COUNT;
 use crate::{
     Card, Crib, Cut, Dealer, Deck, Discarding, Event, EventKind, Finished, GameId, PLAYER0,
     PLAYER1, Pending, PlayState, Player, Playing, Roles, ScoreBreakdown, ScorePhase, Scoreboard,
-    ScoringPone, Starting, State, UserId, Users, constants::PLAYER_COUNT,
+    ScoringPone, Starting, State, UserId, Users,
 };
-use eventsourced::EventSourced;
-use serde::{Deserialize, Serialize};
 
 /// Represents a game session, including host and guest players, game metadata, and state.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -108,143 +110,6 @@ impl Game {
             state,
         }
     }
-
-    // fn init(mut self, id: GameId, host: UserId, guest: Option<UserId>, name: String) -> Self {
-    //     self.id = id;
-    //     self.host = host;
-    //     self.guest = guest;
-    //     self.name = name;
-    //     let starting = Starting::default();
-    //     self.state = State::Starting(starting);
-    //     self
-    // }
-
-    // fn handle_card_cut_for_deal(mut self, player: Player, cut: Cut) -> Self {
-    //     if let State::Starting(starting) = &mut self.state {
-    //         starting.record_cut_for_player(player, cut);
-    //     }
-    //     self
-    // }
-
-    // fn handle_redraw_requested(mut self) -> Self {
-    //     self
-    // }
-
-    // fn handle_round_started(mut self, dealer: Dealer, scoreboard: Scoreboard) -> Self {
-    //     let pone = dealer.opponent();
-    //     let roles = Roles::new(dealer, pone);
-    //     let mut deck = Deck::shuffled_pack();
-    //     let hands = deck.deal(PLAYER_COUNT);
-    //     let hands = [hands[0].clone(), hands[1].clone()];
-    //     let crib = Crib::default();
-    //     let discarding = Discarding::new(scoreboard.clone(), roles, hands, crib, deck);
-    //     self.state = State::Discarding(discarding);
-    //     self
-    // }
-
-    // fn handle_cards_discarded_to_crib(mut self, player: Player, discards: &[Card]) -> Self {
-    //     if let State::Discarding(discarding) = &mut self.state {
-    //         discarding.discard_cards_to_crib(player, discards);
-    //     }
-    //     self
-    // }
-
-    // fn handle_starter_card_cut(mut self, cut: Cut) -> Self {
-    //     println!("=== StarterCardCut {:?}", self.state);
-    //     if let State::Discarding(discarding) = self.state {
-    //         let (mut scoreboard, roles, hands, crib, mut deck, _pending) = discarding.into_parts();
-    //         deck.remove(cut);
-    //         let next_to_play = roles.pone().player();
-    //         let play_state = PlayState::new(next_to_play)
-    //             .with_pending_plays(PLAYER0, hands[PLAYER0].as_ref())
-    //             .with_pending_plays(PLAYER1, hands[PLAYER1].as_ref());
-
-    //         let playing = Playing::new(scoreboard, roles, hands, play_state, crib, cut);
-    //         self.state = State::Playing(playing);
-    //     }
-    //     self
-    // }
-
-    // fn handle_score_recorded(
-    //     mut self,
-    //     player: Player,
-    //     phase: ScorePhase,
-    //     breakdown: ScoreBreakdown,
-    // ) -> Self {
-    //     todo!();
-    //     self
-    // }
-
-    // fn handle_card_played(mut self, player: Player, card: Card) -> Self {
-    //     if let State::Playing(playing) = &mut self.state
-    //         && playing.play_state().all_cards_are_played()
-    //     {
-    //         playing.play_card(player, card);
-
-    //         let (scoreboard, roles, _, mut play_state, crib, cut) = playing.clone().into_parts();
-    //         let hands = play_state.finish_plays();
-    //         let pending = Pending::default();
-
-    //         if let Some(winner) = scoreboard.winner() {
-    //             let finished = Finished::new(winner, scoreboard, roles, hands, crib, cut);
-    //             self.state = State::Finished(finished);
-    //         } else {
-    //             let scoring = ScoringPone::new(scoreboard, roles, hands, crib, cut, pending);
-    //             self.state = State::ScoringPone(scoring);
-    //         }
-    //     }
-    //     self
-    // }
-
-    // fn handle_passed(mut self, player: Player) -> Self {
-    //     if let State::Playing(playing) = &mut self.state {
-    //         playing.pass(player);
-    //     }
-    //     self
-    // }
-
-    // fn handle_plays_finished(mut self) -> Self {
-    //     todo!()
-    // }
-
-    // fn handle_pone_hand_scored(mut self, breakdown: ScoreBreakdown) -> Self {
-    //     todo!()
-    // }
-
-    // fn handle_pone_hand_score_acknowledged(mut self, player: Player) -> Self {
-    //     todo!()
-    // }
-
-    // fn handle_dealer_hand_scored(mut self, breakdown: ScoreBreakdown) -> Self {
-    //     todo!()
-    // }
-
-    // fn handle_dealer_hand_score_acknowledged(mut self, player: Player) -> Self {
-    //     todo!()
-    // }
-
-    // fn handle_crib_scored(mut self, breakdown: ScoreBreakdown) -> Self {
-    //     todo!()
-    // }
-
-    // fn handle_crib_score_acknowledged(mut self, player: Player) -> Self {
-    //     todo!()
-    // }
-
-    // fn handle_winner_declared(mut self, winner: Player) -> Self {
-    //     if let Some((scoreboard, roles, hands, crib, cut)) =
-    //         if let State::Playing(ref playing) = self.state {
-    //             let (scoreboard, roles, hands, _, crib, cut) = playing.clone().into_parts();
-    //             Some((scoreboard, roles, hands, crib, cut))
-    //         } else {
-    //             None
-    //         }
-    //     {
-    //         let finished = Finished::new(winner, scoreboard, roles, hands, crib, cut);
-    //         self.state = State::Finished(finished);
-    //     }
-    //     self
-    // }
 }
 
 #[cfg(test)]
@@ -267,9 +132,10 @@ impl From<State> for Game {
 #[cfg(test)]
 #[coverage(off)]
 mod test {
+    use std::str::FromStr;
+
     use super::*;
     use crate::{CutForDeal, GameTestFramework, cut, prettify};
-    use std::str::FromStr;
 
     fn kinds_to_events(game_id: GameId, events: &[EventKind]) -> Vec<Event> {
         events
@@ -308,7 +174,8 @@ mod test {
     #[coverage(off)]
     mod players {
         use super::*;
-        use crate::{Error, EventKind, HostGame, JoinGame, PlayComputer, test::GameTestFramework};
+        use crate::test::GameTestFramework;
+        use crate::{EventKind, GameError, HostGame, JoinGame, PlayComputer};
 
         #[test]
         fn a_user_can_host_game() {
@@ -421,7 +288,7 @@ mod test {
             GameTestFramework::new(game_id, Game::default())
                 .given(kinds_to_events(game_id, &preconditions))
                 .when(JoinGame::new(game_id, guest))
-                .expect_error(Error::NotPermitted(prettify!(JoinGame)));
+                .expect_error(GameError::NotPermitted(prettify!(JoinGame)));
         }
 
         #[test]
@@ -440,7 +307,7 @@ mod test {
             GameTestFramework::new(game_id, Game::default())
                 .given(kinds_to_events(game_id, &preconditions))
                 .when(JoinGame::new(game_id, guest))
-                .expect_error(Error::InvalidOpponent(guest));
+                .expect_error(GameError::InvalidOpponent(guest));
         }
     }
 
@@ -472,12 +339,15 @@ mod test {
     /// right to shuffle last, and he presents the cards to the non-dealer for the cut prior to the
     /// deal. (In some games, there is no cut at this time.)
     mod deal_cut {
+        use std::cmp::Ordering;
+        use std::str::FromStr;
+
         use super::*;
+        use crate::test::GameTestFramework;
         use crate::{
             CutForDeal, CutForDealReply, Dealer, Deck, GameBuilder, PLAYER0, PLAYER1, Scoreboard,
-            cut, test::GameTestFramework,
+            cut,
         };
-        use std::{cmp::Ordering, str::FromStr};
 
         #[test]
         fn user_must_confirm_the_cut_1() {
@@ -593,10 +463,9 @@ mod test {
     /// opponent.
     mod deal {
         use super::*;
-        use crate::{
-            Dealer, STANDARD_DECK_SIZE, Scoreboard, constants::CARDS_DEALT_PER_HAND,
-            test::GameTestFramework,
-        };
+        use crate::constants::CARDS_DEALT_PER_HAND;
+        use crate::test::GameTestFramework;
+        use crate::{Dealer, STANDARD_DECK_SIZE, Scoreboard};
 
         #[test]
         fn dealer_deals_six_cards_each() {
@@ -638,9 +507,12 @@ mod test {
     /// belongs to the dealer, but these cards are not exposed or used until after the hands have
     /// been played.
     mod the_crib {
-        use super::*;
-        use crate::{card, display::format_vec, test::*, *};
         use std::str::FromStr;
+
+        use super::*;
+        use crate::display::format_vec;
+        use crate::test::*;
+        use crate::{card, *};
 
         #[test]
         fn player_can_discard_own_cards_to_the_crib() {
@@ -698,7 +570,7 @@ mod test {
 
                 GameTestFramework::new(game_id, game)
                     .when(DiscardCardsToCrib::new(game_id, PLAYER0, &discards))
-                    .expect_error(Error::InvalidDiscards(expected_discards));
+                    .expect_error(GameError::InvalidDiscards(expected_discards));
             }
         }
 
@@ -717,7 +589,7 @@ mod test {
 
             GameTestFramework::new(game_id, game)
                 .when(DiscardCardsToCrib::new(game_id, PLAYER0, &discards))
-                .expect_error(Error::InvalidDiscards(expected_discards));
+                .expect_error(GameError::InvalidDiscards(expected_discards));
         }
 
         #[test]
@@ -737,7 +609,7 @@ mod test {
             GameTestFramework::new(game_id, game)
                 .execute(DiscardCardsToCrib::new(game_id, PLAYER0, &discards0))
                 .when(DiscardCardsToCrib::new(game_id, PLAYER0, &discards1))
-                .expect_error(Error::InvalidDiscards(expected_discards));
+                .expect_error(GameError::InvalidDiscards(expected_discards));
         }
     }
 
@@ -750,11 +622,9 @@ mod test {
     /// various card combinations that score points.
     mod before_the_play {
         use super::*;
-        use crate::{
-            Cut, Dealer, DiscardCardsToCrib, Points, Pone, Scoreboard, State,
-            constants::*,
-            test::{GameBuilder, GameTestFramework},
-        };
+        use crate::constants::*;
+        use crate::test::{GameBuilder, GameTestFramework};
+        use crate::{Cut, Dealer, DiscardCardsToCrib, Points, Pone, Scoreboard, State};
 
         fn after_discards_common_tests() -> (Scoreboard, Scoreboard, Cut, Dealer, Pone) {
             let discarding0 = GameBuilder::default()
@@ -924,13 +794,14 @@ mod test {
     /// count 10 each; every other card counts its pip value (the ace counts one).
     #[coverage(off)]
     mod the_play {
-        use super::*;
-        use crate::{
-            Card, Error, Event, Game, GameBuilder, GameTestFramework, Hand, PLAYER0, PLAYER1, Play,
-            PlayCard, Points, State, card, domain::game, hand,
-        };
-        use dioxus::html::g;
         use std::str::FromStr;
+
+        use super::*;
+        use crate::domain::game;
+        use crate::{
+            Card, Event, Game, GameBuilder, GameError, GameTestFramework, Hand, PLAYER0, PLAYER1,
+            Play, PlayCard, Points, State, card, hand,
+        };
 
         #[test]
         fn accept_valid_play() {
@@ -1057,7 +928,7 @@ mod test {
 
             GameTestFramework::new(game_id, game)
                 .when(PlayCard::new(game_id, PLAYER1, card))
-                .expect_error(Error::InvalidPlay(card));
+                .expect_error(GameError::InvalidPlay(card));
         }
 
         #[test]
@@ -1075,7 +946,7 @@ mod test {
 
             GameTestFramework::new(game_id, game)
                 .when(PlayCard::new(game_id, PLAYER0, card))
-                .expect_error(Error::NotPlayersTurn(PLAYER0));
+                .expect_error(GameError::NotPlayersTurn(PLAYER0));
         }
 
         #[test]
@@ -1097,7 +968,7 @@ mod test {
 
             GameTestFramework::new(game_id, game)
                 .when(PlayCard::new(game_id, PLAYER1, card))
-                .expect_error(Error::InvalidPlay(card));
+                .expect_error(GameError::InvalidPlay(card));
         }
 
         #[test]
@@ -1785,7 +1656,7 @@ mod test {
     #[coverage(off)]
     mod the_go {
         use crate::{
-            Error, Game, GameBuilder, GameTestFramework, PLAYER0, PLAYER1, Pass, Points, State,
+            Game, GameBuilder, GameError, GameTestFramework, PLAYER0, PLAYER1, Pass, Points, State,
         };
 
         #[test]
@@ -1896,7 +1767,7 @@ mod test {
             let game_id = game.id;
             GameTestFramework::new(game_id, game)
                 .when(Pass::new(game_id, PLAYER1))
-                .expect_error(Error::InvalidPass);
+                .expect_error(GameError::InvalidPass);
         }
 
         #[test]
@@ -1912,7 +1783,7 @@ mod test {
             let game_id = game.id;
             GameTestFramework::new(game_id, game)
                 .when(Pass::new(game_id, PLAYER0))
-                .expect_error(Error::NotPlayersTurn(PLAYER0));
+                .expect_error(GameError::NotPlayersTurn(PLAYER0));
         }
 
         #[test]
@@ -2321,13 +2192,15 @@ mod test {
     ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
     #[coverage(off)]
     mod counting_the_hands {
+        use std::str::FromStr;
+
         use super::*;
+        use crate::constants::CARDS_DEALT_PER_HAND;
         use crate::{
             AcknowledgeCribScore, AcknowledgeDealerScore, AcknowledgePoneScore, Card, Crib, Game,
             GameBuilder, GameTestFramework, Hand, PLAYER0, PLAYER1, PlayCard, Points, State, card,
-            constants::CARDS_DEALT_PER_HAND, crib, hand,
+            crib, hand,
         };
-        use std::str::FromStr;
 
         #[test]
         fn score_pone_hand_when_plays_finished() {
@@ -2892,9 +2765,10 @@ mod test {
     /// A run of three, with one card triplicated (triple run), counts 15. A. A run of three, with
     /// two different cards duplicated, counts 16.
     mod combinations {
+        use std::str::FromStr;
+
         use super::*;
         use crate::{Card, Hand, Points, card, hand};
-        use std::str::FromStr;
 
         #[test]
         fn should_score_rules_example_eights_sevens_sixes() {

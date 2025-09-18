@@ -1,10 +1,11 @@
-use crate::{constants::*, *};
 use std::str::FromStr;
+
+use crate::constants::*;
+use crate::*;
 
 #[derive(Debug)]
 pub struct GameBuilder {
     dealer: usize,
-    cuts: Vec<Cut>,
     scoreboard: Scoreboard,
     hands: Vec<Hand>,
     current_plays: Vec<Play>,
@@ -13,7 +14,6 @@ pub struct GameBuilder {
     crib: Crib,
     cut: Option<Card>,
     deck: Deck,
-    winner: Option<usize>,
 }
 
 #[coverage(off)]
@@ -21,7 +21,6 @@ impl GameBuilder {
     pub fn new() -> Self {
         Self {
             dealer: usize::default(),
-            cuts: Vec::default(),
             scoreboard: Scoreboard::default(),
             hands: Vec::default(),
             current_plays: Vec::default(),
@@ -30,20 +29,7 @@ impl GameBuilder {
             crib: Crib::default(),
             cut: None,
             deck: Deck::shuffled_pack(),
-            winner: None,
         }
-    }
-
-    pub fn with_cuts(mut self, cuts: &str) -> Self {
-        let cuts = cards!(cuts);
-        self.deck.remove_all(&cuts);
-        self.cuts = cuts;
-        self
-    }
-
-    pub fn cuts(&self) -> Cuts {
-        let cuts = self.cuts.clone();
-        [cuts[0], cuts[1]]
     }
 
     pub fn with_peggings(mut self, points0: usize, points1: usize) -> Self {
@@ -106,18 +92,13 @@ impl GameBuilder {
         self
     }
 
-    pub fn with_winner(mut self, p: usize) -> Self {
-        self.winner = Some(p);
-        self
-    }
-
     pub fn into_new(self) -> State {
         State::default()
     }
 
     pub fn into_starting(self) -> Starting {
         let mut deck = self.deck.clone();
-        let mut cuts = self.cuts.clone();
+        let mut cuts = Vec::<Cut>::default();
 
         if cuts.len() < PLAYER_COUNT {
             let n = PLAYER_COUNT - cuts.len();
@@ -127,7 +108,7 @@ impl GameBuilder {
             });
         }
 
-        let cuts = self.cuts();
+        let cuts = [cuts[0], cuts[1]];
         Starting::new(cuts, deck, Pending::default())
     }
 

@@ -1,5 +1,6 @@
-use crate::{Reactor, TestFrameworkResult};
 use eventsourced::{Command, CommandEffect, EventSourced};
+
+use crate::{Reactor, TestFrameworkResult};
 
 /// A testing utility for simulating command handling and event sourcing in a CQRS/event-sourced system.
 ///

@@ -1,6 +1,9 @@
-use crate::{Card, display::format_vec};
-use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+
+use serde::{Deserialize, Serialize};
+
+use crate::Card;
+use crate::display::format_vec;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Pile<T: Clone> {
@@ -119,9 +122,10 @@ impl<T: Clone> Display for Pile<T> {
 #[cfg(test)]
 #[coverage(off)]
 mod test {
+    use std::str::FromStr;
+
     use super::*;
     use crate::{card, cards, pile};
-    use std::str::FromStr;
 
     impl<T: Clone> FromStr for Pile<T> {
         type Err = String;

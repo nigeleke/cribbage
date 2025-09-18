@@ -1,5 +1,6 @@
-use super::{Dealer, Player};
 use serde::{Deserialize, Serialize};
+
+use super::{Dealer, Player};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Pone(Player);

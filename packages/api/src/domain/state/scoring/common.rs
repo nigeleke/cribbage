@@ -1,9 +1,9 @@
-use crate::{
-    Crib, Cut, Hand, Hands, Pending, Player, Roles, ScoreBreakdown, Scoreboard, display::format_vec,
-};
+use serde::{Deserialize, Serialize};
+
+use crate::display::format_vec;
+use crate::{Crib, Cut, Hand, Hands, Pending, Player, Roles, ScoreBreakdown, Scoreboard};
 #[cfg(test)]
 use crate::{Dealer, Pone};
-use serde::{Deserialize, Serialize};
 
 pub type WaitingForScoresViewed = Pending;
 

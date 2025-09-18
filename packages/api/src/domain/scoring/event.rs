@@ -1,5 +1,7 @@
-use crate::{Card, Points, ScoreKind, display::format_vec};
 use serde::{Deserialize, Serialize};
+
+use crate::display::format_vec;
+use crate::{Card, Points, ScoreKind};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Event {

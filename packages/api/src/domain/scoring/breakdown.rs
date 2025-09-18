@@ -1,10 +1,10 @@
-use super::constants::*;
-use crate::{
-    Card, Crib, Cut, Hand, PlayState, Points, ScoreEvent, ScoreKind, Value, constants::*,
-    display::format_vec,
-};
 use itertools::*;
 use serde::{Deserialize, Serialize};
+
+use super::constants::*;
+use crate::constants::*;
+use crate::display::format_vec;
+use crate::{Card, Crib, Cut, Hand, PlayState, Points, ScoreEvent, ScoreKind, Value};
 
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Breakdown(Vec<ScoreEvent>);
@@ -268,9 +268,10 @@ impl std::fmt::Display for Breakdown {
 
 #[cfg(test)]
 mod test {
+    use std::str::FromStr;
+
     use super::*;
     use crate::{Card, Hand, PLAYER0, PLAYER1, card, hand};
-    use std::str::FromStr;
 
     #[test]
     #[should_panic]

@@ -1,5 +1,6 @@
-use crate::{GameId, State, UserId};
 use serde::{Deserialize, Serialize};
+
+use crate::{GameId, State, UserId};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Event {

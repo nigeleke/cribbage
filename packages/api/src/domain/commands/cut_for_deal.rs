@@ -1,9 +1,12 @@
-use crate::{
-    Crib, Cut, Dealer, Deck, Discarding, Error, Event, Game, GameId, PLAYER0, PLAYER1, Pending,
-    Player, Roles, Scoreboard, Starting, State, constants::PLAYER_COUNT, prettify,
-};
-use eventsourced::{Command, CommandEffect};
 use std::cmp::Ordering;
+
+use eventsourced::{Command, CommandEffect};
+
+use crate::constants::PLAYER_COUNT;
+use crate::{
+    Crib, Cut, Dealer, Deck, Discarding, Event, Game, GameError, GameId, PLAYER0, PLAYER1, Pending,
+    Player, Roles, Scoreboard, Starting, State, prettify,
+};
 
 #[derive(Debug)]
 pub struct CutForDeal {
@@ -35,7 +38,7 @@ impl CutForDealReply {
 
 impl Command<Game> for CutForDeal {
     type Reply = CutForDealReply;
-    type Error = Error;
+    type Error = GameError;
 
     fn handle_command(
         self,
@@ -43,7 +46,7 @@ impl Command<Game> for CutForDeal {
         game: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
         if game.id() != id {
-            return CommandEffect::reject(Error::InvalidGame(*id));
+            return CommandEffect::reject(GameError::InvalidGame(*id));
         };
 
         match game.state() {
@@ -92,7 +95,7 @@ impl Command<Game> for CutForDeal {
                     CutForDealReply { cut, proceeding }
                 })
             }
-            _ => CommandEffect::reject(Error::NotPermitted(prettify!(CutForDeal))),
+            _ => CommandEffect::reject(GameError::NotPermitted(prettify!(CutForDeal))),
         }
     }
 }

@@ -1,5 +1,7 @@
-use crate::{Cut, Cuts, Deck, Pending, Player, display::format_vec};
 use serde::{Deserialize, Serialize};
+
+use crate::display::format_vec;
+use crate::{Cut, Cuts, Deck, Pending, Player};
 
 pub type WaitingForCuts = Pending;
 

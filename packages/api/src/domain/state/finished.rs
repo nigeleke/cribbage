@@ -1,7 +1,9 @@
+use serde::{Deserialize, Serialize};
+
 #[cfg(test)]
 use crate::Hand;
-use crate::{Crib, Cut, Hands, Player, Roles, Scoreboard, display::format_vec};
-use serde::{Deserialize, Serialize};
+use crate::display::format_vec;
+use crate::{Crib, Cut, Hands, Player, Roles, Scoreboard};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Finished {

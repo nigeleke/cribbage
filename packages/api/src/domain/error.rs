@@ -1,9 +1,10 @@
-use crate::{Card, GameId, Player, UserId};
 use thiserror::Error;
+
+use crate::{Card, GameId, Player, UserId};
 
 /// Represents errors that may occur during game or user operations.
 #[derive(Debug, Error, PartialEq, Eq)]
-pub enum Error {
+pub enum GameError {
     /// The specified game is invalid or unrecognized.
     /// - `GameId`: The game that caused the error.
     #[error("invalid game {0}")]

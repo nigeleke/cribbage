@@ -1,5 +1,6 @@
-use super::{Dealer, Pone};
 use serde::{Deserialize, Serialize};
+
+use super::{Dealer, Pone};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Roles {

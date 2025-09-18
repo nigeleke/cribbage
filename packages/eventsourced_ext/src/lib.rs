@@ -9,7 +9,5 @@ mod macros;
 mod reactor;
 mod test;
 
-pub use self::{
-    reactor::Reactor,
-    test::{TestFramework, TestFrameworkResult},
-};
+pub use self::reactor::Reactor;
+pub use self::test::{TestFramework, TestFrameworkResult};

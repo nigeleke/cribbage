@@ -1,5 +1,6 @@
-use crate::{Card, Player};
 use serde::{Deserialize, Serialize};
+
+use crate::{Card, Player};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Play {

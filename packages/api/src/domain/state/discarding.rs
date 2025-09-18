@@ -1,8 +1,7 @@
-use crate::{
-    Card, Crib, Dealer, Deck, Hand, Hands, Pending, Player, Pone, Roles, Scoreboard,
-    display::format_vec,
-};
 use serde::{Deserialize, Serialize};
+
+use crate::display::format_vec;
+use crate::{Card, Crib, Dealer, Deck, Hand, Hands, Pending, Player, Pone, Roles, Scoreboard};
 
 pub type WaitingForDiscards = Pending;
 

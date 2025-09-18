@@ -1,15 +1,23 @@
 mod cards;
+mod commands;
+mod error;
+mod events;
 mod game;
 mod players;
 mod plays;
 mod scoreboard;
 mod scoring;
 mod state;
+mod types;
 
 pub use cards::*;
+pub use commands::*;
+pub use error::*;
+pub use events::*;
 pub use game::*;
 pub use players::*;
 pub use plays::*;
 pub use scoreboard::*;
 pub use scoring::*;
 pub use state::*;
+pub use types::*;

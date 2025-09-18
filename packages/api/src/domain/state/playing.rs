@@ -1,10 +1,11 @@
+use serde::{Deserialize, Serialize};
+
 #[cfg(test)]
 use crate::Pone;
+use crate::display::format_vec;
 use crate::{
     Card, Crib, Cut, Dealer, Hand, Hands, PlayState, Player, Roles, ScoreBreakdown, Scoreboard,
-    display::format_vec,
 };
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Playing {

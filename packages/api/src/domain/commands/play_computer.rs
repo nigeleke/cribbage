@@ -1,7 +1,8 @@
-use crate::{
-    Error, Event, Game, GameId, Player, UserId, domain::PLAYER0, name_builder::generate_game_name,
-};
 use eventsourced::{Command, CommandEffect};
+
+use crate::domain::PLAYER0;
+use crate::name_builder::generate_game_name;
+use crate::{GameError, Event, Game, GameId, Player, UserId};
 
 #[derive(Debug)]
 pub struct PlayComputer {
@@ -16,7 +17,7 @@ impl PlayComputer {
 
 impl Command<Game> for PlayComputer {
     type Reply = (GameId, Player);
-    type Error = Error;
+    type Error = GameError;
 
     fn handle_command(
         self,
@@ -24,7 +25,7 @@ impl Command<Game> for PlayComputer {
         game: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
         if game.id() != &GameId::default() {
-            return CommandEffect::reject(Error::InvalidGame(*id));
+            return CommandEffect::reject(GameError::InvalidGame(*id));
         };
 
         let game_id = *id;

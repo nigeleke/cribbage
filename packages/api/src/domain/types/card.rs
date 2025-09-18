@@ -6,7 +6,10 @@ mod rank;
 mod suit;
 mod value;
 
-pub use self::{face::Face, rank::Rank, suit::Suit, value::Value};
+pub use self::face::Face;
+pub use self::rank::Rank;
+pub use self::suit::Suit;
+pub use self::value::Value;
 
 /// A playing card.
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -77,8 +80,9 @@ impl std::fmt::Display for Card {
 #[cfg(test)]
 #[coverage(off)]
 mod test {
-    use super::*;
     use std::str::FromStr;
+
+    use super::*;
 
     impl FromStr for Card {
         type Err = String;

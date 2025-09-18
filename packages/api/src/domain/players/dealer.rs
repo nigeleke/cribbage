@@ -1,5 +1,6 @@
-use super::{Player, Pone};
 use serde::{Deserialize, Serialize};
+
+use super::{Player, Pone};
 
 /// Represents the dealer in a game round.
 ///

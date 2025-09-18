@@ -1,8 +1,8 @@
-use crate::{
-    Card, Hand, Hands, PLAYER0, PLAYER1, PLAYERS, Play, Player, Value, constants::*,
-    display::format_vec,
-};
 use serde::{Deserialize, Serialize};
+
+use crate::constants::*;
+use crate::display::format_vec;
+use crate::{Card, Hand, Hands, PLAYER0, PLAYER1, PLAYERS, Play, Player, Value};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayState {

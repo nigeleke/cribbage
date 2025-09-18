@@ -1,6 +1,7 @@
-use crate::{Event, Game, GameId};
 use eventsourced::{Command, CommandEffect};
 use eventsourced_ext::{TestFramework, TestFrameworkResult};
+
+use crate::{Event, Game, GameId};
 
 pub struct GameTestFramework {
     inner: TestFramework<Game>,

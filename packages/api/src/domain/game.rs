@@ -113,6 +113,8 @@ impl From<State> for Game {
 #[cfg(test)]
 #[coverage(off)]
 mod test {
+    use std::str::FromStr;
+
     use super::*;
     use crate::test::GameTestFramework;
     use crate::{Cut, CutForDeal, PLAYER0, PLAYER1, Starting, cut, prettify};

@@ -27,6 +27,7 @@ eventsourced = "0.27.0"
 eventsourced_ext = { workspace = true }
 itertools = "0.14.0"
 eventsourced-postgres = "0.14.1"
+rand = "0.9.2"
 
 [dev-dependencies]
 insta = { version = "1.43.2", features = ["filters"] }

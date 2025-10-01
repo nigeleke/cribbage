@@ -3,8 +3,8 @@ use eventsourced::{Command, CommandEffect};
 use crate::constants::CARDS_DISCARDED_TO_CRIB;
 use crate::display::format_vec;
 use crate::{
-    Card, Discarding, GameError, Event, Finished, Game, GameId, PLAYER0, PLAYER1, PlayState, Player,
-    Playing, ScoreBreakdown, State, prettify,
+    Card, Discarding, DomainError, Event, Finished, Game, GameId, PLAYER0, PLAYER1, PlayState,
+    Player, Playing, ScoreBreakdown, State, prettify,
 };
 
 #[derive(Debug)]
@@ -26,7 +26,7 @@ impl DiscardCardsToCrib {
 
 impl Command<Game> for DiscardCardsToCrib {
     type Reply = bool;
-    type Error = GameError;
+    type Error = DomainError;
 
     fn handle_command(
         self,
@@ -47,7 +47,9 @@ impl Command<Game> for DiscardCardsToCrib {
                 let valid = can_discard && valid_discard_count && valid_discard_cards;
 
                 if !valid {
-                    return CommandEffect::reject(GameError::InvalidDiscards(format_vec(&discards)));
+                    return CommandEffect::reject(DomainError::InvalidDiscards(format_vec(
+                        &discards,
+                    )));
                 }
 
                 hands[player].remove_all(&discards);
@@ -82,7 +84,7 @@ impl Command<Game> for DiscardCardsToCrib {
                     }
                 }
             }
-            _ => CommandEffect::reject(GameError::NotPermitted(prettify!(DiscardCardsToCrib))),
+            _ => CommandEffect::reject(DomainError::NotPermitted(prettify!(DiscardCardsToCrib))),
         }
     }
 }

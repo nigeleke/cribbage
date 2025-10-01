@@ -1,7 +1,7 @@
 use eventsourced::{Command, CommandEffect};
 
 use crate::domain::PLAYER1;
-use crate::{GameError, Event, Game, GameId, Player, UserId, prettify};
+use crate::{DomainError, Event, Game, GameId, Player, UserId, prettify};
 
 #[derive(Debug)]
 pub struct JoinGame {
@@ -17,7 +17,7 @@ impl JoinGame {
 
 impl Command<Game> for JoinGame {
     type Reply = Player;
-    type Error = GameError;
+    type Error = DomainError;
 
     fn handle_command(
         self,
@@ -25,13 +25,13 @@ impl Command<Game> for JoinGame {
         game: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
         if game.id() != id {
-            return CommandEffect::reject(GameError::InvalidGame(*id));
+            return CommandEffect::reject(DomainError::InvalidGame(*id));
         };
 
         if game.guest().is_some() {
-            CommandEffect::reject(GameError::NotPermitted(prettify!(JoinGame)))
+            CommandEffect::reject(DomainError::NotPermitted(prettify!(JoinGame)))
         } else if game.host() == &self.guest {
-            CommandEffect::reject(GameError::InvalidOpponent(self.guest))
+            CommandEffect::reject(DomainError::InvalidOpponent(self.guest))
         } else {
             let guest = self.guest;
             CommandEffect::emit_and_reply(Event::lobby_game_joined(*id, guest), move |_| PLAYER1)

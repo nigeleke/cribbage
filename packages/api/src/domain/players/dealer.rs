@@ -2,10 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use super::{Player, Pone};
 
-/// Represents the dealer in a game round.
-///
-/// Internally wraps a [`Player`] to distinguish dealer-related logic
-/// from general player behavior.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Dealer(Player);
 

@@ -4,8 +4,8 @@ use eventsourced::{Command, CommandEffect};
 
 use crate::constants::PLAYER_COUNT;
 use crate::{
-    Crib, Cut, Dealer, Deck, Discarding, Event, Game, GameError, GameId, PLAYER0, PLAYER1, Pending,
-    Player, Roles, Scoreboard, Starting, State, prettify,
+    Crib, Cut, Dealer, Deck, Discarding, DomainError, Event, Game, GameId, PLAYER0, PLAYER1,
+    Pending, Player, Roles, Scoreboard, Starting, State, prettify,
 };
 
 #[derive(Debug)]
@@ -38,7 +38,7 @@ impl CutForDealReply {
 
 impl Command<Game> for CutForDeal {
     type Reply = CutForDealReply;
-    type Error = GameError;
+    type Error = DomainError;
 
     fn handle_command(
         self,
@@ -46,7 +46,7 @@ impl Command<Game> for CutForDeal {
         game: &Game,
     ) -> CommandEffect<Game, Self::Reply, Self::Error> {
         if game.id() != id {
-            return CommandEffect::reject(GameError::InvalidGame(*id));
+            return CommandEffect::reject(DomainError::InvalidGame(*id));
         };
 
         match game.state() {
@@ -93,7 +93,7 @@ impl Command<Game> for CutForDeal {
                     CutForDealReply { cut, proceeding }
                 })
             }
-            _ => CommandEffect::reject(GameError::NotPermitted(prettify!(CutForDeal))),
+            _ => CommandEffect::reject(DomainError::NotPermitted(prettify!(CutForDeal))),
         }
     }
 }

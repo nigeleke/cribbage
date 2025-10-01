@@ -1,0 +1,16 @@
+[package]
+name = "entrypoint"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dioxus = { workspace = true, features = ["fullstack"] }
+frontend = { workspace = true }
+backend = { workspace = true, optional = true }
+
+[features]
+default = []
+desktop = ["dioxus/desktop"]
+mobile = ["dioxus/mobile"]
+web = ["dioxus/web"]
+server = ["dioxus/server", "dep:backend"]

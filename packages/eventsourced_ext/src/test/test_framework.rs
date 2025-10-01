@@ -1,6 +1,6 @@
 use eventsourced::{Command, CommandEffect, EventSourced};
 
-use crate::{Reactor, TestFrameworkResult};
+use crate::TestFrameworkResult;
 
 /// A testing utility for simulating command handling and event sourcing in a CQRS/event-sourced system.
 ///
@@ -14,14 +14,12 @@ use crate::{Reactor, TestFrameworkResult};
 /// # Fields
 /// - `id`: The identifier of the entity under test.
 /// - `entity`: The current state of the entity, updated via historical events or command effects.
-/// - `reactors`: The reactors that will be triggered by the test framework.
 pub struct TestFramework<E>
 where
     E: EventSourced,
 {
     id: E::Id,
     entity: E,
-    reactors: Vec<Box<dyn Reactor<E>>>,
 }
 
 impl<E> TestFramework<E>
@@ -34,12 +32,7 @@ where
     /// - `id` the entity id.
     /// - `entity` the entity itself.
     pub fn new(id: E::Id, entity: E) -> Self {
-        let reactors = Vec::default();
-        Self {
-            id,
-            entity,
-            reactors,
-        }
+        Self { id, entity }
     }
 
     /// Assert conditions (using supplied function) on an entity.
@@ -61,37 +54,6 @@ where
         &self.entity
     }
 
-    /// Registers a single reactor to be notified of all events applied during the test.
-    ///
-    /// # Parameters
-    /// - `reactor`: A boxed implementation of the `Reactor` trait for your event type.
-    ///
-    /// # Returns
-    /// A modified instance of the `TestFramework` with the reactor added.
-    ///
-    /// # Note
-    /// If this is called before `given` then the reactors will be applied to the `given`
-    /// events.
-    pub fn with_reactor(mut self, reactor: Box<dyn Reactor<E>>) -> Self {
-        self.reactors.push(reactor);
-        self
-    }
-
-    /// Registers multiple reactors to be notified of all events applied during the test.
-    ///
-    /// This is a convenience method that applies [`with_reactor`] repeatedly for each item in the vector.
-    ///
-    /// # Parameters
-    /// - `reactors`: A vector of boxed `Reactor` implementations to register.
-    ///
-    /// # Returns
-    /// A modified instance of the `TestFramework` with all reactors added.
-    pub fn with_reactors(self, reactors: Vec<Box<dyn Reactor<E>>>) -> Self {
-        reactors
-            .into_iter()
-            .fold(self, |acc, r| acc.with_reactor(r))
-    }
-
     /// Applies a sequence of historical events to the test framework's entity, simulating
     /// the past evolution of its state.
     ///
@@ -107,10 +69,6 @@ where
     {
         events.into_iter().fold(self, |mut me, event| {
             me.entity = me.entity.handle_event(event.clone());
-            me.entity = me
-                .reactors
-                .iter_mut()
-                .fold(me.entity, |e, r| r.apply(e, &me.id, event.clone()));
             me
         })
     }
@@ -147,10 +105,6 @@ where
 
         if let CommandEffect::EmitAndReply(event, _) = &effect {
             self.entity = self.entity.handle_event(event.clone());
-            self.entity = self
-                .reactors
-                .iter_mut()
-                .fold(self.entity, |e, r| r.apply(e, &self.id, event.clone()));
         }
 
         TestFrameworkResult::new(self.entity, effect)

@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-/// Represents a player in a two-player game.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Player(usize);
 

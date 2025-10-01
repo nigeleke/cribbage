@@ -1,4 +1,3 @@
-/// The value of a Card. 1 to 10.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Value(usize);
 

@@ -1,0 +1,21 @@
+.card-view {
+    --ease-time: 300ms;
+    transition: transform var(--ease-time) ease;
+}
+
+.card-view .card {
+}
+
+.card-view .placeholder {
+    border: dashed 2px var(--border-color);
+    border-radius: 5px;
+}
+
+.card-view.selected {
+    transform: translateY(-20px) rotate(5deg);
+    transition: transform var(--ease-time) ease;
+}
+
+.card-view.selectable {
+    cursor: pointer;
+}

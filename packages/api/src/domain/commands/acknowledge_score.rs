@@ -2,7 +2,7 @@ use eventsourced::{Command, CommandEffect};
 
 use crate::constants::PLAYER_COUNT;
 use crate::{
-    Crib, Deck, Discarding, Event, Finished, Game, GameError, GameId, Hands, Pending, Player,
+    Crib, Deck, Discarding, DomainError, Event, Finished, Game, GameId, Hands, Pending, Player,
     Roles, ScoreBreakdown, ScoringCrib, ScoringDealer, ScoringPone, State, prettify,
 };
 
@@ -22,7 +22,7 @@ macro_rules! acknowledge_score {
 
         impl Command<Game> for $cmd {
             type Reply = bool;
-            type Error = GameError;
+            type Error = DomainError;
 
             fn handle_command(
                 self,
@@ -60,7 +60,7 @@ macro_rules! acknowledge_score {
                             )
                         }
                     }
-                    _ => CommandEffect::reject(GameError::NotPermitted(prettify!($cmd))),
+                    _ => CommandEffect::reject(DomainError::NotPermitted(prettify!($cmd))),
                 }
             }
         }

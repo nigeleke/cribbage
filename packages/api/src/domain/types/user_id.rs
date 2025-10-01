@@ -1,21 +1,26 @@
+use dto::UserIdDTO;
 use serde::{Deserialize, Serialize};
-use ulid::Ulid;
+use uuid::Uuid;
 
 use crate::constants::*;
 
-/// A unique identifier for a user, internally represented as a ULID.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct UserId(Ulid);
+pub struct UserId(Uuid);
 
 impl UserId {
-    /// Generates a new, random `UserId` using a ULID.
     pub fn new() -> Self {
-        Self::from(Ulid::new())
+        Self::from(Uuid::new_v4())
     }
 }
 
-impl From<Ulid> for UserId {
-    fn from(value: Ulid) -> Self {
+impl From<UserIdDTO> for UserId {
+    fn from(id: UserIdDTO) -> Self {
+        Self(id.value())
+    }
+}
+
+impl From<Uuid> for UserId {
+    fn from(value: Uuid) -> Self {
         Self(value)
     }
 }
@@ -37,7 +42,7 @@ mod test {
     fn user_id_is_displayable() {
         filtered_assert(
             UserId::new().to_string(),
-            |actual| insta::assert_snapshot!(actual, @"<userid>"),
+            |actual| insta::assert_snapshot!(actual, @"UserId(<uuid>)"),
         );
     }
 }

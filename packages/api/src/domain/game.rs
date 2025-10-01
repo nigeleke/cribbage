@@ -1,49 +1,30 @@
 use eventsourced::EventSourced;
 use serde::{Deserialize, Serialize};
 
-use crate::constants::PLAYER_COUNT;
-use crate::{
-    Card, Crib, Cut, Dealer, Deck, Discarding, Event, EventKind, Finished, GameId, PLAYER0,
-    PLAYER1, Pending, PlayState, Player, Playing, Roles, ScoreBreakdown, ScorePhase, Scoreboard,
-    ScoringPone, Starting, State, UserId, Users,
-};
+use crate::{Event, EventKind, GameId, State, UserId};
 
-/// Represents a game session, including host and guest players, game metadata, and state.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Game {
-    /// Unique identifier for the game.
     id: GameId,
-
-    /// The user who created or is hosting the game.
     host: UserId,
-
-    /// Optional user ID of the guest player, if one has joined.
     guest: Option<UserId>,
-
-    /// The name or title of the game.
     name: String,
-
-    /// The current state of the game.
     state: State,
 }
 
 impl Game {
-    /// Returns a reference to the game’s unique ID.
     pub fn id(&self) -> &GameId {
         &self.id
     }
 
-    /// Returns a reference to the host user’s ID.
     pub fn host(&self) -> &UserId {
         &self.host
     }
 
-    /// Returns an optional reference to the guest user’s ID, if a guest has joined.
     pub fn guest(&self) -> Option<&UserId> {
         self.guest.as_ref()
     }
 
-    /// Return a reference to the game's current state.
     pub fn state(&self) -> &State {
         &self.state
     }
@@ -98,19 +79,19 @@ impl EventSourced for Game {
     }
 }
 
-impl Game {
-    pub fn new(id: GameId, host: UserId, guest: Option<UserId>, name: String) -> Self {
-        let starting = Starting::default();
-        let state = State::Starting(starting);
-        Game {
-            id,
-            host,
-            guest,
-            name,
-            state,
-        }
-    }
-}
+// impl Game {
+//     pub fn new(id: GameId, host: UserId, guest: Option<UserId>, name: String) -> Self {
+//         let starting = Starting::default();
+//         let state = State::Starting(starting);
+//         Game {
+//             id,
+//             host,
+//             guest,
+//             name,
+//             state,
+//         }
+//     }
+// }
 
 #[cfg(test)]
 impl From<State> for Game {
@@ -132,10 +113,9 @@ impl From<State> for Game {
 #[cfg(test)]
 #[coverage(off)]
 mod test {
-    use std::str::FromStr;
-
     use super::*;
-    use crate::{CutForDeal, GameTestFramework, cut, prettify};
+    use crate::test::GameTestFramework;
+    use crate::{Cut, CutForDeal, PLAYER0, PLAYER1, Starting, cut, prettify};
 
     fn kinds_to_events(game_id: GameId, events: &[EventKind]) -> Vec<Event> {
         events
@@ -175,7 +155,7 @@ mod test {
     mod players {
         use super::*;
         use crate::test::GameTestFramework;
-        use crate::{EventKind, GameError, HostGame, JoinGame, PlayComputer};
+        use crate::{DomainError, EventKind, HostGame, JoinGame, PlayComputer};
 
         #[test]
         fn a_user_can_host_game() {
@@ -288,7 +268,7 @@ mod test {
             GameTestFramework::new(game_id, Game::default())
                 .given(kinds_to_events(game_id, &preconditions))
                 .when(JoinGame::new(game_id, guest))
-                .expect_error(GameError::NotPermitted(prettify!(JoinGame)));
+                .expect_error(DomainError::NotPermitted(prettify!(JoinGame)));
         }
 
         #[test]
@@ -307,7 +287,7 @@ mod test {
             GameTestFramework::new(game_id, Game::default())
                 .given(kinds_to_events(game_id, &preconditions))
                 .when(JoinGame::new(game_id, guest))
-                .expect_error(GameError::InvalidOpponent(guest));
+                .expect_error(DomainError::InvalidOpponent(guest));
         }
     }
 
@@ -340,14 +320,10 @@ mod test {
     /// deal. (In some games, there is no cut at this time.)
     mod deal_cut {
         use std::cmp::Ordering;
-        use std::str::FromStr;
 
         use super::*;
         use crate::test::GameTestFramework;
-        use crate::{
-            CutForDeal, CutForDealReply, Dealer, Deck, GameBuilder, PLAYER0, PLAYER1, Scoreboard,
-            cut,
-        };
+        use crate::{CutForDeal, Dealer, PLAYER0, PLAYER1};
 
         #[test]
         fn user_must_confirm_the_cut_1() {
@@ -463,9 +439,8 @@ mod test {
     /// opponent.
     mod deal {
         use super::*;
-        use crate::constants::CARDS_DEALT_PER_HAND;
-        use crate::test::GameTestFramework;
-        use crate::{Dealer, STANDARD_DECK_SIZE, Scoreboard};
+        use crate::STANDARD_DECK_SIZE;
+        use crate::constants::{CARDS_DEALT_PER_HAND, PLAYER_COUNT};
 
         #[test]
         fn dealer_deals_six_cards_each() {
@@ -570,7 +545,7 @@ mod test {
 
                 GameTestFramework::new(game_id, game)
                     .when(DiscardCardsToCrib::new(game_id, PLAYER0, &discards))
-                    .expect_error(GameError::InvalidDiscards(expected_discards));
+                    .expect_error(DomainError::InvalidDiscards(expected_discards));
             }
         }
 
@@ -589,7 +564,7 @@ mod test {
 
             GameTestFramework::new(game_id, game)
                 .when(DiscardCardsToCrib::new(game_id, PLAYER0, &discards))
-                .expect_error(GameError::InvalidDiscards(expected_discards));
+                .expect_error(DomainError::InvalidDiscards(expected_discards));
         }
 
         #[test]
@@ -609,7 +584,7 @@ mod test {
             GameTestFramework::new(game_id, game)
                 .execute(DiscardCardsToCrib::new(game_id, PLAYER0, &discards0))
                 .when(DiscardCardsToCrib::new(game_id, PLAYER0, &discards1))
-                .expect_error(GameError::InvalidDiscards(expected_discards));
+                .expect_error(DomainError::InvalidDiscards(expected_discards));
         }
     }
 
@@ -796,11 +771,10 @@ mod test {
     mod the_play {
         use std::str::FromStr;
 
-        use super::*;
-        use crate::domain::game;
+        use crate::test::{GameBuilder, GameTestFramework};
         use crate::{
-            Card, Event, Game, GameBuilder, GameError, GameTestFramework, Hand, PLAYER0, PLAYER1,
-            Play, PlayCard, Points, State, card, hand,
+            Card, DomainError, Game, Hand, PLAYER0, PLAYER1, Play, PlayCard, Points, State, card,
+            hand,
         };
 
         #[test]
@@ -928,7 +902,7 @@ mod test {
 
             GameTestFramework::new(game_id, game)
                 .when(PlayCard::new(game_id, PLAYER1, card))
-                .expect_error(GameError::InvalidPlay(card));
+                .expect_error(DomainError::InvalidPlay(card));
         }
 
         #[test]
@@ -946,7 +920,7 @@ mod test {
 
             GameTestFramework::new(game_id, game)
                 .when(PlayCard::new(game_id, PLAYER0, card))
-                .expect_error(GameError::NotPlayersTurn(PLAYER0));
+                .expect_error(DomainError::NotPlayersTurn(PLAYER0));
         }
 
         #[test]
@@ -968,7 +942,7 @@ mod test {
 
             GameTestFramework::new(game_id, game)
                 .when(PlayCard::new(game_id, PLAYER1, card))
-                .expect_error(GameError::InvalidPlay(card));
+                .expect_error(DomainError::InvalidPlay(card));
         }
 
         #[test]
@@ -1655,9 +1629,8 @@ mod test {
     /// have a Go on the last card if not earlier.
     #[coverage(off)]
     mod the_go {
-        use crate::{
-            Game, GameBuilder, GameError, GameTestFramework, PLAYER0, PLAYER1, Pass, Points, State,
-        };
+        use crate::test::{GameBuilder, GameTestFramework};
+        use crate::{DomainError, Game, PLAYER0, PLAYER1, Pass, Points, State};
 
         #[test]
         fn accept_pass_when_pone_has_no_valid_card() {
@@ -1767,7 +1740,7 @@ mod test {
             let game_id = game.id;
             GameTestFramework::new(game_id, game)
                 .when(Pass::new(game_id, PLAYER1))
-                .expect_error(GameError::InvalidPass);
+                .expect_error(DomainError::InvalidPass);
         }
 
         #[test]
@@ -1783,7 +1756,7 @@ mod test {
             let game_id = game.id;
             GameTestFramework::new(game_id, game)
                 .when(Pass::new(game_id, PLAYER0))
-                .expect_error(GameError::NotPlayersTurn(PLAYER0));
+                .expect_error(DomainError::NotPlayersTurn(PLAYER0));
         }
 
         #[test]
@@ -2020,7 +1993,8 @@ mod test {
     /// true run with no foreign card.
     #[coverage(off)]
     mod pegging {
-        use crate::{GameBuilder, Points, ScoreBreakdown};
+        use crate::test::GameBuilder;
+        use crate::{Points, ScoreBreakdown};
 
         #[test]
         fn should_score_fifteens() {
@@ -2196,10 +2170,10 @@ mod test {
 
         use super::*;
         use crate::constants::CARDS_DEALT_PER_HAND;
+        use crate::test::{GameBuilder, GameTestFramework};
         use crate::{
             AcknowledgeCribScore, AcknowledgeDealerScore, AcknowledgePoneScore, Card, Crib, Game,
-            GameBuilder, GameTestFramework, Hand, PLAYER0, PLAYER1, PlayCard, Points, State, card,
-            crib, hand,
+            Hand, PLAYER0, PLAYER1, PlayCard, Points, ScoreBreakdown, State, card, crib, hand,
         };
 
         #[test]
@@ -2767,8 +2741,7 @@ mod test {
     mod combinations {
         use std::str::FromStr;
 
-        use super::*;
-        use crate::{Card, Hand, Points, card, hand};
+        use crate::{Card, Hand, Points, ScoreBreakdown, card, hand};
 
         #[test]
         fn should_score_rules_example_eights_sevens_sixes() {

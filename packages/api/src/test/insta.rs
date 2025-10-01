@@ -1,9 +1,7 @@
 pub fn filtered_assert(s: String, f: impl Fn(String)) {
     insta::with_settings!({filters => vec![
         (r"Card\([A-Z2-9][HCDS]\)", "<card>"),
-        (r"GameId\([0-9A-Z]{26}\)", "<gameid>"),
         (r"[a-z]+-[a-z]+-[a-z]+", "<name>"),
-        (r"Ulid\([0-9]+\)", "<ulid>"),
-        (r"UserId\([0-9A-Z]{26}\)", "<userid>"),
+        (r"[0-9a-f]{8}(-[0-9a-z]{4}){3}-[0-9a-z]{12}", "<uuid>"),
     ]}, { f(s.into()) })
 }

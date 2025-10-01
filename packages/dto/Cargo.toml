@@ -1,0 +1,10 @@
+[package]
+name = "dto"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dioxus = { workspace = true }
+serde = { version = "1.0.228", features = ["derive"] }
+thiserror = "2.0.16"
+uuid = { version = "1.18.1", features = ["serde"] }

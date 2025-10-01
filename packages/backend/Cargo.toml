@@ -1,0 +1,15 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dioxus = { workspace = true, features = ["server"] }
+api = { workspace = true }
+axum = { version = "0.8.5" }
+dotenvy = { version = "0.15.7" }
+tokio = { version = "1.47.1", features = ["full"] }
+
+[features]
+default = []
+server = ["dioxus/server"]

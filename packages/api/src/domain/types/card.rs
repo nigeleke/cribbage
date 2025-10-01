@@ -11,7 +11,6 @@ pub use self::rank::Rank;
 pub use self::suit::Suit;
 pub use self::value::Value;
 
-/// A playing card.
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Card {
     face: Face,

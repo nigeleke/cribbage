@@ -1,14 +1,30 @@
+use dto::GameIdDTO;
 use serde::{Deserialize, Serialize};
-use ulid::Ulid;
+use uuid::Uuid;
 
-/// A unique identifier for a game, internally represented as a ULID.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct GameId(Ulid);
+pub struct GameId(Uuid);
 
 impl GameId {
-    /// Generates a new, random `GameId` using a ULID.
+    /// Generates a new, random `GameId` using a Uuid.
     pub fn new() -> Self {
-        Self(Ulid::new())
+        Self(Uuid::now_v7())
+    }
+
+    pub fn value(self) -> Uuid {
+        self.0
+    }
+}
+
+impl From<GameIdDTO> for GameId {
+    fn from(id: GameIdDTO) -> Self {
+        Self(id.value())
+    }
+}
+
+impl From<GameId> for GameIdDTO {
+    fn from(id: GameId) -> Self {
+        GameIdDTO::new(id.0)
     }
 }
 
@@ -17,6 +33,7 @@ impl std::fmt::Display for GameId {
         write!(f, "GameId({})", self.0)
     }
 }
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -26,7 +43,7 @@ mod test {
     fn game_id_is_displayable() {
         filtered_assert(
             GameId::new().to_string(),
-            |actual| insta::assert_snapshot!(actual, @"<gameid>"),
+            |actual| insta::assert_snapshot!(actual, @"GameId(<uuid>)"),
         );
     }
 }

@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, EnumIter};
 
-/// A Card suit.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, EnumIter, AsRefStr)]
 pub enum Suit {
     Hearts,

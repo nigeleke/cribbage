@@ -1,7 +1,7 @@
 use eventsourced::{Command, CommandEffect};
 
 use crate::{
-    GameError, Event, Finished, Game, GameId, Player, Playing, ScoreBreakdown, State, prettify,
+    DomainError, Event, Finished, Game, GameId, Player, Playing, ScoreBreakdown, State, prettify,
 };
 
 #[derive(Debug)]
@@ -18,7 +18,7 @@ impl Pass {
 
 impl Command<Game> for Pass {
     type Reply = ();
-    type Error = GameError;
+    type Error = DomainError;
 
     fn handle_command(
         self,
@@ -30,9 +30,9 @@ impl Command<Game> for Pass {
                 let player = self.player;
 
                 if playing.play_state().next_to_play() != player {
-                    CommandEffect::reject(GameError::NotPlayersTurn(player))
+                    CommandEffect::reject(DomainError::NotPlayersTurn(player))
                 } else if !playing.play_state().legal_plays(player).is_empty() {
-                    CommandEffect::reject(GameError::InvalidPass)
+                    CommandEffect::reject(DomainError::InvalidPass)
                 } else {
                     let (mut scoreboard, roles, hands, mut play_state, crib, cut) =
                         playing.clone().into_parts();

@@ -1,0 +1,17 @@
+[package]
+name = "ui"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dioxus = { workspace = true, features = ["fullstack"] }
+dioxus-sdk = { workspace = true, features = ["storage", "time"] }
+api = { workspace = true }
+dto = { workspace = true }
+gloo-timers = { version = "0.3.0", features = ["futures"] }
+
+[features]
+default = []
+desktop = ["dioxus/desktop"]
+mobile = ["dioxus/mobile"]
+web = ["dioxus/web"]

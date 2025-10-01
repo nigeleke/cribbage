@@ -1,11 +1,10 @@
-use rand::seq::SliceRandom;
-use rand::thread_rng;
+// use rand::seq::SliceRandom;
+// use rand::thread_rng;
 
 use super::{Hand, Pile};
 use crate::constants::*;
 use crate::{Card, Cut};
 
-/// A deck of cards.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DeckType;
 pub type Deck = Pile<DeckType>;
@@ -13,7 +12,7 @@ pub type Deck = Pile<DeckType>;
 impl Deck {
     pub fn shuffled_pack() -> Self {
         let mut cards = Card::all();
-        cards.shuffle(&mut thread_rng());
+        // cards.shuffle(&mut thread_rng());
         Self::from(cards.as_ref())
     }
 

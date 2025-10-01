@@ -4,7 +4,6 @@ use strum::{AsRefStr, EnumIter};
 use super::rank::Rank;
 use super::value::Value;
 
-/// A Card face.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, EnumIter, AsRefStr)]
 pub enum Face {
     Ace,

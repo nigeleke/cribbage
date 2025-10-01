@@ -53,9 +53,11 @@ dependencies = [
  "eventsourced",
  "eventsourced-postgres",
  "eventsourced_ext",
+ "goofy-animals",
  "insta",
  "itertools",
  "rand 0.9.2",
+ "rand_chacha 0.9.0",
  "serde",
  "serde_json",
  "sqlx",
@@ -610,6 +612,12 @@ name = "const-str"
 version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "451d0640545a0553814b4c646eb549343561618838e9b42495f466131fe3ad49"
+
+[[package]]
+name = "const-str"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4d34b8f066904ed7cfa4a6f9ee96c3214aa998cb44b69ca20bd2054f47402ed"
 
 [[package]]
 name = "const_format"
@@ -2470,6 +2478,15 @@ dependencies = [
  "glib-sys",
  "libc",
  "system-deps",
+]
+
+[[package]]
+name = "goofy-animals"
+version = "0.1.0"
+source = "git+https://github.com/nigeleke/goofy-animals.git#48b3e8d509eecd92683319806fd198b3818511a9"
+dependencies = [
+ "const-str 0.7.0",
+ "rand 0.9.2",
 ]
 
 [[package]]
@@ -4808,7 +4825,7 @@ dependencies = [
  "axum",
  "base64",
  "bytes",
- "const-str",
+ "const-str 0.6.4",
  "const_format",
  "dashmap",
  "futures",

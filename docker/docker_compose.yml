@@ -24,16 +24,6 @@ services:
             - cribbagenw
         restart: unless-stopped
 
-    valkey:
-        image: valkey/valkey:latest
-        container_name: valkey
-        ports:
-            - "6379:6379"
-            - "8001:8001"
-        networks:
-            - cribbagenw
-        restart: unless-stopped
-
 networks:
     cribbagenw:
         driver: bridge

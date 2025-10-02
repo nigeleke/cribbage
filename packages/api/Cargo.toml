@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 dioxus = { workspace = true, features = ["fullstack"] }
 axum = { version = "0.8.4" }
-bb8-valkey = { version = "0.0.0-alpha2" }
 chrono = { version = "0.4.42", features = ["serde"] }
 serde = { version = "1.0.226", features = ["derive"] }
 serde_json = { version = "1.0.145" }
@@ -20,7 +19,6 @@ sqlx = { version = "0.8.6", features = [
 ] }
 thiserror = "2.0.16"
 uuid = { version = "1.18.1", nodefault = true, features = ["v4", "v7", "serde"] }
-tokio-valkey = { version = "0.0.0-alpha2", optional = true }
 dto = { workspace = true }
 strum = { version = "0.27.2", features = ["derive"] }
 eventsourced = "0.27.0"
@@ -38,8 +36,4 @@ insta = { version = "1.43.2", features = ["filters"] }
 default = []
 server = [
     "dioxus/server",
-    # "dep:bb8-valkey",
-    # "dep:serde_json",
-    # "dep:sqlx",
-    "dep:tokio-valkey",
 ]

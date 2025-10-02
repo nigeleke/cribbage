@@ -46,7 +46,6 @@ name = "api"
 version = "0.1.0"
 dependencies = [
  "axum",
- "bb8-valkey",
  "chrono",
  "dioxus",
  "dto",
@@ -63,7 +62,6 @@ dependencies = [
  "sqlx",
  "strum",
  "thiserror 2.0.17",
- "tokio-valkey",
  "uuid",
 ]
 
@@ -324,18 +322,6 @@ dependencies = [
  "bb8",
  "tokio",
  "tokio-postgres",
-]
-
-[[package]]
-name = "bb8-valkey"
-version = "0.0.0-alpha2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a6e47bce89459a403f1ac8dd4f22773cd6a18bea1961078d39f12e070a8bf7a"
-dependencies = [
- "async-trait",
- "bb8",
- "tokio",
- "tokio-valkey",
 ]
 
 [[package]]
@@ -5777,15 +5763,6 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "pin-project-lite",
- "tokio",
-]
-
-[[package]]
-name = "tokio-valkey"
-version = "0.0.0-alpha2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d090d4c493086c9a0b3628df42a946f9beb12339eac2f90f481067043051e58d"
-dependencies = [
  "tokio",
 ]
 

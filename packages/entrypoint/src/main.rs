@@ -1,4 +1,4 @@
-mod app;
+pub use frontend::App;
 
 fn main() {
     dioxus::logger::init(dioxus::logger::tracing::Level::DEBUG)
@@ -8,11 +8,11 @@ fn main() {
     dotenvy::dotenv().expect("environment settings required");
 
     #[cfg(not(feature = "server"))]
-    dioxus::launch(app::App);
+    dioxus::launch(App);
 
     #[cfg(feature = "server")]
     dioxus::serve(|| async move {
-        let router = dioxus::server::router(app::App);
+        let router = dioxus::server::router(App);
         Ok(router)
     });
 }

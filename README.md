@@ -33,7 +33,7 @@ cargo test --all-features
 
 ```bash
 docker-compose -f docker/docker_compose.yml up -d
-dx build --package=frontend [platform]
+dx build --package=entrypoint [platform]
   where [platform] is
     --desktop
     --mobile
@@ -44,7 +44,7 @@ dx build --package=frontend [platform]
 
 ```bash
 docker-compose -f docker/docker_compose.yml up -d
-dx serve --package=frontend [platform]
+dx serve --package=entry [platform]
   where [platform] is
     --desktop
     --web

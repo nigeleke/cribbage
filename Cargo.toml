@@ -6,6 +6,7 @@ members = [
     "packages/api",
     "packages/ui",
     "packages/frontend",
+    "packages/entrypoint"
 ]
 
 [workspace.dependencies]
@@ -16,3 +17,4 @@ api = { path = "packages/api" }
 backend = { path = "packages/backend" }
 dto = { path = "packages/dto" }
 ui = { path = "packages/ui" }
+frontend = { path = "packages/frontend" }

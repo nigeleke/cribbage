@@ -1,0 +1,17 @@
+[package]
+name = "entrypoint"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dioxus = { workspace = true, features = ["fullstack"] }
+backend = { workspace = true, optional = true }
+dotenvy = { version = "0.15.7", optional = true }
+frontend = { workspace = true, optional = true }
+
+[features]
+default = ["desktop"]
+desktop = ["dioxus/desktop", "frontend/desktop"]
+mobile = ["dioxus/mobile", "frontend/mobile"]
+web = ["dioxus/web", "frontend/web"]
+server = ["dioxus/server", "backend/server", "frontend/server", "dep:dotenvy"]

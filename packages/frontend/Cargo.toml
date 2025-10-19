@@ -4,7 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-dioxus = { workspace = true, features = ["router"] }
+dioxus = { workspace = true, features = ["router", "fullstack"] }
 dioxus-sdk = { workspace = true, features = ["storage", "time"] }
+dotenvy = { version = "0.15.7", optional = true }
 dto = { workspace = true }
 ui = { workspace = true }
+
+[features]
+default = ["desktop"]
+desktop = ["dioxus/desktop"]
+mobile = ["dioxus/mobile"]
+web = ["dioxus/web"]
+server = ["dioxus/server", "ui/server", "dep:dotenvy"]

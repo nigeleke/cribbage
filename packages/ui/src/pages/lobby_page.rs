@@ -1,4 +1,3 @@
-use dioxus::logger::tracing::warn;
 use dioxus::prelude::*;
 use dto::{GameIdDTO, UserIdDTO};
 // use futures_util::StreamExt;
@@ -8,14 +7,27 @@ use dto::{GameIdDTO, UserIdDTO};
 #[component]
 pub fn LobbyPage(game_id: GameIdDTO) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
-    // let mut game = use_signal(|| None);
+    let mut game = use_signal(|| None);
 
-    // let fetch_game = use_resource(move || async move { fetch_lobby_game(id).await });
-    // use_effect(move || {
-    //     if let Some(result) = fetch_game() {
-    //         game.set(result.ok());
-    //     };
-    // });
+    dioxus::logger::tracing::info!("LobbyPage 1");
+
+    let mut game_stream = use_action(move || async move {
+        dioxus::logger::tracing::info!("LobbyPage 2");
+        let mut stream = api::user_game_stream(*user_id.read(), game_id).await?;
+        dioxus::logger::tracing::info!("LobbyPage 3");
+
+        while let Some(Ok(updated_game)) = stream.next().await {
+            dioxus::logger::tracing::info!("LobbyPage 4");
+            game.set(Some(updated_game));
+        }
+
+        dioxus::logger::tracing::info!("LobbyPage 5");
+        dioxus::Ok(())
+    });
+
+    use_effect(move || {
+        game_stream.call();
+    });
 
     let navigator = use_navigator();
 
@@ -55,21 +67,21 @@ pub fn LobbyPage(game_id: GameIdDTO) -> Element {
 
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/lobby_page.css") }
-        // if let Some(game) = game() {
-        //     div {
-        //        class: "lobby-page",
-        //        "The game "
-        //        span {
-        //           class: "game-name",
-        //           "{game.name()}"
-        //        }
-        //        " is waiting for an opponent"
-        //     }
-        // } else {
-        //     div {
-        //         class: "lobby-page",
-        //         "Loading..."
-        //     }
-        // }
+        if let Some(game) = game() {
+            div {
+               class: "lobby-page",
+               "The game "
+               span {
+                  class: "game-name",
+                  "{game.name()}"
+               }
+               " is waiting for an opponent"
+            }
+        } else {
+            div {
+                class: "lobby-page",
+                "Loading..."
+            }
+        }
     }
 }

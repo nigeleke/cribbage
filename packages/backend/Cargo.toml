@@ -4,11 +4,31 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-dioxus = { workspace = true, features = ["server"] }
-api = { workspace = true }
-axum = { version = "0.8.5" }
-dotenvy = { version = "0.15.7" }
+dioxus = { workspace = true }
+chrono = { version = "0.4.42", features = ["serde"] }
+goofy-animals = "0.1.0"
+itertools = { version = "0.14.0" }
+rand = "0.9.2"
+rand_chacha = "0.9.0"
+serde = { version = "1.0.226", features = ["derive"] }
+serde_json = { version = "1.0.145" }
+sqlx = { version = "0.8.6", features = [
+    "runtime-tokio",
+    "runtime-async-std",
+    "postgres",
+    "uuid",
+    "chrono",
+    "json",
+    "migrate",
+] }
+strum = { version = "0.27.2", features = ["derive"] }
+thiserror = { version = "2.0.17" }
 tokio = { version = "1.47.1", features = ["full"] }
+uuid = { version = "1.18.1", nodefault = true, features = ["serde", "v7"] }
+futures = "0.3.31"
+
+[dev-dependencies]
+insta = { version = "1.43.2", features = ["filters"] }
 
 [features]
 default = []

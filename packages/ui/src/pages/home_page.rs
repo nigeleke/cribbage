@@ -1,4 +1,3 @@
-use api::{AvailableGamesRequest, AvailableGamesState, get_available_games, host_game};
 use dioxus::prelude::*;
 use dto::{AvailableGameDTO, UserIdDTO};
 
@@ -28,7 +27,7 @@ fn NewGameSection() -> Element {
 
     let host_game = move |_| {
         spawn(async move {
-            match host_game(*user_id.read()).await {
+            match api::host_game(*user_id.read()).await {
                 Ok(game_id) => {
                     navigator.push(Route::LobbyPage { game_id });
                 }
@@ -73,38 +72,35 @@ fn JoinGameSection() -> Element {
     let mut filter = use_signal(String::default);
 
     let mut has_more = use_signal(|| false);
-    let mut next_state = use_signal(AvailableGamesState::default);
+    let mut since = use_signal(|| api::Since::default());
 
     let fetch_games = {
-        move |state: AvailableGamesState, replace: bool| async move {
-            let request = AvailableGamesRequest::new(*user_id.read(), filter(), state);
-            dioxus::logger::tracing::info!("{request:?}");
-            let result = get_available_games(request).await;
-            dioxus::logger::tracing::info!("{result:?}");
-            // match get_available_games(request).await {
-            //     Ok(response) => {
-            //         if replace {
-            //             games.set(Vec::from(response.games()));
-            //         } else {
-            //             let mut new_games = response
-            //                 .games()
-            //                 .iter()
-            //                 .filter_map(|g| (!games.read().contains(g)).then_some(g.clone()))
-            //                 .collect::<Vec<_>>();
-            //             games.write().append(&mut new_games);
-            //         }
-            //         next_state.set(response.state().clone());
-            //         has_more.set(response.has_more());
-            //     }
-            //     Err(e) => {
-            //         panic!("Failed to fetch games: {e}");
-            //     }
-            // }
+        move |since2: api::Since, replace: bool| async move {
+            let result = api::get_available_games(*user_id.read(), Some(filter()), since2).await;
+            match result {
+                Ok(response) => {
+                    if replace {
+                        games.set(Vec::from(response.games()));
+                    } else {
+                        let mut new_games = response
+                            .games()
+                            .iter()
+                            .filter_map(|g| (!games.read().contains(g)).then_some(g.clone()))
+                            .collect::<Vec<_>>();
+                        games.write().append(&mut new_games);
+                    }
+                    since.set(response.since().clone());
+                    has_more.set(response.has_more());
+                }
+                Err(e) => {
+                    dioxus::logger::tracing::error!("Failed to fetch games: '{e}'");
+                }
+            }
         }
     };
 
     let _ = use_resource(move || async move {
-        fetch_games(AvailableGamesState::default(), true).await;
+        fetch_games(api::Since::default(), true).await;
     });
 
     // use_coroutine(move |_: UnboundedReceiver<()>| async move {
@@ -177,10 +173,10 @@ fn JoinGameSection() -> Element {
                 value: filter,
                 on_debounced_input: move |value| {
                     filter.set(value);
-                    let state = AvailableGamesState::default();
-                    // async move {
-                    //     fetch_games(state, true).await;
-                    // }
+                    let state = api::Since::default();
+                    async move {
+                        fetch_games(state, true).await;
+                    }
                 }
             }
             GameList { games }
@@ -188,9 +184,9 @@ fn JoinGameSection() -> Element {
                 class: "more-button",
                 disabled: !has_more(),
                 onclick: move |_| {
-                    // async move {
-                    //     fetch_games(next_state(), false).await;
-                    // }
+                    async move {
+                        fetch_games(since(), false).await;
+                    }
                 },
                 "More..."
             }
@@ -208,7 +204,7 @@ fn GameList(games: ReadOnlySignal<Vec<AvailableGameDTO>>) -> Element {
         move |_: u32| {
             let available_game = available_game.clone();
             match available_game {
-                AvailableGameDTO::Lobby { game_id, name: _ } => {
+                AvailableGameDTO::Lobby { game_id, .. } => {
                     spawn(async move {
                         // match activate_game(user_id(), id).await {
                         //     Ok(id) => navigator.push(Route::GamePage { id }),
@@ -216,7 +212,7 @@ fn GameList(games: ReadOnlySignal<Vec<AvailableGameDTO>>) -> Element {
                         // };
                     });
                 }
-                AvailableGameDTO::Active { game_id, name: _ } => {
+                AvailableGameDTO::Active { game_id, .. } => {
                     // navigator.push(Route::GamePage { game_id });
                 }
             }
@@ -228,15 +224,15 @@ fn GameList(games: ReadOnlySignal<Vec<AvailableGameDTO>>) -> Element {
             class: "games-list",
             ul {
                 class: "game-items",
-                // for game in games().into_iter() {
-                //     li {
-                //         class: "game-item",
-                //         class: if matches!(game, AvailableGameDTO::Active { game_id: _, name: _ }) { "active" },
-                //         key: game.id(),
-                //         onclick: set_active_game(game),
-                //         span { "{game.name().to_string()}" }
-                //     }
-                // }
+                for game in games().into_iter() {
+                    li {
+                        class: "game-item",
+                        class: if matches!(game, AvailableGameDTO::Active { .. }) { "active" },
+                        key: "{game.id()}",
+                        // onclick: set_active_game(game),
+                        span { "{game.name()}" }
+                    }
+                }
             }
         }
     }

@@ -23,3 +23,19 @@ pub enum AvailableGameDTO {
         name: String,
     },
 }
+
+impl AvailableGameDTO {
+    pub fn id(&self) -> &GameIdDTO {
+        match self {
+            Self::Lobby { game_id, .. } => game_id,
+            Self::Active { game_id, .. } => game_id,
+        }
+    }
+
+    pub fn name(&self) -> &String {
+        match self {
+            Self::Lobby { name, .. } => name,
+            Self::Active { name, .. } => name,
+        }
+    }
+}

@@ -1,22 +1,18 @@
 [workspace]
 resolver = "2"
 members = [
-    "packages/auth",
-    "packages/eventsourced_ext",
+    "packages/backend",
     "packages/dto",
     "packages/api",
     "packages/ui",
     "packages/frontend",
-    "packages/backend",
-    "packages/entrypoint",
 ]
 
 [workspace.dependencies]
-dioxus = "0.7.0-rc.0"
+dioxus = "0.7.0-rc.2"
 dioxus-sdk = { git = "https://github.com/ealmloff/dioxus-std", branch = "0.7" }
-eventsourced_ext = { path = "packages/eventsourced_ext" }
+
 api = { path = "packages/api" }
 backend = { path = "packages/backend" }
 dto = { path = "packages/dto" }
-frontend = { path = "packages/frontend" }
 ui = { path = "packages/ui" }

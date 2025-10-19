@@ -11,7 +11,4 @@ dto = { workspace = true }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 
 [features]
-default = []
-desktop = ["dioxus/desktop"]
-mobile = ["dioxus/mobile"]
-web = ["dioxus/web"]
+server = ["api/server"]

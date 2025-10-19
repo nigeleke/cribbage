@@ -22,7 +22,7 @@ pub enum Route {
 
 #[component]
 fn Layout() -> Element {
-    let user_id = use_persistent("user_id", || UserIdDTO::default());
+    let user_id = use_persistent("user_id", || UserIdDTO::new());
     provide_context(user_id);
 
     rsx! {

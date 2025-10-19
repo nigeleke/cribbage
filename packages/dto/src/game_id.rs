@@ -32,8 +32,8 @@ impl std::str::FromStr for GameIdDTO {
     }
 }
 
-// impl From<Uuid> for GameIdDTO {
-//     fn from(value: Uuid) -> Self {
-//         Self(value)
-//     }
-// }
+impl From<Uuid> for GameIdDTO {
+    fn from(value: Uuid) -> Self {
+        Self(value)
+    }
+}

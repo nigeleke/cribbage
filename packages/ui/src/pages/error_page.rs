@@ -6,7 +6,7 @@ pub fn ErrorPage(errors: ErrorContext) -> Element {
         div {
            h2 { "Unexpected Error" }
            ul {
-               for error in errors.errors() {
+               if let Some(error) = errors.error() {
                    li { {error.to_string()} }
                }
            }

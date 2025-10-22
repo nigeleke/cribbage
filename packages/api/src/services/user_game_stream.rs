@@ -2,7 +2,7 @@ use dioxus::fullstack::{JsonEncoding, Streaming};
 use dioxus::prelude::*;
 use dto::{GameIdDTO, UserGameDTO, UserIdDTO};
 
-#[get("/api/{user_id}/stream/game/{game_id}")]
+#[get("/api/{user_id}/game/{game_id}/stream")]
 pub async fn user_game_stream(
     user_id: UserIdDTO,
     game_id: GameIdDTO,
@@ -10,19 +10,22 @@ pub async fn user_game_stream(
     use backend::{GameId, UserId};
     use futures::StreamExt;
 
+    use crate::services::convertors::game_to_user_game_dto;
+
     let user_id = UserId::from(user_id.value());
     let game_id = GameId::from(game_id.value());
 
-    dioxus::logger::tracing::info!("user_game_stream 0");
-
-    let rx = backend::game_stream(game_id)
+    info!("user_game_stream 1");
+    let mut stream = backend::game_stream(game_id)
         .await
         .map_err(ServerFnError::new)?;
 
-    let rx = rx.map(|game| {
-        dioxus::logger::tracing::info!("user_game_stream 1");
-        UserGameDTO::new(game.name())
+    info!("user_game_stream 2");
+    let stream = stream.map(move |g| {
+        info!("user_game_stream 3");
+        game_to_user_game_dto(&g, &user_id)
     });
 
-    Ok(Streaming::new(rx))
+    info!("user_game_stream 4");
+    Ok(Streaming::from(stream))
 }

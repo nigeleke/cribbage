@@ -1,22 +1,33 @@
 use dioxus::fullstack::Lazy;
+use dioxus::prelude::*;
 use sqlx::migrate;
 use sqlx::postgres::*;
+use tokio::sync::broadcast;
 
+use crate::database::Notification;
 use crate::error::BackendError;
 
-#[derive(Clone)]
 pub struct ServerState {
     postgres_pool: PgPool,
+    database_changes_sender: broadcast::Sender<Notification>,
 }
 
 impl ServerState {
     pub async fn setup() -> Result<ServerState, BackendError> {
         let postgres_pool = create_postgres_pool().await?;
-        Ok(ServerState { postgres_pool })
+        let database_changes_sender = create_database_changes_sender(&postgres_pool).await?;
+        Ok(ServerState {
+            postgres_pool,
+            database_changes_sender,
+        })
     }
 
-    pub fn postgres_pool(&self) -> &PgPool {
+    pub(crate) fn postgres_pool(&self) -> &PgPool {
         &self.postgres_pool
+    }
+
+    pub(crate) fn subscribe_database_changes(&self) -> broadcast::Receiver<Notification> {
+        self.database_changes_sender.subscribe()
     }
 }
 
@@ -34,5 +45,33 @@ async fn create_postgres_pool() -> Result<PgPool, BackendError> {
     Ok(postgres_pool)
 }
 
+async fn create_database_changes_sender(
+    postgres_pool: &PgPool,
+) -> Result<broadcast::Sender<Notification>, BackendError> {
+    let mut listener = PgListener::connect_with(postgres_pool).await?;
+    listener.listen_all(["games_change"]).await?;
+
+    let (tx, _rx): (broadcast::Sender<Notification>, _) = broadcast::channel(10);
+    let tx2 = tx.clone();
+    tokio::spawn(async move {
+        loop {
+            match listener.recv().await {
+                Ok(notification) => {
+                    let payload = serde_json::from_str::<Notification>(notification.payload());
+                    if let Ok(parsed) = payload {
+                        let _ = tx2.send(parsed);
+                    }
+                }
+                Err(e) => {
+                    error!("database listener failed: {e}");
+                    break;
+                }
+            }
+        }
+    });
+
+    Ok(tx)
+}
+
 pub static SERVER_STATE: Lazy<ServerState> =
-    Lazy::new(|| async move { dioxus::Ok(ServerState::setup().await?) });
+    Lazy::new(|| async move { ServerState::setup().await });

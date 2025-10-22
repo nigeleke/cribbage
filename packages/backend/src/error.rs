@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+use crate::GameId;
+
 #[derive(Debug, Error)]
 pub enum BackendError {
     #[error("{0}")]
@@ -19,4 +21,10 @@ pub enum BackendError {
 
     #[error("{0}")]
     StrumParseError(#[from] strum::ParseError),
+
+    #[error("{0}")]
+    JsonError(#[from] serde_json::Error),
+
+    #[error("game not found: {0}")]
+    GameNotFound(GameId),
 }

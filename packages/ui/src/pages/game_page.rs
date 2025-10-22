@@ -1,118 +1,112 @@
 use dioxus::prelude::*;
-use dto::{GameIdDTO, UserIdDTO};
+use dto::{CardDTO, Dealer, GameIdDTO, UserGameDTO, UserIdDTO};
 
-use crate::components::CardFace;
+use crate::components::CardView;
 
 #[component]
 pub fn GamePage(game_id: GameIdDTO) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
-    provide_context(game_id);
 
-    // let mut state = use_signal(|| None);
+    let mut game = use_signal(|| None);
+    provide_context(game);
 
-    // let fetch_state = use_resource(move || fetch_game_state(id, user_id()));
-    // use_effect(move || {
-    //     if let Some(result) = fetch_state() {
-    //         state.set(result.ok())
-    //     }
-    // });
+    let _initial_game = use_resource(move || async move {
+        let initial_game = api::get_game(*user_id.read(), game_id).await?;
+        game.set(initial_game);
+        dioxus::Ok(())
+    });
 
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/game_page.css") }
-        // if let Some(state) = state() {
-        //     ActiveGame{ state }
-        // } else {
+        if let Some(game) = game() {
+            ActiveGame{ game }
+        } else {
             div {
                 class: "game-page",
                 "Loading..."
             }
-        // }
+        }
     }
 }
 
-// #[component]
-// fn ActiveGame(state: UserGameState) -> Element {
-//     match state {
-//         UserGameState::Starting {
-//             user_cut,
-//             opponent_cut,
-//             dealer,
-//         } => {
-//             rsx! { Starting { user_cut, opponent_cut, dealer } }
-//         }
-//         UserGameState::InProgress {
-//             user_state,
-//             opponent_state,
-//             crib,
-//             cut,
-//             plays,
-//             winner,
-//         } => {
-//             rsx! { InProgress { user_state, opponent_state, crib, cut, plays, winner }}
-//         }
-//     }
-// }
+#[component]
+fn ActiveGame(game: UserGameDTO) -> Element {
+    match game.dealer() {
+        Dealer::Undecided {
+            user_cut,
+            opponent_cut,
+        } => {
+            let user_cut = user_cut.clone();
+            let opponent_cut = opponent_cut.clone();
+            rsx! { Starting { user_cut, opponent_cut } }
+        }
+        Dealer::Decided { dealer, crib } => {
+            rsx! { p { "Decided" } }
+            // rsx! { InProgress { user_state, opponent_state, crib, cut, plays, winner }}
+        }
+    }
+}
 
-// #[component]
-// fn Starting(user_cut: Card, opponent_cut: Card, dealer: Option<Role>) -> Element {
-//     let user_id = use_context::<Signal<UserId>>();
-//     let game_id = use_context::<GameId>();
+#[component]
+fn Starting(user_cut: Option<CardDTO>, opponent_cut: Option<CardDTO>) -> Element {
+    let user_id = use_context::<Signal<UserIdDTO>>();
+    // let game_id = use_context::<GameId>();
 
-//     let mut waiting = use_signal(|| false);
+    let mut waiting = use_signal(|| false);
 
-//     let on_start = move |_| {
-//         spawn(async move {
-//             match start(game_id, user_id()).await {
-//                 Ok(ready) => {
-//                     if !ready {
-//                         waiting.set(true);
-//                     }
-//                 }
-//                 Err(e) => panic!("start game failed: {}", e.to_string()),
-//             }
-//         });
-//     };
+    //     let on_start = move |_| {
+    //         spawn(async move {
+    //             match start(game_id, user_id()).await {
+    //                 Ok(ready) => {
+    //                     if !ready {
+    //                         waiting.set(true);
+    //                     }
+    //                 }
+    //                 Err(e) => panic!("start game failed: {}", e.to_string()),
+    //             }
+    //         });
+    //     };
 
-//     let on_redraw = move |_| {
-//         spawn(async move {
-//             match redraw(game_id, user_id()).await {
-//                 Ok(ready) => {
-//                     if !ready {
-//                         waiting.set(true);
-//                     }
-//                 }
-//                 Err(e) => panic!("redraw game failed: {}", e.to_string()),
-//             }
-//         });
-//     };
+    //     let on_redraw = move |_| {
+    //         spawn(async move {
+    //             match redraw(game_id, user_id()).await {
+    //                 Ok(ready) => {
+    //                     if !ready {
+    //                         waiting.set(true);
+    //                     }
+    //                 }
+    //                 Err(e) => panic!("redraw game failed: {}", e.to_string()),
+    //             }
+    //         });
+    //     };
 
-//     rsx! {
-//         div {
-//             class: "game-page",
-//             div {
-//                 class: "starting",
-//                 CardFace { card: user_cut }
-//                 CardFace { card: opponent_cut }
-//             }
-//             if let Some(dealer) = dealer {
-//                 if dealer == Role::User {
-//                     h2 { "You deal" }
-//                 } else {
-//                     h2 { "Opponent deals" }
-//                 }
-//                 button {
-//                    onclick: on_start,
-//                    "Ok"
-//                 }
-//             } else {
-//                 button {
-//                    onclick: on_redraw,
-//                    "Redraw"
-//                 }
-//             }
-//         }
-//     }
-// }
+    rsx! {
+        div {
+            class: "game-page",
+            div {
+                class: "starting",
+                CardView { card: user_cut }
+                CardView { card: opponent_cut }
+            }
+            // if let Some(dealer) = dealer {
+            //     if dealer == Role::User {
+            //         h2 { "You deal" }
+            //     } else {
+            //         h2 { "Opponent deals" }
+            //     }
+            //     button {
+            //        onclick: on_start,
+            //        "Ok"
+            //     }
+            // } else {
+            //     button {
+            //        onclick: on_redraw,
+            //        "Redraw"
+            //     }
+            // }
+        }
+    }
+}
 
 // #[component]
 // fn InProgress(

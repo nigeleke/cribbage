@@ -5,7 +5,7 @@ use dioxus_sdk::time::use_debounce;
 
 #[component]
 pub fn DebouncedInput(
-    value: ReadOnlySignal<String>,
+    value: ReadSignal<String>,
     on_debounced_input: EventHandler<String>,
     placeholder: Option<String>,
 ) -> Element {

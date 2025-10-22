@@ -4,7 +4,7 @@ mod debounced_input;
 mod error;
 mod toast;
 
-pub use card_view::CardFace;
+pub use card_view::CardView;
 pub use debounced_input::DebouncedInput;
 pub use toast::Toast;
 // pub use card_view::{CardDisplayState, CardView};

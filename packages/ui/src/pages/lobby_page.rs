@@ -1,35 +1,58 @@
 use dioxus::prelude::*;
 use dto::{GameIdDTO, UserIdDTO};
-// use futures_util::StreamExt;
 
-// use crate::route::Route;
+use crate::Route;
 
 #[component]
 pub fn LobbyPage(game_id: GameIdDTO) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
-    let mut game = use_signal(|| None);
 
-    dioxus::logger::tracing::info!("LobbyPage 1");
+    let mut game = use_signal(|| None);
+    let navigator = use_navigator();
+
+    let _initial_game = use_resource(move || async move {
+        let initial_game = api::get_game(*user_id.read(), game_id).await?;
+        game.set(initial_game);
+        dioxus::Ok(())
+    });
 
     let mut game_stream = use_action(move || async move {
-        dioxus::logger::tracing::info!("LobbyPage 2");
         let mut stream = api::user_game_stream(*user_id.read(), game_id).await?;
-        dioxus::logger::tracing::info!("LobbyPage 3");
 
-        while let Some(Ok(updated_game)) = stream.next().await {
-            dioxus::logger::tracing::info!("LobbyPage 4");
-            game.set(Some(updated_game));
+        while let Some(Ok(update)) = stream.next().await {
+            // if update.guest().is_some() {
+            navigator.replace(Route::GamePage { game_id });
+            // } else {
+            game.set(Some(update));
+            // }
         }
 
-        dioxus::logger::tracing::info!("LobbyPage 5");
         dioxus::Ok(())
     });
 
     use_effect(move || {
-        game_stream.call();
+        if let Some(_game) = game() {
+            game_stream.call();
+        }
     });
 
-    let navigator = use_navigator();
+    // let mut _game_stream = use_action(move || async move {
+    //     let mut stream = api::user_game_stream(*user_id.read(), game_id).await?;
+    //     // let _ = spawn(async move {
+    //     //     loop {
+    //     //         match stream.next().await {
+    //     //             Some(Ok(updated_game)) => game.set(Some(updated_game)),
+    //     //             Some(Err(e)) => {
+    //     //                 warn!("user_game_stream: {e}");
+    //     //                 break;
+    //     //             }
+    //     //             None => sleep(std::time::Duration::from_secs(1)).await,
+    //     //         }
+    //     //     }
+    //     // });
+    //     dioxus::Ok(())
+    // })
+    // .call();
 
     // use_coroutine(move |_: UnboundedReceiver<()>| async move {
     //     match user_event_stream(user_id()).await {

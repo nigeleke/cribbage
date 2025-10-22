@@ -7,7 +7,7 @@ use dioxus::prelude::*;
 /// triggered when the card is selected / unselected.
 #[component]
 pub fn CardView(
-    card: ReadOnlySignal<Card>,
+    card: ReadSignal<Card>,
     selected: Option<bool>,
     on_click: Option<EventHandler<Card>>,
 ) -> Element {
@@ -41,7 +41,7 @@ const WIDTH: &str = "100px";
 const HEIGHT: &str = "160px";
 
 #[component]
-fn CardFace(card: ReadOnlySignal<Card>) -> Element {
+fn CardFace(card: ReadSignal<Card>) -> Element {
     rsx! {
         div {
             class: "card",
@@ -74,9 +74,10 @@ fn CardPlace() -> Element {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use dioxus::prelude::*;
     use dioxus_core::*;
+
+    use super::*;
 
     fn render(root: fn() -> Element) -> String {
         let mut dom = VirtualDom::new(root);

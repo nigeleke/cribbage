@@ -1,39 +1,31 @@
-use futures::StreamExt;
+use dioxus::prelude::*;
+use futures::SinkExt;
 
-use crate::domain::{Game, GameId, UserId};
+use crate::database::GameRow;
+use crate::domain::{Game, GameId};
 use crate::error::BackendError;
-use crate::name_builder::generate_game_name;
-// use crate::{SERVER_STATE, database};
+use crate::server_state::SERVER_STATE;
+use crate::services::convertors;
 
-pub async fn game_stream(
-    _game_id: GameId,
-) -> Result<dioxus::prelude::UnboundedReceiver<Game>, BackendError> {
-    let (tx, rx) = futures::channel::mpsc::unbounded();
+pub async fn game_stream(game_id: GameId) -> Result<UnboundedReceiver<Game>, BackendError> {
+    let mut db_changes = SERVER_STATE.subscribe_database_changes();
+    let (mut tx, rx) = futures::channel::mpsc::unbounded::<Game>();
 
     tokio::spawn(async move {
-        loop {
-            //         // TODO:
-            //         // let mut game_stream = database::game_change_stream(SERVER_STATE.postgres_pool())
-            //         //     .await
-            //         //     .expect("must be valid game_change_stream");
-            //         // let result = game_stream.next().await;
-
-            //         // dioxus::logger::tracing::info!("GOT STREAM CHANGE RESULT {result:?}");
-
-            //         // let game = result.expect("valid result not got");
-
-            //         // dioxus::logger::tracing::info!("GOT STREAM CHANGE {game:?}");
-
-            let result = tx.unbounded_send(Game::host_game(UserId::new(), generate_game_name()));
-            dioxus::logger::tracing::info!("game_stream::result {result:?}");
-
-            if result.is_err() {
-                dioxus::logger::tracing::info!("game_stream::result:is_err()");
-                break;
+        info!("game_stream 1");
+        while let Ok(notification) = db_changes.recv().await {
+            info!("game_stream 2");
+            if let Ok(Some(row)) = notification.new_row_as::<GameRow>()
+                && let Ok(game) = convertors::game_row_to_game(row)
+                && game.id() == &game_id
+            {
+                info!("game_stream 3");
+                let _ = tx.send(game);
+            } else {
+                info!("game_stream error");
+                error!("Failed to convert JSON to Game");
+                continue;
             }
-
-            dioxus::logger::tracing::info!("game_stream::result:is_not_err()");
-            tokio::time::sleep(tokio::time::Duration::from_millis(6000)).await;
         }
     });
 

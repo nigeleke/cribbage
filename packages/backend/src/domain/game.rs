@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{GameId, Starting, State, UserId};
+use crate::domain::{DomainError, GameId, Starting, State, UserId};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Game {
@@ -83,7 +83,23 @@ impl Game {
 // }
 
 impl Game {
-    fn new(host: UserId, guest: Option<UserId>, name: String) -> Self {
+    pub fn new(
+        id: GameId,
+        host: UserId,
+        guest: Option<UserId>,
+        name: String,
+        state: State,
+    ) -> Self {
+        Self {
+            id,
+            host,
+            guest,
+            name,
+            state,
+        }
+    }
+
+    fn new_starting(host: UserId, guest: Option<UserId>, name: String) -> Self {
         let id = GameId::default();
         let starting = Starting::default();
         let state = State::Starting(starting);
@@ -97,11 +113,22 @@ impl Game {
     }
 
     pub fn host_game(host: UserId, name: String) -> Self {
-        Game::new(host, None, name)
+        Game::new_starting(host, None, name)
     }
 
     pub fn play_gueat(host: UserId, guest: UserId, name: String) -> Self {
-        Game::new(host, Some(guest), name)
+        Game::new_starting(host, Some(guest), name)
+    }
+
+    pub fn join_game(mut self, guest_id: UserId) -> Result<Self, DomainError> {
+        if self.guest().is_some() {
+            Err(DomainError::NotPermitted(String::from("join game")))
+        } else if self.host() == &guest_id {
+            Err(DomainError::InvalidOpponent(guest_id))
+        } else {
+            self.guest = Some(guest_id);
+            Ok(self)
+        }
     }
 }
 

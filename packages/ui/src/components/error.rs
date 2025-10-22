@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 
 /// Display server errors to the user in a friendly way.
 #[component]
-pub fn Error(error: ReadOnlySignal<Option<String>>) -> Element {
+pub fn Error(error: ReadSignal<Option<String>>) -> Element {
     rsx! {
         if let Some(error) = &*error.read() {
             div {

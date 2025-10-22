@@ -1,11 +1,12 @@
 use dioxus::prelude::*;
-use serde_json::json;
+use sqlx::types::JsonValue;
 
-use crate::SERVER_STATE;
 use crate::database::{NewGame, insert_game};
 use crate::domain::{Game, GameId, UserId};
 use crate::error::BackendError;
 use crate::name_builder::generate_game_name;
+use crate::server_state::SERVER_STATE;
+use crate::services::convertors;
 
 pub async fn host_game(user_id: UserId) -> Result<GameId, BackendError> {
     let game = Game::host_game(user_id, generate_game_name());
@@ -13,7 +14,7 @@ pub async fn host_game(user_id: UserId) -> Result<GameId, BackendError> {
     let name = game.name().clone();
     let host_id = game.host().value();
     let guest_id = game.guest().map(|id| id.value());
-    let state = json!(game.state()).into();
+    let state: JsonValue = convertors::state_to_json(game.state());
 
     let new_game = NewGame {
         name,

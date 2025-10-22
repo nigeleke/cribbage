@@ -11,6 +11,7 @@ mod services;
 #[cfg(test)]
 mod test;
 
-pub use domain::{GameId, UserId};
+pub use domain::{Game, GameId, State, UserId};
+pub use error::BackendError;
 pub use server_state::{SERVER_STATE, ServerState};
 pub use services::*;

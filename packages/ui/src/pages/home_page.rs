@@ -1,7 +1,6 @@
 use dioxus::prelude::*;
 use dto::{AvailableGameDTO, UserIdDTO};
 
-// use futures_util::StreamExt;
 use crate::components::{DebouncedInput, Toast};
 use crate::route::Route;
 
@@ -93,7 +92,7 @@ fn JoinGameSection() -> Element {
                     has_more.set(response.has_more());
                 }
                 Err(e) => {
-                    dioxus::logger::tracing::error!("Failed to fetch games: '{e}'");
+                    error!("Failed to fetch games: '{e}'");
                 }
             }
         }
@@ -196,25 +195,26 @@ fn JoinGameSection() -> Element {
 }
 
 #[component]
-fn GameList(games: ReadOnlySignal<Vec<AvailableGameDTO>>) -> Element {
+fn GameList(games: ReadSignal<Vec<AvailableGameDTO>>) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
     let navigator = use_navigator();
 
-    let set_active_game = move |available_game: AvailableGameDTO| {
-        move |_: u32| {
-            let available_game = available_game.clone();
-            match available_game {
-                AvailableGameDTO::Lobby { game_id, .. } => {
-                    spawn(async move {
-                        // match activate_game(user_id(), id).await {
-                        //     Ok(id) => navigator.push(Route::GamePage { id }),
-                        //     Err(e) => panic!("Unable to start game: {e}"),
-                        // };
-                    });
-                }
-                AvailableGameDTO::Active { game_id, .. } => {
-                    // navigator.push(Route::GamePage { game_id });
-                }
+    let mut join_game = use_action(move |game_id| async move {
+        match api::join_game(user_id(), game_id).await {
+            Ok(game_id) => navigator.push(Route::GamePage { game_id }),
+            Err(e) => panic!("Unable to start game: {e}"),
+        };
+
+        dioxus::Ok(())
+    });
+
+    let select_game = |available_game: AvailableGameDTO| {
+        move |_| match available_game {
+            AvailableGameDTO::Lobby { game_id, .. } => {
+                join_game.call(game_id);
+            }
+            AvailableGameDTO::Active { game_id, .. } => {
+                navigator.push(Route::GamePage { game_id });
             }
         }
     };
@@ -229,7 +229,7 @@ fn GameList(games: ReadOnlySignal<Vec<AvailableGameDTO>>) -> Element {
                         class: "game-item",
                         class: if matches!(game, AvailableGameDTO::Active { .. }) { "active" },
                         key: "{game.id()}",
-                        // onclick: set_active_game(game),
+                        onclick: select_game(game),
                         span { "{game.name()}" }
                     }
                 }

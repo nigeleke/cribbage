@@ -26,16 +26,13 @@ impl Response {
     }
 }
 
-#[get("/api/available_games/{user_id}?filter&since")]
+#[get("/api/{user_id}/available_games?filter&since")]
 pub async fn get_available_games(
     user_id: UserIdDTO,
     filter: Option<String>,
     since: Since,
 ) -> Result<Response, ServerFnError> {
     use dto::GameIdDTO;
-
-    // use crate::set_no_cache_response;
-    // set_no_cache_response!();
 
     let user_id = backend::UserId::from(user_id.value());
     let filter = filter.unwrap_or_default();

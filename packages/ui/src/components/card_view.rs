@@ -1,47 +1,51 @@
 use dioxus::prelude::*;
 use dto::CardDTO;
 
-// /// The component to display a card. The card itself can be presented face-up, face-down,
-// /// empty (which is a gap) or as a placeholder (which is a card sized dashed line).
-// /// The card can be "selectable", if on_selected is provided, in which case it will be
-// /// triggered when the card is selected / unselected.
-// #[component]
-// pub fn CardView(
-//     card: ReadOnlySignal<Card>,
-//     selected: Option<bool>,
-//     on_click: Option<EventHandler<Card>>,
-// ) -> Element {
-//     let is_selected = selected.unwrap_or(false);
+/// The component to display a card. The card itself can be presented face-up, face-down,
+/// empty (which is a gap) or as a placeholder (which is a card sized dashed line).
+/// The card can be "selectable", if on_selected is provided, in which case it will be
+/// triggered when the card is selected / unselected.
+#[component]
+pub fn CardView(
+    card: Option<CardDTO>,
+    // selected: Option<bool>,
+    // on_click: Option<EventHandler<Card>>,
+) -> Element {
+    // let is_selected = selected.unwrap_or(false);
 
-//     let onclick = move |_| {
-//         if let Some(on_click) = on_click {
-//             on_click.call(card());
-//         }
-//     };
+    // let onclick = move |_| {
+    //     if let Some(on_click) = on_click {
+    //         on_click.call(card());
+    //     }
+    // };
 
-//     rsx! {
-//         document::Script { src: asset!("/assets/js/elements.cardmeister.min.js")},
-//         document::Stylesheet { href: asset!("/assets/css/card_view.css")},
-//         div {
-//             class: "card-view",
-//             class: if is_selected { "selected" },
-//             class: if on_click.is_some() { "selectable" },
-//             onclick: onclick,
-//             CardFace { card }
-//         }
-//     }
-// }
+    rsx! {
+        document::Script { src: asset!("/assets/js/elements.cardmeister.min.js")},
+        document::Stylesheet { href: asset!("/assets/css/card_view.css")},
+        div {
+            class: "card-view",
+            // class: if is_selected { "selected" },
+            // class: if on_click.is_some() { "selectable" },
+            // onclick: onclick,
+            match card {
+                Some(CardDTO::FaceDown) => rsx! { CardBack {} },
+                Some(CardDTO::FaceUp { cid }) => rsx! { CardFace { cid } },
+                None => rsx! { CardPlaceholder {} },
+            }
+        }
+    }
+}
 
 const WIDTH: &str = "100px";
 const HEIGHT: &str = "160px";
 
 #[component]
-pub fn CardFace(card: ReadOnlySignal<CardDTO>) -> Element {
+fn CardFace(cid: String) -> Element {
     rsx! {
         CardWrapper {
             div {
                 class: "card",
-                dangerous_inner_html: format!("<playing-card cid='{card}' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
+                dangerous_inner_html: format!("<playing-card cid='{cid}' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
             }
         }
     }
@@ -59,27 +63,27 @@ fn CardWrapper(children: Element) -> Element {
     }
 }
 
-// #[component]
-// fn CardBack() -> Element {
-//     rsx! {
-//         div {
-//             class: "card",
-//             dangerous_inner_html: format!("<playing-card cid='00' backcolor='#546F82' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
-//         }
-//     }
-// }
+#[component]
+fn CardBack() -> Element {
+    rsx! {
+        div {
+            class: "card",
+            dangerous_inner_html: format!("<playing-card cid='00' backcolor='#546F82' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
+        }
+    }
+}
 
-// #[component]
-// fn CardPlace() -> Element {
-//     rsx! {
-//         div {
-//             class: "placeholder",
-//             min_width: WIDTH,
-//             min_height: HEIGHT,
-//             span {}
-//         }
-//     }
-// }
+#[component]
+fn CardPlaceholder() -> Element {
+    rsx! {
+        div {
+            class: "placeholder",
+            min_width: WIDTH,
+            min_height: HEIGHT,
+            span {}
+        }
+    }
+}
 
 // #[cfg(test)]
 // mod test {

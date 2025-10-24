@@ -8,24 +8,27 @@ pub async fn user_game_stream(
     game_id: GameIdDTO,
 ) -> Result<Streaming<UserGameDTO, JsonEncoding>, ServerFnError> {
     use backend::{GameId, UserId};
-    use futures::StreamExt;
 
-    use crate::services::convertors::game_to_user_game_dto;
+    use crate::services::convertors;
 
     let user_id = UserId::from(user_id.value());
     let game_id = GameId::from(game_id.value());
 
-    info!("user_game_stream 1");
-    let mut stream = backend::game_stream(game_id)
+    let stream = backend::game_stream(game_id)
         .await
         .map_err(ServerFnError::new)?;
 
-    info!("user_game_stream 2");
-    let stream = stream.map(move |g| {
-        info!("user_game_stream 3");
-        game_to_user_game_dto(&g, &user_id)
+    let stream = futures::stream::unfold(stream, move |mut stream| async move {
+        debug!("api::user_game_stream:unfolding");
+        if let Some(game) = stream.recv().await {
+            debug!("api::user_game_stream:received: {game:?}");
+            let game = convertors::game_to_user_game_dto(&game, &user_id);
+            Some((game, stream))
+        } else {
+            debug!("api::user_game_stream:received-nothing");
+            None
+        }
     });
 
-    info!("user_game_stream 4");
     Ok(Streaming::from(stream))
 }

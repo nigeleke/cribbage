@@ -1,10 +1,10 @@
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
     :root {
         --background-color: lightgreen;
         --text-color: grey;
         --primary-color: #1a73e8;
         --secondary-color: #e8f0fe;
-        --border-color: #cccccc;
+        --border-color: #444444;
         --highlight-color: #f0f8ff;
     }
 }
@@ -15,7 +15,7 @@
         --text-color: ghostwhite;
         --primary-color: #8ab4f8;
         --secondary-color: #1e1e1e;
-        --border-color: #444444;
+        --border-color: #cccccc;
         --highlight-color: #80a080;
         /* --highlight-color: white; #1a1a2a; */
     }
@@ -49,8 +49,9 @@ html {
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+        Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     background: radial-gradient(
         circle at left top,
         var(--background-color-light),

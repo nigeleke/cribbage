@@ -1,32 +1,17 @@
-use std::str::FromStr;
-
 use chrono::{DateTime, Utc};
 use dioxus::prelude::*;
-use strum::{AsRefStr, EnumString};
 
 use crate::database::select_available_games;
-use crate::domain::{GameId, UserId};
+use crate::domain::{AvailableGame, UserId};
 use crate::error::BackendError;
 use crate::server_state::SERVER_STATE;
-
-#[derive(Debug, AsRefStr, EnumString)]
-pub enum AvailableGameSource {
-    Lobby,
-    Active,
-}
+use crate::services::convertors;
 
 pub async fn get_available_games(
     user_id: UserId,
     filter: String,
     last_created_at: Option<DateTime<Utc>>,
-) -> Result<
-    (
-        Vec<(GameId, AvailableGameSource, String)>,
-        bool,
-        Option<DateTime<Utc>>,
-    ),
-    BackendError,
-> {
+) -> Result<(Vec<AvailableGame>, bool, Option<DateTime<Utc>>), BackendError> {
     const CHUNK_SIZE: u32 = 20;
 
     let filter = (!filter.is_empty()).then_some(filter);
@@ -44,10 +29,8 @@ pub async fn get_available_games(
         .games
         .into_iter()
         .map(|row| {
-            let game_id = GameId::from(row.id);
-            let source = AvailableGameSource::from_str(&row.source)?;
-            let name = row.name;
-            Ok::<_, BackendError>((game_id, source, name))
+            let game = convertors::available_game_row_to_available_game(row)?;
+            Ok::<_, BackendError>(game)
         })
         .collect::<Result<Vec<_>, _>>()?;
 

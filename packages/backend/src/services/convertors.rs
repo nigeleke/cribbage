@@ -1,7 +1,9 @@
+use std::str::FromStr;
+
 use serde_json::json;
 
-use crate::database::GameRow;
-use crate::domain::{Game, GameId, State, UserId};
+use crate::database::{AvailableGameRow, GameRow};
+use crate::domain::{AvailableGame, AvailableGameSource, Game, GameId, State, UserId};
 use crate::error::BackendError;
 use crate::services::convertors;
 
@@ -15,6 +17,30 @@ pub fn game_row_to_game(row: GameRow) -> Result<Game, BackendError> {
     let game = Game::new(id, host, guest, name, state);
 
     Ok(game)
+}
+
+pub fn available_game_row_to_available_game(
+    row: AvailableGameRow,
+) -> Result<AvailableGame, BackendError> {
+    let id = GameId::from(row.id);
+    let name = row.name;
+    let user = UserId::from(row.user_id);
+    let source = AvailableGameSource::from_str(&row.source)?;
+
+    let game = AvailableGame::new(id, user, name, source);
+
+    Ok(game)
+}
+
+pub fn game_to_available_game(game: &Game, user: &UserId) -> AvailableGame {
+    let id = game.id();
+    let name = game.name().clone();
+    let source = if game.guest().is_none() {
+        AvailableGameSource::Lobby
+    } else {
+        AvailableGameSource::Active
+    };
+    AvailableGame::new(*id, *user, name, source)
 }
 
 // TODO: Remove?

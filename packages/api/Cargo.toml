@@ -8,9 +8,9 @@ dioxus = { workspace = true, features = ["fullstack"] }
 backend = { workspace = true, optional = true }
 chrono = { version = "0.4.42", features = ["serde"] }
 dto = { workspace = true }
+futures = "0.3.31"
 serde = { version = "1.0.226", features = ["derive"] }
 thiserror = { version = "2.0.17" }
-futures = "0.3.31"
 
 [dev-dependencies]
 insta = { version = "1.43.2", features = ["filters"] }

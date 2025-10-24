@@ -1,3 +1,4 @@
+use api::AvailableGamesStreamEvent;
 use dioxus::prelude::*;
 use dto::{AvailableGameDTO, UserIdDTO};
 
@@ -102,66 +103,24 @@ fn JoinGameSection() -> Element {
         fetch_games(api::Since::default(), true).await;
     });
 
-    // use_coroutine(move |_: UnboundedReceiver<()>| async move {
-    //     match app_event_stream().await {
-    //         Ok(stream) => {
-    //             println!("HomePage:: Recevied app_event");
-    //             let mut stream = stream.into_inner();
-    //             while let Some(event) = stream.next().await {
-    //                 println!("HomePage:: Recevied app_event: event: {:?}", event);
-    //                 match event {
-    //                     Ok(event) => match event {
-    //                         AppEvent::NewLobbyGame(_) => has_more.set(true),
-    //                         AppEvent::RemovedLobbyGame(deleted_game) => games
-    //                             .write()
-    //                             .retain(|game| game.id().value() != deleted_game.id().value()),
-    //                     },
-    //                     Err(e) => {
-    //                         warn!("Stream error: {:?}", e);
-    //                         break;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //         Err(e) => {
-    //             warn!("Failed to fetch stream: {:?}", e);
-    //             return;
-    //         }
-    //     }
-    // });
+    let mut available_game_events = use_action(move || async move {
+        let mut stream = api::available_games_stream(*user_id.read()).await?;
+        while let Some(Ok(event)) = stream.next().await {
+            match event {
+                AvailableGamesStreamEvent::Added(game) => {
+                    has_more.set(true);
+                    toasts.write().push(format!("{} added", game.name()))
+                }
+                AvailableGamesStreamEvent::Removed(game) => {
+                    games.write().retain(|g| g.id() != game.id());
+                    toasts.write().push(format!("{} removed", game.name()))
+                }
+            }
+        }
+        dioxus::Ok(())
+    });
 
-    // use_coroutine(move |_: UnboundedReceiver<()>| async move {
-    //     match user_event_stream(*user_id.read()).await {
-    //         Ok(stream) => {
-    //             println!("HomePage:: Recevied user_event");
-    //             let mut stream = stream.into_inner();
-    //             while let Some(event) = stream.next().await {
-    //                 println!("HomePage:: Recevied user_event: event: {:?}", event);
-    //                 match event {
-    //                     Ok(event) => match event {
-    //                         UserEvent::NewActiveGame(new_game) => {
-    //                             let new_game = AvailableGame::from(new_game);
-    //                             let game_name = new_game.name().clone();
-    //                             games.write().insert(0, new_game);
-    //                             toasts.write().push(format!("Someone joined {}", game_name));
-    //                         }
-    //                         UserEvent::RemovedActiveGame(deleted_game) => games
-    //                             .write()
-    //                             .retain(|game| game.id().value() != deleted_game.id().value()),
-    //                     },
-    //                     Err(e) => {
-    //                         warn!("Stream error: {:?}", e);
-    //                         break;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //         Err(e) => {
-    //             warn!("Failed to fetch stream: {:?}", e);
-    //             return;
-    //         }
-    //     }
-    // });
+    available_game_events.call();
 
     rsx! {
         section {

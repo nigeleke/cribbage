@@ -24,6 +24,10 @@ impl Game {
         self.guest.as_ref()
     }
 
+    pub fn has_user(&self, user_id: &UserId) -> bool {
+        &self.host == user_id || self.guest.as_ref() == Some(user_id)
+    }
+
     pub fn name(&self) -> &String {
         &self.name
     }

@@ -51,15 +51,22 @@ async fn create_database_changes_sender(
     let mut listener = PgListener::connect_with(postgres_pool).await?;
     listener.listen_all(["games_change"]).await?;
 
-    let (tx, _rx): (broadcast::Sender<Notification>, _) = broadcast::channel(10);
-    let tx2 = tx.clone();
+    let (tx, _rx) = broadcast::channel::<Notification>(10);
+
+    let tx_emitter = tx.clone();
     tokio::spawn(async move {
         loop {
             match listener.recv().await {
                 Ok(notification) => {
-                    let payload = serde_json::from_str::<Notification>(notification.payload());
-                    if let Ok(parsed) = payload {
-                        let _ = tx2.send(parsed);
+                    let result = serde_json::from_str::<Notification>(notification.payload());
+                    match result {
+                        Ok(payload) => {
+                            debug!("database changes::send {payload:?}");
+                            let _ = tx_emitter.send(payload);
+                        }
+                        Err(e) => {
+                            error!("Failed parsing notification payload: {e}");
+                        }
                     }
                 }
                 Err(e) => {

@@ -18,15 +18,25 @@ pub struct Notification {
 impl Notification {
     pub fn new_row_as<T>(&self) -> Result<Option<T>, DatabaseError>
     where
-        T: DeserializeOwned + Debug,
+        T: DeserializeOwned,
     {
-        dioxus::prelude::info!("new_row_as 1 {:?}", self.new_row);
         let t = self
             .new_row
             .clone()
             .map(|r| serde_json::from_value::<T>(r))
             .transpose()?;
-        dioxus::prelude::info!("new_row_as 2 {t:?}");
+        Ok(t)
+    }
+
+    pub fn old_row_as<T>(&self) -> Result<Option<T>, DatabaseError>
+    where
+        T: DeserializeOwned,
+    {
+        let t = self
+            .old_row
+            .clone()
+            .map(|r| serde_json::from_value::<T>(r))
+            .transpose()?;
         Ok(t)
     }
 }

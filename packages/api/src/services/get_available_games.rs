@@ -44,9 +44,9 @@ pub async fn get_available_games(
     let games = games
         .into_iter()
         .map(|game| {
-            let game_id = GameIdDTO::from(game.0.value());
-            let source = game.1;
-            let name = game.2;
+            let game_id = GameIdDTO::from(game.id().value());
+            let name = game.name().clone();
+            let source = game.source();
             match source {
                 backend::AvailableGameSource::Lobby => AvailableGameDTO::Lobby { game_id, name },
                 backend::AvailableGameSource::Active => AvailableGameDTO::Active { game_id, name },

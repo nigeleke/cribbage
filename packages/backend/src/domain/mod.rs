@@ -1,5 +1,5 @@
+mod available_game;
 mod cards;
-// mod commands;
 mod error;
 mod game;
 mod players;
@@ -9,8 +9,8 @@ mod scoring;
 mod state;
 mod types;
 
+pub use available_game::{AvailableGame, Source as AvailableGameSource};
 pub use cards::*;
-// pub use commands::*;
 pub use error::*;
 pub use game::*;
 pub use players::*;

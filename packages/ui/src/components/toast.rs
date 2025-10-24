@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use gloo_timers::future::TimeoutFuture;
+use dioxus_sdk::time;
 
 #[component]
 pub fn Toast(toasts: Signal<Vec<String>>) -> Element {
@@ -12,12 +12,10 @@ pub fn Toast(toasts: Signal<Vec<String>>) -> Element {
             let count = new_toasts.len();
             visible_toasts.write().extend(new_toasts.clone());
 
-            spawn({
-                async move {
-                    TimeoutFuture::new(3000).await;
-                    toasts.write().drain(0..count);
-                    visible_toasts.write().drain(0..count);
-                }
+            spawn(async move {
+                time::sleep(std::time::Duration::from_secs(3)).await;
+                toasts.write().drain(0..count);
+                visible_toasts.write().drain(0..count);
             });
         }
     });

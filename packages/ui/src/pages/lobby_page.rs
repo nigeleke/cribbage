@@ -1,5 +1,6 @@
+use api::AvailableGamesStreamEvent;
 use dioxus::prelude::*;
-use dto::{GameIdDTO, UserIdDTO};
+use dto::{AvailableGameDTO, GameIdDTO, UserIdDTO};
 
 use crate::Route;
 
@@ -17,21 +18,24 @@ pub fn LobbyPage(game_id: GameIdDTO) -> Element {
     });
 
     let mut game_stream = use_action(move || async move {
-        let mut stream = api::user_game_stream(*user_id.read(), game_id).await?;
+        let mut stream = api::available_games_stream(*user_id.read()).await?;
 
         while let Some(Ok(update)) = stream.next().await {
-            // if update.guest().is_some() {
-            navigator.replace(Route::GamePage { game_id });
-            // } else {
-            game.set(Some(update));
-            // }
+            match update {
+                AvailableGamesStreamEvent::Added(AvailableGameDTO::Active {
+                    game_id: id, ..
+                }) if id == game_id => {
+                    navigator.replace(Route::GamePage { game_id });
+                }
+                _ => {}
+            }
         }
 
         dioxus::Ok(())
     });
 
     use_effect(move || {
-        if let Some(_game) = game() {
+        if game.read().is_some() {
             game_stream.call();
         }
     });

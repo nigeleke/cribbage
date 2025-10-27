@@ -4,7 +4,7 @@ use crate::database::{UpdateGame, select_game, update_game};
 use crate::domain::{GameId, UserId};
 use crate::error::BackendError;
 use crate::server_state::SERVER_STATE;
-use crate::services::{convertors, get_game};
+use crate::services::convertors;
 
 pub async fn join_game(user_id: UserId, game_id: GameId) -> Result<GameId, BackendError> {
     let game = select_game(SERVER_STATE.postgres_pool(), game_id.value())

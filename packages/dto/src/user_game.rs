@@ -8,25 +8,18 @@ pub enum Player {
     Opponent,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Dealer {
-    Undecided {
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Phase {
+    #[default]
+    Lobby,
+    CutForDeal {
         user_cut: Option<CardDTO>,
         opponent_cut: Option<CardDTO>,
     },
-    Decided {
+    Active {
         dealer: Player,
         crib: Vec<CardDTO>,
     },
-}
-
-impl Default for Dealer {
-    fn default() -> Self {
-        Self::Undecided {
-            user_cut: None,
-            opponent_cut: None,
-        }
-    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -52,7 +45,7 @@ struct Plays {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UserGameDTO {
     name: String,
-    dealer: Dealer,
+    phase: Phase,
     user_state: PlayerState,
     opponent_state: PlayerState,
     cut: Option<CardDTO>,
@@ -67,8 +60,68 @@ impl UserGameDTO {
         }
     }
 
-    pub fn dealer(&self) -> &Dealer {
-        &self.dealer
+    pub fn with_user_cut(self, user_cut: Option<CardDTO>) -> Self {
+        let UserGameDTO {
+            name,
+            mut phase,
+            user_state,
+            opponent_state,
+            cut,
+            plays,
+        } = self;
+        phase = match phase {
+            Phase::Lobby => Phase::CutForDeal {
+                user_cut,
+                opponent_cut: None,
+            },
+            Phase::CutForDeal { opponent_cut, .. } => Phase::CutForDeal {
+                user_cut,
+                opponent_cut,
+            },
+            Phase::Active { .. } => unreachable!(),
+        };
+        UserGameDTO {
+            name,
+            phase,
+            user_state,
+            opponent_state,
+            cut,
+            plays,
+        }
+    }
+
+    pub fn with_opponent_cut(self, opponent_cut: Option<CardDTO>) -> Self {
+        let UserGameDTO {
+            name,
+            mut phase,
+            user_state,
+            opponent_state,
+            cut,
+            plays,
+        } = self;
+        phase = match phase {
+            Phase::Lobby => Phase::CutForDeal {
+                user_cut: None,
+                opponent_cut,
+            },
+            Phase::CutForDeal { user_cut, .. } => Phase::CutForDeal {
+                user_cut,
+                opponent_cut,
+            },
+            Phase::Active { .. } => unreachable!(),
+        };
+        UserGameDTO {
+            name,
+            phase,
+            user_state,
+            opponent_state,
+            cut,
+            plays,
+        }
+    }
+
+    pub fn phase(&self) -> &Phase {
+        &self.phase
     }
 
     pub fn name(&self) -> &String {

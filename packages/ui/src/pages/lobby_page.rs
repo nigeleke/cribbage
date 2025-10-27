@@ -1,6 +1,5 @@
-use api::AvailableGamesStreamEvent;
 use dioxus::prelude::*;
-use dto::{AvailableGameDTO, GameIdDTO, UserIdDTO};
+use dto::{GameIdDTO, Phase, UserGameDTO, UserIdDTO};
 
 use crate::Route;
 
@@ -8,36 +7,42 @@ use crate::Route;
 pub fn LobbyPage(game_id: GameIdDTO) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
 
-    let mut game = use_signal(|| None);
     let navigator = use_navigator();
+
+    let mut game = use_signal(|| None::<UserGameDTO>);
+
+    use_effect(move || {
+        info!("LobbyPage::effect");
+        if let Some(game) = game() {
+            info!("LobbyPage::effect triggered: {game:?}");
+            match game.phase() {
+                Phase::Lobby => {}
+                _ => {
+                    info!("LobbyPage::effect navigating to GamePage {game_id}");
+                    navigator.replace(Route::GamePage { game_id });
+                }
+            }
+        }
+    });
+
+    let mut game_stream = use_action(move || async move {
+        info!("LobbyPage::listening-api::user_game_stream");
+        let mut stream = api::user_game_stream(*user_id.read(), game_id).await?;
+
+        while let Some(Ok(updated_game)) = stream.next().await {
+            info!("LobbyPage::received-api::user_game_stream: {updated_game:?}");
+            game.set(Some(updated_game));
+        }
+
+        info!("LobbyPage::finished-api::user_game_stream");
+        dioxus::Ok(())
+    });
 
     let _initial_game = use_resource(move || async move {
         let initial_game = api::get_game(*user_id.read(), game_id).await?;
         game.set(initial_game);
+        game_stream.call();
         dioxus::Ok(())
-    });
-
-    let mut game_stream = use_action(move || async move {
-        let mut stream = api::available_games_stream(*user_id.read()).await?;
-
-        while let Some(Ok(update)) = stream.next().await {
-            match update {
-                AvailableGamesStreamEvent::Added(AvailableGameDTO::Active {
-                    game_id: id, ..
-                }) if id == game_id => {
-                    navigator.replace(Route::GamePage { game_id });
-                }
-                _ => {}
-            }
-        }
-
-        dioxus::Ok(())
-    });
-
-    use_effect(move || {
-        if game.read().is_some() {
-            game_stream.call();
-        }
     });
 
     // let mut _game_stream = use_action(move || async move {

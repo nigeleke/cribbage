@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use dto::{CardDTO, Dealer, GameIdDTO, UserGameDTO, UserIdDTO};
+use dto::{CardDTO, GameIdDTO, Phase, UserGameDTO, UserIdDTO};
 
 use crate::components::CardView;
 
@@ -19,7 +19,7 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/game_page.css") }
         if let Some(game) = game() {
-            ActiveGame{ game }
+            ActiveGame { game }
         } else {
             div {
                 class: "game-page",
@@ -31,8 +31,9 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
 
 #[component]
 fn ActiveGame(game: UserGameDTO) -> Element {
-    match game.dealer() {
-        Dealer::Undecided {
+    match game.phase() {
+        Phase::Lobby => rsx! { Starting { user_cut: None, opponent_cut: None } },
+        Phase::CutForDeal {
             user_cut,
             opponent_cut,
         } => {
@@ -40,7 +41,7 @@ fn ActiveGame(game: UserGameDTO) -> Element {
             let opponent_cut = opponent_cut.clone();
             rsx! { Starting { user_cut, opponent_cut } }
         }
-        Dealer::Decided { dealer, crib } => {
+        Phase::Active { dealer, crib } => {
             rsx! { p { "Decided" } }
             // rsx! { InProgress { user_state, opponent_state, crib, cut, plays, winner }}
         }

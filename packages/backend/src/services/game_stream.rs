@@ -7,10 +7,10 @@ use crate::error::BackendError;
 use crate::server_state::SERVER_STATE;
 use crate::services::convertors;
 
-pub async fn game_stream(game_id: GameId) -> Result<mpsc::UnboundedReceiver<Game>, BackendError> {
+pub async fn game_stream(game_id: GameId) -> Result<broadcast::Receiver<Game>, BackendError> {
     let mut db_changes = SERVER_STATE.subscribe_database_changes();
 
-    let (tx, rx) = mpsc::unbounded_channel::<Game>();
+    let (tx, rx) = broadcast::channel::<Game>(10);
 
     tokio::spawn(async move {
         while let Ok(notification) = db_changes.recv().await {
@@ -22,7 +22,7 @@ pub async fn game_stream(game_id: GameId) -> Result<mpsc::UnboundedReceiver<Game
                 debug!("backend::game_stream::send {game:?}");
                 let _ = tx.send(game);
             } else {
-                error!("Failed to convert JSON to Game");
+                error!("Failed to create Game from: {notification:?}");
                 continue;
             }
         }

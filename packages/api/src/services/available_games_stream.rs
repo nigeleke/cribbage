@@ -1,7 +1,6 @@
 use dioxus::fullstack::{JsonEncoding, Streaming};
 use dioxus::prelude::*;
 use dto::{AvailableGameDTO, UserIdDTO};
-use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -26,22 +25,26 @@ pub async fn available_games_stream(
 
     let stream = futures::stream::unfold(stream, |mut stream| async move {
         debug!("api::available_game_stream:unfolding");
-        if let Some(event) = stream.recv().await {
-            let event = match event {
-                AvailableGamesStreamEvent::Added(game) => {
-                    let game = convertors::available_game_to_dto(&game);
-                    debug!("api::available_games_stream:mapped_to: {game:?}");
-                    Event::Added(game)
-                }
-                AvailableGamesStreamEvent::Removed(game) => {
-                    let game = convertors::available_game_to_dto(&game);
-                    debug!("api::available_games_stream:mapped_to: {game:?}");
-                    Event::Removed(game)
-                }
-            };
-            Some((event, stream))
-        } else {
-            None
+        match stream.recv().await {
+            Ok(event) => {
+                let event = match event {
+                    AvailableGamesStreamEvent::Added(game) => {
+                        let game = convertors::available_game_to_dto(&game);
+                        debug!("api::available_games_stream:mapped_to: {game:?}");
+                        Event::Added(game)
+                    }
+                    AvailableGamesStreamEvent::Removed(game) => {
+                        let game = convertors::available_game_to_dto(&game);
+                        debug!("api::available_games_stream:mapped_to: {game:?}");
+                        Event::Removed(game)
+                    }
+                };
+                Some((event, stream))
+            }
+            Err(e) => {
+                error!("available_games_stream closed");
+                None
+            }
         }
     });
 

@@ -1,11 +1,10 @@
-use dioxus::logger::tracing::*;
+use dioxus::prelude::*;
 use tokio::sync::*;
 
-use crate::database::GameRow;
+use crate::GamesStreamEvent;
 use crate::domain::{AvailableGame, UserId};
 use crate::error::BackendError;
-use crate::server_state::SERVER_STATE;
-use crate::services::convertors;
+use crate::services::{convertors, games_stream};
 
 #[derive(Clone, Debug)]
 pub enum Event {
@@ -15,77 +14,42 @@ pub enum Event {
 
 pub async fn available_games_stream(
     user_id: UserId,
-) -> Result<mpsc::UnboundedReceiver<Event>, BackendError> {
-    let mut db_changes = SERVER_STATE.subscribe_database_changes();
-    let (tx, rx) = mpsc::unbounded_channel();
+) -> Result<broadcast::Receiver<Event>, BackendError> {
+    let mut stream = games_stream().await?;
 
-    debug!("backend::available_games_stream:listening: {user_id:?}");
+    let (tx, rx) = broadcast::channel::<Event>(10);
 
     tokio::spawn(async move {
-        let create_event = |old_row: Option<GameRow>,
-                            new_row: Option<GameRow>|
-         -> Result<Option<Event>, BackendError> {
-            debug!("backend::available_games_stream:creating_event:");
-            let old_game = old_row.map(convertors::game_row_to_game).transpose()?;
-            let new_game = new_row.map(convertors::game_row_to_game).transpose()?;
-
-            let old_game_has_user = old_game
-                .as_ref()
-                .map(|g| g.has_user(&user_id))
-                .unwrap_or(false);
-            let new_game_has_user = new_game
-                .as_ref()
-                .map(|g| g.has_user(&user_id) || g.guest().is_none())
-                .unwrap_or(false);
-
-            debug!(
-                "backend::available_games_stream:creating_event: old_game_user: {old_game_has_user} new_game_user: {new_game_has_user}"
-            );
-
-            let event = match (old_game_has_user, new_game_has_user) {
-                (false, false) => None,
-                (false, true) => new_game.map(|new_game| {
+        while let Ok(event) = stream.recv().await {
+            let event = match event {
+                GamesStreamEvent::Inserted(game) if game.available_to_user(&user_id) => {
+                    let game = convertors::game_to_available_game(&game, &user_id);
+                    Some(Event::Added(game))
+                }
+                GamesStreamEvent::Updated { old_game, new_game }
+                    if !old_game.available_to_user(&user_id)
+                        && new_game.available_to_user(&user_id) =>
+                {
                     let game = convertors::game_to_available_game(&new_game, &user_id);
-                    Event::Added(game)
-                }),
-                (true, false) => old_game.map(|old_game| {
+                    Some(Event::Added(game))
+                }
+                GamesStreamEvent::Updated { old_game, new_game }
+                    if old_game.available_to_user(&user_id)
+                        && !new_game.available_to_user(&user_id) =>
+                {
                     let game = convertors::game_to_available_game(&old_game, &user_id);
-                    Event::Removed(game)
-                }),
-                (true, true) => new_game.map(|new_game| {
-                    let game = convertors::game_to_available_game(&new_game, &user_id);
-                    Event::Added(game)
-                }),
+                    Some(Event::Removed(game))
+                }
+                GamesStreamEvent::Deleted(game) if game.available_to_user(&user_id) => {
+                    let game = convertors::game_to_available_game(&game, &user_id);
+                    Some(Event::Removed(game))
+                }
+                _ => None,
             };
-
-            debug!("backend::available_games_stream:created_event: {event:?}");
-
-            Ok(event)
-        };
-
-        loop {
-            match db_changes.recv().await {
-                Ok(notification) if notification.table_name == "games" => {
-                    debug!("backend::available_games_stream:received: {notification:?}");
-                    let old_row = notification.old_row_as::<GameRow>()?;
-                    let new_row = notification.new_row_as::<GameRow>()?;
-                    let event = create_event(old_row, new_row)?;
-                    if let Some(event) = event {
-                        debug!("backend::available_games_stream::send {event:?}");
-                        let _ = tx.send(event);
-                    }
-                }
-                Ok(notification) => {
-                    debug!("backend::available_games_stream:received: (IGNORING) {notification:?}");
-                }
-                Err(e) => {
-                    error!("available_games_stream error: {e}");
-                    break;
-                }
+            if let Some(event) = event {
+                let _ = tx.send(event);
             }
         }
-
-        dioxus::Ok(())
     });
 
     Ok(rx)

@@ -3,6 +3,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Points(usize);
 
+impl Points {
+    pub fn value(&self) -> usize {
+        self.0
+    }
+}
+
 impl From<usize> for Points {
     fn from(value: usize) -> Self {
         Self(value)

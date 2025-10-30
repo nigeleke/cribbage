@@ -27,7 +27,10 @@ pub async fn games_stream() -> Result<broadcast::Receiver<Event>, BackendError> 
                     (None, Some(new_game)) => Ok(Event::Inserted(new_game)),
                     (Some(old_game), Some(new_game)) => Ok(Event::Updated { old_game, new_game }),
                     (Some(old_game), None) => Ok(Event::Deleted(old_game)),
-                    _ => unreachable!(),
+                    _ => {
+                        error!("database update with no before or after");
+                        unreachable!()
+                    }
                 }
             };
 
@@ -37,7 +40,6 @@ pub async fn games_stream() -> Result<broadcast::Receiver<Event>, BackendError> 
                     let old_row = notification.old_row_as::<GameRow>()?;
                     let new_row = notification.new_row_as::<GameRow>()?;
                     let event = create_event(old_row, new_row)?;
-                    debug!("backend::games_stream::send {event:?}");
                     let _ = tx.send(event);
                 }
                 Err(e) => {

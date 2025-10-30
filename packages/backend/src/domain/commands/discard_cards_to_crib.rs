@@ -55,13 +55,13 @@ impl Command<Game> for DiscardCardsToCrib {
 
                 hands[player].remove_all(&discards);
                 crib.add_all(&discards);
-                let proceeding = pending.acknowledge(player);
+                let can_proceed = pending.acknowledge(player);
 
-                if !proceeding {
+                if !can_proceed {
                     let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
                     let state = State::Discarding(discarding);
                     CommandEffect::emit_and_reply(Event::state_updated(*id, state), move |_| {
-                        proceeding
+                        can_proceed
                     })
                 } else {
                     let cut = deck.cut();
@@ -80,7 +80,7 @@ impl Command<Game> for DiscardCardsToCrib {
                         let playing = Playing::new(scoreboard, roles, hands, play_state, crib, cut);
                         let state = State::Playing(playing);
                         CommandEffect::emit_and_reply(Event::state_updated(*id, state), move |_| {
-                            proceeding
+                            can_proceed
                         })
                     }
                 }

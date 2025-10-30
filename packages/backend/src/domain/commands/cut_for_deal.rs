@@ -24,7 +24,7 @@ impl CutForDeal {
 #[derive(Debug, PartialEq, Eq)]
 pub struct CutForDealReply {
     cut: Cut,
-    proceeding: bool,
+    can_proceed: bool,
 }
 
 impl CutForDealReply {
@@ -32,8 +32,8 @@ impl CutForDealReply {
         self.cut
     }
 
-    pub fn proceeding(&self) -> bool {
-        self.proceeding
+    pub fn can_proceed(&self) -> bool {
+        self.can_proceed
     }
 }
 
@@ -57,7 +57,7 @@ impl Command<Game> for CutForDeal {
                 let player = self.player;
                 let cut = deck.cut();
                 cuts[player] = cut;
-                let proceeding = pending.acknowledge(player);
+                let can_proceed = pending.acknowledge(player);
 
                 let as_starting = |cuts, deck, pending| {
                     let starting = Starting::new(cuts, deck, pending);
@@ -76,7 +76,7 @@ impl Command<Game> for CutForDeal {
                     State::Discarding(discarding)
                 };
 
-                let state = if proceeding {
+                let state = if can_proceed {
                     match cuts[PLAYER0]
                         .face()
                         .rank()
@@ -91,7 +91,7 @@ impl Command<Game> for CutForDeal {
                 };
 
                 CommandEffect::emit_and_reply(Event::state_updated(*id, state), move |_| {
-                    CutForDealReply { cut, proceeding }
+                    CutForDealReply { cut, can_proceed }
                 })
             }
             _ => CommandEffect::reject(DomainError::NotPermitted(prettify!(CutForDeal))),

@@ -61,7 +61,6 @@ async fn create_database_changes_sender(
                     let result = serde_json::from_str::<Notification>(notification.payload());
                     match result {
                         Ok(payload) => {
-                            debug!("database changes::send {payload:?}");
                             let _ = tx_emitter.send(payload);
                         }
                         Err(e) => {

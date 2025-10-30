@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{DomainError, GameId, Starting, State, UserId};
+use crate::domain::constants::PLAYER_COUNT;
+use crate::domain::{
+    Crib, CutForDealState, Deck, Discarding, DomainError, GameId, PLAYER0, PLAYER1, Pending,
+    Player, Roles, Scoreboard, Starting, State, UserId,
+};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Game {
@@ -37,30 +41,6 @@ impl Game {
     pub fn state(&self) -> &State {
         &self.state
     }
-
-    // fn handle_game_created(
-    //     mut self,
-    //     id: GameId,
-    //     host: UserId,
-    //     guest: Option<UserId>,
-    //     name: String,
-    // ) -> Self {
-    //     self.id = id;
-    //     self.host = host;
-    //     self.guest = guest;
-    //     self.name = name;
-    //     self
-    // }
-
-    // fn handle_guest_joined(mut self, _id: GameId, guest: UserId) -> Self {
-    //     self.guest = Some(guest);
-    //     self
-    // }
-
-    // fn handle_state_updated(mut self, _id: GameId, state: State) -> Self {
-    //     self.state = state.clone();
-    //     self
-    // }
 }
 
 // impl EventSourced for Game {
@@ -89,13 +69,8 @@ impl Game {
 // }
 
 impl Game {
-    pub fn new(
-        id: GameId,
-        host: UserId,
-        guest: Option<UserId>,
-        name: String,
-        state: State,
-    ) -> Self {
+    #[rustfmt::skip]
+    pub fn new(id: GameId, host: UserId, guest: Option<UserId>, name: String, state: State) -> Self {
         Self {
             id,
             host,
@@ -134,6 +109,66 @@ impl Game {
         } else {
             self.guest = Some(guest_id);
             Ok(self)
+        }
+    }
+
+    fn user_to_player(&self, user_id: UserId) -> Result<Player, DomainError> {
+        if self.host == user_id {
+            Ok(PLAYER0)
+        } else if self.guest == Some(user_id) {
+            Ok(PLAYER1)
+        } else {
+            Err(DomainError::InvalidUser(user_id))
+        }
+    }
+
+    pub fn cut_for_deal(mut self, user_id: UserId) -> Result<(CutForDealState, Self), DomainError> {
+        let player = self.user_to_player(user_id)?;
+
+        let cut_for_deal = |starting: Starting| {
+            let (cuts, deck, pending) = &mut starting.clone().into_parts();
+
+            let cut = deck.cut();
+            cuts[player] = Some(cut);
+            let can_proceed = pending.acknowledge(player);
+
+            let as_starting = |cuts, deck, pending| {
+                let starting = Starting::new(cuts, deck, pending);
+                State::Starting(starting)
+            };
+
+            let as_discarding = |roles| {
+                let scoreboard = Scoreboard::default();
+                let crib = Crib::default();
+                let mut deck = Deck::shuffled_pack();
+                let hands = deck.deal(PLAYER_COUNT);
+                let hands = [hands[PLAYER0].clone(), hands[PLAYER1].clone()];
+                let discarding =
+                    Discarding::new(scoreboard, roles, hands, crib, deck, pending.clone());
+                State::Discarding(discarding)
+            };
+
+            if can_proceed {
+                if let Some(roles) = Roles::from_cuts_when_ready(cuts, pending) {
+                    let discarding = as_discarding(roles);
+                    (CutForDealState::DealerSelected, discarding)
+                } else {
+                    let starting = as_starting(*cuts, Deck::default(), Pending::default());
+                    (CutForDealState::RedrawRequired, starting)
+                }
+            } else {
+                let starting = as_starting(*cuts, deck.clone(), pending.clone());
+                (CutForDealState::Pending, starting)
+            }
+        };
+
+        match self.state {
+            State::Starting(starting) => {
+                let (cut_for_deal_state, new_state) = cut_for_deal(starting);
+                self.state = new_state;
+                Ok((cut_for_deal_state, self))
+            }
+            _ => Err(DomainError::NotPermitted(String::from("cut for deal"))),
         }
     }
 }
@@ -399,7 +434,7 @@ impl From<State> for Game {
 //                     assert_eq!(actual_id, &id);
 //                     assert!(matches!(state, State::Starting(_)));
 //                 })
-//                 .assert_reply(|reply| assert_eq!(reply.proceeding(), false))
+//                 .assert_reply(|reply| assert_eq!(reply.can_proceed(), false))
 //                 .assert_entity(|game| {
 //                     let State::Starting(starting) = &game.state else {
 //                         panic!("unexpected state: {}", game.state);
@@ -417,7 +452,7 @@ impl From<State> for Game {
 //             GameTestFramework::new(game_id, game)
 //                 .execute_using_result(CutForDeal::new(game_id, PLAYER0), |_| {})
 //                 .when(CutForDeal::new(game_id, PLAYER1))
-//                 .assert_reply(|reply| assert!(reply.proceeding()))
+//                 .assert_reply(|reply| assert!(reply.can_proceed()))
 //                 .assert_event(|event| {
 //                     let EventKind::StateUpdated {
 //                         id: actual_id,

@@ -109,7 +109,7 @@ impl GameBuilder {
             });
         }
 
-        let cuts = [cuts[0], cuts[1]];
+        let cuts = [Some(cuts[0]), Some(cuts[1])];
         Starting::new(cuts, deck, Pending::default())
     }
 

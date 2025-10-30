@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 use dto::{GameIdDTO, UserIdDTO};
 
-#[post("/api/host_game/")]
+#[post("/api/{user_id}/host_game/")]
 pub async fn host_game(user_id: UserIdDTO) -> Result<GameIdDTO, ServerFnError> {
     let user_id = backend::UserId::from(user_id.value());
 

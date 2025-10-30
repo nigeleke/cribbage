@@ -1,6 +1,7 @@
 mod available_games_stream;
 #[cfg(feature = "server")]
 mod convertors;
+mod cut_for_deal;
 mod get_available_games;
 mod get_game;
 mod host_game;
@@ -8,6 +9,7 @@ mod join_game;
 mod user_game_stream;
 
 pub use available_games_stream::{Event as AvailableGamesStreamEvent, available_games_stream};
+pub use cut_for_deal::cut_for_deal;
 pub use get_available_games::{Response as AvailableGamesResponse, Since, get_available_games};
 pub use get_game::get_game;
 pub use host_game::host_game;

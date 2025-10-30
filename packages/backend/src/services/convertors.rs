@@ -43,13 +43,6 @@ pub fn game_to_available_game(game: &Game, user: &UserId) -> AvailableGame {
     AvailableGame::new(*id, *user, name, source)
 }
 
-// TODO: Remove?
-// pub fn json_to_game(json: serde_json::Value) -> Result<Game, BackendError> {
-//     dioxus::logger::tracing::info!("json_to_game from `{json}`");
-//     let game = serde_json::from_value::<Game>(json)?;
-//     Ok(game)
-// }
-
 pub fn json_to_state(json: serde_json::Value) -> Result<State, BackendError> {
     let state = serde_json::from_value::<State>(json)?;
     Ok(state)

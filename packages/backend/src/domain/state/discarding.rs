@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::display::format_vec;
 use crate::domain::{
-    Card, Crib, Dealer, Deck, Hand, Hands, Pending, Player, Pone, Roles, Scoreboard,
+    Card, Crib, Cut, Dealer, Deck, Hand, Hands, Pending, Player, Pone, Roles, Scoreboard,
 };
 
 pub type WaitingForDiscards = Pending;
@@ -35,6 +35,10 @@ impl Discarding {
         (scoreboard, roles, hands, crib, deck, pending)
     }
 
+    pub fn cut(&self, player: Player) -> &Cut {
+        self.roles.cut(player)
+    }
+
     pub fn scoreboard(&self) -> &Scoreboard {
         &self.scoreboard
     }
@@ -51,7 +55,6 @@ impl Discarding {
         &self.hands[player]
     }
 
-    #[cfg(test)]
     pub fn crib(&self) -> &Crib {
         &self.crib
     }

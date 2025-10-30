@@ -24,18 +24,15 @@ pub async fn available_games_stream(
         .map_err(ServerFnError::new)?;
 
     let stream = futures::stream::unfold(stream, |mut stream| async move {
-        debug!("api::available_game_stream:unfolding");
         match stream.recv().await {
             Ok(event) => {
                 let event = match event {
                     AvailableGamesStreamEvent::Added(game) => {
                         let game = convertors::available_game_to_dto(&game);
-                        debug!("api::available_games_stream:mapped_to: {game:?}");
                         Event::Added(game)
                     }
                     AvailableGamesStreamEvent::Removed(game) => {
                         let game = convertors::available_game_to_dto(&game);
-                        debug!("api::available_games_stream:mapped_to: {game:?}");
                         Event::Removed(game)
                     }
                 };

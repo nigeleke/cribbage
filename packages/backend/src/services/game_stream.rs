@@ -19,7 +19,6 @@ pub async fn game_stream(game_id: GameId) -> Result<broadcast::Receiver<Game>, B
                 && let Ok(game) = convertors::game_row_to_game(row)
                 && game.id() == &game_id
             {
-                debug!("backend::game_stream::send {game:?}");
                 let _ = tx.send(game);
             } else {
                 error!("Failed to create Game from: {notification:?}");

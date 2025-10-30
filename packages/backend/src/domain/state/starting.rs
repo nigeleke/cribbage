@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::display::format_vec;
-use crate::domain::{Cut, Cuts, Deck, Pending};
+use crate::domain::{Cut, Cuts, Deck, Pending, Player, Roles};
 
 pub type WaitingForCuts = Pending;
 
@@ -30,8 +30,8 @@ impl Starting {
         (cuts, deck, pending)
     }
 
-    pub fn cuts(&self) -> &Cuts {
-        &self.cuts
+    pub fn cut(&self, player: Player) -> Option<&Cut> {
+        self.cuts[player].as_ref()
     }
 
     pub fn deck(&self) -> &Deck {
@@ -41,11 +41,15 @@ impl Starting {
     pub fn pending(&self) -> &WaitingForCuts {
         &self.pending
     }
+
+    pub fn roles(&self) -> Option<Roles> {
+        Roles::from_cuts_when_ready(&self.cuts, &self.pending)
+    }
 }
 
 impl Default for Starting {
     fn default() -> Self {
-        let cuts = [Cut::placeholder(), Cut::placeholder()];
+        let cuts = [None, None];
         let deck = Deck::shuffled_pack();
         let pending = WaitingForCuts::default();
         Starting {
@@ -63,7 +67,11 @@ impl std::fmt::Display for Starting {
             deck,
             pending,
         } = self;
-        let cuts = format_vec(cuts);
+        let cuts = cuts
+            .iter()
+            .map(|c| c.map_or(String::from("--"), |c: Cut| c.to_string()))
+            .collect::<Vec<_>>();
+        let cuts = format_vec(&cuts);
 
         write!(
             f,

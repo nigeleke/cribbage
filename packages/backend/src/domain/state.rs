@@ -9,7 +9,7 @@ pub mod exports {
     pub use super::finished::Finished;
     pub use super::playing::Playing;
     pub use super::scoring::{ScoringCrib, ScoringDealer, ScoringPone};
-    pub use super::starting::Starting;
+    pub use super::starting::{Starting, WaitingForCuts};
 }
 
 pub use exports::*;

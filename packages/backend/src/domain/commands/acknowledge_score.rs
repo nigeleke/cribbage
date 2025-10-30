@@ -35,9 +35,9 @@ macro_rules! acknowledge_score {
                         let (mut scoreboard, roles, hands, crib, cut, breakdown, mut pending) =
                             scoring.clone().into_parts();
 
-                        let proceeding = pending.acknowledge(self.player);
+                        let can_proceed = pending.acknowledge(self.player);
 
-                        if proceeding {
+                        if can_proceed {
                             scoreboard.peg($peg_player(&roles), &breakdown);
                             if let Some(winner) = scoreboard.winner() {
                                 let finished =
@@ -45,10 +45,10 @@ macro_rules! acknowledge_score {
                                 let state = State::Finished(finished);
                                 CommandEffect::emit_and_reply(
                                     Event::state_updated(*id, state),
-                                    move |_| proceeding,
+                                    move |_| can_proceed,
                                 )
                             } else {
-                                $next(*id, scoreboard, roles, hands, crib, cut, proceeding)
+                                $next(*id, scoreboard, roles, hands, crib, cut, can_proceed)
                             }
                         } else {
                             let scoring = <$scoring_type>::new(
@@ -57,7 +57,7 @@ macro_rules! acknowledge_score {
                             let state = State::$state_variant(scoring);
                             CommandEffect::emit_and_reply(
                                 Event::state_updated(*id, state),
-                                move |_| proceeding,
+                                move |_| can_proceed,
                             )
                         }
                     }
@@ -73,12 +73,12 @@ acknowledge_score!(
     ScoringPone,
     ScoringPone,
     |roles: &Roles| roles.pone().player(),
-    |id: GameId, scoreboard, roles: Roles, hands: Hands, crib, cut, proceeding| {
+    |id: GameId, scoreboard, roles: Roles, hands: Hands, crib, cut, can_proceed| {
         let pending = Pending::default();
         let breakdown = ScoreBreakdown::hand(&hands[roles.dealer()], cut);
         let scoring = ScoringDealer::new(scoreboard, roles, hands, crib, cut, breakdown, pending);
         let state = State::ScoringDealer(scoring);
-        CommandEffect::emit_and_reply(Event::state_updated(id, state), move |_| proceeding)
+        CommandEffect::emit_and_reply(Event::state_updated(id, state), move |_| can_proceed)
     }
 );
 
@@ -87,12 +87,12 @@ acknowledge_score!(
     ScoringDealer,
     ScoringDealer,
     |roles: &Roles| roles.dealer().player(),
-    |id: GameId, scoreboard, roles, hands, crib, cut, proceeding| {
+    |id: GameId, scoreboard, roles, hands, crib, cut, can_proceed| {
         let pending = Pending::default();
         let breakdown = ScoreBreakdown::crib(&crib, cut);
         let scoring = ScoringCrib::new(scoreboard, roles, hands, crib, cut, breakdown, pending);
         let state = State::ScoringCrib(scoring);
-        CommandEffect::emit_and_reply(Event::state_updated(id, state), move |_| proceeding)
+        CommandEffect::emit_and_reply(Event::state_updated(id, state), move |_| can_proceed)
     }
 );
 
@@ -101,7 +101,7 @@ acknowledge_score!(
     ScoringCrib,
     ScoringCrib,
     |roles: &Roles| roles.dealer().player(),
-    |id: GameId, scoreboard, mut roles: Roles, _hands, _crib, _cut, proceeding| {
+    |id: GameId, scoreboard, mut roles: Roles, _hands, _crib, _cut, can_proceed| {
         roles.swap();
         let mut deck = Deck::shuffled_pack();
         let hands = deck.deal(PLAYER_COUNT);
@@ -110,6 +110,6 @@ acknowledge_score!(
         let pending = Pending::default();
         let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
         let state = State::Discarding(discarding);
-        CommandEffect::emit_and_reply(Event::state_updated(id, state), move |_| proceeding)
+        CommandEffect::emit_and_reply(Event::state_updated(id, state), move |_| can_proceed)
     }
 );

@@ -12,7 +12,8 @@ mod services;
 mod test;
 
 pub use domain::{
-    AvailableGame, AvailableGameSource, Card, Game, GameId, PLAYER0, PLAYER1, Player, State, UserId,
+    AvailableGame, AvailableGameSource, Card, CutForDealState, Game, GameId, PLAYER0, PLAYER1,
+    Pegging, Player, State, UserId,
 };
 pub use error::BackendError;
 pub use server_state::{SERVER_STATE, ServerState};

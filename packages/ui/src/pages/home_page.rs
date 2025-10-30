@@ -103,7 +103,7 @@ fn JoinGameSection() -> Element {
         fetch_games(api::Since::default(), true).await;
     });
 
-    let mut available_game_events = use_action(move || async move {
+    let mut available_game_events = use_resource(move || async move {
         let mut stream = api::available_games_stream(*user_id.read()).await?;
         while let Some(Ok(event)) = stream.next().await {
             match event {
@@ -119,8 +119,6 @@ fn JoinGameSection() -> Element {
         }
         dioxus::Ok(())
     });
-
-    available_game_events.call();
 
     rsx! {
         section {
@@ -161,7 +159,10 @@ fn GameList(games: ReadSignal<Vec<AvailableGameDTO>>) -> Element {
     let mut join_game = use_action(move |game_id| async move {
         match api::join_game(user_id(), game_id).await {
             Ok(game_id) => navigator.push(Route::GamePage { game_id }),
-            Err(e) => panic!("Unable to start game: {e}"),
+            Err(error) => {
+                let error = error.to_string();
+                navigator.push(Route::OopsPage { error })
+            }
         };
 
         dioxus::Ok(())

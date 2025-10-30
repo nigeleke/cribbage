@@ -19,10 +19,8 @@ pub async fn user_game_stream(
         .map_err(ServerFnError::new)?;
 
     let stream = futures::stream::unfold(stream, move |mut stream| async move {
-        debug!("api::user_game_stream:unfolding");
         match stream.recv().await {
             Ok(game) => {
-                debug!("api::user_game_stream:received: {game:?}");
                 let game = convertors::game_to_user_game_dto(&game, &user_id);
                 Some((game, stream))
             }

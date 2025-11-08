@@ -1,0 +1,18 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+chrono = { version = "0.4.42", features = ["serde"] }
+dioxus = { workspace = true, features = ["fullstack"] }
+serde = { version = "1.0.228", features = ["derive"] }
+server = { workspace = true, optional = true }
+thiserror = "2.0.17"
+uuid = { version = "1.18.1", features = ["serde", "v4", "v7", "js"] }
+
+[dev-dependencies]
+insta = { version = "1.43.2", features = ["filters"] }
+
+[features]
+server = ["dioxus/server", "dep:server"]

@@ -14,22 +14,47 @@
 
 This project has had many flavours over time. It is being used as a learning platform, initially to implement a practical example using [Akka](https://akka.io/), [CQRS](https://martinfowler.com/bliki/CQRS.html), [Domain Driven Design](https://martinfowler.com/tags/domain%20driven%20design.html), [Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html), and [Event Storming](https://www.eventstorming.com/). Later I applied pure functional programming using the [Cats Effects](https://typelevel.org/cats-effect/) stack.
 
-The project then moved to [Rust](https://www.rust-lang.org/) using [Leptos](https://www.leptos.dev/).
+The project then moved to [Rust](https://www.rust-lang.org/) / [Leptos](https://www.leptos.dev/), and now [Rust](https://www.rust-lang.org/) / [Dioxus](https://dioxuslabs.com/).
 
-The current incarnation is still [Rust](https://www.rust-lang.org/), but using [Dioxus](https://dioxuslabs.com/)
-
-The project is under active development as of Jun 2025.
+The project is under active development as of Oct 2025.
 
 ## Testing
 
 ```bash
+DATABASE_URL=postgres://postgres:password@localhost:5432/cribbage
+```
+
+```bash
 docker-compose -f docker/docker_compose.yml up -d
-docker exec -it postgres psql -U postgres -c 'CREATE DATABASE cribbage_db;'
 cargo test --all-features
-cd entrypoint
-dx serve
+```
+
+## Build
+
+```bash
+docker-compose -f docker/docker_compose.yml up -d
+dx build --package=entrypoint [platform]
+  where [platform] is
+    --desktop
+    --mobile
+    --web
+```
+
+## Run
+
+```bash
+docker-compose -f docker/docker_compose.yml up -d
+dx serve --package=entry [platform]
+  where [platform] is
+    --desktop
+    --web
 ```
 
 Navigate to:
   - [app](http://localhost:8080/)
   - [pgadmin](http://localhost:8181/)
+
+## Notes
+
+* This is not an example of authorisation and / or security.
+  A "user-id" is simply persisted in browser storage and passed around as-is.

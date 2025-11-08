@@ -3,11 +3,11 @@ services:
         image: postgres:latest
         container_name: postgres
         environment:
+            POSTGRES_USER: postgres
             POSTGRES_PASSWORD: password
+            POSTGRES_DB: cribbage
         ports:
             - "5432:5432"
-        networks:
-            - dbnw
         restart: unless-stopped
 
     pgadmin:
@@ -16,24 +16,8 @@ services:
         depends_on:
             - postgres
         environment:
-            PGADMIN_DEFAULT_EMAIL: admin@admin.com
-            PGADMIN_DEFAULT_PASSWORD: admin
+            PGADMIN_DEFAULT_EMAIL: admin@example.com
+            PGADMIN_DEFAULT_PASSWORD: password
         ports:
             - "8181:80"
-        networks:
-            - dbnw
         restart: unless-stopped
-
-    valkey:
-        image: valkey/valkey:latest
-        container_name: valkey
-        ports:
-            - "6379:6379"
-            - "8001:8001"
-        networks:
-            - dbnw
-        restart: unless-stopped
-
-networks:
-    dbnw:
-        driver: bridge

@@ -1,0 +1,15 @@
+[package]
+name = "web"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+api = { workspace = true }
+dioxus = { workspace = true, features = ["router", "fullstack"] }
+dotenvy = "0.15.7"
+ui = { workspace = true }
+
+[features]
+default = []
+web = ["dioxus/web"]
+server = ["dioxus/server", "ui/server"]

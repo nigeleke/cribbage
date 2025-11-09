@@ -14,11 +14,15 @@ pub fn LobbyPage(game_id: GameIdDTO) -> Element {
     let _ = use_resource(move || async move {
         let mut stream = api::user_game_events(*user_id.read(), game_id).await?;
         while let Some(Ok(event)) = stream.next().await {
+            debug!("LobbyPage::user_game_events: {event:?}");
             match event {
                 GameEventDTO::LobbyGameCreated { name } => game_name.set(Some(name)),
-                // GameEventDTO::OpponentJoined => navigator.replace(Route::GamePage { game_id });
+                GameEventDTO::OpponentJoined => {
+                    navigator.replace(Route::GamePage { game_id });
+                }
             }
         }
+        debug!("LobbyPage::user_game_events: --done");
         dioxus::Ok(())
     });
 

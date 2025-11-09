@@ -153,27 +153,27 @@ fn GameList(games: ReadSignal<Vec<AvailableGameDTO>>) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
     let navigator = use_navigator();
 
-    // let mut join_game = use_action(move |game_id| async move {
-    //     // match api::join_game(user_id(), game_id).await {
-    //     //     Ok(game_id) => navigator.push(Route::GamePage { game_id }),
-    //     //     Err(error) => {
-    //     //         let error = error.to_string();
-    //     //         navigator.push(Route::OopsPage { error })
-    //     //     }
-    //     // };
+    let mut join_game = use_action(move |game_id| async move {
+        match api::join_game(user_id(), game_id).await {
+            Ok(_) => navigator.push(Route::GamePage { game_id }),
+            Err(error) => {
+                let error = error.to_string();
+                navigator.push(Route::ErrorPage { error })
+            }
+        };
 
-    //     dioxus::Ok(())
-    // });
+        dioxus::Ok(())
+    });
 
     let select_game = |available_game: AvailableGameDTO| {
-        // move |_| match available_game {
-        //     AvailableGameDTO::Lobby { game_id, .. } => {
-        //         join_game.call(game_id);
-        //     }
-        //     AvailableGameDTO::Active { game_id, .. } => {
-        //         navigator.push(Route::GamePage { game_id });
-        //     }
-        // }
+        move |_| match available_game {
+            AvailableGameDTO::Lobby { game_id, .. } => {
+                join_game.call(game_id);
+            }
+            AvailableGameDTO::Active { game_id, .. } => {
+                navigator.push(Route::GamePage { game_id });
+            }
+        }
     };
 
     rsx! {
@@ -186,7 +186,7 @@ fn GameList(games: ReadSignal<Vec<AvailableGameDTO>>) -> Element {
                         class: "game-item",
                         class: if matches!(game, AvailableGameDTO::Active { .. }) { "active" },
                         key: "{game.id()}",
-                        // onclick: select_game(game),
+                        onclick: select_game(game),
                         span { "{game.name()}" }
                     }
                 }

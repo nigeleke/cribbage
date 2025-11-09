@@ -6,8 +6,8 @@ mod get_available_games;
 // mod get_game;
 mod game_events;
 mod host_game;
+mod join_game;
 mod play_computer;
-// mod join_game;
 
 // pub use available_games_stream::{Event as AvailableGamesStreamEvent, available_games_stream};
 // pub use cut_for_deal::cut_for_deal;
@@ -17,5 +17,5 @@ pub use get_available_games::get_available_games;
 // pub use get_game::get_game;
 pub use game_events::game_events;
 pub use host_game::host_game;
+pub use join_game::join_game;
 pub use play_computer::play_computer;
-// pub use join_game::join_game;

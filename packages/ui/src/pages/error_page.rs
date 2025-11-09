@@ -4,10 +4,8 @@ use dioxus::prelude::*;
 pub fn ErrorPage(error: String) -> Element {
     rsx! {
         div {
-           h2 { "Unexpected Error" }
-           ul {
-                li { {error.to_string()} }
-           }
+           h2 { "An error occurred" }
+           p { "{error}" }
        }
     }
 }

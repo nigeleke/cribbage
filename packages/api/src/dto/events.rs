@@ -5,7 +5,7 @@ use crate::{CardDTO, PlayerDTO};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GameEventDTO {
     LobbyGameCreated { name: String },
-    // OpponentJoined {},
+    OpponentJoined,
     // ComputerGameStarted {
     //     name: String,
     // },

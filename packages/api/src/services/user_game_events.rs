@@ -4,7 +4,7 @@ use dioxus::fullstack::{JsonEncoding, Streaming};
 use dioxus::prelude::*;
 use futures::StreamExt;
 
-#[post("/api/{user_id}/game/{game_id}/events", State(server_state): State<server::ServerState>)]
+#[get("/api/{user_id}/game/{game_id}/events", State(server_state): State<server::ServerState>)]
 pub async fn user_game_events(
     user_id: UserIdDTO,
     game_id: GameIdDTO,
@@ -16,6 +16,7 @@ pub async fn user_game_events(
 
     let game_event_to_dto = |event| match event {
         GameEvent::LobbyGameCreated { name, .. } => Some(GameEventDTO::LobbyGameCreated { name }),
+        GameEvent::LobbyGameJoined { .. } => Some(GameEventDTO::OpponentJoined),
         _ => None,
     };
 

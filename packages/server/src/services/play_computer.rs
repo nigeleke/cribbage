@@ -6,7 +6,7 @@ use crate::error::ServerError;
 use crate::server_state::ServerState;
 
 pub async fn play_computer(
-    server_state: &ServerState,
+    server_state: ServerState,
     user_id: UserId,
 ) -> Result<GameId, ServerError> {
     let game_id = GameId::new();

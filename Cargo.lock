@@ -38,6 +38,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dioxus",
+ "futures",
  "insta",
  "serde",
  "server",
@@ -3545,6 +3546,7 @@ dependencies = [
  "chrono",
  "cqrs-es",
  "dioxus",
+ "futures",
  "goofy-animals",
  "insta",
  "itertools",

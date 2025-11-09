@@ -22,4 +22,7 @@ pub enum ServerError {
 
     #[error(transparent)]
     AggregateError(#[from] cqrs_es::AggregateError<crate::GameError>),
+
+    #[error(transparent)]
+    PersistenceError(#[from] cqrs_es::persist::PersistenceError),
 }

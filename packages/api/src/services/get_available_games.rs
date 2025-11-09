@@ -27,7 +27,7 @@ impl Response {
     }
 }
 
-#[get("/api/{user_id}/available_games?filter&since", server_state: State<server::ServerState>)]
+#[get("/api/{user_id}/available_games?filter&since", State(server_state): State<server::ServerState>)]
 pub async fn get_available_games(
     user_id: UserIdDTO,
     filter: Option<String>,
@@ -40,7 +40,7 @@ pub async fn get_available_games(
     let filter = filter.unwrap_or_default();
 
     let (games, has_more, since) =
-        server::get_available_games(&server_state, user_id, filter, since)
+        server::get_available_games(server_state, user_id, filter, since)
             .await
             .map_err(ServerFnError::new)?;
 

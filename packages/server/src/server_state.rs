@@ -2,7 +2,9 @@ use crate::{Game, GameServices, projections::GameQuery};
 use cqrs_es::QueryWrapper;
 use dioxus::fullstack::FullstackContext;
 use dioxus::fullstack::extract::FromRef;
-use postgres_es::{PostgresCqrs, default_postgress_pool, postgres_aggregate_cqrs};
+use postgres_es::{
+    PostgresCqrs, PostgresEventRepository, default_postgress_pool, postgres_aggregate_cqrs,
+};
 use sqlx::{PgPool, migrate};
 use std::sync::Arc;
 

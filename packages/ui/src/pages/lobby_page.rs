@@ -1,4 +1,4 @@
-use api::{GameIdDTO, UserIdDTO};
+use api::{GameEventDTO, GameIdDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 use crate::Route;
@@ -9,50 +9,36 @@ pub fn LobbyPage(game_id: GameIdDTO) -> Element {
 
     let navigator = use_navigator();
 
-    // let mut game = use_signal(|| None::<UserGameDTO>);
-
-    use_effect(move || {
-        // if let Some(game) = game() {
-        //     match game.phase() {
-        //         Phase::Lobby => {}
-        //         _ => {
-        //             navigator.replace(Route::GamePage { game_id });
-        //         }
-        //     }
-        // }
-    });
+    let mut game_name = use_signal(|| None);
 
     let _ = use_resource(move || async move {
-        // let mut stream = api::user_game_stream(*user_id.read(), game_id).await?;
-        // while let Some(Ok(updated_game)) = stream.next().await {
-        //     game.set(Some(updated_game));
-        // }
-        dioxus::Ok(())
-    });
-
-    let _ = use_resource(move || async move {
-        // let initial_game = api::get_game(*user_id.read(), game_id).await?;
-        // game.set(initial_game);
+        let mut stream = api::user_game_events(*user_id.read(), game_id).await?;
+        while let Some(Ok(event)) = stream.next().await {
+            match event {
+                GameEventDTO::LobbyGameCreated { name } => game_name.set(Some(name)),
+                // GameEventDTO::OpponentJoined => navigator.replace(Route::GamePage { game_id });
+            }
+        }
         dioxus::Ok(())
     });
 
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/lobby_page.css") }
-        // if let Some(game) = game() {
-        //     div {
-        //        class: "lobby-page",
-        //        "The game "
-        //        span {
-        //           class: "game-name",
-        //           "{game.name()}"
-        //        }
-        //        " is waiting for an opponent"
-        //     }
-        // } else {
+        if let Some(name) = game_name() {
+            div {
+               class: "lobby-page",
+               "The game "
+               span {
+                  class: "game-name",
+                  "{name}"
+               }
+               " is waiting for an opponent"
+            }
+        } else {
             div {
                 class: "lobby-page",
                 "Loading..."
             }
-        // }
+        }
     }
 }

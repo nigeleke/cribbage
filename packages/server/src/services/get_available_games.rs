@@ -7,7 +7,7 @@ use crate::error::ServerError;
 use crate::server_state::ServerState;
 
 pub async fn get_available_games(
-    server_state: &ServerState,
+    server_state: ServerState,
     user_id: UserId,
     filter: String,
     last_created_at: Option<DateTime<Utc>>,

@@ -12,7 +12,7 @@ fn main() {
 
         dotenvy::dotenv().expect("environment settings needed on startup");
         let router = dioxus::server::router(app::App);
-        let router = router.layer(Extension(api::initialize_server_state().await));
+        let router = router.layer(Extension(api::initialize_server_state().await?));
         Ok(router)
     });
 }

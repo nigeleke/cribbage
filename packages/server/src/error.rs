@@ -25,4 +25,13 @@ pub enum ServerError {
 
     #[error(transparent)]
     PersistenceError(#[from] cqrs_es::persist::PersistenceError),
+
+    #[error(transparent)]
+    StreamingError(#[from] tokio::sync::broadcast::error::RecvError),
+
+    #[error(transparent)]
+    StreamingMappingError(#[from] tokio_stream::wrappers::errors::BroadcastStreamRecvError),
+
+    #[error("internal error: {0}")]
+    InternalError(String),
 }

@@ -25,6 +25,7 @@ pub enum DatabaseError {
 
     #[error("invalid value: {0} {1}")]
     InvalidValue(String, String),
-    // #[error(transparent)]
-    // MutexError(#[from] std::sync::PoisonError<std::sync::MutexGuard<()>>),
+
+    #[error(transparent)]
+    JsonError(#[from] serde_json::Error),
 }

@@ -101,19 +101,20 @@ fn JoinGameSection() -> Element {
     });
 
     let mut available_game_events = use_resource(move || async move {
-        // let mut stream = api::available_games_stream(*user_id.read()).await?;
-        // while let Some(Ok(event)) = stream.next().await {
-        //     match event {
-        //         AvailableGamesStreamEvent::Added(game) => {
-        //             has_more.set(true);
-        //             toasts.write().push(format!("{} added", game.name()))
-        //         }
-        //         AvailableGamesStreamEvent::Removed(game) => {
-        //             games.write().retain(|g| g.id() != game.id());
-        //             toasts.write().push(format!("{} removed", game.name()))
-        //         }
-        //     }
-        // }
+        let mut stream = api::available_game_events(*user_id.read()).await?;
+        while let Some(Ok(event)) = stream.next().await {
+            debug!("HomePage::available_game_events: {event:?}");
+            //     match event {
+            //         AvailableGamesStreamEvent::Added(game) => {
+            //             has_more.set(true);
+            //             toasts.write().push(format!("{} added", game.name()))
+            //         }
+            //         AvailableGamesStreamEvent::Removed(game) => {
+            //             games.write().retain(|g| g.id() != game.id());
+            //             toasts.write().push(format!("{} removed", game.name()))
+            //         }
+            //     }
+        }
         dioxus::Ok(())
     });
 
@@ -121,17 +122,17 @@ fn JoinGameSection() -> Element {
         section {
             class: "join-game",
             h2 { "Join a Game" }
-            // DebouncedInput {
-            //     placeholder: "🔍 Search games...",
-            //     // value: filter,
-            //     // on_debounced_input: move |value| {
-            //     //     filter.set(value);
-            //     //     let state = api::Since::default();
-            //     //     async move {
-            //     //         fetch_games(state, true).await;
-            //     //     }
-            //     // }
-            // }
+            DebouncedInput {
+                placeholder: "🔍 Search games...",
+                value: filter,
+                on_debounced_input: move |value| {
+                    filter.set(value);
+                    let state = api::Since::default();
+                    async move {
+                        fetch_games(state, true).await;
+                    }
+                }
+            }
             GameList { games }
             button {
                 class: "more-button",

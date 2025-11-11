@@ -261,7 +261,7 @@ impl Game {
 
     fn lobby_game_joined(&mut self, guest: UserId) {
         self.guest = Some(guest);
-        dioxus::prelude::debug!("apt::handle_event::lobby_game_joined {self:?}");
+        dioxus::prelude::debug!("api:handle_event:lobby_game_joined {self:?}");
     }
 
     fn computer_game_started(

@@ -7,19 +7,18 @@ use tokio_stream::wrappers::BroadcastStream;
 
 use crate::{
     database::{EventRow, Notification},
-    error::ServerError,
     server_state::ServerState,
     services::AggregateId,
+    services::error::ServiceError,
 };
 
 pub async fn events<T>(
     server_state: ServerState,
     aggregate_id: Option<AggregateId>,
-) -> Result<impl Stream<Item = (String, T::Event)>, ServerError>
+) -> Result<impl Stream<Item = (String, T::Event)>, ServiceError>
 where
     T: Aggregate,
 {
-    debug!(">>> server:services:events");
     let past_events = past_events::<T>(server_state.clone(), aggregate_id.clone()).await?;
     let future_events = future_events::<T>(server_state.clone(), aggregate_id.clone()).await?;
 
@@ -29,11 +28,10 @@ where
 async fn past_events<T>(
     server_state: ServerState,
     aggregate_id: Option<AggregateId>,
-) -> Result<impl Stream<Item = (AggregateId, T::Event)>, ServerError>
+) -> Result<impl Stream<Item = (AggregateId, T::Event)>, ServiceError>
 where
     T: Aggregate,
 {
-    debug!(">>> server:services:past_events");
     let server_state = server_state.clone();
     let pool = server_state.pool.clone();
 
@@ -65,21 +63,17 @@ where
 async fn future_events<T>(
     server_state: ServerState,
     aggregate_id: Option<String>,
-) -> Result<impl Stream<Item = (AggregateId, T::Event)>, ServerError>
+) -> Result<impl Stream<Item = (AggregateId, T::Event)>, ServiceError>
 where
     T: Aggregate,
 {
-    debug!(">>> server:services:future_events");
     let stream = BroadcastStream::new(server_state.database_changes_sender.subscribe());
 
     let stream = stream.filter_map(move |result| {
         let aggregate_id = aggregate_id.clone();
 
         async move {
-            debug!("server:services:events:stream.filter_map {result:?}");
-
-            let notification_to_event_row = move |notification: Notification| -> Option<EventRow> {
-                debug!("server:services:events:notification_to_event_row {notification:?}");
+            let notification_to_event_row = move |notification: Notification| {
                 if notification.operation == "INSERT" && notification.table_name == "events" {
                     match notification.new_row_as::<EventRow>() {
                         Ok(Some(row)) if aggregate_id.is_none() => Some(row),
@@ -105,8 +99,8 @@ where
                 let aggregate_id = row.aggregate_id.clone();
                 let payload = row.payload.clone();
                 let event =
-                    serde_json::from_value::<T::Event>(payload).map_err(ServerError::from)?;
-                Ok::<_, ServerError>(Some((aggregate_id, event)))
+                    serde_json::from_value::<T::Event>(payload).map_err(ServiceError::from)?;
+                Ok::<_, ServiceError>(Some((aggregate_id, event)))
             };
 
             let notification = result.ok()?;

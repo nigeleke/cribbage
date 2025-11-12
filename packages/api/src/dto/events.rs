@@ -16,10 +16,8 @@ pub enum GameEventDTO {
     // CutForDealAcknowledged {
     //     player: PlayerDTO,
     // },
-    // CutForDealTied,
-    // CutForDealDecided {
-    //     dealer: PlayerDTO,
-    // },
+    CutForDealTied,
+    CutForDealDecided,
     // HandDealt {
     //     player: PlayerDTO,
     //     hand: Vec<CardDTO>,

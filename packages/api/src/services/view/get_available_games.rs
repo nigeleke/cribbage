@@ -40,7 +40,7 @@ pub async fn get_available_games(
     let filter = filter.unwrap_or_default();
 
     let (games, has_more, since) =
-        server::get_available_games(server_state, user_id, filter, since)
+        server::view::get_available_games(server_state, user_id, filter, since)
             .await
             .map_err(ServerFnError::new)?;
 

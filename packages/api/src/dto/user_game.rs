@@ -1,19 +1,6 @@
 use serde::{Deserialize, Serialize};
-use strum::AsRefStr;
 
-use crate::CardDTO;
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, AsRefStr)]
-pub enum Player {
-    User,
-    Opponent,
-}
-
-impl std::fmt::Display for Player {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.to_string().fmt(f)
-    }
-}
+use super::{CardDTO, PlayerDTO, ScoreDTO};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Phase {
@@ -22,38 +9,21 @@ pub enum Phase {
     CutForDeal {
         user_cut: Option<CardDTO>,
         opponent_cut: Option<CardDTO>,
-        dealer: Option<Player>,
+        dealer: Option<PlayerDTO>,
     },
     Active {
-        dealer: Player,
-        user_cut: CardDTO,
-        opponent_cut: CardDTO,
+        dealer: PlayerDTO,
         crib: Vec<CardDTO>,
     },
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Score {
-    back_peg: usize,
-    front_peg: usize,
-}
-
-impl Score {
-    pub fn new(back_peg: usize, front_peg: usize) -> Self {
-        Self {
-            back_peg,
-            front_peg,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 struct PlayerState {
     hand: Vec<CardDTO>,
-    score: Score,
+    score: ScoreDTO,
 }
 
-type Play = (Player, CardDTO);
+type Play = (PlayerDTO, CardDTO);
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct Plays {
@@ -80,7 +50,7 @@ impl UserGameDTO {
         }
     }
 
-    pub fn with_user_cut(self, user_cut: Option<CardDTO>, dealer: Option<Player>) -> Self {
+    pub fn with_user_cut(self, user_cut: Option<CardDTO>, dealer: Option<PlayerDTO>) -> Self {
         eprintln!("UserGameDTO::with_user_cut {user_cut:?} {dealer:?}");
         let Self {
             name,
@@ -164,33 +134,19 @@ impl UserGameDTO {
         }
     }
 
-    pub fn with_dealer_and_crib(
-        mut self,
-        user_cut: CardDTO,
-        opponent_cut: CardDTO,
-        dealer: Player,
-        crib: &[CardDTO],
-    ) -> Self {
-        eprintln!(
-            "UserGameDTO::with_dealer_and_crib {user_cut:?} {opponent_cut:?} {dealer:?} {crib:#?}"
-        );
+    pub fn with_dealer_and_crib(mut self, dealer: PlayerDTO, crib: &[CardDTO]) -> Self {
         let crib = Vec::from(crib);
-        self.phase = Phase::Active {
-            dealer,
-            user_cut,
-            opponent_cut,
-            crib,
-        };
+        self.phase = Phase::Active { dealer, crib };
         self
     }
 
-    pub fn with_user_state(mut self, score: Score, hand: &[CardDTO]) -> Self {
+    pub fn with_user_state(mut self, score: ScoreDTO, hand: &[CardDTO]) -> Self {
         let hand = Vec::from(hand);
         self.user_state = PlayerState { hand, score };
         self
     }
 
-    pub fn with_opponent_state(mut self, score: Score, hand: &[CardDTO]) -> Self {
+    pub fn with_opponent_state(mut self, score: ScoreDTO, hand: &[CardDTO]) -> Self {
         let hand = Vec::from(hand);
         self.opponent_state = PlayerState { hand, score };
         self
@@ -204,23 +160,7 @@ impl UserGameDTO {
         &self.name
     }
 
-    pub fn user_cut(&self) -> Option<&CardDTO> {
-        match &self.phase {
-            Phase::Lobby => None,
-            Phase::CutForDeal { user_cut, .. } => user_cut.as_ref(),
-            Phase::Active { user_cut, .. } => Some(user_cut),
-        }
-    }
-
-    pub fn opponent_cut(&self) -> Option<&CardDTO> {
-        match &self.phase {
-            Phase::Lobby => None,
-            Phase::CutForDeal { opponent_cut, .. } => opponent_cut.as_ref(),
-            Phase::Active { opponent_cut, .. } => Some(opponent_cut),
-        }
-    }
-
-    pub fn dealer(&self) -> Option<&Player> {
+    pub fn dealer(&self) -> Option<&PlayerDTO> {
         match &self.phase {
             Phase::Lobby => None,
             Phase::CutForDeal { dealer, .. } => dealer.as_ref(),

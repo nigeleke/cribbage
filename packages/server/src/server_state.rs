@@ -5,6 +5,7 @@ use crate::{domain::Game, domain::GameServices, projections::GameQuery};
 use cqrs_es::QueryWrapper;
 use dioxus::fullstack::FullstackContext;
 use dioxus::fullstack::extract::FromRef;
+use dioxus::prelude::*;
 use postgres_es::{PostgresCqrs, default_postgress_pool, postgres_aggregate_cqrs};
 use sqlx::postgres::*;
 use sqlx::{PgPool, migrate};
@@ -64,7 +65,7 @@ async fn create_database_changes_sender(
         .await
         .map_err(DatabaseError::from)?;
     listener
-        .listen_all(["events_change"])
+        .listen_all(["events_change", "games_change"])
         .await
         .map_err(DatabaseError::from)?;
 
@@ -74,16 +75,14 @@ async fn create_database_changes_sender(
         loop {
             match listener.recv().await {
                 Ok(notification) => {
-                    dioxus::prelude::debug!("database listener notification: {notification:?}");
                     let payload = serde_json::from_str::<Notification>(notification.payload());
-                    dioxus::prelude::debug!("database listener payload: {payload:?}");
                     if let Ok(parsed) = payload {
-                        dioxus::prelude::debug!("database listener parsed: {parsed:?}");
+                        debug!("server_state:database_listener: received: {parsed:?}");
                         let _ = tx2.send(parsed);
                     }
                 }
                 Err(e) => {
-                    dioxus::prelude::error!("database listener failed: {e}");
+                    error!("server_state:database_listener: failed: {e}");
                     break;
                 }
             }

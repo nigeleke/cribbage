@@ -37,31 +37,31 @@ pub fn CardView(
 }
 
 const WIDTH: &str = "100px";
-const HEIGHT: &str = "160px";
+const HEIGHT: &str = "135px";
 
 #[component]
 fn CardFace(cid: String) -> Element {
     rsx! {
-        CardWrapper {
-            div {
-                class: "card",
-                dangerous_inner_html: format!("<playing-card cid='{cid}' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
-            }
+        document::Script { src: asset!("/assets/js/elements.cardmeister.min.js")},
+        document::Stylesheet { href: asset!("/assets/css/card_view.css")},
+        div {
+            class: "card",
+            dangerous_inner_html: format!("<playing-card cid='{cid}' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
         }
     }
 }
 
-#[component]
-fn CardWrapper(children: Element) -> Element {
-    rsx! {
-        document::Script { src: asset!("/assets/js/elements.cardmeister.min.js")},
-        document::Stylesheet { href: asset!("/assets/css/card_view.css")},
-        div {
-            class: "card-view",
-            {children}
-        }
-    }
-}
+// #[component]
+// fn CardWrapper(children: Element) -> Element {
+//     rsx! {
+//         document::Script { src: asset!("/assets/js/elements.cardmeister.min.js")},
+//         document::Stylesheet { href: asset!("/assets/css/card_view.css")},
+//         div {
+//             class: "card-view",
+//             {children}
+//         }
+//     }
+// }
 
 #[component]
 fn CardBack() -> Element {

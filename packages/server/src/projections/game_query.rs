@@ -1,7 +1,7 @@
 use crate::convertors;
 use crate::database::{self, DatabaseError, NewGame};
 use crate::domain::{Game, GameEvent};
-use crate::error::ServerError;
+use crate::projections::error::ProjectionError;
 use cqrs_es::{EventEnvelope, Query};
 use sqlx::PgPool;
 use std::str::FromStr;
@@ -21,8 +21,8 @@ impl GameQuery {
         pool: Arc<PgPool>,
         aggregate_id: &str,
         events: &[GameEvent],
-    ) -> Result<(), ServerError> {
-        let mut tx = pool.begin().await.map_err(DatabaseError::SqlxError)?;
+    ) -> Result<(), ProjectionError> {
+        let mut tx = pool.begin().await?;
 
         let game_id = Uuid::from_str(aggregate_id)?;
 

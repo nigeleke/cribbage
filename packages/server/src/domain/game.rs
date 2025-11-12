@@ -47,6 +47,14 @@ impl Game {
     pub fn state(&self) -> &State {
         &self.state
     }
+
+    pub fn validate_user(&self, user_id: UserId) -> Option<Player> {
+        match user_id {
+            id if id == self.host => Some(PLAYER0),
+            id if Some(id) == self.guest => Some(PLAYER1),
+            _ => None,
+        }
+    }
 }
 
 // fn new_starting(host: UserId, guest: Option<UserId>, name: &str) -> Self {

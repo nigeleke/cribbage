@@ -4,11 +4,11 @@ use dioxus::fullstack::{JsonEncoding, Streaming};
 use dioxus::prelude::*;
 use futures::StreamExt;
 
-#[get("/api/{user_id}/available_game/events", State(server_state): State<server::ServerState>)]
-pub async fn available_game_events(
+#[get("/api/{user_id}/available_games/events", State(server_state): State<server::ServerState>)]
+pub async fn available_games_events(
     user_id: UserIdDTO,
 ) -> Result<Streaming<GameEventDTO, JsonEncoding>, ServerFnError> {
-    use server::AvailableGameEvent;
+    use server::stream::AvailableGameEvent;
 
     let user_id = server::UserId::from(user_id.value());
 
@@ -18,7 +18,7 @@ pub async fn available_game_events(
     };
 
     let server_state = server_state.clone();
-    let stream = server::available_game_events(server_state, user_id)
+    let stream = server::stream::available_game_events(server_state, user_id)
         .await
         .map_err(ServerFnError::new)?;
 

@@ -24,11 +24,12 @@ fn NewGameSection() -> Element {
 
     let host_game = move |_| {
         spawn(async move {
-            match api::host_game(*user_id.read()).await {
+            match api::action::host_game(*user_id.read()).await {
                 Ok(game_id) => {
                     navigator.push(Route::LobbyPage { game_id });
                 }
                 Err(error) => {
+                    warn!("HomePage:host_game:error {error:?}");
                     let error = error.to_string();
                     navigator.push(Route::ErrorPage { error });
                 }
@@ -38,11 +39,15 @@ fn NewGameSection() -> Element {
 
     let play_computer = move |_| {
         spawn(async move {
-            match api::play_computer(*user_id.read()).await {
+            match api::action::play_computer(*user_id.read()).await {
                 Ok(game_id) => {
                     navigator.push(Route::GamePage { game_id });
                 }
-                Err(e) => panic!("start game failed: {}", e.to_string()),
+                Err(error) => {
+                    warn!("HomePage:play_computer:error {error:?}");
+                    let error = error.to_string();
+                    navigator.push(Route::ErrorPage { error });
+                }
             };
         });
     };
@@ -69,11 +74,12 @@ fn JoinGameSection() -> Element {
     let mut filter = use_signal(String::default);
 
     let mut has_more = use_signal(|| false);
-    let mut since = use_signal(|| api::Since::default());
+    let mut since = use_signal(|| api::view::Since::default());
 
     let fetch_games = {
-        move |since2: api::Since, replace: bool| async move {
-            let result = api::get_available_games(*user_id.read(), Some(filter()), since2).await;
+        move |since2: api::view::Since, replace: bool| async move {
+            let result =
+                api::view::get_available_games(*user_id.read(), Some(filter()), since2).await;
             match result {
                 Ok(response) => {
                     if replace {
@@ -97,11 +103,11 @@ fn JoinGameSection() -> Element {
     };
 
     let _ = use_resource(move || async move {
-        fetch_games(api::Since::default(), true).await;
+        fetch_games(api::view::Since::default(), true).await;
     });
 
     let mut available_game_events = use_resource(move || async move {
-        let mut stream = api::available_game_events(*user_id.read()).await?;
+        let mut stream = api::stream::available_games_events(*user_id.read()).await?;
         while let Some(Ok(event)) = stream.next().await {
             debug!("HomePage::available_game_events: {event:?}");
             //     match event {
@@ -127,7 +133,7 @@ fn JoinGameSection() -> Element {
                 value: filter,
                 on_debounced_input: move |value| {
                     filter.set(value);
-                    let state = api::Since::default();
+                    let state = api::view::Since::default();
                     async move {
                         fetch_games(state, true).await;
                     }
@@ -136,12 +142,12 @@ fn JoinGameSection() -> Element {
             GameList { games }
             button {
                 class: "more-button",
-                // disabled: !has_more(),
-                // onclick: move |_| {
-                //     async move {
-                //         fetch_games(since(), false).await;
-                //     }
-                // },
+                disabled: !has_more(),
+                onclick: move |_| {
+                    async move {
+                        fetch_games(since(), false).await;
+                    }
+                },
                 "More..."
             }
             Toast { toasts }
@@ -155,9 +161,10 @@ fn GameList(games: ReadSignal<Vec<AvailableGameDTO>>) -> Element {
     let navigator = use_navigator();
 
     let mut join_game = use_action(move |game_id| async move {
-        match api::join_game(user_id(), game_id).await {
+        match api::action::join_game(user_id(), game_id).await {
             Ok(_) => navigator.push(Route::GamePage { game_id }),
             Err(error) => {
+                warn!("HomePage:join_game:error {error:?}");
                 let error = error.to_string();
                 navigator.push(Route::ErrorPage { error })
             }

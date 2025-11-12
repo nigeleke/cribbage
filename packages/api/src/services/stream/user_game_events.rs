@@ -17,11 +17,21 @@ pub async fn user_game_events(
     let game_event_to_dto = |event| match event {
         GameEvent::LobbyGameCreated { name, .. } => Some(GameEventDTO::LobbyGameCreated { name }),
         GameEvent::LobbyGameJoined { .. } => Some(GameEventDTO::OpponentJoined),
-        _ => None,
+        GameEvent::ComputerGameStarted { .. } => {
+            warn!("Unhandled GameEvent: {event:?}");
+            None
+        }
+        GameEvent::CutForDealMade { .. } => None,
+        GameEvent::CutForDealDecided { .. } => Some(GameEventDTO::CutForDealDecided),
+        GameEvent::CutForDealTied => Some(GameEventDTO::CutForDealTied),
+        _ => {
+            warn!("Unhandled GameEvent: {event:?}");
+            None
+        }
     };
 
     let server_state = server_state.clone();
-    let stream = server::game_events(server_state, game_id)
+    let stream = server::stream::game_events(server_state, game_id)
         .await
         .map_err(ServerFnError::new)?;
 

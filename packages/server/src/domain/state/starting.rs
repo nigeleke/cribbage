@@ -35,7 +35,8 @@ impl Starting {
     }
 
     pub fn set_cut(&mut self, player: Player, cut: Cut) {
-        self.cuts[player] = Some(cut)
+        self.cuts[player] = Some(cut);
+        self.deck.remove(cut);
     }
 
     pub fn deck(&self) -> &Deck {

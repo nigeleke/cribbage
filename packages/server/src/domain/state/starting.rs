@@ -52,7 +52,7 @@ impl Starting {
     }
 
     pub fn roles(&self) -> Option<Roles> {
-        Roles::from_cuts_when_ready(&self.cuts, &self.pending)
+        Roles::from_cuts(&self.cuts)
     }
 }
 

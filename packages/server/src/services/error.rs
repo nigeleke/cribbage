@@ -33,4 +33,7 @@ pub enum ServiceError {
 
     #[error(transparent)]
     AggregateError(#[from] cqrs_es::AggregateError<crate::GameError>),
+
+    #[error(transparent)]
+    BroadcastStreamError(#[from] tokio_stream::wrappers::errors::BroadcastStreamRecvError),
 }

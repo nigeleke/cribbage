@@ -1,7 +1,12 @@
+use dioxus::logger::tracing::field::debug;
 use serde::{Deserialize, Serialize};
+use serde_json::de;
 
 use super::{Dealer, Pone};
-use crate::domain::{Cuts, PLAYER0, PLAYER1, WaitingForCuts};
+use crate::{
+    constants::PLAYER_COUNT,
+    domain::{Cuts, PLAYER0, PLAYER1, WaitingForCuts},
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Roles {
@@ -10,13 +15,14 @@ pub struct Roles {
 }
 
 impl Roles {
-    pub fn from_cuts_when_ready(cuts: &Cuts, pending: &WaitingForCuts) -> Option<Self> {
+    pub fn from_cuts(cuts: &Cuts) -> Option<Self> {
         use std::cmp::Ordering;
-        println!("**** {cuts:?}");
-        pending
-            .finished()
+
+        let defined_cuts = cuts.iter().filter_map(|c| c.clone()).collect::<Vec<_>>();
+
+        (defined_cuts.len() == PLAYER_COUNT)
             .then(|| {
-                let defined_cuts = cuts.iter().filter_map(|c| c.clone()).collect::<Vec<_>>();
+                debug("Roles:from_cuts: {defined_cuts:?}");
                 let dealer = match defined_cuts[PLAYER0]
                     .face()
                     .rank()
@@ -26,6 +32,7 @@ impl Roles {
                     Ordering::Greater => Some(Dealer::from(PLAYER1)),
                     Ordering::Equal => None,
                 };
+
                 dealer.map(|dealer| Self {
                     dealer,
                     pone: dealer.opponent(),

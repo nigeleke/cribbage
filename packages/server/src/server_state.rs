@@ -64,6 +64,7 @@ async fn create_database_changes_sender(
     let mut listener = PgListener::connect_with(&postgres_pool)
         .await
         .map_err(DatabaseError::from)?;
+
     listener
         .listen_all(["events_change", "games_change"])
         .await
@@ -77,7 +78,6 @@ async fn create_database_changes_sender(
                 Ok(notification) => {
                     let payload = serde_json::from_str::<Notification>(notification.payload());
                     if let Ok(parsed) = payload {
-                        debug!("server_state:database_listener: received: {parsed:?}");
                         let _ = tx2.send(parsed);
                     }
                 }

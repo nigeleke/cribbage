@@ -26,12 +26,12 @@ pub enum GameEvent {
         player: Player,
         cut: Cut,
     },
-    CutForDealAcknowledged {
-        player: Player,
-    },
     CutForDealTied,
     CutForDealDecided {
         dealer: Dealer,
+    },
+    CutForDealAcknowledged {
+        player: Player,
     },
     HandDealt {
         player: Player,

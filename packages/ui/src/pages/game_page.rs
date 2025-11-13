@@ -13,19 +13,16 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
     provide_context(game);
 
     let mut game_stream = use_action(move || async move {
-        debug!(">>> GamePage::game_stream 0");
         let mut stream = api::stream::user_game_stream(*user_id.read(), game_id).await?;
-        debug!(">>> GamePage::game_stream 1");
         while let Some(Ok(updated_game)) = stream.next().await {
-            debug!("***** Setting {user_id} game as {updated_game:?}");
             game.set(Some(updated_game));
         }
         dioxus::Ok(())
     });
 
     let _ = use_resource(move || async move {
-        let game0 = api::view::get_game(*user_id.read(), game_id).await?;
-        game.set(Some(game0));
+        let current_game = api::view::get_game(*user_id.read(), game_id).await?;
+        game.set(Some(current_game));
         game_stream.call();
         dioxus::Ok(())
     });
@@ -45,7 +42,6 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
 
 #[component]
 fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
-    debug!("ActiveGame: {game:?}");
     match game().phase() {
         Phase::Lobby => rsx! { Starting { user_cut: None, opponent_cut: None } },
         Phase::CutForDeal {
@@ -81,14 +77,13 @@ fn Starting(
     let _ = use_resource(move || async move {
         let mut stream = api::stream::user_game_events(*user_id.read(), game_id).await?;
         while let Some(Ok(event)) = stream.next().await {
-            debug!("GamePage::user_game_events: {user_id} {event:?}");
             match event {
                 GameEventDTO::CutForDealDecided => can_start.set(true),
                 GameEventDTO::CutForDealTied => can_redraw.set(true),
                 _ => {}
             }
         }
-        debug!("GamePage::user_game_events: {user_id} --done");
+
         dioxus::Ok(())
     });
 
@@ -180,7 +175,7 @@ fn Starting(
                     }
                 },
                 (Some(_), None, _) => rsx! { p { "Waiting for opponent"} },
-                (Some(_), Some(_), None) => rsx! { p { "No dealer declared - Acknowledge??" } },
+                (Some(_), Some(_), None) => rsx! { p { "Cut for deal tied" } },
                 (Some(_), Some(_), Some(dealer)) => rsx! { p { "Dealer declared {dealer}" } },
             }
 

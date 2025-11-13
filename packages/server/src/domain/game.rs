@@ -1,10 +1,11 @@
 use crate::domain::constants::PLAYER_COUNT;
 use crate::domain::{
-    Crib, Cut, CutForDealState, Deck, Discarding, GameCommand, GameError, GameEvent, GameId,
-    PLAYER0, PLAYER1, Pending, Player, Roles, Scoreboard, Starting, State, UserId,
+    Crib, Cut, CutForDealState, Dealer, Deck, Discarding, GameCommand, GameError, GameEvent,
+    GameId, PLAYER0, PLAYER1, Pending, Player, Roles, Scoreboard, Starting, State, UserId,
 };
 use crate::name_builder::generate_game_name;
 use cqrs_es::Aggregate;
+use dioxus::html::ol::start;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -56,72 +57,6 @@ impl Game {
         }
     }
 }
-
-// fn new_starting(host: UserId, guest: Option<UserId>, name: &str) -> Self {
-//     let id = GameId::new();
-//     let name = String::from(name);
-//     let starting = Starting::default();
-//     let state = State::Starting(starting);
-//     Game {
-//         id,
-//         host,
-//         guest,
-//         name,
-//         state,
-//     }
-// }
-
-// pub fn id(&self) -> &GameId {
-//     &self.id
-// }
-
-// pub fn host(&self) -> &UserId {
-//     &self.host
-// }
-
-// pub fn guest(&self) -> Option<&UserId> {
-//     self.guest.as_ref()
-// }
-
-// pub fn available_to_user(&self, user_id: &UserId) -> bool {
-//     let participating = &self.host == user_id || self.guest.as_ref() == Some(user_id);
-//     let can_participate = &self.host != user_id && self.guest().is_none();
-//     participating || can_participate
-// }
-
-// pub fn name(&self) -> &String {
-//     &self.name
-// }
-
-// pub fn state(&self) -> &State {
-//     &self.state
-// }
-// }
-
-// impl EventSourced for Game {
-//     type Id = GameId;
-//     type Event = Event;
-
-//     const TYPE_NAME: &'static str = stringify!(Game);
-
-//     fn handle_event(self, event: Self::Event) -> Self {
-//         match event.kind() {
-//             EventKind::LobbyGameCreated { id, host, name } => {
-//                 self.handle_game_created(*id, *host, None, name.to_owned())
-//             }
-//             EventKind::ComputerGameCreated {
-//                 id,
-//                 host,
-//                 guest,
-//                 name,
-//             } => self.handle_game_created(*id, *host, Some(*guest), name.to_owned()),
-//             EventKind::LobbyGameJoined { id, guest } => self.handle_guest_joined(*id, *guest),
-//             EventKind::StateUpdated { id, state } => {
-//                 self.handle_state_updated(*id, state.to_owned())
-//             }
-//         }
-//     }
-// }
 
 impl Game {
     fn host_game(&self, host: UserId, game_id: GameId) -> Result<Vec<GameEvent>, GameError> {
@@ -177,12 +112,25 @@ impl Game {
         let not_permitted = || Err(GameError::NotPermitted(String::from("cut for deal")));
 
         let cut_for_deal = |starting: &Starting| {
-            let (_cuts, deck, pending) = &mut starting.clone().into_parts();
+            let (cuts, deck, pending) = &mut starting.clone().into_parts();
             if !pending.waiting_on(player) {
                 not_permitted()
             } else {
                 let cut = deck.cut();
-                let events = vec![GameEvent::CutForDealMade { player, cut }];
+                let mut events = vec![GameEvent::CutForDealMade { player, cut }];
+
+                cuts[player] = Some(cut);
+
+                let proceed = cuts[PLAYER0].is_some() && cuts[PLAYER1].is_some();
+                if proceed {
+                    if let Some(roles) = Roles::from_cuts(&cuts) {
+                        let dealer = *roles.dealer();
+                        events.push(GameEvent::CutForDealDecided { dealer })
+                    } else {
+                        events.push(GameEvent::CutForDealTied)
+                    }
+                }
+
                 Ok(events)
             }
         };
@@ -208,22 +156,11 @@ impl Game {
         };
 
         let acknowledge = |starting: &Starting| {
-            let (cuts, _deck, pending) = &mut starting.clone().into_parts();
+            let (_cuts, _deck, pending) = &mut starting.clone().into_parts();
             if !pending.waiting_on(player) {
                 not_permitted()
             } else {
-                let proceed = pending.acknowledge(player);
-                let mut events = vec![GameEvent::CutForDealAcknowledged { player }];
-
-                if proceed {
-                    if let Some(roles) = Roles::from_cuts_when_ready(cuts, pending) {
-                        let dealer = *roles.dealer();
-                        events.push(GameEvent::CutForDealDecided { dealer })
-                    } else {
-                        events.push(GameEvent::CutForDealTied)
-                    }
-                }
-
+                let events = vec![GameEvent::CutForDealAcknowledged { player }];
                 Ok(events)
             }
         };
@@ -269,7 +206,6 @@ impl Game {
 
     fn lobby_game_joined(&mut self, guest: UserId) {
         self.guest = Some(guest);
-        dioxus::prelude::debug!("api:handle_event:lobby_game_joined {self:?}");
     }
 
     fn computer_game_started(
@@ -313,6 +249,8 @@ impl Game {
                 name,
             } => self.computer_game_started(game_id, host, guest, name),
             GameEvent::CutForDealMade { player, cut } => self.cut_for_deal_made(player, cut),
+            GameEvent::CutForDealDecided { .. } => { /* do nothing until acknowledged */ }
+            GameEvent::CutForDealTied => { /* do nothing until acknowledged */ }
             GameEvent::CutForDealAcknowledged { player } => self.cut_for_deal_acknowledged(player),
             _ => unimplemented!("apply: {event:?}"),
         }

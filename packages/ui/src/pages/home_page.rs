@@ -109,7 +109,6 @@ fn JoinGameSection() -> Element {
     let mut available_game_events = use_resource(move || async move {
         let mut stream = api::stream::available_games_events(*user_id.read()).await?;
         while let Some(Ok(event)) = stream.next().await {
-            debug!("HomePage::available_game_events: {event:?}");
             //     match event {
             //         AvailableGamesStreamEvent::Added(game) => {
             //             has_more.set(true);

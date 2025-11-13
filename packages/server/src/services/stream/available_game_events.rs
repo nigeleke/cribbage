@@ -1,13 +1,14 @@
-use std::str::FromStr;
+use crate::{
+    convertors::{self},
+    database::{Change, GameRow, Notification},
+    domain::{Game, GameId, UserId},
+    server_state::ServerState,
+    services::error::ServiceError,
+};
 
 use dioxus::prelude::*;
-
-use crate::{
-    domain::{Game, GameEvent, GameId, UserId},
-    server_state::ServerState,
-    services::{error::ServiceError, stream::events::events, view::get_game},
-};
-use futures::{Stream, StreamExt};
+use futures::{Stream, TryStreamExt};
+use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 
 pub enum AvailableGameEvent {
     Created { game_id: GameId, name: String },
@@ -16,27 +17,79 @@ pub enum AvailableGameEvent {
 
 pub async fn available_game_events(
     server_state: ServerState,
-    _user_id: UserId,
+    user_id: UserId,
 ) -> Result<impl Stream<Item = AvailableGameEvent>, ServiceError> {
-    let stream = events::<Game>(server_state.clone(), None).await?;
-    let stream = stream.filter_map({
-        move |(aggregate_id, event)| {
-            let server_state = server_state.clone();
-            async move {
-                if let Ok(game_id) = GameId::from_str(&aggregate_id)
-                    && let Ok(_game) = get_game(server_state, game_id).await
-                {
-                    match event {
-                        GameEvent::LobbyGameCreated { game_id, name, .. } => {
-                            Some(AvailableGameEvent::Created { game_id, name })
-                        }
-                        _ => None,
-                    }
-                } else {
-                    None
+    let stream = BroadcastStream::new(server_state.database_changes_sender.subscribe())
+        .map_err(ServiceError::from);
+
+    let stream = stream.try_filter_map(move |notification| async move {
+        let notification_to_game_row_change = move |notification: Notification| {
+            let change = (notification.table_name == "games")
+                .then_some(notification.as_change::<GameRow>())
+                .transpose()?;
+            Ok::<_, ServiceError>(change)
+        };
+
+        let row_change_to_game_change = move |change: Change<GameRow>| {
+            let change = match change {
+                Change::Insert { t } => {
+                    let t = convertors::game_row_to_game(t)?;
+                    Change::Insert { t }
                 }
+                Change::Update { old_t, new_t } => {
+                    let old_t = convertors::game_row_to_game(old_t)?;
+                    let new_t = convertors::game_row_to_game(new_t)?;
+                    Change::Update { old_t, new_t }
+                }
+                Change::Delete { t } => {
+                    let t = convertors::game_row_to_game(t)?;
+                    Change::Delete { t }
+                }
+            };
+            Ok::<_, ServiceError>(change)
+        };
+
+        let game_change_to_event = move |change: Change<Game>| {
+            let user_is_host = |game: &Game| game.host() == &user_id;
+            let user_can_join = |game: &Game| game.host() != &user_id && game.guest().is_none();
+            let player = |game: &Game| game.validate_user(user_id).is_some();
+            let joined = |old_game: &Game, new_game: &Game| !player(old_game) && player(new_game);
+
+            let created = |game: &Game| {
+                Some(AvailableGameEvent::Created {
+                    game_id: *game.id(),
+                    name: game.name().clone(),
+                })
+            };
+
+            let removed = |game: &Game| {
+                Some(AvailableGameEvent::Removed {
+                    game_id: *game.id(),
+                })
+            };
+
+            match &change {
+                Change::Insert { t } if user_is_host(t) => created(t),
+                Change::Insert { t } if user_can_join(t) => created(t),
+                Change::Update { old_t, new_t } if !joined(old_t, new_t) => created(new_t),
+                Change::Delete { t } if player(t) => removed(t),
+                _ => None,
             }
+        };
+
+        let change = notification_to_game_row_change(notification)?;
+        let change = change.map(row_change_to_game_change).transpose()?;
+        let event = change.map(game_change_to_event).flatten();
+        Ok(event)
+    });
+
+    let stream = stream.filter_map(|result| match result {
+        Ok(event) => Some(event),
+        Err(error) => {
+            warn!("server:services:available_game_events: error: {error}");
+            None
         }
     });
+
     Ok(stream)
 }

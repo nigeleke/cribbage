@@ -30,13 +30,13 @@ fn Layout() -> Element {
         document::Link { rel: "icon", href: asset!("/assets/favicon.ico"), type: "image/x-icon" }
         document::Script { r#type: "module", src: asset!("/assets/js/listen_unhandled_promises.js") }
 
-        header { h1 { "Cribbage" } }
+        header { h1 { "Cribbage"  } }
         main {
             ErrorBoundary {
                 handle_error: |errors| rsx! { UnexpectedErrorPage { errors } },
                 Outlet::<Route> {}
             }
         }
-        footer { "Copyright © 2025; Nigel Eke. All rights reserved." }
+        footer { "{user_id}" " - Copyright © 2025; Nigel Eke. All rights reserved." }
     }
 }

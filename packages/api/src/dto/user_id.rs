@@ -23,7 +23,7 @@ impl Default for UserIdDTO {
 
 impl std::fmt::Display for UserIdDTO {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", &self.0.to_string()[..8])
+        self.0.fmt(f)
     }
 }
 

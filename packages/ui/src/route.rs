@@ -23,6 +23,7 @@ pub enum Route {
 #[component]
 fn Layout() -> Element {
     let user_id = use_persistent("user_id", || UserIdDTO::new());
+    let display_user_id = &user_id.to_string()[..8];
     provide_context(user_id);
 
     rsx! {
@@ -37,6 +38,6 @@ fn Layout() -> Element {
                 Outlet::<Route> {}
             }
         }
-        footer { "{user_id}" " - Copyright © 2025; Nigel Eke. All rights reserved." }
+        footer { "{display_user_id}" " - Copyright © 2025; Nigel Eke. All rights reserved." }
     }
 }

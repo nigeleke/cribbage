@@ -13,7 +13,7 @@ pub fn LobbyPage(game_id: GameIdDTO) -> Element {
 
     let _ = use_resource(move || async move {
         let game = api::view::get_game(*user_id.read(), game_id).await?;
-        game_name.set(Some(game.name().clone()));
+        game_name.set(Some(game.name.clone()));
         dioxus::Ok(())
     });
 

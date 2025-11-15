@@ -1,4 +1,7 @@
-use api::{CardDTO, GameEventDTO, GameIdDTO, Phase, PlayerDTO, UserGameDTO, UserIdDTO};
+use api::{
+    CardDTO, GameEventDTO, GameIdDTO, Phase, PlayerDTO, PlayerStateDTO, PlaysDTO, UserGameDTO,
+    UserIdDTO,
+};
 use dioxus::prelude::*;
 
 use crate::components::CardView;
@@ -30,7 +33,9 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/game_page.css") }
         if let Some(game) = game() {
-            ActiveGame { game }
+            ActiveGame {
+                game
+            }
         } else {
             div {
                 class: "game-page",
@@ -42,7 +47,7 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
 
 #[component]
 fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
-    match game().phase() {
+    match game().phase {
         Phase::Lobby => rsx! { Starting { user_cut: None, opponent_cut: None } },
         Phase::CutForDeal {
             user_cut,
@@ -54,11 +59,14 @@ fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
             let dealer = dealer.clone();
             rsx! { Starting { user_cut, opponent_cut, dealer } }
         }
-        Phase::Active { .. } => rsx! { p{"Active Phase"} },
-        // Phase::Active { dealer, crib, .. } => {
-        //     rsx! { p { "Decided: {dealer:?} {crib:?}" } }
-        //     rsx! { InProgress { user_state, opponent_state, crib, cut, plays, winner }}
-        // }
+        Phase::Active { dealer, crib } => {
+            let user_state = game().user_state;
+            let opponent_state = game().opponent_state;
+            let cut = game().cut;
+            let plays = game().plays;
+            let winner = game().winner;
+            rsx! { InProgress { user_state, opponent_state, dealer, crib, cut, plays, winner } }
+        }
     }
 }
 
@@ -156,38 +164,42 @@ fn Starting(
     }
 }
 
-// #[component]
-// fn InProgress(
-//     user_state: PlayerState,
-//     opponent_state: PlayerState,
-//     crib: Vec<CardState>,
-//     cut: Option<Card>,
-//     plays: Option<Plays>,
-//     winner: Option<Role>,
-// ) -> Element {
-//     rsx! {
-//         div {
-//             class: "in-progress",
-//             div {
-//                 class: "scoreboard",
-//                 h2 { class: "scoreboard-title", "Scoreboard" }
-//             }
-//             div {
-//                 class: "card-container",
-//                 h3 { class: "section-title", "Your Hand" }
-//             }
-//             div {
-//                 class: "middle-section",
-//                 p { "middle" }
-//             }
-//             div {
-//                 class: "card-container",
-//                 h3 { class: "section-title", "Opponent Hand" }
-//             }
-//             div {
-//                 class: "crib-cut-container",
-//                 h3 { class: "section-title", "Crib / cut" }
-//             }
-//         }
-//     }
-// }
+#[component]
+fn InProgress(
+    user_state: PlayerStateDTO,
+    opponent_state: PlayerStateDTO,
+    dealer: PlayerDTO,
+    crib: Vec<CardDTO>,
+    cut: Option<CardDTO>,
+    plays: Option<PlaysDTO>,
+    winner: Option<PlayerDTO>,
+) -> Element {
+    rsx! {
+        div {
+            class: "game-page",
+            div {
+                class: "in-progress",
+                div {
+                    class: "scoreboard",
+                    h2 { class: "scoreboard-title", "Scoreboard" }
+                }
+                div {
+                    class: "card-container",
+                    h3 { class: "section-title", "Your Hand" }
+                }
+                div {
+                    class: "middle-section",
+                    p { "middle" }
+                }
+                div {
+                    class: "card-container",
+                    h3 { class: "section-title", "Opponent Hand" }
+                }
+                div {
+                    class: "crib-cut-container",
+                    h3 { class: "section-title", "Crib / cut" }
+                }
+            }
+        }
+    }
+}

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{CardDTO, PlayerDTO, ScoreDTO};
+use super::{CardDTO, PlayerDTO, PlayerStateDTO, PlaysDTO, ScoreDTO};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Phase {
@@ -18,28 +18,15 @@ pub enum Phase {
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-struct PlayerState {
-    hand: Vec<CardDTO>,
-    score: ScoreDTO,
-}
-
-type Play = (PlayerDTO, CardDTO);
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-struct Plays {
-    current: Vec<Play>,
-    historic: Vec<Play>,
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UserGameDTO {
-    name: String,
-    phase: Phase,
-    pending: bool,
-    user_state: PlayerState,
-    opponent_state: PlayerState,
-    cut: Option<CardDTO>,
-    plays: Option<Plays>,
+    pub name: String,
+    pub phase: Phase,
+    pub pending: bool,
+    pub user_state: PlayerStateDTO,
+    pub opponent_state: PlayerStateDTO,
+    pub cut: Option<CardDTO>,
+    pub plays: Option<PlaysDTO>,
+    pub winner: Option<PlayerDTO>,
 }
 
 impl UserGameDTO {
@@ -51,7 +38,6 @@ impl UserGameDTO {
     }
 
     pub fn with_user_cut(self, user_cut: Option<CardDTO>, dealer: Option<PlayerDTO>) -> Self {
-        eprintln!("UserGameDTO::with_user_cut {user_cut:?} {dealer:?}");
         let Self {
             name,
             mut phase,
@@ -60,6 +46,7 @@ impl UserGameDTO {
             opponent_state,
             cut,
             plays,
+            winner,
         } = self;
 
         let pending = dealer.is_none();
@@ -76,7 +63,6 @@ impl UserGameDTO {
                 dealer,
             },
             Phase::Active { .. } => {
-                eprintln!("applying UserGameDTO::with_user_cut in unexpected state");
                 unreachable!()
             }
         };
@@ -89,11 +75,11 @@ impl UserGameDTO {
             opponent_state,
             cut,
             plays,
+            winner,
         }
     }
 
     pub fn with_opponent_cut(self, opponent_cut: Option<CardDTO>) -> Self {
-        eprintln!("UserGameDTO::with_opponent_cut {opponent_cut:?}");
         let Self {
             name,
             mut phase,
@@ -102,6 +88,7 @@ impl UserGameDTO {
             opponent_state,
             cut,
             plays,
+            winner,
         } = self;
 
         phase = match phase {
@@ -118,7 +105,6 @@ impl UserGameDTO {
                 dealer,
             },
             Phase::Active { .. } => {
-                eprintln!("applying UserGameDTO::with_opponent_cut in unexpected state");
                 unreachable!()
             }
         };
@@ -131,6 +117,7 @@ impl UserGameDTO {
             opponent_state,
             cut,
             plays,
+            winner,
         }
     }
 
@@ -142,22 +129,14 @@ impl UserGameDTO {
 
     pub fn with_user_state(mut self, score: ScoreDTO, hand: &[CardDTO]) -> Self {
         let hand = Vec::from(hand);
-        self.user_state = PlayerState { hand, score };
+        self.user_state = PlayerStateDTO { hand, score };
         self
     }
 
     pub fn with_opponent_state(mut self, score: ScoreDTO, hand: &[CardDTO]) -> Self {
         let hand = Vec::from(hand);
-        self.opponent_state = PlayerState { hand, score };
+        self.opponent_state = PlayerStateDTO { hand, score };
         self
-    }
-
-    pub fn phase(&self) -> &Phase {
-        &self.phase
-    }
-
-    pub fn name(&self) -> &String {
-        &self.name
     }
 
     pub fn dealer(&self) -> Option<&PlayerDTO> {

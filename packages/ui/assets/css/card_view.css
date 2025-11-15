@@ -1,6 +1,8 @@
 .card-view {
     --ease-time: 300ms;
     transition: transform var(--ease-time) ease;
+    width: fit-content;
+    height: fit-content;
 }
 
 .card-view .card {

@@ -1,0 +1,16 @@
+.crib-container {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(3, 1fr);
+}
+
+.crib-container > :nth-child(1) {
+    align-self: start;
+}
+.crib-container > :nth-child(2) {
+    align-self: center;
+}
+.crib-container > :nth-child(3) {
+    align-self: end;
+}

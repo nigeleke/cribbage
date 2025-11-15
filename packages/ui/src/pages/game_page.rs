@@ -4,7 +4,7 @@ use api::{
 };
 use dioxus::prelude::*;
 
-use crate::components::{CardView, Hand, Scoreboard};
+use crate::components::{CardView, CribAndCut, Hand, Scoreboard};
 use crate::route::Route;
 
 #[component]
@@ -202,7 +202,7 @@ fn InProgress(
                 }
                 div {
                     class: "crib-cut-container",
-                    h3 { class: "section-title", "Crib / cut" }
+                    CribAndCut { dealer, cards: crib, cut }
                 }
             }
         }

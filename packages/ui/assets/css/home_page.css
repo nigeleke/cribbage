@@ -4,13 +4,7 @@
     display: flex;
     flex-direction: column;
     justify-content: stretch;
-    max-height: 100%;
     overflow: hidden;
-}
-
-.join-game,
-.new-game {
-    /* align-self: start; */
 }
 
 .join-game {
@@ -18,7 +12,6 @@
     display: flex;
     flex-direction: column;
     justify-items: stretch;
-    max-height: 100%;
     overflow: hidden;
 }
 
@@ -42,7 +35,6 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding: 1em 0em;
 }
 
 .game-items {

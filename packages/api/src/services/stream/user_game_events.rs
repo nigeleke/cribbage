@@ -24,6 +24,7 @@ pub async fn user_game_events(
         GameEvent::CutForDealMade { .. } => None,
         GameEvent::CutForDealDecided { .. } => Some(GameEventDTO::CutForDealDecided),
         GameEvent::CutForDealTied => Some(GameEventDTO::CutForDealTied),
+        GameEvent::CutForDealAcknowledged { .. } => None,
         _ => {
             warn!("Unhandled GameEvent: {event:?}");
             None

@@ -1,10 +1,5 @@
 .game-page {
-    flex-grow: 1;
     justify-self: center;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
 }
 
 .starting {
@@ -28,24 +23,24 @@
     grid-template-columns: 1fr 2fr 1fr;
     grid-template-rows: 1fr 1fr 1fr;
     gap: 16px;
-    padding: 16px;
+}
+
+.in-progress > :nth-child(2) {
+    align-self: start;
+}
+
+.in-progress > :nth-child(4) {
+    align-self: end;
 }
 
 .scoreboard {
     grid-column: 1;
     grid-row: 1 / 4;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
 }
 
 .card-container {
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 16px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -53,23 +48,11 @@
 
 .middle-section {
     background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
 }
 
 .crib-cut-container {
     grid-column: 3;
     grid-row: 1 / 4;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 16px;
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    justify-self: center;
 }

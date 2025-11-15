@@ -61,6 +61,7 @@
     align-items: center;
     justify-content: center;
 }
+
 .crib-cut-container {
     grid-column: 3;
     grid-row: 1 / 4;

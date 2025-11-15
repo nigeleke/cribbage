@@ -29,13 +29,11 @@
     grid-template-rows: 1fr 1fr 1fr;
     gap: 16px;
     padding: 16px;
-    background-color: lightblue;
 }
 
 .scoreboard {
     grid-column: 1;
     grid-row: 1 / 4;
-    background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
@@ -45,7 +43,6 @@
 }
 
 .card-container {
-    background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 16px;
@@ -74,9 +71,4 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-}
-.section-title {
-    font-size: 1.125rem;
-    font-weight: bold;
-    margin-bottom: 8px;
 }

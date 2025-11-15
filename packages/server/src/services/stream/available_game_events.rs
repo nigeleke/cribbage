@@ -12,7 +12,7 @@ use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 
 pub enum AvailableGameEvent {
     Created { game_id: GameId, name: String },
-    Removed { game_id: GameId },
+    Removed { game_id: GameId, name: String },
 }
 
 pub async fn available_game_events(
@@ -65,13 +65,14 @@ pub async fn available_game_events(
             let removed = |game: &Game| {
                 Some(AvailableGameEvent::Removed {
                     game_id: *game.id(),
+                    name: game.name().clone(),
                 })
             };
 
             match &change {
                 Change::Insert { t } if user_is_host(t) => created(t),
                 Change::Insert { t } if user_can_join(t) => created(t),
-                Change::Update { old_t, new_t } if !joined(old_t, new_t) => created(new_t),
+                Change::Update { old_t, new_t } if !joined(old_t, new_t) => removed(new_t),
                 Change::Delete { t } if player(t) => removed(t),
                 _ => None,
             }

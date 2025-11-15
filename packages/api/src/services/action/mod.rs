@@ -1,8 +1,10 @@
+mod acknowledge_cut_for_deal;
 mod cut_for_deal;
 mod host_game;
 mod join_game;
 mod play_computer;
 
+pub use acknowledge_cut_for_deal::acknowledge_cut_for_deal;
 pub use cut_for_deal::cut_for_deal;
 pub use host_game::host_game;
 pub use join_game::join_game;

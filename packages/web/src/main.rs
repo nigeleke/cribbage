@@ -11,8 +11,8 @@ fn main() {
         use dioxus::fullstack::axum::Extension;
 
         dotenvy::dotenv().expect("environment settings needed on startup");
-        let router = dioxus::server::router(app::App);
-        let router = router.layer(Extension(api::initialize_server_state().await?));
+        let router = dioxus::server::router(app::App)
+            .layer(Extension(api::initialize_server_state().await?));
         Ok(router)
     });
 }

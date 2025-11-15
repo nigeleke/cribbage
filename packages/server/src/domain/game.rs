@@ -1,11 +1,10 @@
 use crate::domain::constants::PLAYER_COUNT;
 use crate::domain::{
-    Crib, Cut, CutForDealState, Dealer, Deck, Discarding, GameCommand, GameError, GameEvent,
-    GameId, PLAYER0, PLAYER1, Pending, Player, Roles, Scoreboard, Starting, State, UserId,
+    Crib, Cut, Cuts, Deck, Discarding, GameCommand, GameError, GameEvent, GameId, PLAYER0, PLAYER1,
+    Player, Roles, Scoreboard, Starting, State, UserId, WaitingForCuts, WaitingForDiscards,
 };
 use crate::name_builder::generate_game_name;
 use cqrs_es::Aggregate;
-use dioxus::html::ol::start;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -155,22 +154,12 @@ impl Game {
             )))
         };
 
-        let acknowledge = |starting: &Starting| {
-            let (_cuts, _deck, pending) = &mut starting.clone().into_parts();
-            if !pending.waiting_on(player) {
-                not_permitted()
-            } else {
-                let events = vec![GameEvent::CutForDealAcknowledged { player }];
-                Ok(events)
-            }
-        };
-
         if self.id == GameId::default() {
             not_permitted()
         } else {
             match &self.state {
-                State::Starting(starting) => {
-                    let events = acknowledge(starting)?;
+                State::Starting(_) => {
+                    let events = vec![GameEvent::CutForDealAcknowledged { player }];
                     Ok(events)
                 }
                 _ => not_permitted(),
@@ -229,8 +218,32 @@ impl Game {
     }
 
     fn cut_for_deal_acknowledged(&mut self, player: Player) {
-        if let State::Starting(starting) = &mut self.state {
-            starting.set_acknowledged(player);
+        if let State::Starting(starting) = &self.state {
+            let (cuts, deck, mut pending) = starting.clone().into_parts();
+
+            let proceed = pending.acknowledge(player);
+
+            if proceed {
+                if let Some(roles) = Roles::from_cuts(&cuts) {
+                    let scoreboard = Scoreboard::default();
+                    let mut deck = Deck::shuffled_pack();
+                    let hands = deck.deal(PLAYER_COUNT);
+                    let hands = [hands[PLAYER0].clone(), hands[PLAYER1].clone()];
+                    let crib = Crib::default();
+                    let pending = WaitingForDiscards::default();
+                    let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
+                    self.state = State::Discarding(discarding);
+                } else {
+                    let cuts = Cuts::default();
+                    let deck = Deck::shuffled_pack();
+                    let pending = WaitingForCuts::default();
+                    let starting = Starting::new(cuts, deck, pending);
+                    self.state = State::Starting(starting);
+                }
+            } else {
+                let starting = Starting::new(cuts, deck, pending);
+                self.state = State::Starting(starting);
+            }
         }
     }
 
@@ -511,6 +524,8 @@ mod test {
     /// right to shuffle last, and he presents the cards to the non-dealer for the cut prior to the
     /// deal. (In some games, there is no cut at this time.)
     mod deal_cut {
+        use itertools::Itertools;
+
         use super::*;
         use crate::domain::{
             Cut, Dealer, GameCommand, GameEvent, GameId, GameServices, PLAYER0, PLAYER1, UserId,
@@ -597,7 +612,114 @@ mod test {
         }
 
         #[test]
-        fn start_game_with_lowest_cut_as_dealer() {
+        fn dealer_decided_with_lowest_cut() {
+            let game_id = GameId::new();
+            let host = UserId::new();
+            let guest = UserId::new();
+            let name = function_name!();
+
+            let cut0 = cut!("AS");
+            let preconditions = vec![
+                GameEvent::ComputerGameStarted {
+                    game_id,
+                    host,
+                    guest,
+                    name,
+                },
+                GameEvent::CutForDealMade {
+                    player: PLAYER0,
+                    cut: cut0,
+                },
+            ];
+
+            loop {
+                let result = GameTestFramework::with(GameServices)
+                    .given(preconditions.clone())
+                    .when(GameCommand::CutForDeal { player: PLAYER1 })
+                    .inspect_result();
+
+                match result {
+                    Ok(events) => {
+                        let Some(GameEvent::CutForDealMade { cut, .. }) = events
+                            .iter()
+                            .find(|e| matches!(e, GameEvent::CutForDealMade { .. }))
+                        else {
+                            panic!("expected event not found");
+                        };
+                        if cut0.face() != cut.face() {
+                            let Some(GameEvent::CutForDealDecided { dealer }) = events
+                                .iter()
+                                .find(|e| matches!(e, GameEvent::CutForDealDecided { .. }))
+                            else {
+                                panic!("expected event not found");
+                            };
+
+                            if cut0.value() < cut.value() {
+                                assert_eq!(dealer, &Dealer::from(PLAYER0));
+                            } else if cut.value() < cut0.value() {
+                                assert_eq!(dealer, &Dealer::from(PLAYER1));
+                            } else {
+                                panic!("expected dealer decided");
+                            }
+                            break;
+                        }
+                    }
+                    Err(error) => {
+                        panic!("unexpected error {error}");
+                    }
+                }
+            }
+        }
+
+        #[test]
+        fn dealer_undecided_with_tied_cut() {
+            let game_id = GameId::new();
+            let host = UserId::new();
+            let guest = UserId::new();
+            let name = function_name!();
+
+            let cut0 = cut!("AS");
+            let preconditions = vec![
+                GameEvent::ComputerGameStarted {
+                    game_id,
+                    host,
+                    guest,
+                    name,
+                },
+                GameEvent::CutForDealMade {
+                    player: PLAYER0,
+                    cut: cut0,
+                },
+            ];
+
+            loop {
+                let result = GameTestFramework::with(GameServices)
+                    .given(preconditions.clone())
+                    .when(GameCommand::CutForDeal { player: PLAYER1 })
+                    .inspect_result();
+
+                match result {
+                    Ok(events) => {
+                        let Some(GameEvent::CutForDealMade { cut, .. }) = events
+                            .iter()
+                            .find(|e| matches!(e, GameEvent::CutForDealMade { .. }))
+                        else {
+                            panic!("expected event not found");
+                        };
+                        if cut0.face() == cut.face() {
+                            assert!(events.iter().contains(&GameEvent::CutForDealTied));
+                            break;
+                        }
+                    }
+                    Err(error) => {
+                        panic!("unexpected error {error}");
+                    }
+                }
+            }
+        }
+
+        #[test]
+        fn start_game_when_dealer_decided() {
             let game_id = GameId::new();
             let host = UserId::new();
             let guest = UserId::new();
@@ -620,22 +742,20 @@ mod test {
                     player: PLAYER1,
                     cut: cut1,
                 },
+                GameEvent::CutForDealDecided {
+                    dealer: Dealer::from(PLAYER0),
+                },
                 GameEvent::CutForDealAcknowledged { player: PLAYER0 },
             ];
 
             GameTestFramework::with(GameServices)
                 .given(preconditions)
                 .when(GameCommand::AcknowledgeCutForDeal { player: PLAYER1 })
-                .then_expect_events(vec![
-                    GameEvent::CutForDealAcknowledged { player: PLAYER1 },
-                    GameEvent::CutForDealDecided {
-                        dealer: Dealer::from(PLAYER0),
-                    },
-                ]);
+                .then_expect_events(vec![GameEvent::CutForDealAcknowledged { player: PLAYER1 }]);
         }
 
         #[test]
-        fn redraw_when_cut_for_deal_tied() {
+        fn redraw_when_dealed_undecided() {
             let game_id = GameId::new();
             let host = UserId::new();
             let guest = UserId::new();
@@ -658,16 +778,14 @@ mod test {
                     player: PLAYER1,
                     cut: cut1,
                 },
+                GameEvent::CutForDealTied,
                 GameEvent::CutForDealAcknowledged { player: PLAYER0 },
             ];
 
             GameTestFramework::with(GameServices)
                 .given(preconditions)
                 .when(GameCommand::AcknowledgeCutForDeal { player: PLAYER1 })
-                .then_expect_events(vec![
-                    GameEvent::CutForDealAcknowledged { player: PLAYER1 },
-                    GameEvent::CutForDealTied,
-                ]);
+                .then_expect_events(vec![GameEvent::CutForDealAcknowledged { player: PLAYER1 }]);
         }
     }
 

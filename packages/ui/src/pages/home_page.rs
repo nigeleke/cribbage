@@ -1,5 +1,5 @@
 // use api::AvailableGamesStreamEvent;
-use api::{AvailableGameDTO, GameIdDTO, UserIdDTO};
+use api::{AvailableGameDTO, AvailableGameEventDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 use crate::components::{DebouncedInput, Toast};
@@ -106,19 +106,19 @@ fn JoinGameSection() -> Element {
         fetch_games(api::view::Since::default(), true).await;
     });
 
-    let mut available_game_events = use_resource(move || async move {
+    let _ = use_resource(move || async move {
         let mut stream = api::stream::available_games_events(*user_id.read()).await?;
         while let Some(Ok(event)) = stream.next().await {
-            //     match event {
-            //         AvailableGamesStreamEvent::Added(game) => {
-            //             has_more.set(true);
-            //             toasts.write().push(format!("{} added", game.name()))
-            //         }
-            //         AvailableGamesStreamEvent::Removed(game) => {
-            //             games.write().retain(|g| g.id() != game.id());
-            //             toasts.write().push(format!("{} removed", game.name()))
-            //         }
-            //     }
+            match event {
+                AvailableGameEventDTO::Created { name, .. } => {
+                    has_more.set(true);
+                    toasts.write().push(format!("{} added", name))
+                }
+                AvailableGameEventDTO::Removed { game_id, name } => {
+                    games.write().retain(|g| g.id() != &game_id);
+                    toasts.write().push(format!("{} removed", name))
+                }
+            }
         }
         dioxus::Ok(())
     });

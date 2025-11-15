@@ -19,10 +19,16 @@ pub async fn user_game_stream(
         .await
         .map_err(ServerFnError::new)?;
 
-    let stream = stream.filter_map(move |game| async move {
+    let mut stream = Box::pin(stream.filter_map(move |game| async move {
         game.validate_user(user_id)
             .map(|_| convertors::game_to_user_game_dto(&game, &user_id))
-    });
+    }));
 
-    Ok(Streaming::new(stream))
+    Ok(Streaming::spawn(|tx| async move {
+        while let Some(game) = stream.next().await {
+            if tx.unbounded_send(game).is_err() {
+                break;
+            }
+        }
+    }))
 }

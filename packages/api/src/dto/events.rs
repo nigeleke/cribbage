@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CardDTO, PlayerDTO};
+use crate::{CardDTO, GameIdDTO, PlayerDTO};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GameEventDTO {
@@ -55,4 +55,10 @@ pub enum GameEventDTO {
     // WinnerDeclared {
     //     player: PlayerDTO,
     // },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AvailableGameEventDTO {
+    Created { game_id: GameIdDTO, name: String },
+    Removed { game_id: GameIdDTO, name: String },
 }

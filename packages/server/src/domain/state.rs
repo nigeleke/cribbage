@@ -5,7 +5,7 @@ mod scoring;
 mod starting;
 
 pub mod exports {
-    pub use super::discarding::Discarding;
+    pub use super::discarding::{Discarding, WaitingForDiscards};
     pub use super::finished::Finished;
     pub use super::playing::Playing;
     pub use super::scoring::{ScoringCrib, ScoringDealer, ScoringPone};

@@ -71,30 +71,12 @@ fn Starting(
     let user_id = use_context::<Signal<UserIdDTO>>();
     let game_id = use_context::<GameIdDTO>();
 
-    let mut can_start = use_signal(|| false);
-    let mut can_redraw = use_signal(|| false);
-
-    let _ = use_resource(move || async move {
-        let mut stream = api::stream::user_game_events(*user_id.read(), game_id).await?;
-        while let Some(Ok(event)) = stream.next().await {
-            match event {
-                GameEventDTO::CutForDealDecided => can_start.set(true),
-                GameEventDTO::CutForDealTied => can_redraw.set(true),
-                _ => {}
-            }
-        }
-
-        dioxus::Ok(())
-    });
-
     let navigator = use_navigator();
 
     let on_cut_for_deal = move |_| {
         spawn(async move {
             match api::action::cut_for_deal(*user_id.read(), game_id).await {
-                Ok(_state) => {
-                    // cut_for_deal_state.set(state);
-                }
+                Ok(_) => {}
                 Err(error) => {
                     warn!("GamePage:cut_for_deal:error {error:?}");
                     let error = error.to_string();
@@ -104,60 +86,55 @@ fn Starting(
         });
     };
 
-    // let on_acknowledge_cut_for_deal = move |_| {};
+    let mut acknowledge_required = use_signal(|| false);
 
-    //     //     let on_start = move |_| {
-    //     //         spawn(async move {
-    //     //             match start(game_id, user_id()).await {
-    //     //                 Ok(ready) => {
-    //     //                     if !ready {
-    //     //                         waiting.set(true);
-    //     //                     }
-    //     //                 }
-    //     //                 Err(e) => panic!("start game failed: {}", e.to_string()),
-    //     //             }
-    //     //         });
-    //     //     };
+    let on_acknowledge = move |_| {
+        spawn(async move {
+            match api::action::acknowledge_cut_for_deal(*user_id.read(), game_id).await {
+                Ok(_) => acknowledge_required.set(false),
+                Err(error) => {
+                    warn!("GamePage:acknowledge:error {error:?}");
+                    let error = error.to_string();
+                    navigator.push(Route::ErrorPage { error });
+                }
+            }
+        });
+    };
 
-    //     //     let on_redraw = move |_| {
-    //     //         spawn(async move {
-    //     //             match redraw(game_id, user_id()).await {
-    //     //                 Ok(ready) => {
-    //     //                     if !ready {
-    //     //                         waiting.set(true);
-    //     //                     }
-    //     //                 }
-    //     //                 Err(e) => panic!("redraw game failed: {}", e.to_string()),
-    //     //             }
-    //     //         });
-    //     //     };
+    let _ = use_resource(move || async move {
+        let mut stream = api::stream::user_game_events(*user_id.read(), game_id).await?;
+        while let Some(Ok(event)) = stream.next().await {
+            match event {
+                GameEventDTO::CutForDealDecided => acknowledge_required.set(true),
+                GameEventDTO::CutForDealTied => acknowledge_required.set(true),
+                _ => {}
+            }
+        }
+        dioxus::Ok(())
+    });
 
-    //     let _ = use_resource(move || async move {
-    //         let mut stream = api::user_game_stream(*user_id.read(), game_id).await?;
-    //         while let Some(Ok(updated_game)) = stream.next().await {
-    //             debug!("GamePage::Starting: {updated_game:?}");
-    //             user_cut.set(updated_game.user_cut().cloned());
-    //             opponent_cut.set(updated_game.opponent_cut().cloned());
-    //             dealer.set(updated_game.dealer().cloned());
-    //         }
-    //         dioxus::Ok(())
-    //     });
+    let waiting_for_opponent = rsx! { p { "Waiting for opponent"} };
 
-    //     let mut user_has_cut = use_signal(|| false);
-    //     let mut opponent_has_cut = use_signal(|| false);
-    //     let mut dealer_selected = use_signal(|| false);
+    let cut_for_deal_button = rsx! {
+        button {
+            onclick: on_cut_for_deal,
+            "Cut for deal"
+        }
+    };
 
-    //     use_effect(move || {
-    //         debug!(
-    //             "GamePage::Starting:use_effect: {} {} {}",
-    //             user_cut.read().is_some(),
-    //             opponent_cut.read().is_some(),
-    //             dealer.read().is_some()
-    //         );
-    //         user_has_cut.set(user_cut.read().is_some());
-    //         opponent_has_cut.set(opponent_cut.read().is_some());
-    //         dealer_selected.set(dealer.read().is_some());
-    //     });
+    let redraw_button = rsx! {
+        button {
+            onclick: on_acknowledge,
+            "Redraw"
+        }
+    };
+
+    let start_button = rsx! {
+        button {
+            onclick: on_acknowledge,
+            "Start"
+        }
+    };
 
     rsx! {
         div {
@@ -168,23 +145,12 @@ fn Starting(
                 CardView { card: opponent_cut() }
             }
             match (user_cut(), opponent_cut(), dealer()) {
-                (None, _, _) => rsx! {
-                    button {
-                        onclick: on_cut_for_deal,
-                        "Cut for deal"
-                    }
-                },
-                (Some(_), None, _) => rsx! { p { "Waiting for opponent"} },
-                (Some(_), Some(_), None) => rsx! { p { "Cut for deal tied" } },
-                (Some(_), Some(_), Some(dealer)) => rsx! { p { "Dealer declared {dealer}" } },
-            }
-
-            if can_start() {
-                button { "Start" }
-            }
-
-            if can_redraw() {
-                button { "Redraw" }
+                (None, _, _) => cut_for_deal_button,
+                (Some(_), None, _) => waiting_for_opponent,
+                (Some(_), Some(_), None) if acknowledge_required() => redraw_button,
+                (Some(_), Some(_), None) => waiting_for_opponent,
+                (Some(_), Some(_), Some(dealer)) if acknowledge_required() => start_button,
+                (Some(_), Some(_), Some(_)) => waiting_for_opponent,
             }
         }
     }

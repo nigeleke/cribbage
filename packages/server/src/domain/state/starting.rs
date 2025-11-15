@@ -47,10 +47,6 @@ impl Starting {
         &self.pending
     }
 
-    pub fn set_acknowledged(&mut self, player: Player) {
-        self.pending.acknowledge(player);
-    }
-
     pub fn roles(&self) -> Option<Roles> {
         Roles::from_cuts(&self.cuts)
     }

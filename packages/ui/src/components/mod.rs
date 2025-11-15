@@ -2,10 +2,12 @@
 mod card_view;
 mod debounced_input;
 mod error;
+mod scoreboard;
 mod toast;
 
 pub use card_view::CardView;
 pub use debounced_input::DebouncedInput;
+pub use scoreboard::Scoreboard;
 pub use toast::Toast;
 // pub use card_view::{CardDisplayState, CardView};
 // pub use error::Error;

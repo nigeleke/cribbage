@@ -28,7 +28,10 @@ fn cards_as_dto(cards: &[Card], f: impl Fn(&Card) -> CardDTO) -> Vec<CardDTO> {
 fn pegging_as_score(pegging: &Pegging) -> ScoreDTO {
     let back_peg = pegging.back_peg().value();
     let front_peg = pegging.front_peg().value();
-    ScoreDTO::new(back_peg, front_peg)
+    ScoreDTO {
+        back_peg,
+        front_peg,
+    }
 }
 
 pub fn game_to_user_game_dto(game: &Game, user_id: &server::UserId) -> UserGameDTO {

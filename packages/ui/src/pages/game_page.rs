@@ -4,7 +4,7 @@ use api::{
 };
 use dioxus::prelude::*;
 
-use crate::components::CardView;
+use crate::components::{CardView, Scoreboard};
 use crate::route::Route;
 
 #[component]
@@ -174,6 +174,9 @@ fn InProgress(
     plays: Option<PlaysDTO>,
     winner: Option<PlayerDTO>,
 ) -> Element {
+    let user_score = user_state.score;
+    let opponent_score = opponent_state.score;
+
     rsx! {
         div {
             class: "game-page",
@@ -181,7 +184,7 @@ fn InProgress(
                 class: "in-progress",
                 div {
                     class: "scoreboard",
-                    h2 { class: "scoreboard-title", "Scoreboard" }
+                    Scoreboard { user_score, opponent_score }
                 }
                 div {
                     class: "card-container",

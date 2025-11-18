@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::GameIdDTO;
+use crate::{CardDTO, GameIdDTO};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GameEventDTO {
@@ -9,10 +9,7 @@ pub enum GameEventDTO {
     // ComputerGameStarted {
     //     name: String,
     // },
-    // CutForDealMade {
-    //     player: PlayerDTO,
-    //     cut: CardDTO,
-    // },
+    CutForDealMade { cut: CardDTO },
     // CutForDealAcknowledged {
     //     player: PlayerDTO,
     // },

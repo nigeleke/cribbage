@@ -1,6 +1,6 @@
 use thiserror::*;
 
-use crate::{GameId, UserId};
+use crate::domain::{GameId, UserId};
 
 #[derive(Debug, Error)]
 pub enum ServiceError {
@@ -32,7 +32,7 @@ pub enum ServiceError {
     GameError(#[from] crate::domain::GameError),
 
     #[error(transparent)]
-    AggregateError(#[from] cqrs_es::AggregateError<crate::GameError>),
+    AggregateError(#[from] cqrs_es::AggregateError<crate::domain::GameError>),
 
     #[error(transparent)]
     BroadcastStreamError(#[from] tokio_stream::wrappers::errors::BroadcastStreamRecvError),

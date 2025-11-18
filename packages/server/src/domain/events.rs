@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 
 use crate::domain::{
-    Card, Crib, Cut, Dealer, GameId, Hand, Player, Points, ScoreBreakdown, UserId,
+    Card, Crib, Dealer, GameId, Hand, Player, Points, ScoreBreakdown, StarterCut, UserId,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, AsRefStr)]
@@ -24,7 +24,7 @@ pub enum GameEvent {
     },
     CutForDealMade {
         player: Player,
-        cut: Cut,
+        cut: Card,
     },
     CutForDealTied,
     CutForDealDecided {
@@ -42,7 +42,7 @@ pub enum GameEvent {
         cards: Vec<Card>,
     },
     StarterSelected {
-        cut: Cut,
+        cut: StarterCut,
     },
     PointsScored {
         points: Points,

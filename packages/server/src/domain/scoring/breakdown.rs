@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 use super::constants::*;
 use crate::display::format_vec;
 use crate::domain::constants::*;
-use crate::domain::{Card, Crib, Cut, Hand, PlayState, Points, ScoreEvent, ScoreKind, Value};
+use crate::domain::{
+    Card, Crib, Hand, PlayState, Points, ScoreEvent, ScoreKind, StarterCut, Value,
+};
 
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Breakdown(Vec<ScoreEvent>);
@@ -142,7 +144,7 @@ impl Breakdown {
         self
     }
 
-    pub fn hand(hand: &Hand, cut: Cut) -> Self {
+    pub fn hand(hand: &Hand, cut: StarterCut) -> Self {
         let mut all = hand.clone();
         all.add(cut);
 
@@ -154,7 +156,7 @@ impl Breakdown {
             .nobs(hand.as_ref(), cut)
     }
 
-    pub fn crib(hand: &Crib, cut: Cut) -> Self {
+    pub fn crib(hand: &Crib, cut: StarterCut) -> Self {
         let mut all = hand.clone();
         all.add(cut);
 
@@ -222,7 +224,7 @@ impl Breakdown {
         self
     }
 
-    fn flush(mut self, cards: &[Card], cut: Cut, constaint: usize) -> Self {
+    fn flush(mut self, cards: &[Card], cut: StarterCut, constaint: usize) -> Self {
         let flush = |cards: &[Card]| {
             let suit = cards.first().map(|c| c.suit()).unwrap();
             let same_suit = cards.iter().all(|c| c.suit() == suit);
@@ -248,7 +250,7 @@ impl Breakdown {
         self
     }
 
-    fn nobs(mut self, cards: &[Card], cut: Cut) -> Self {
+    fn nobs(mut self, cards: &[Card], cut: StarterCut) -> Self {
         for card in cards {
             if card.is_jack() && card.suit() == cut.suit() {
                 self.add_event(ScoreKind::Nobs, cards, Points::from(SCORE_NOBS));

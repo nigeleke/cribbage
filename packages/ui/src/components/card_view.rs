@@ -3,20 +3,23 @@ use dioxus::prelude::*;
 
 /// The component to display a card. The card itself can be presented face-up, face-down,
 /// empty (which is a gap) or as a placeholder (which is a card sized dashed line).
-/// The card can be "selectable", if on_selected is provided, in which case it will be
+/// The card can be "selectable", if on_click is provided, in which case it will be
 /// triggered when the card is selected / unselected.
 #[component]
 pub fn CardView(
     card: Option<CardDTO>,
-    // selected: Option<bool>,
-    // on_click: Option<EventHandler<Card>>,
+    selected: Option<bool>,
+    on_click: Option<EventHandler<CardDTO>>,
 ) -> Element {
+    // let card = use_signal(|| card);
     // let is_selected = selected.unwrap_or(false);
 
     // let onclick = move |_| {
-    //     if let Some(on_click) = on_click {
-    //         on_click.call(card());
-    //     }
+    //     if let Some(on_click) = on_click
+    //         && let Some(card) = card()
+    //     {
+    //         on_click.call(card);
+    //     };
     // };
 
     rsx! {
@@ -26,7 +29,7 @@ pub fn CardView(
             class: "card-view",
             // class: if is_selected { "selected" },
             // class: if on_click.is_some() { "selectable" },
-            // onclick: onclick,
+            // onclick,
             match card {
                 Some(CardDTO::FaceDown) => rsx! { CardBack {} },
                 Some(CardDTO::FaceUp { cid }) => rsx! { CardFace { cid } },
@@ -50,18 +53,6 @@ fn CardFace(cid: String) -> Element {
         }
     }
 }
-
-// #[component]
-// fn CardWrapper(children: Element) -> Element {
-//     rsx! {
-//         document::Script { src: asset!("/assets/js/elements.cardmeister.min.js")},
-//         document::Stylesheet { href: asset!("/assets/css/card_view.css")},
-//         div {
-//             class: "card-view",
-//             {children}
-//         }
-//     }
-// }
 
 #[component]
 fn CardBack() -> Element {

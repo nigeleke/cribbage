@@ -1,10 +1,15 @@
-use super::{Hand, Pile};
+use crate::domain::cards::pile::Pile;
 use crate::domain::constants::*;
-use crate::domain::{Card, Cut};
+use crate::domain::{Card, Hand};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DeckType;
 pub type Deck = Pile<DeckType>;
+
+pub trait HasDeck {
+    fn deck(&self) -> &Deck;
+    fn deck_mut(&mut self) -> &mut Deck;
+}
 
 impl Deck {
     pub fn shuffled_pack() -> Self {
@@ -16,7 +21,7 @@ impl Deck {
         Self::from(cards.as_ref())
     }
 
-    pub fn cut(&mut self) -> Cut {
+    pub fn cut(&mut self) -> Card {
         self.pop().expect("available card")
     }
 

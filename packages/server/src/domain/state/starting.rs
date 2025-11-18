@@ -1,54 +1,67 @@
 use serde::{Deserialize, Serialize};
 
 use crate::display::format_vec;
-use crate::domain::{Cut, Cuts, Deck, Pending, Player, Roles};
+use crate::domain::{CutsForDeal, Deck, HasCutsForDeal, HasDeck, HasPending, Pending, Roles};
 
 pub type WaitingForCuts = Pending;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Starting {
-    cuts: Cuts,
+    cuts_for_deal: CutsForDeal,
     deck: Deck,
     pending: WaitingForCuts,
 }
 
 impl Starting {
-    pub fn new(cuts: Cuts, deck: Deck, pending: WaitingForCuts) -> Self {
+    pub fn new(cuts_for_deal: CutsForDeal, deck: Deck, pending: WaitingForCuts) -> Self {
         Self {
-            cuts,
+            cuts_for_deal,
             deck,
             pending,
         }
     }
 
-    pub fn into_parts(self) -> (Cuts, Deck, WaitingForCuts) {
+    pub fn into_parts(self) -> (CutsForDeal, Deck, WaitingForCuts) {
         let Self {
-            cuts,
+            cuts_for_deal,
             deck,
             pending,
         } = self;
-        (cuts, deck, pending)
-    }
-
-    pub fn cut(&self, player: Player) -> Option<&Cut> {
-        self.cuts[player].as_ref()
-    }
-
-    pub fn set_cut(&mut self, player: Player, cut: Cut) {
-        self.cuts[player] = Some(cut);
-        self.deck.remove(cut);
-    }
-
-    pub fn deck(&self) -> &Deck {
-        &self.deck
-    }
-
-    pub fn pending(&self) -> &WaitingForCuts {
-        &self.pending
+        (cuts_for_deal, deck, pending)
     }
 
     pub fn roles(&self) -> Option<Roles> {
-        Roles::from_cuts(&self.cuts)
+        Roles::from_cuts(&self.cuts_for_deal)
+    }
+}
+
+impl HasCutsForDeal for Starting {
+    fn cuts_for_deal(&self) -> &CutsForDeal {
+        &self.cuts_for_deal
+    }
+
+    fn cuts_for_deal_mut(&mut self) -> &mut CutsForDeal {
+        &mut self.cuts_for_deal
+    }
+}
+
+impl HasDeck for Starting {
+    fn deck(&self) -> &Deck {
+        &self.deck
+    }
+
+    fn deck_mut(&mut self) -> &mut Deck {
+        &mut self.deck
+    }
+}
+
+impl HasPending for Starting {
+    fn pending(&self) -> &Pending {
+        &self.pending
+    }
+
+    fn pending_mut(&mut self) -> &mut Pending {
+        &mut self.pending
     }
 }
 
@@ -58,7 +71,7 @@ impl Default for Starting {
         let deck = Deck::shuffled_pack();
         let pending = WaitingForCuts::default();
         Starting {
-            cuts,
+            cuts_for_deal: cuts,
             deck,
             pending,
         }
@@ -68,13 +81,13 @@ impl Default for Starting {
 impl std::fmt::Display for Starting {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let Self {
-            cuts,
+            cuts_for_deal: cuts,
             deck,
             pending,
         } = self;
         let cuts = cuts
             .iter()
-            .map(|c| c.map_or(String::from("--"), |c: Cut| c.to_string()))
+            .map(|c| c.map_or(String::from("--"), |c| c.to_string()))
             .collect::<Vec<_>>();
         let cuts = format_vec(&cuts);
 

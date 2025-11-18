@@ -1,10 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::display::format_vec;
-#[cfg(test)]
-use crate::domain::Pone;
 use crate::domain::{
-    Card, Crib, Cut, Dealer, Hand, Hands, PlayState, Player, Roles, ScoreBreakdown, Scoreboard,
+    Card, Crib, Hands, HasCrib, HasHands, HasPlayState, HasRoles, HasScoreboard, HasStarterCut,
+    PlayState, Player, Roles, ScoreBreakdown, Scoreboard, StarterCut,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -14,13 +13,13 @@ pub struct Playing {
     hands: Hands,
     play_state: PlayState,
     crib: Crib,
-    cut: Cut,
+    starter_cut: StarterCut,
 }
 
 impl Playing {
     #[rustfmt::skip]
-    pub const fn new(scoreboard: Scoreboard, roles: Roles, hands: Hands, play_state: PlayState, crib: Crib, cut: Cut) -> Self {
-        Self { scoreboard, roles, hands, play_state, crib, cut }
+    pub const fn new(scoreboard: Scoreboard, roles: Roles, hands: Hands, play_state: PlayState, crib: Crib, cut: StarterCut) -> Self {
+        Self { scoreboard, roles, hands, play_state, crib, starter_cut: cut }
     }
 
     pub fn play_card(&mut self, player: Player, card: Card) {
@@ -43,48 +42,73 @@ impl Playing {
         }
     }
 
-    pub fn into_parts(self) -> (Scoreboard, Roles, Hands, PlayState, Crib, Cut) {
+    pub fn into_parts(self) -> (Scoreboard, Roles, Hands, PlayState, Crib, StarterCut) {
         #[rustfmt::skip]
-        let Self { scoreboard, roles, hands, play_state, crib, cut } = self;
+        let Self { scoreboard, roles, hands, play_state, crib, starter_cut: cut } = self;
         (scoreboard, roles, hands, play_state, crib, cut)
     }
+}
 
-    pub fn hand(&self, player: Player) -> &Hand {
-        &self.hands[player]
+impl HasScoreboard for Playing {
+    fn scoreboard(&self) -> &Scoreboard {
+        &self.scoreboard
     }
 
-    #[cfg(test)]
-    pub fn crib(&self) -> &Crib {
+    fn scoreboard_mut(&mut self) -> &mut Scoreboard {
+        &mut self.scoreboard
+    }
+}
+
+impl HasRoles for Playing {
+    fn roles(&self) -> &Roles {
+        &self.roles
+    }
+
+    fn roles_mut(&mut self) -> &mut Roles {
+        &mut self.roles
+    }
+}
+
+impl HasHands for Playing {
+    fn hands(&self) -> &Hands {
+        &self.hands
+    }
+
+    fn hands_mut(&mut self) -> &mut Hands {
+        &mut self.hands
+    }
+}
+
+impl HasCrib for Playing {
+    fn crib(&self) -> &Crib {
         &self.crib
     }
 
-    #[cfg(test)]
-    pub fn cut(&self) -> Cut {
-        self.cut
+    fn crib_mut(&mut self) -> &mut Crib {
+        &mut self.crib
     }
+}
 
-    pub fn play_state(&self) -> &PlayState {
+impl HasStarterCut for Playing {
+    fn starter_cut(&self) -> &StarterCut {
+        &self.starter_cut
+    }
+}
+
+impl HasPlayState for Playing {
+    fn play_state(&self) -> &PlayState {
         &self.play_state
     }
 
-    pub fn dealer(&self) -> &Dealer {
-        self.roles.dealer()
-    }
-
-    #[cfg(test)]
-    pub fn pone(&self) -> &Pone {
-        self.roles.pone()
-    }
-
-    pub fn scoreboard(&self) -> &Scoreboard {
-        &self.scoreboard
+    fn play_state_mut(&mut self) -> &mut PlayState {
+        &mut self.play_state
     }
 }
 
 impl std::fmt::Display for Playing {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         #[rustfmt::skip]
-        let Self { scoreboard, roles, hands, play_state, cut, crib } = self;
+        let Self { scoreboard, roles, hands, play_state, starter_cut, crib } = self;
         let hands = format_vec(hands);
 
         write!(
@@ -94,7 +118,7 @@ impl std::fmt::Display for Playing {
     roles: {roles},
     hands: {hands},
     play_state: {play_state},
-    cut: {cut},
+    cut: {starter_cut},
     crib: {crib}
 )"#
         )

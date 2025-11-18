@@ -1,15 +1,13 @@
 #![feature(coverage_attribute)]
 
 //! This crate contains all shared fullstack server functions.
-#[cfg(feature = "server")]
-mod convertors;
 mod dto;
 mod services;
-// #[cfg(test)]
-// mod test;
 
-pub use dto::*;
-pub use services::*;
+pub use {dto::*, services::*};
+
+#[cfg(feature = "server")]
+mod convertors;
 
 #[cfg(feature = "server")]
 pub use server::initialize_server_state;

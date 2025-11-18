@@ -13,6 +13,11 @@ pub struct PlayState {
     previous_plays: Vec<Play>,
 }
 
+pub trait HasPlayState {
+    fn play_state(&self) -> &PlayState;
+    fn play_state_mut(&mut self) -> &mut PlayState;
+}
+
 impl PlayState {
     pub fn new(next_to_play: Player) -> Self {
         Self {

@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::display::format_vec;
 use crate::domain::{
-    Card, Crib, Dealer, Deck, Hand, Hands, Pending, Player, Pone, Roles, Scoreboard,
+    Card, Crib, Deck, Hands, HasCrib, HasDeck, HasHands, HasPending, HasRoles, HasScoreboard,
+    Pending, Player, Roles, Scoreboard,
 };
 
 pub type WaitingForDiscards = Pending;
@@ -47,33 +48,65 @@ impl Discarding {
         let Self { scoreboard, roles, hands, crib, deck, pending } = self;
         (scoreboard, roles, hands, crib, deck, pending)
     }
+}
 
-    pub fn scoreboard(&self) -> &Scoreboard {
+impl HasScoreboard for Discarding {
+    fn scoreboard(&self) -> &Scoreboard {
         &self.scoreboard
     }
 
-    pub fn dealer(&self) -> &Dealer {
-        self.roles.dealer()
+    fn scoreboard_mut(&mut self) -> &mut Scoreboard {
+        &mut self.scoreboard
+    }
+}
+
+impl HasRoles for Discarding {
+    fn roles(&self) -> &Roles {
+        &self.roles
     }
 
-    pub fn pone(&self) -> &Pone {
-        self.roles.pone()
+    fn roles_mut(&mut self) -> &mut Roles {
+        &mut self.roles
+    }
+}
+
+impl HasHands for Discarding {
+    fn hands(&self) -> &Hands {
+        &self.hands
     }
 
-    pub fn hand(&self, player: Player) -> &Hand {
-        &self.hands[player]
+    fn hands_mut(&mut self) -> &mut Hands {
+        &mut self.hands
     }
+}
 
-    pub fn crib(&self) -> &Crib {
+impl HasCrib for Discarding {
+    fn crib(&self) -> &Crib {
         &self.crib
     }
 
-    pub fn deck(&self) -> &Deck {
+    fn crib_mut(&mut self) -> &mut Crib {
+        &mut self.crib
+    }
+}
+
+impl HasDeck for Discarding {
+    fn deck(&self) -> &Deck {
         &self.deck
     }
 
-    pub fn pending(&self) -> &WaitingForDiscards {
+    fn deck_mut(&mut self) -> &mut Deck {
+        &mut self.deck
+    }
+}
+
+impl HasPending for Discarding {
+    fn pending(&self) -> &Pending {
         &self.pending
+    }
+
+    fn pending_mut(&mut self) -> &mut Pending {
+        &mut self.pending
     }
 }
 

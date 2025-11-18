@@ -4,9 +4,12 @@ use dioxus::prelude::*;
 
 #[post("/api/{user_id}/host_game/", State(server_state): State<server::ServerState>)]
 pub async fn host_game(user_id: UserIdDTO) -> Result<GameIdDTO, ServerFnError> {
-    let user_id = server::UserId::from(user_id.value());
+    use server::action::host_game;
+    use server::domain::UserId;
 
-    server::action::host_game(server_state, user_id)
+    let user_id = UserId::from(user_id.value());
+
+    host_game(server_state, user_id)
         .await
         .map(|id| GameIdDTO::from(id.value()))
         .map_err(ServerFnError::new)

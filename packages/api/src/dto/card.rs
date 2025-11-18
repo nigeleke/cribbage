@@ -7,8 +7,20 @@ pub enum CardDTO {
     FaceDown,
 }
 
-// impl std::fmt::Display for CardDTO {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         self.0.fmt(f)
-//     }
-// }
+#[cfg(feature = "server")]
+mod server_only {
+    use super::*;
+    use server::domain::Card;
+
+    impl CardDTO {
+        pub fn face_up(card: &Card) -> Self {
+            Self::FaceUp {
+                cid: card.cid().clone(),
+            }
+        }
+
+        pub fn face_down(_card: &Card) -> Self {
+            Self::FaceDown
+        }
+    }
+}

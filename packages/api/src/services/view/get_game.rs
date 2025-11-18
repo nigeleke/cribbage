@@ -9,13 +9,13 @@ pub async fn get_game(
     game_id: GameIdDTO,
 ) -> Result<UserGameDTO, ServerFnError> {
     use crate::convertors;
-    use server::GameId;
-    use server::UserId;
+    use server::domain::{GameId, UserId};
+    use server::view::get_game;
 
     let user_id = UserId::from(user_id.value());
     let game_id = GameId::from(game_id.value());
 
-    let game = server::view::get_game(server_state, game_id)
+    let game = get_game(server_state, game_id)
         .await
         .map_err(ServerFnError::new)?;
 

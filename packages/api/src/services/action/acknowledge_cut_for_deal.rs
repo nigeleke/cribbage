@@ -7,10 +7,13 @@ pub async fn acknowledge_cut_for_deal(
     user_id: UserIdDTO,
     game_id: GameIdDTO,
 ) -> Result<(), ServerFnError> {
-    let user_id = server::UserId::from(user_id.value());
-    let game_id = server::GameId::from(game_id.value());
+    use server::action::acknowledge_cut_for_deal;
+    use server::domain::{GameId, UserId};
 
-    server::action::acknowledge_cut_for_deal(server_state, user_id, game_id)
+    let user_id = UserId::from(user_id.value());
+    let game_id = GameId::from(game_id.value());
+
+    acknowledge_cut_for_deal(server_state, user_id, game_id)
         .await
         .map_err(ServerFnError::new)
 }

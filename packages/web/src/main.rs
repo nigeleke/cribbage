@@ -8,11 +8,13 @@ fn main() {
 
     #[cfg(feature = "server")]
     dioxus::serve(|| async move {
-        use dioxus::fullstack::axum::Extension;
+        use dioxus::server::axum::Extension;
 
         dotenvy::dotenv().expect("environment settings needed on startup");
+
         let router = dioxus::server::router(app::App)
             .layer(Extension(api::initialize_server_state().await?));
+
         Ok(router)
     });
 }

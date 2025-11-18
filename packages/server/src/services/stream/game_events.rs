@@ -14,5 +14,8 @@ pub async fn game_events(
 ) -> Result<impl Stream<Item = GameEvent>, ServerError> {
     let aggregate_id = game_id.value().to_string();
     let stream = events::<Game>(server_state, Some(aggregate_id)).await?;
-    Ok(stream.map(|(_, event)| event))
+    Ok(stream.map(|(_, event)| {
+        debug!("***** server:game_events: streaming: {event:?}");
+        event
+    }))
 }

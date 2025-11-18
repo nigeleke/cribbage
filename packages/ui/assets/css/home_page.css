@@ -1,33 +1,30 @@
 .home-page {
-    flex-grow: 1;
-    justify-self: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: stretch;
-    overflow: hidden;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    display: grid;
+    grid-template-rows: auto 1fr;
 }
 
 .join-game {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-items: stretch;
-    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto auto auto auto;
+    gap: 1rem;
 }
 
 .new-game {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto auto;
 }
 
 .new-game-buttons {
-    display: flex;
-    gap: 1em;
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 1rem;
 }
 
 .more-button {
-    align-self: center;
+    align-self: end;
 }
 
 .games-list {

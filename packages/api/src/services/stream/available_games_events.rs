@@ -8,9 +8,10 @@ use futures::StreamExt;
 pub async fn available_games_events(
     user_id: UserIdDTO,
 ) -> Result<Streaming<AvailableGameEventDTO, JsonEncoding>, ServerFnError> {
-    use server::stream::AvailableGameEvent;
+    use server::domain::UserId;
+    use server::stream::{AvailableGameEvent, available_game_events};
 
-    let user_id = server::UserId::from(user_id.value());
+    let user_id = UserId::from(user_id.value());
 
     let game_event_to_dto = |event| match event {
         AvailableGameEvent::Created { game_id, name } => {
@@ -23,17 +24,11 @@ pub async fn available_games_events(
         }
     };
 
-    let stream = server::stream::available_game_events(server_state, user_id)
+    let stream = available_game_events(server_state, user_id)
         .await
         .map_err(ServerFnError::new)?;
 
-    let mut stream = Box::pin(stream.map(move |event| game_event_to_dto(event)));
+    let stream = stream.map(move |event| game_event_to_dto(event));
 
-    Ok(Streaming::spawn(|tx| async move {
-        while let Some(event) = stream.next().await {
-            if tx.unbounded_send(event).is_err() {
-                break;
-            }
-        }
-    }))
+    Ok(Streaming::new(stream))
 }

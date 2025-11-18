@@ -10,6 +10,15 @@ pub struct Scoreboard {
     history: Vec<ScoreBreakdown>,
 }
 
+pub trait HasScoreboard {
+    fn scoreboard(&self) -> &Scoreboard;
+    fn scoreboard_mut(&mut self) -> &mut Scoreboard;
+
+    fn pegging(&self, player: Player) -> &Pegging {
+        &self.scoreboard().peggings[player]
+    }
+}
+
 impl Scoreboard {
     pub fn new(peggings: Peggings) -> Self {
         Self {

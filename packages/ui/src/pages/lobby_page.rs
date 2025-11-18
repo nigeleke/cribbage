@@ -1,4 +1,4 @@
-use api::{GameEventDTO, GameIdDTO, UserIdDTO};
+use api::{GameIdDTO, PhaseDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 use crate::Route;
@@ -9,25 +9,31 @@ pub fn LobbyPage(game_id: GameIdDTO) -> Element {
 
     let navigator = use_navigator();
 
-    let mut game_name = use_signal(|| None);
+    let mut game = use_memo(|| None);
+    let mut game_name = use_memo(|| None);
 
-    let _ = use_resource(move || async move {
-        let game = api::view::get_game(*user_id.read(), game_id).await?;
-        game_name.set(Some(game.name.clone()));
+    let mut game_stream = use_action(move || async move {
+        let mut stream = api::stream::user_game_stream(*user_id.read(), game_id).await?;
+        while let Some(Ok(updated_game)) = stream.next().await {
+            game.set(Some(updated_game));
+        }
         dioxus::Ok(())
     });
 
     let _ = use_resource(move || async move {
-        let mut stream = api::stream::user_game_events(*user_id.read(), game_id).await?;
-        while let Some(Ok(event)) = stream.next().await {
-            match event {
-                GameEventDTO::OpponentJoined => {
-                    navigator.replace(Route::GamePage { game_id });
-                }
-                _ => {}
-            }
-        }
+        let updated_game = api::view::get_game(*user_id.read(), game_id).await?;
+        game_stream.call();
+        game.set(Some(updated_game));
         dioxus::Ok(())
+    });
+
+    use_effect(move || {
+        if let Some(game) = game() {
+            game_name.set(Some(game.name));
+            if game.phase == PhaseDTO::CuttingForDeal {
+                navigator.replace(Route::GamePage { game_id });
+            }
+        };
     });
 
     rsx! {

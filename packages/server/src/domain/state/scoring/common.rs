@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 use crate::display::format_vec;
-use crate::domain::{Crib, Cut, Hand, Hands, Pending, Player, Roles, ScoreBreakdown, Scoreboard};
-#[cfg(test)]
-use crate::domain::{Dealer, Pone};
+use crate::domain::{
+    Crib, Hands, HasCrib, HasHands, HasPending, HasRoles, HasScoreboard, HasStarterCut, Pending,
+    Roles, ScoreBreakdown, Scoreboard, StarterCut,
+};
 
 pub type WaitingForScoresViewed = Pending;
 
@@ -13,7 +14,7 @@ pub struct Scoring<T> {
     roles: Roles,
     hands: Hands,
     crib: Crib,
-    cut: Cut,
+    starter_cut: StarterCut,
     breakdown: ScoreBreakdown,
     pending: WaitingForScoresViewed,
     _marker: std::marker::PhantomData<T>,
@@ -25,7 +26,7 @@ impl<T> Scoring<T> {
         roles: Roles,
         hands: Hands,
         crib: Crib,
-        cut: Cut,
+        starter_cut: StarterCut,
         breakdown: ScoreBreakdown,
         pending: WaitingForScoresViewed,
     ) -> Self {
@@ -34,7 +35,7 @@ impl<T> Scoring<T> {
             roles,
             hands,
             crib,
-            cut,
+            starter_cut,
             breakdown,
             pending,
             _marker: std::marker::PhantomData,
@@ -48,47 +49,81 @@ impl<T> Scoring<T> {
         Roles,
         Hands,
         Crib,
-        Cut,
+        StarterCut,
         ScoreBreakdown,
         WaitingForScoresViewed,
     ) {
         #[rustfmt::skip]
-        let Self { scoreboard, roles, hands, crib, cut, breakdown, pending, _marker } = self;
-        (scoreboard, roles, hands, crib, cut, breakdown, pending)
-    }
-
-    pub fn scoreboard(&self) -> &Scoreboard {
-        &self.scoreboard
-    }
-
-    #[cfg(test)]
-    pub fn dealer(&self) -> &Dealer {
-        self.roles.dealer()
-    }
-
-    #[cfg(test)]
-    pub fn pone(&self) -> &Pone {
-        self.roles.pone()
-    }
-
-    pub fn hand(&self, player: Player) -> &Hand {
-        &self.hands[player]
-    }
-
-    pub fn crib(&self) -> &Crib {
-        &self.crib
-    }
-
-    pub fn cut(&self) -> Cut {
-        self.cut
+        let Self { scoreboard, roles, hands, crib, starter_cut, breakdown, pending, _marker } = self;
+        (
+            scoreboard,
+            roles,
+            hands,
+            crib,
+            starter_cut,
+            breakdown,
+            pending,
+        )
     }
 
     pub fn breakdown(&self) -> &ScoreBreakdown {
         &self.breakdown
     }
+}
 
-    pub fn pending(&self) -> &WaitingForScoresViewed {
+impl<T> HasScoreboard for Scoring<T> {
+    fn scoreboard(&self) -> &Scoreboard {
+        &self.scoreboard
+    }
+
+    fn scoreboard_mut(&mut self) -> &mut Scoreboard {
+        &mut self.scoreboard
+    }
+}
+
+impl<T> HasRoles for Scoring<T> {
+    fn roles(&self) -> &Roles {
+        &self.roles
+    }
+
+    fn roles_mut(&mut self) -> &mut Roles {
+        &mut self.roles
+    }
+}
+
+impl<T> HasHands for Scoring<T> {
+    fn hands(&self) -> &Hands {
+        &self.hands
+    }
+
+    fn hands_mut(&mut self) -> &mut Hands {
+        &mut self.hands
+    }
+}
+
+impl<T> HasCrib for Scoring<T> {
+    fn crib(&self) -> &Crib {
+        &self.crib
+    }
+
+    fn crib_mut(&mut self) -> &mut Crib {
+        &mut self.crib
+    }
+}
+
+impl<T> HasStarterCut for Scoring<T> {
+    fn starter_cut(&self) -> &StarterCut {
+        &self.starter_cut
+    }
+}
+
+impl<T> HasPending for Scoring<T> {
+    fn pending(&self) -> &Pending {
         &self.pending
+    }
+
+    fn pending_mut(&mut self) -> &mut Pending {
+        &mut self.pending
     }
 }
 
@@ -102,7 +137,7 @@ impl<T> std::fmt::Display for Scoring<T> {
             .unwrap_or(name);
 
         #[rustfmt::skip]
-        let Self { scoreboard, roles, hands, crib, cut, breakdown, pending, _marker } = self;
+        let Self { scoreboard, roles, hands, crib, starter_cut: cut, breakdown, pending, _marker } = self;
         let hands = format_vec(hands);
 
         write!(

@@ -1,13 +1,16 @@
 .game-page {
-    justify-self: center;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    display: grid;
+    grid-auto-rows: auto;
+    gap: 1rem;
 }
 
 .starting {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
+    display: grid;
+    grid-template-columns: auto auto;
     gap: 1em;
-    align-items: center;
 }
 
 .game-page button {

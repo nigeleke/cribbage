@@ -8,6 +8,11 @@ use crate::domain::{PLAYER0, PLAYER1, Player};
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Pending(HashSet<Player>);
 
+pub trait HasPending {
+    fn pending(&self) -> &Pending;
+    fn pending_mut(&mut self) -> &mut Pending;
+}
+
 impl Pending {
     pub fn finished(&self) -> bool {
         self.0.is_empty()

@@ -1,4 +1,4 @@
-use crate::{GameEventDTO, GameIdDTO, UserIdDTO};
+use crate::{CardDTO, GameEventDTO, GameIdDTO, UserIdDTO};
 use dioxus::fullstack::extract::State;
 use dioxus::fullstack::{JsonEncoding, Streaming};
 use dioxus::prelude::*;
@@ -21,7 +21,10 @@ pub async fn user_game_events(
             warn!("Unhandled GameEvent: {event:?}");
             None
         }
-        GameEvent::CutForDealMade { .. } => None,
+        GameEvent::CutForDealMade { cut, .. } => {
+            let cut = CardDTO::FaceUp { cid: cut.cid() };
+            Some(GameEventDTO::CutForDealMade { cut })
+        }
         GameEvent::CutForDealDecided { .. } => Some(GameEventDTO::CutForDealDecided),
         GameEvent::CutForDealTied => Some(GameEventDTO::CutForDealTied),
         GameEvent::CutForDealAcknowledged { .. } => None,
@@ -36,14 +39,10 @@ pub async fn user_game_events(
         .await
         .map_err(ServerFnError::new)?;
 
-    let mut stream =
-        Box::pin(stream.filter_map(move |event| async move { game_event_to_dto(event) }));
+    let stream = stream.filter_map(move |event| async move {
+        debug!("api:user_game_events: {event:?}");
+        game_event_to_dto(event)
+    });
 
-    Ok(Streaming::spawn(|tx| async move {
-        while let Some(event) = stream.next().await {
-            if tx.unbounded_send(event).is_err() {
-                break;
-            }
-        }
-    }))
+    Ok(Streaming::new(stream))
 }

@@ -1,8 +1,7 @@
 .lobby-page {
-    flex-grow: 1;
-    justify-self: center;
-    max-height: 100%;
-    overflow: hidden;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .lobby-page .game-name {

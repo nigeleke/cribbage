@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::GameCommand;
+use crate::domain::GameCommand;
 use crate::domain::{GameId, UserId};
 use crate::server_state::ServerState;
 use crate::services::error::ServiceError;

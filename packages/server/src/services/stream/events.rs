@@ -46,6 +46,7 @@ where
     let stream = stream::unfold(stream, |mut stream| async move {
         match stream.next::<T>(&[]).await {
             Some(Ok(event)) => {
+                debug!("services:stream:events {:?}", event.payload);
                 let aggregate_id = event.aggregate_id;
                 let event = event.payload;
                 Some(((aggregate_id, event), stream))
@@ -78,6 +79,8 @@ where
             let wanted_aggregate = |t: &EventRow| {
                 aggregate_id.is_none() || Some(&t.aggregate_id) == aggregate_id.as_ref()
             };
+
+            debug!("server:future_event: {}", notification.table_name);
 
             let id_event = if notification.table_name == "events" {
                 let change = notification.as_change::<EventRow>()?;

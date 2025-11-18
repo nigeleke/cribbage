@@ -1,10 +1,7 @@
-use api::{
-    CardDTO, GameEventDTO, GameIdDTO, Phase, PlayerDTO, PlayerStateDTO, PlaysDTO, UserGameDTO,
-    UserIdDTO,
-};
+use api::{GameIdDTO, PendingDTO, PhaseDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-use crate::components::{CardView, CribAndCut, Hand, Scoreboard};
+use crate::components::{CardView, CribAndCut, DiscardingHand, Hand, Scoreboard};
 use crate::route::Route;
 
 #[component]
@@ -13,7 +10,6 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
     let game_id = provide_context(game_id);
 
     let mut game = use_signal(|| None::<UserGameDTO>);
-    provide_context(game);
 
     let mut game_stream = use_action(move || async move {
         let mut stream = api::stream::user_game_stream(*user_id.read(), game_id).await?;
@@ -23,10 +19,19 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
         dioxus::Ok(())
     });
 
+    use_effect(move || {
+        if let Some(game) = game() {
+            let user_cut = game.user_state.cut;
+            let opponent_cut = game.opponent_state.cut;
+            let dealer = game.dealer;
+            debug!("GamePage:use_effect: {user_cut:?}, {opponent_cut:?}, {dealer:?}")
+        }
+    });
+
     let _ = use_resource(move || async move {
         let current_game = api::view::get_game(*user_id.read(), game_id).await?;
-        game.set(Some(current_game));
         game_stream.call();
+        game.set(Some(current_game));
         dioxus::Ok(())
     });
 
@@ -47,35 +52,21 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
 
 #[component]
 fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
+    dioxus::prelude::debug!(">>> ActiveGame: {:?}", game());
     match game().phase {
-        Phase::Lobby => rsx! { Starting { user_cut: None, opponent_cut: None } },
-        Phase::CutForDeal {
-            user_cut,
-            opponent_cut,
-            dealer,
-        } => {
-            let user_cut = user_cut.clone();
-            let opponent_cut = opponent_cut.clone();
-            let dealer = dealer.clone();
-            rsx! { Starting { user_cut, opponent_cut, dealer } }
+        PhaseDTO::InLobby => rsx! { Starting { game } },
+        PhaseDTO::CuttingForDeal => {
+            rsx! { Starting { game } }
         }
-        Phase::Active { dealer, crib } => {
-            let user_state = game().user_state;
-            let opponent_state = game().opponent_state;
-            let cut = game().cut;
-            let plays = game().plays;
-            let winner = game().winner;
-            rsx! { InProgress { user_state, opponent_state, dealer, crib, cut, plays, winner } }
+        PhaseDTO::Discarding => {
+            rsx! { InProgress { game } }
         }
+        _ => unimplemented!(),
     }
 }
 
 #[component]
-fn Starting(
-    user_cut: ReadSignal<Option<CardDTO>>,
-    opponent_cut: ReadSignal<Option<CardDTO>>,
-    dealer: ReadSignal<Option<PlayerDTO>>,
-) -> Element {
+fn Starting(game: ReadSignal<UserGameDTO>) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
     let game_id = use_context::<GameIdDTO>();
 
@@ -94,12 +85,10 @@ fn Starting(
         });
     };
 
-    let mut acknowledge_required = use_signal(|| false);
-
     let on_acknowledge = move |_| {
         spawn(async move {
             match api::action::acknowledge_cut_for_deal(*user_id.read(), game_id).await {
-                Ok(_) => acknowledge_required.set(false),
+                Ok(_) => {}
                 Err(error) => {
                     warn!("GamePage:acknowledge:error {error:?}");
                     let error = error.to_string();
@@ -108,18 +97,6 @@ fn Starting(
             }
         });
     };
-
-    let _ = use_resource(move || async move {
-        let mut stream = api::stream::user_game_events(*user_id.read(), game_id).await?;
-        while let Some(Ok(event)) = stream.next().await {
-            match event {
-                GameEventDTO::CutForDealDecided => acknowledge_required.set(true),
-                GameEventDTO::CutForDealTied => acknowledge_required.set(true),
-                _ => {}
-            }
-        }
-        dioxus::Ok(())
-    });
 
     let waiting_for_opponent = rsx! { p { "Waiting for opponent"} };
 
@@ -144,6 +121,19 @@ fn Starting(
         }
     };
 
+    let mut user_cut = use_signal(|| game().user_state.cut);
+    let mut opponent_cut = use_signal(|| game().opponent_state.cut);
+    let mut dealer = use_signal(|| game().dealer);
+    let mut pending = use_signal(|| game().pending);
+
+    use_effect(move || {
+        let game = game();
+        user_cut.set(game.user_state.cut);
+        opponent_cut.set(game.opponent_state.cut);
+        dealer.set(game.dealer);
+        pending.set(game.pending);
+    });
+
     rsx! {
         div {
             class: "game-page",
@@ -154,30 +144,26 @@ fn Starting(
             }
             match (user_cut(), opponent_cut(), dealer()) {
                 (None, _, _) => cut_for_deal_button,
-                (Some(_), None, _) => waiting_for_opponent,
-                (Some(_), Some(_), None) if acknowledge_required() => redraw_button,
-                (Some(_), Some(_), None) => waiting_for_opponent,
-                (Some(_), Some(_), Some(dealer)) if acknowledge_required() => start_button,
-                (Some(_), Some(_), Some(_)) => waiting_for_opponent,
+                (_, None, _) => waiting_for_opponent,
+                (_, _, None) if pending() == PendingDTO::User => redraw_button,
+                (_, _, None) => waiting_for_opponent,
+                (_, _, Some(_)) if pending() == PendingDTO::User => start_button,
+                (_, _, Some(_)) => waiting_for_opponent,
             }
         }
     }
 }
 
 #[component]
-fn InProgress(
-    user_state: PlayerStateDTO,
-    opponent_state: PlayerStateDTO,
-    dealer: PlayerDTO,
-    crib: Vec<CardDTO>,
-    cut: Option<CardDTO>,
-    plays: Option<PlaysDTO>,
-    winner: Option<PlayerDTO>,
-) -> Element {
-    let user_score = user_state.score;
-    let user_hand = user_state.hand;
-    let opponent_score = opponent_state.score;
-    let opponent_hand = opponent_state.hand;
+fn InProgress(game: ReadSignal<UserGameDTO>) -> Element {
+    let phase = game().phase;
+    let user_score = game().user_state.score;
+    let user_hand = game().user_state.hand;
+    let opponent_score = game().opponent_state.score;
+    let opponent_hand = game().opponent_state.hand;
+    let dealer = game().dealer.expect("dealer must have been selected");
+    let crib = game().crib.cards;
+    let starter_cut = game().crib.starter_cut;
 
     rsx! {
         div {
@@ -190,7 +176,11 @@ fn InProgress(
                 }
                 div {
                     class: "card-container",
-                    Hand { cards: user_hand }
+                    if phase == PhaseDTO::Discarding {
+                        DiscardingHand { cards: user_hand }
+                    } else {
+                        Hand { cards: user_hand }
+                    }
                 }
                 div {
                     class: "middle-section",
@@ -202,7 +192,7 @@ fn InProgress(
                 }
                 div {
                     class: "crib-cut-container",
-                    CribAndCut { dealer, cards: crib, cut }
+                    CribAndCut { dealer, cards: crib, starter_cut }
                 }
             }
         }

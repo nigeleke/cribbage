@@ -1,7 +1,8 @@
 use crate::domain::constants::PLAYER_COUNT;
 use crate::domain::{
-    Crib, Cut, Cuts, Deck, Discarding, GameCommand, GameError, GameEvent, GameId, PLAYER0, PLAYER1,
-    Player, Roles, Scoreboard, Starting, State, UserId, WaitingForCuts, WaitingForDiscards,
+    Card, Crib, CutsForDeal, Deck, Discarding, GameCommand, GameError, GameEvent, GameId,
+    HasCutsForDeal, HasDeck, PLAYER0, PLAYER1, Player, Roles, Scoreboard, Starting, State, UserId,
+    WaitingForCuts, WaitingForDiscards,
 };
 use crate::name_builder::generate_game_name;
 use cqrs_es::Aggregate;
@@ -121,6 +122,7 @@ impl Game {
                 cuts[player] = Some(cut);
 
                 let proceed = cuts[PLAYER0].is_some() && cuts[PLAYER1].is_some();
+
                 if proceed {
                     if let Some(roles) = Roles::from_cuts(&cuts) {
                         let dealer = *roles.dealer();
@@ -211,9 +213,12 @@ impl Game {
         self.state = State::Starting(Starting::default());
     }
 
-    fn cut_for_deal_made(&mut self, player: Player, cut: Cut) {
+    fn cut_for_deal_made(&mut self, player: Player, cut: Card) {
         if let State::Starting(starting) = &mut self.state {
-            starting.set_cut(player, cut);
+            *starting.cut_for_deal_mut(player) = Some(cut);
+            starting.deck_mut().remove(cut);
+
+            let roles = starting.roles();
         }
     }
 
@@ -234,7 +239,7 @@ impl Game {
                     let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
                     self.state = State::Discarding(discarding);
                 } else {
-                    let cuts = Cuts::default();
+                    let cuts = CutsForDeal::default();
                     let deck = Deck::shuffled_pack();
                     let pending = WaitingForCuts::default();
                     let starting = Starting::new(cuts, deck, pending);
@@ -343,8 +348,8 @@ mod test {
     //         let starting = Starting::default();
     //         let game = Game::from(State::Starting(starting));
     //         let game_id = *game.id();
-    //         let cut0 = std::cell::RefCell::new(cut!("AH"));
-    //         let cut1 = std::cell::RefCell::new(cut!("AH"));
+    //         let cut0 = std::cell::RefCell::new(card!("AH"));
+    //         let cut1 = std::cell::RefCell::new(card!("AH"));
 
     //         let game = GameTestFramework::new(game_id, game)
     //             .execute_using_result(CutForDeal::new(game_id, PLAYER0), |reply| {
@@ -503,7 +508,7 @@ mod test {
     /// Rank of Cards: K (high), Q, J, 10, 9, 8, 7, 6, 5, 4, 3, 2, A.
     mod deck {
         use super::*;
-        use crate::domain::STANDARD_DECK_SIZE;
+        use crate::domain::{HasDeck, STANDARD_DECK_SIZE};
 
         #[test]
         fn use_a_standard_pack_of_cards() {
@@ -528,9 +533,9 @@ mod test {
 
         use super::*;
         use crate::domain::{
-            Cut, Dealer, GameCommand, GameEvent, GameId, GameServices, PLAYER0, PLAYER1, UserId,
+            Dealer, GameCommand, GameEvent, GameId, GameServices, PLAYER0, PLAYER1, UserId,
         };
-        use crate::{cut, function_name};
+        use crate::{card, function_name};
         use std::str::FromStr;
 
         #[test]
@@ -575,7 +580,7 @@ mod test {
             let guest = UserId::new();
             let name = function_name!();
 
-            let cut0 = cut!("AS");
+            let cut0 = card!("AS");
             let preconditions = vec![
                 GameEvent::ComputerGameStarted {
                     game_id,
@@ -618,7 +623,7 @@ mod test {
             let guest = UserId::new();
             let name = function_name!();
 
-            let cut0 = cut!("AS");
+            let cut0 = card!("AS");
             let preconditions = vec![
                 GameEvent::ComputerGameStarted {
                     game_id,
@@ -678,7 +683,7 @@ mod test {
             let guest = UserId::new();
             let name = function_name!();
 
-            let cut0 = cut!("AS");
+            let cut0 = card!("AS");
             let preconditions = vec![
                 GameEvent::ComputerGameStarted {
                     game_id,
@@ -725,8 +730,8 @@ mod test {
             let guest = UserId::new();
             let name = function_name!();
 
-            let cut0 = cut!("AS");
-            let cut1 = cut!("QH");
+            let cut0 = card!("AS");
+            let cut1 = card!("QH");
             let preconditions = vec![
                 GameEvent::ComputerGameStarted {
                     game_id,
@@ -761,8 +766,8 @@ mod test {
             let guest = UserId::new();
             let name = function_name!();
 
-            let cut0 = cut!("QS");
-            let cut1 = cut!("QH");
+            let cut0 = card!("QS");
+            let cut1 = card!("QH");
             let preconditions = vec![
                 GameEvent::ComputerGameStarted {
                     game_id,

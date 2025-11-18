@@ -1,11 +1,10 @@
 use dioxus::logger::tracing::field::debug;
 use serde::{Deserialize, Serialize};
-use serde_json::de;
 
 use super::{Dealer, Pone};
 use crate::{
-    constants::PLAYER_COUNT,
-    domain::{Cuts, PLAYER0, PLAYER1, WaitingForCuts},
+    domain::constants::PLAYER_COUNT,
+    domain::{CutsForDeal, PLAYER0, PLAYER1},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -14,8 +13,13 @@ pub struct Roles {
     pone: Pone,
 }
 
+pub trait HasRoles {
+    fn roles(&self) -> &Roles;
+    fn roles_mut(&mut self) -> &mut Roles;
+}
+
 impl Roles {
-    pub fn from_cuts(cuts: &Cuts) -> Option<Self> {
+    pub fn from_cuts(cuts: &CutsForDeal) -> Option<Self> {
         use std::cmp::Ordering;
 
         let defined_cuts = cuts.iter().filter_map(|c| c.clone()).collect::<Vec<_>>();
@@ -41,11 +45,11 @@ impl Roles {
             .flatten()
     }
 
-    pub const fn dealer(&self) -> &Dealer {
+    pub fn dealer(&self) -> &Dealer {
         &self.dealer
     }
 
-    pub const fn pone(&self) -> &Pone {
+    pub fn pone(&self) -> &Pone {
         &self.pone
     }
 

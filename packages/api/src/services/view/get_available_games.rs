@@ -34,15 +34,15 @@ pub async fn get_available_games(
     since: Since,
 ) -> Result<Response, ServerFnError> {
     use crate::dto::GameIdDTO;
-    use server::UserId;
+    use server::domain::{AvailableGameSource, UserId};
+    use server::view::get_available_games;
 
     let user_id = UserId::from(user_id.value());
     let filter = filter.unwrap_or_default();
 
-    let (games, has_more, since) =
-        server::view::get_available_games(server_state, user_id, filter, since)
-            .await
-            .map_err(ServerFnError::new)?;
+    let (games, has_more, since) = get_available_games(server_state, user_id, filter, since)
+        .await
+        .map_err(ServerFnError::new)?;
 
     let games = games
         .into_iter()
@@ -51,8 +51,8 @@ pub async fn get_available_games(
             let name = game.name().clone();
             let source = game.source();
             match source {
-                server::AvailableGameSource::Lobby => AvailableGameDTO::Lobby { game_id, name },
-                server::AvailableGameSource::Active => AvailableGameDTO::Active { game_id, name },
+                AvailableGameSource::Lobby => AvailableGameDTO::Lobby { game_id, name },
+                AvailableGameSource::Active => AvailableGameDTO::Active { game_id, name },
             }
         })
         .collect::<Vec<_>>();

@@ -3,7 +3,7 @@ use api::{CardDTO, PlayerDTO};
 use dioxus::prelude::*;
 
 #[component]
-pub fn CribAndCut(dealer: PlayerDTO, cards: Vec<CardDTO>, cut: Option<CardDTO>) -> Element {
+pub fn CribAndCut(dealer: PlayerDTO, cards: Vec<CardDTO>, starter_cut: Option<CardDTO>) -> Element {
     let user_crib = (dealer == PlayerDTO::User).then(|| cards.clone());
     let opponent_crib = (dealer == PlayerDTO::Opponent).then(|| cards.clone());
 
@@ -12,7 +12,7 @@ pub fn CribAndCut(dealer: PlayerDTO, cards: Vec<CardDTO>, cut: Option<CardDTO>) 
         div {
             class: "crib-container",
             PlayerCrib { cards: user_crib }
-            CutView { cut }
+            CutView { starter_cut }
             PlayerCrib { cards: opponent_crib }
         }
     }
@@ -29,8 +29,8 @@ fn PlayerCrib(cards: Option<Vec<CardDTO>>) -> Element {
 }
 
 #[component]
-fn CutView(cut: Option<CardDTO>) -> Element {
-    if let Some(card) = cut {
+fn CutView(starter_cut: Option<CardDTO>) -> Element {
+    if let Some(card) = starter_cut {
         rsx! { CardView { card } }
     } else {
         rsx! { p {} }

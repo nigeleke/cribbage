@@ -59,16 +59,13 @@ body {
 #main {
     display: grid;
     grid-template-rows: auto 1fr auto;
-    flex: 1;
+    height: 100%;
 }
 
 header,
 footer {
     text-align: center;
-}
-
-main {
-    flex: 1;
+    padding: 0.5rem;
 }
 
 button {
@@ -80,5 +77,6 @@ button {
 
 input {
     border-radius: 1em;
+    width: fit-content;
     padding: 0.5em 1em;
 }

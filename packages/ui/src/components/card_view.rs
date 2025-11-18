@@ -11,26 +11,26 @@ pub fn CardView(
     selected: Option<bool>,
     on_click: Option<EventHandler<CardDTO>>,
 ) -> Element {
-    // let card = use_signal(|| card);
-    // let is_selected = selected.unwrap_or(false);
+    let card = use_signal(|| card);
+    let is_selected = selected.unwrap_or(false);
 
-    // let onclick = move |_| {
-    //     if let Some(on_click) = on_click
-    //         && let Some(card) = card()
-    //     {
-    //         on_click.call(card);
-    //     };
-    // };
+    let onclick = move |_| {
+        if let Some(on_click) = on_click
+            && let Some(card) = card()
+        {
+            on_click.call(card);
+        };
+    };
 
     rsx! {
         document::Script { src: asset!("/assets/js/elements.cardmeister.min.js")},
         document::Stylesheet { href: asset!("/assets/css/card_view.css")},
         div {
             class: "card-view",
-            // class: if is_selected { "selected" },
-            // class: if on_click.is_some() { "selectable" },
-            // onclick,
-            match card {
+            class: if is_selected { "selected" },
+            class: if on_click.is_some() { "selectable" },
+            onclick,
+            match card() {
                 Some(CardDTO::FaceDown) => rsx! { CardBack {} },
                 Some(CardDTO::FaceUp { cid }) => rsx! { CardFace { cid } },
                 None => rsx! { CardPlaceholder {} },

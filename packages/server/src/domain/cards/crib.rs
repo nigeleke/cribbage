@@ -8,4 +8,3 @@ pub trait HasCrib {
     fn crib(&self) -> &Crib;
     fn crib_mut(&mut self) -> &mut Crib;
 }
-

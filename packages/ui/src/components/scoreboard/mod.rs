@@ -1,6 +1,6 @@
 mod block;
 mod hole;
-mod track;
 mod scoreboard;
+mod track;
 
 pub use scoreboard::Scoreboard;

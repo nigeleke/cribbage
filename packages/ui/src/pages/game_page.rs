@@ -1,4 +1,4 @@
-use api::{GameIdDTO, PendingDTO, PhaseDTO, UserGameDTO, UserIdDTO};
+use api::{GameIdDTO, PendingDTO, PhaseDTO, PlayActionDTO, PlayerStateDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 use crate::components::{
@@ -157,6 +157,7 @@ fn InProgress(game: ReadSignal<UserGameDTO>) -> Element {
     let dealer = game().dealer.expect("dealer must have been selected");
     let crib = game().crib.cards;
     let starter_cut = game().crib.starter_cut;
+    let next_play_action = game().plays.map(|p| p.next_action);
 
     rsx! {
         div {
@@ -172,7 +173,7 @@ fn InProgress(game: ReadSignal<UserGameDTO>) -> Element {
                     if phase == PhaseDTO::Discarding {
                         DiscardingHand { cards: user_hand }
                     } else if phase == PhaseDTO::Playing {
-                        PlayingHand { cards: user_hand }
+                        PlayingHand { cards: user_hand, action: next_play_action.expect("plays must be defined") }
                     } else {
                         Hand { cards: user_hand }
                     }

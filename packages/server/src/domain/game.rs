@@ -186,7 +186,6 @@ impl Game {
             match &self.state {
                 State::Starting(starting) => {
                     let events = acknowledge_cut_for_deal(&starting);
-                    debug!("********** acknowledged_cut_for_deal {events:#?}");
                     Ok(events)
                 }
                 _ => not_permitted(),
@@ -280,7 +279,6 @@ impl Game {
     }
 
     fn cut_for_deal_made(&mut self, player: Player, cut: Card) {
-        debug!("Game:cut_for_deal_made: player: {cut}");
         if let State::Starting(starting) = &mut self.state {
             *starting.cut_for_deal_mut(player) = Some(cut);
             starting.deck_mut().remove(cut);
@@ -288,14 +286,12 @@ impl Game {
     }
 
     fn cut_for_deal_acknowledged(&mut self, player: Player) {
-        debug!("Game:cut_for_deal_acknowledged: player: {player}");
         if let State::Starting(starting) = &mut self.state {
             starting.pending_mut().acknowledge(player);
         }
     }
 
     fn cut_for_deal_decided(&mut self, dealer: Dealer) {
-        debug!("Game:cut_for_deal_decided: dealer: {dealer}");
         if let State::Starting(_) = &self.state {
             let scoreboard = Scoreboard::default();
             let roles = Roles::new(dealer);
@@ -309,7 +305,6 @@ impl Game {
     }
 
     fn hand_dealt(&mut self, player: Player, hand: Hand) {
-        debug!("Game:hand_dealt: player: {player} hand: {hand}");
         if let State::Discarding(discarding) = &mut self.state {
             let hands = discarding.hands_mut();
             hands[player] = hand;
@@ -317,7 +312,6 @@ impl Game {
     }
 
     fn cut_for_deal_tied(&mut self) {
-        debug!("Game:cut_for_deal_tied");
         if let State::Starting(_) = &self.state {
             let cuts = CutsForDeal::default();
             let deck = Deck::shuffled_pack();
@@ -328,15 +322,18 @@ impl Game {
     }
 
     fn cards_discarded_to_crib(&mut self, player: Player, cards: &[Card]) {
-        debug!("Game:cards_dicarded_to_crib: player: {player}, cards: {cards:?}");
         if let State::Discarding(discarding) = &self.state {
             let (scoreboard, roles, mut hands, mut crib, mut deck, pending) =
                 discarding.clone().into_parts();
+
             hands[player].remove_all(cards);
             crib.add_all(cards);
+
             if crib.len() == CARDS_REQUIRED_IN_CRIB {
                 let starter_cut = deck.cut();
-                let play_state = PlayState::new(roles.dealer().player());
+                let play_state = PlayState::new(roles.pone().player())
+                    .with_pending_plays(PLAYER0, hands[PLAYER0].as_ref())
+                    .with_pending_plays(PLAYER1, hands[PLAYER1].as_ref());
                 let playing = Playing::new(scoreboard, roles, hands, play_state, crib, starter_cut);
                 self.state = State::Playing(playing);
             } else {

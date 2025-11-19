@@ -72,13 +72,20 @@ impl UserGameDTO {
         self.crib = CribDTO { starter_cut, cards };
         self
     }
+
+    fn with_plays(mut self, plays: PlaysDTO) -> Self {
+        self.plays = Some(plays);
+        self
+    }
 }
 
 #[cfg(feature = "server")]
 mod server_only {
+    use crate::dto::plays::PlayActionDTO;
+
     use super::*;
     use server::domain::{
-        Game, HasCrib, HasCutsForDeal, HasHands, HasPending, HasRoles, HasScoreboard,
+        Game, HasCrib, HasCutsForDeal, HasHands, HasPending, HasPlayState, HasRoles, HasScoreboard,
         HasStarterCut, PLAYER0, PLAYER1, Player, Roles, State, UserId,
     };
 
@@ -105,21 +112,24 @@ mod server_only {
 
     fn dealer_from_roles(
         roles: &Roles,
-        player_dto_map: HashMap<Player, PlayerDTO>,
+        player_dto_map: &HashMap<Player, PlayerDTO>,
     ) -> Option<PlayerDTO> {
         player_dto_map.get(&roles.dealer().player()).cloned()
     }
 
     fn dealer_from_maybe_roles(
         roles: Option<Roles>,
-        player_dto_map: HashMap<Player, PlayerDTO>,
+        player_dto_map: &HashMap<Player, PlayerDTO>,
     ) -> Option<PlayerDTO> {
         roles
             .map(|roles| dealer_from_roles(&roles, player_dto_map))
             .flatten()
     }
 
-    fn dealer<T: HasRoles>(s: &T, player_dto_map: HashMap<Player, PlayerDTO>) -> Option<PlayerDTO> {
+    fn dealer<T: HasRoles>(
+        s: &T,
+        player_dto_map: &HashMap<Player, PlayerDTO>,
+    ) -> Option<PlayerDTO> {
         dealer_from_roles(s.roles(), player_dto_map)
     }
 
@@ -143,78 +153,96 @@ mod server_only {
         s.crib().as_ref().iter().map(CardDTO::face_up).collect()
     }
 
-    impl From<(UserId, &Game)> for UserGameDTO {
-        fn from((user_id, game): (UserId, &Game)) -> Self {
-            match &game.state() {
-                State::Starting(state) => {
-                    if let Some(_) = game.guest() {
-                        let (me, them) = players(game, user_id);
-                        Self::new(game.name(), PhaseDTO::CuttingForDeal)
-                            .with_pending(pending(state, me))
-                            .with_cuts_for_deal(cut_for_deal(state, me), cut_for_deal(state, them))
-                            .with_dealer(dealer_from_maybe_roles(
-                                state.roles(),
-                                player_dto_map(me, them),
-                            ))
-                    } else {
-                        Self::new(game.name(), PhaseDTO::InLobby).with_pending(PendingDTO::Opponent)
-                    }
-                }
-                State::Discarding(state) => {
-                    let (me, them) = players(game, user_id);
-                    dto_base(game.name(), PhaseDTO::Discarding, state, me, them)
-                        .with_pending(pending(state, me))
-                        .with_hands(hand_up(state, me), hand_down(state, them))
-                        .with_crib_and_starter_cut(crib_down(state), None)
-                }
-                State::Playing(state) => {
-                    let (me, them) = players(game, user_id);
-                    dto_base(game.name(), PhaseDTO::Playing, state, me, them)
-                        .with_hands(hand_up(state, me), hand_down(state, them))
-                        .with_crib_and_starter_cut(crib_down(state), starter_cut(state))
-                }
-                State::ScoringPone(state) => {
-                    let (me, them) = players(game, user_id);
-                    dto_base(game.name(), PhaseDTO::ScoringPone, state, me, them)
-                        .with_pending(pending(state, me))
-                        .with_hands(hand_up(state, me), hand_down(state, them))
-                        .with_crib_and_starter_cut(crib_down(state), starter_cut(state))
-                }
-                State::ScoringDealer(state) => {
-                    let (me, them) = players(game, user_id);
-                    dto_base(game.name(), PhaseDTO::ScoringDealer, state, me, them)
-                        .with_pending(pending(state, me))
-                        .with_hands(hand_up(state, me), hand_up(state, them))
-                        .with_crib_and_starter_cut(crib_down(state), starter_cut(state))
-                }
-                State::ScoringCrib(state) => {
-                    let (me, them) = players(game, user_id);
-                    dto_base(game.name(), PhaseDTO::ScoringCrib, state, me, them)
-                        .with_pending(pending(state, me))
-                        .with_hands(hand_up(state, me), hand_up(state, them))
-                        .with_crib_and_starter_cut(crib_up(state), starter_cut(state))
-                }
-                State::Finished(state) => {
-                    let (me, them) = players(game, user_id);
-                    dto_base(game.name(), PhaseDTO::Finished, state, me, them)
-                        .with_hands(hand_up(state, me), hand_up(state, them))
-                        .with_crib_and_starter_cut(crib_up(state), starter_cut(state))
-                }
+    fn plays<T: HasPlayState>(s: &T, player_dto_map: &HashMap<Player, PlayerDTO>) -> PlaysDTO {
+        let play_state = s.play_state();
+
+        let next_action = {
+            let next_to_play = play_state.next_to_play();
+            let next_to_play_dto = player_dto_map
+                .get(&next_to_play)
+                .expect("next player must be defined");
+            let can_play = !play_state.legal_plays(next_to_play).is_empty();
+            if can_play {
+                PlayActionDTO::Play(*next_to_play_dto)
+            } else {
+                PlayActionDTO::Pass(*next_to_play_dto)
             }
+        };
+
+        let current = Vec::default();
+
+        let historic = Vec::default();
+
+        PlaysDTO {
+            next_action,
+            current,
+            historic,
         }
     }
 
-    #[inline]
-    fn player_dto_map(me: Player, them: Player) -> HashMap<Player, PlayerDTO> {
-        HashMap::from([(me, PlayerDTO::User), (them, PlayerDTO::Opponent)])
-    }
+    impl From<(UserId, &Game)> for UserGameDTO {
+        fn from((user_id, game): (UserId, &Game)) -> Self {
+            let (me, them) = players(game, user_id);
+            let player_dto_map: HashMap<Player, PlayerDTO> =
+                [(me, PlayerDTO::User), (them, PlayerDTO::Opponent)]
+                    .into_iter()
+                    .collect();
+            let name = game.name();
 
-    fn dto_base<S>(name: &str, phase: PhaseDTO, state: &S, me: Player, them: Player) -> UserGameDTO
-    where
-        S: HasRoles + HasScoreboard,
-    {
-        UserGameDTO::new(name, phase)
-            .with_scores(score(state, me), score(state, them))
-            .with_dealer(dealer(state, player_dto_map(me, them)))
+            match &game.state() {
+                State::Starting(state) if game.guest().is_none() => {
+                    Self::new(name, PhaseDTO::InLobby).with_pending(PendingDTO::Opponent)
+                }
+
+                State::Starting(state) => Self::new(name, PhaseDTO::CuttingForDeal)
+                    .with_pending(pending(state, me))
+                    .with_cuts_for_deal(cut_for_deal(state, me), cut_for_deal(state, them))
+                    .with_dealer(dealer_from_maybe_roles(state.roles(), &player_dto_map)),
+
+                State::Discarding(state) => UserGameDTO::new(name, PhaseDTO::Discarding)
+                    .with_scores(score(state, me), score(state, them))
+                    .with_dealer(dealer(state, &player_dto_map))
+                    .with_pending(pending(state, me))
+                    .with_hands(hand_up(state, me), hand_down(state, them))
+                    .with_crib_and_starter_cut(crib_down(state), None),
+
+                State::Playing(state) => {
+                    dioxus::prelude::debug!("dto:user_game: mapping {state}");
+                    Self::new(name, PhaseDTO::Playing)
+                        .with_scores(score(state, me), score(state, them))
+                        .with_dealer(dealer(state, &player_dto_map))
+                        .with_hands(hand_up(state, me), hand_down(state, them))
+                        .with_crib_and_starter_cut(crib_down(state), starter_cut(state))
+                        .with_plays(plays(state, &player_dto_map))
+                }
+
+                State::ScoringPone(state) => UserGameDTO::new(name, PhaseDTO::ScoringPone)
+                    .with_scores(score(state, me), score(state, them))
+                    .with_dealer(dealer(state, &player_dto_map))
+                    .with_pending(pending(state, me))
+                    .with_hands(hand_up(state, me), hand_down(state, them))
+                    .with_crib_and_starter_cut(crib_down(state), starter_cut(state)),
+
+                State::ScoringDealer(state) => UserGameDTO::new(name, PhaseDTO::ScoringDealer)
+                    .with_scores(score(state, me), score(state, them))
+                    .with_dealer(dealer(state, &player_dto_map))
+                    .with_pending(pending(state, me))
+                    .with_hands(hand_up(state, me), hand_up(state, them))
+                    .with_crib_and_starter_cut(crib_down(state), starter_cut(state)),
+
+                State::ScoringCrib(state) => UserGameDTO::new(name, PhaseDTO::ScoringCrib)
+                    .with_scores(score(state, me), score(state, them))
+                    .with_dealer(dealer(state, &player_dto_map))
+                    .with_pending(pending(state, me))
+                    .with_hands(hand_up(state, me), hand_up(state, them))
+                    .with_crib_and_starter_cut(crib_up(state), starter_cut(state)),
+
+                State::Finished(state) => UserGameDTO::new(name, PhaseDTO::Finished)
+                    .with_scores(score(state, me), score(state, them))
+                    .with_dealer(dealer(state, &player_dto_map))
+                    .with_hands(hand_up(state, me), hand_up(state, them))
+                    .with_crib_and_starter_cut(crib_up(state), starter_cut(state)),
+            }
+        }
     }
 }

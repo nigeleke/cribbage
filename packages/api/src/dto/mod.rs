@@ -23,7 +23,7 @@ pub use pending::PendingDTO;
 pub use phase::PhaseDTO;
 pub use player::PlayerDTO;
 pub use player_state::PlayerStateDTO;
-pub use plays::{PlayDTO, PlaysDTO};
+pub use plays::{PlayActionDTO, PlayDTO, PlaysDTO};
 pub use score::ScoreDTO;
 pub use user_game::UserGameDTO;
 pub use user_id::UserIdDTO;

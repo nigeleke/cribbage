@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
+use strum::AsRefStr;
 
 use crate::domain::{Card, GameId, Player, UserId};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, AsRefStr)]
 pub enum GameCommand {
     HostGame { user_id: UserId, game_id: GameId },
     JoinGame { user_id: UserId },

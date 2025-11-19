@@ -39,10 +39,7 @@ pub async fn user_game_events(
         .await
         .map_err(ServerFnError::new)?;
 
-    let stream = stream.filter_map(move |event| async move {
-        debug!("api:user_game_events: {event:?}");
-        game_event_to_dto(event)
-    });
+    let stream = stream.filter_map(move |event| async move { game_event_to_dto(event) });
 
     Ok(Streaming::new(stream))
 }

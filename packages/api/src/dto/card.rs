@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
+pub type CardIdDTO = String;
+
 /// A DTO representing a Card. The value is the "cid" (Card identifier), e.g. "AS", "QD".
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CardDTO {
-    FaceUp { cid: String },
+    FaceUp { cid: CardIdDTO },
     FaceDown,
 }
 

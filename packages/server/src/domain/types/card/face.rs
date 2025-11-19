@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, EnumIter};
 
+use crate::domain::CardsError;
+
 use super::rank::Rank;
 use super::value::Value;
 
@@ -68,6 +70,29 @@ impl Face {
     }
 }
 
+impl TryFrom<char> for Face {
+    type Error = CardsError;
+
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        match value {
+            'A' => Ok(Self::Ace),
+            '2' => Ok(Self::Two),
+            '3' => Ok(Self::Three),
+            '4' => Ok(Self::Four),
+            '5' => Ok(Self::Five),
+            '6' => Ok(Self::Six),
+            '7' => Ok(Self::Seven),
+            '8' => Ok(Self::Eight),
+            '9' => Ok(Self::Nine),
+            'T' => Ok(Self::Ten),
+            'J' => Ok(Self::Jack),
+            'Q' => Ok(Self::Queen),
+            'K' => Ok(Self::King),
+            other => Err(CardsError::InvalidCard(format!("Invalid face: {other}"))),
+        }
+    }
+}
+
 impl std::fmt::Display for Face {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
@@ -93,29 +118,6 @@ impl std::fmt::Display for Face {
 #[coverage(off)]
 pub mod test {
     use super::*;
-
-    impl TryFrom<char> for Face {
-        type Error = String;
-
-        fn try_from(value: char) -> Result<Self, Self::Error> {
-            match value {
-                'A' => Ok(Self::Ace),
-                '2' => Ok(Self::Two),
-                '3' => Ok(Self::Three),
-                '4' => Ok(Self::Four),
-                '5' => Ok(Self::Five),
-                '6' => Ok(Self::Six),
-                '7' => Ok(Self::Seven),
-                '8' => Ok(Self::Eight),
-                '9' => Ok(Self::Nine),
-                'T' => Ok(Self::Ten),
-                'J' => Ok(Self::Jack),
-                'Q' => Ok(Self::Queen),
-                'K' => Ok(Self::King),
-                other => Err(format!("Invalid face: {other}")),
-            }
-        }
-    }
 
     #[test]
     fn face_has_rank_value_display_string_and_name() {

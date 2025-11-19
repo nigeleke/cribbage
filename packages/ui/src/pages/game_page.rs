@@ -1,7 +1,9 @@
 use api::{GameIdDTO, PendingDTO, PhaseDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-use crate::components::{CardView, CribAndCut, DiscardingHand, Hand, Scoreboard};
+use crate::components::{
+    CardView, CribAndCut, DiscardingHand, Hand, PlayingHand, Scoreboard, WaitingForOpponent,
+};
 use crate::route::Route;
 
 #[component]
@@ -14,18 +16,10 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
     let mut game_stream = use_action(move || async move {
         let mut stream = api::stream::user_game_stream(*user_id.read(), game_id).await?;
         while let Some(Ok(updated_game)) = stream.next().await {
+            debug!("GamePage: updated for {user_id} {updated_game:?}");
             game.set(Some(updated_game));
         }
         dioxus::Ok(())
-    });
-
-    use_effect(move || {
-        if let Some(game) = game() {
-            let user_cut = game.user_state.cut;
-            let opponent_cut = game.opponent_state.cut;
-            let dealer = game.dealer;
-            debug!("GamePage:use_effect: {user_cut:?}, {opponent_cut:?}, {dealer:?}")
-        }
     });
 
     let _ = use_resource(move || async move {
@@ -52,13 +46,12 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
 
 #[component]
 fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
-    dioxus::prelude::debug!(">>> ActiveGame: {:?}", game());
     match game().phase {
         PhaseDTO::InLobby => rsx! { Starting { game } },
         PhaseDTO::CuttingForDeal => {
             rsx! { Starting { game } }
         }
-        PhaseDTO::Discarding => {
+        PhaseDTO::Discarding | PhaseDTO::Playing => {
             rsx! { InProgress { game } }
         }
         _ => unimplemented!(),
@@ -98,7 +91,7 @@ fn Starting(game: ReadSignal<UserGameDTO>) -> Element {
         });
     };
 
-    let waiting_for_opponent = rsx! { p { "Waiting for opponent"} };
+    let waiting_for_opponent = rsx! { WaitingForOpponent {  } };
 
     let cut_for_deal_button = rsx! {
         button {
@@ -178,6 +171,8 @@ fn InProgress(game: ReadSignal<UserGameDTO>) -> Element {
                     class: "card-container",
                     if phase == PhaseDTO::Discarding {
                         DiscardingHand { cards: user_hand }
+                    } else if phase == PhaseDTO::Playing {
+                        PlayingHand { cards: user_hand }
                     } else {
                         Hand { cards: user_hand }
                     }

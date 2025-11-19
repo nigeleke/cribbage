@@ -1,11 +1,11 @@
-use super::{CardView, WaitingForOpponent};
+use crate::components::CardView;
 use crate::route::Route;
 use api::{CardDTO, GameIdDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-/// The `DiscardingHand` component shows a set of cards (in the order provided).
+/// The `PlayingHand` component shows a set of cards (in the order provided).
 #[component]
-pub fn DiscardingHand(cards: ReadSignal<Vec<CardDTO>>) -> Element {
+pub fn PlayingHand(cards: ReadSignal<Vec<CardDTO>>) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
     let game_id = use_context::<GameIdDTO>();
 
@@ -40,33 +40,39 @@ pub fn DiscardingHand(cards: ReadSignal<Vec<CardDTO>>) -> Element {
 
     let navigator = use_navigator();
 
-    let on_discard = move |_| {
+    let on_play = move |_| {
         spawn(async move {
-            let cards = cards()
-                .into_iter()
-                .zip(selections())
-                .filter_map(|(card, keep)| keep.then_some(card))
-                .filter_map(|card| match card {
-                    CardDTO::FaceUp { cid } => Some(cid),
-                    CardDTO::FaceDown => None, // unreachable
-                })
-                .collect::<Vec<_>>();
+            // let cards = cards()
+            //     .into_iter()
+            //     .zip(selections())
+            //     .filter_map(|(card, keep)| keep.then_some(card))
+            //     .filter_map(|card| match card {
+            //         CardDTO::FaceUp { cid } => Some(cid),
+            //         CardDTO::FaceDown => None, // unreachable
+            //     })
+            //     .collect::<Vec<_>>();
 
-            match api::action::discard_cards_to_crib(*user_id.read(), game_id, cards).await {
-                Ok(_) => {}
-                Err(error) => {
-                    warn!("GamePage:discard_cards_to_crib:error {error:?}");
-                    let error = error.to_string();
-                    navigator.push(Route::ErrorPage { error });
-                }
-            }
+            // match api::action::discard_cards_to_crib(*user_id.read(), game_id, cards).await {
+            //     Ok(_) => {}
+            //     Err(error) => {
+            //         warn!("GamePage:discard_cards_to_crib:error {error:?}");
+            //         let error = error.to_string();
+            //         navigator.push(Route::ErrorPage { error });
+            //     }
+            // }
+        });
+    };
+
+    let on_pass = move |_| {
+        spawn(async move {
+            //
         });
     };
 
     rsx! {
-        document::Stylesheet { href: asset!("/assets/css/discarding_hand.css")},
+        document::Stylesheet { href: asset!("/assets/css/playing_hand.css")},
         div {
-            class: "discarding-hand",
+            class: "playing-hand",
             div {
                 for (i, card) in cards().into_iter().enumerate() {
                     CardView {
@@ -76,16 +82,8 @@ pub fn DiscardingHand(cards: ReadSignal<Vec<CardDTO>>) -> Element {
                     }
                 }
             }
-            if cards().len() == 6 {
-                button {
-                    onclick: on_discard,
-                    disabled: selected_count() != 2,
-                    "Discard"
-                }
-
-            } else {
-                WaitingForOpponent {}
-            }
+            button { onclick: on_play, "Play" }
+            button { onclick: on_pass, "Pass" }
         }
     }
 }

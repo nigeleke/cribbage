@@ -1,6 +1,6 @@
+use crate::domain::CardsError;
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
-
 mod face;
 mod rank;
 mod suit;
@@ -64,6 +64,23 @@ impl Card {
     }
 }
 
+impl std::str::FromStr for Card {
+    type Err = CardsError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() == 2 {
+            let mut chars = s.chars();
+            let face = chars.next().ok_or(CardsError::InvalidCard(s.into()))?;
+            let face = Face::try_from(face)?;
+            let suit = chars.next().ok_or(CardsError::InvalidCard(s.into()))?;
+            let suit = Suit::try_from(suit)?;
+            Ok(Card::new(face, suit))
+        } else {
+            Err(CardsError::InvalidCard(s.into()))
+        }
+    }
+}
+
 impl std::fmt::Debug for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Card({})", self)
@@ -79,27 +96,12 @@ impl std::fmt::Display for Card {
 #[cfg(test)]
 #[coverage(off)]
 mod test {
-    use std::str::FromStr;
-
     use super::*;
-
-    impl FromStr for Card {
-        type Err = String;
-
-        fn from_str(s: &str) -> Result<Self, Self::Err> {
-            if s.len() == 2 {
-                let mut chars = s.chars();
-                let face = chars.next().ok_or("missing face charactor")?.try_into()?;
-                let suit = chars.next().ok_or("missing suit character")?.try_into()?;
-                Ok(Card::new(face, suit))
-            } else {
-                Err("two characters required for card".into())
-            }
-        }
-    }
 
     #[test]
     fn cards_have_definitive_names_id_rank_and_value() {
+        use std::str::FromStr;
+
         let suits = "HCDS";
         let faces = "A23456789TJQK";
 

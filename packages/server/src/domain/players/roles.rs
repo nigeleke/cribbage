@@ -19,6 +19,13 @@ pub trait HasRoles {
 }
 
 impl Roles {
+    pub fn new(dealer: Dealer) -> Self {
+        Self {
+            dealer,
+            pone: dealer.opponent(),
+        }
+    }
+
     pub fn from_cuts(cuts: &CutsForDeal) -> Option<Self> {
         use std::cmp::Ordering;
 
@@ -37,10 +44,7 @@ impl Roles {
                     Ordering::Equal => None,
                 };
 
-                dealer.map(|dealer| Self {
-                    dealer,
-                    pone: dealer.opponent(),
-                })
+                dealer.map(|dealer| Self::new(dealer))
             })
             .flatten()
     }

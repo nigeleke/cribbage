@@ -4,9 +4,13 @@ use dioxus::prelude::*;
 pub fn ErrorPage(error: String) -> Element {
     debug!("***** ***** ***** ***** ErrorPage:error: '{error}'");
     rsx! {
+        document::Stylesheet { href: asset!("/assets/css/error_page.css") }
         div {
-           h2 { "An error occurred" }
-           p { "{error}" }
+            class: "error-page",
+            h2 { "Ooops!" }
+            p { "Something went wrong."}
+            p { "Please try again later."}
+            p { "{error}" }
        }
     }
 }

@@ -7,11 +7,10 @@ use dioxus::prelude::*;
 /// triggered when the card is selected / unselected.
 #[component]
 pub fn CardView(
-    card: Option<CardDTO>,
+    card: ReadSignal<Option<CardDTO>>,
     selected: Option<bool>,
     on_click: Option<EventHandler<CardDTO>>,
 ) -> Element {
-    let card = use_signal(|| card);
     let is_selected = selected.unwrap_or(false);
 
     let onclick = move |_| {

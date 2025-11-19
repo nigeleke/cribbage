@@ -1,11 +1,15 @@
-use crate::domain::constants::PLAYER_COUNT;
+use crate::display::format_vec;
+use crate::domain::constants::{
+    CARDS_DISCARDED_TO_CRIB, CARDS_KEPT_PER_HAND, CARDS_REQUIRED_IN_CRIB, PLAYER_COUNT,
+};
 use crate::domain::{
-    Card, Crib, CutsForDeal, Deck, Discarding, GameCommand, GameError, GameEvent, GameId,
-    HasCutsForDeal, HasDeck, PLAYER0, PLAYER1, Player, Roles, Scoreboard, Starting, State, UserId,
-    WaitingForCuts, WaitingForDiscards,
+    Card, Crib, CutsForDeal, Dealer, Deck, Discarding, GameCommand, GameError, GameEvent, GameId,
+    Hand, Hands, HasCutsForDeal, HasDeck, HasHands, HasPending, PLAYER0, PLAYER1, Pending,
+    PlayState, Player, Playing, Roles, Scoreboard, Starting, State, UserId, WaitingForDiscards,
 };
 use crate::name_builder::generate_game_name;
 use cqrs_es::Aggregate;
+use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -117,21 +121,9 @@ impl Game {
                 not_permitted()
             } else {
                 let cut = deck.cut();
-                let mut events = vec![GameEvent::CutForDealMade { player, cut }];
-
                 cuts[player] = Some(cut);
 
-                let proceed = cuts[PLAYER0].is_some() && cuts[PLAYER1].is_some();
-
-                if proceed {
-                    if let Some(roles) = Roles::from_cuts(&cuts) {
-                        let dealer = *roles.dealer();
-                        events.push(GameEvent::CutForDealDecided { dealer })
-                    } else {
-                        events.push(GameEvent::CutForDealTied)
-                    }
-                }
-
+                let events = vec![GameEvent::CutForDealMade { player, cut }];
                 Ok(events)
             }
         };
@@ -156,12 +148,83 @@ impl Game {
             )))
         };
 
+        let acknowledge_cut_for_deal = |starting: &Starting| {
+            let mut events = vec![GameEvent::CutForDealAcknowledged { player }];
+
+            let (cuts, _, mut pending) = starting.clone().into_parts();
+
+            let proceed = pending.acknowledge(player);
+            if proceed {
+                if let Some(roles) = Roles::from_cuts(&cuts) {
+                    let mut deck = Deck::shuffled_pack();
+                    let hands = deck.deal(PLAYER_COUNT);
+
+                    events.append(&mut vec![
+                        GameEvent::CutForDealDecided {
+                            dealer: *roles.dealer(),
+                        },
+                        GameEvent::HandDealt {
+                            player: PLAYER0,
+                            hand: hands[PLAYER0].clone(),
+                        },
+                        GameEvent::HandDealt {
+                            player: PLAYER1,
+                            hand: hands[PLAYER1].clone(),
+                        },
+                    ]);
+                } else {
+                    events.push(GameEvent::CutForDealTied);
+                }
+            }
+
+            events
+        };
+
         if self.id == GameId::default() {
             not_permitted()
         } else {
             match &self.state {
-                State::Starting(_) => {
-                    let events = vec![GameEvent::CutForDealAcknowledged { player }];
+                State::Starting(starting) => {
+                    let events = acknowledge_cut_for_deal(&starting);
+                    debug!("********** acknowledged_cut_for_deal {events:#?}");
+                    Ok(events)
+                }
+                _ => not_permitted(),
+            }
+        }
+    }
+
+    fn discard_cards_to_crib(
+        &self,
+        player: Player,
+        cards: Vec<Card>,
+    ) -> Result<Vec<GameEvent>, GameError> {
+        let not_permitted = || Err(GameError::NotPermitted("discard cards to crib".into()));
+
+        let discard_cards_to_crib = |discarding: &Discarding| {
+            if !discarding.pending().waiting_on(player) {
+                not_permitted()
+            } else if !discarding.hand(player).contains_all(&cards) {
+                Err(GameError::InvalidDiscards(format_vec(&cards)))
+            } else if cards.len() != CARDS_DISCARDED_TO_CRIB {
+                Err(GameError::InvalidDiscards(format_vec(&cards)))
+            } else if discarding.hand(player).len() - cards.len() != CARDS_KEPT_PER_HAND {
+                Err(GameError::InvalidDiscards(format_vec(&cards)))
+            } else {
+                let events = vec![GameEvent::CardsDiscardedToCrib {
+                    player: player.clone(),
+                    cards: cards.clone(),
+                }];
+                Ok(events)
+            }
+        };
+
+        if self.id == GameId::default() {
+            not_permitted()
+        } else {
+            match &self.state {
+                State::Discarding(discarding) => {
+                    let events = discard_cards_to_crib(discarding)?;
                     Ok(events)
                 }
                 _ => not_permitted(),
@@ -170,14 +233,17 @@ impl Game {
     }
 
     pub fn handle_command(&self, command: GameCommand) -> Result<Vec<GameEvent>, GameError> {
+        debug!("Game:handle_command: {:?}", command);
         match command {
             GameCommand::HostGame { user_id, game_id } => self.host_game(user_id, game_id),
             GameCommand::JoinGame { user_id } => self.join_game(user_id),
             GameCommand::PlayComputer { user_id, game_id } => self.play_computer(user_id, game_id),
             GameCommand::CutForDeal { player } => self.cut_for_deal(player),
             GameCommand::AcknowledgeCutForDeal { player } => self.acknowledge_cut_for_deal(player),
+            GameCommand::DiscardCardsToCrib { player, cards } => {
+                self.discard_cards_to_crib(player, cards)
+            }
             _ => unimplemented!("handle {command:?}"),
-            // GameCommand::DiscardCardsToCrib { player, cards } => {}
             // GameCommand::PlayCard { player, card } => {}
             // GameCommand::Pass { player } => {}
             // GameCommand::AcknowledgePoneScore { player } => {}
@@ -214,45 +280,74 @@ impl Game {
     }
 
     fn cut_for_deal_made(&mut self, player: Player, cut: Card) {
+        debug!("Game:cut_for_deal_made: player: {cut}");
         if let State::Starting(starting) = &mut self.state {
             *starting.cut_for_deal_mut(player) = Some(cut);
             starting.deck_mut().remove(cut);
-
-            let roles = starting.roles();
         }
     }
 
     fn cut_for_deal_acknowledged(&mut self, player: Player) {
-        if let State::Starting(starting) = &self.state {
-            let (cuts, deck, mut pending) = starting.clone().into_parts();
+        debug!("Game:cut_for_deal_acknowledged: player: {player}");
+        if let State::Starting(starting) = &mut self.state {
+            starting.pending_mut().acknowledge(player);
+        }
+    }
 
-            let proceed = pending.acknowledge(player);
+    fn cut_for_deal_decided(&mut self, dealer: Dealer) {
+        debug!("Game:cut_for_deal_decided: dealer: {dealer}");
+        if let State::Starting(_) = &self.state {
+            let scoreboard = Scoreboard::default();
+            let roles = Roles::new(dealer);
+            let deck = Deck::shuffled_pack();
+            let hands = Hands::default();
+            let crib = Crib::default();
+            let pending = WaitingForDiscards::default();
+            let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
+            self.state = State::Discarding(discarding);
+        }
+    }
 
-            if proceed {
-                if let Some(roles) = Roles::from_cuts(&cuts) {
-                    let scoreboard = Scoreboard::default();
-                    let mut deck = Deck::shuffled_pack();
-                    let hands = deck.deal(PLAYER_COUNT);
-                    let hands = [hands[PLAYER0].clone(), hands[PLAYER1].clone()];
-                    let crib = Crib::default();
-                    let pending = WaitingForDiscards::default();
-                    let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
-                    self.state = State::Discarding(discarding);
-                } else {
-                    let cuts = CutsForDeal::default();
-                    let deck = Deck::shuffled_pack();
-                    let pending = WaitingForCuts::default();
-                    let starting = Starting::new(cuts, deck, pending);
-                    self.state = State::Starting(starting);
-                }
+    fn hand_dealt(&mut self, player: Player, hand: Hand) {
+        debug!("Game:hand_dealt: player: {player} hand: {hand}");
+        if let State::Discarding(discarding) = &mut self.state {
+            let hands = discarding.hands_mut();
+            hands[player] = hand;
+        }
+    }
+
+    fn cut_for_deal_tied(&mut self) {
+        debug!("Game:cut_for_deal_tied");
+        if let State::Starting(_) = &self.state {
+            let cuts = CutsForDeal::default();
+            let deck = Deck::shuffled_pack();
+            let pending = Pending::default();
+            let starting = Starting::new(cuts, deck, pending);
+            self.state = State::Starting(starting);
+        }
+    }
+
+    fn cards_discarded_to_crib(&mut self, player: Player, cards: &[Card]) {
+        debug!("Game:cards_dicarded_to_crib: player: {player}, cards: {cards:?}");
+        if let State::Discarding(discarding) = &self.state {
+            let (scoreboard, roles, mut hands, mut crib, mut deck, pending) =
+                discarding.clone().into_parts();
+            hands[player].remove_all(cards);
+            crib.add_all(cards);
+            if crib.len() == CARDS_REQUIRED_IN_CRIB {
+                let starter_cut = deck.cut();
+                let play_state = PlayState::new(roles.dealer().player());
+                let playing = Playing::new(scoreboard, roles, hands, play_state, crib, starter_cut);
+                self.state = State::Playing(playing);
             } else {
-                let starting = Starting::new(cuts, deck, pending);
-                self.state = State::Starting(starting);
+                let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
+                self.state = State::Discarding(discarding);
             }
         }
     }
 
     pub fn apply_event(&mut self, event: GameEvent) {
+        debug!("Game:apply_event: {:?}", event);
         match event {
             GameEvent::LobbyGameCreated {
                 game_id,
@@ -267,9 +362,13 @@ impl Game {
                 name,
             } => self.computer_game_started(game_id, host, guest, name),
             GameEvent::CutForDealMade { player, cut } => self.cut_for_deal_made(player, cut),
-            GameEvent::CutForDealDecided { .. } => { /* do nothing until acknowledged */ }
-            GameEvent::CutForDealTied => { /* do nothing until acknowledged */ }
             GameEvent::CutForDealAcknowledged { player } => self.cut_for_deal_acknowledged(player),
+            GameEvent::CutForDealDecided { dealer } => self.cut_for_deal_decided(dealer),
+            GameEvent::HandDealt { player, hand } => self.hand_dealt(player, hand),
+            GameEvent::CutForDealTied => self.cut_for_deal_tied(),
+            GameEvent::CardsDiscardedToCrib { player, cards } => {
+                self.cards_discarded_to_crib(player, &cards)
+            }
             _ => unimplemented!("apply: {event:?}"),
         }
     }
@@ -303,6 +402,20 @@ impl Aggregate for Game {
 
     fn apply(&mut self, event: Self::Event) {
         self.apply_event(event);
+    }
+}
+
+impl std::fmt::Display for Game {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}\n{} {}\n{}",
+            self.name,
+            self.host,
+            self.guest
+                .map_or("-".into(), |g| std::convert::identity(g).to_string()),
+            self.state
+        )
     }
 }
 
@@ -624,6 +737,7 @@ mod test {
             let name = function_name!();
 
             let cut0 = card!("AS");
+            let cut1 = card!("QH");
             let preconditions = vec![
                 GameEvent::ComputerGameStarted {
                     game_id,
@@ -635,43 +749,37 @@ mod test {
                     player: PLAYER0,
                     cut: cut0,
                 },
+                GameEvent::CutForDealMade {
+                    player: PLAYER1,
+                    cut: cut1,
+                },
+                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
             ];
 
-            loop {
-                let result = GameTestFramework::with(GameServices)
-                    .given(preconditions.clone())
-                    .when(GameCommand::CutForDeal { player: PLAYER1 })
-                    .inspect_result();
+            let result = GameTestFramework::with(GameServices)
+                .given(preconditions.clone())
+                .when(GameCommand::AcknowledgeCutForDeal { player: PLAYER1 })
+                .inspect_result();
 
-                match result {
-                    Ok(events) => {
-                        let Some(GameEvent::CutForDealMade { cut, .. }) = events
-                            .iter()
-                            .find(|e| matches!(e, GameEvent::CutForDealMade { .. }))
-                        else {
-                            panic!("expected event not found");
-                        };
-                        if cut0.face() != cut.face() {
-                            let Some(GameEvent::CutForDealDecided { dealer }) = events
-                                .iter()
-                                .find(|e| matches!(e, GameEvent::CutForDealDecided { .. }))
-                            else {
-                                panic!("expected event not found");
-                            };
-
-                            if cut0.value() < cut.value() {
-                                assert_eq!(dealer, &Dealer::from(PLAYER0));
-                            } else if cut.value() < cut0.value() {
-                                assert_eq!(dealer, &Dealer::from(PLAYER1));
-                            } else {
-                                panic!("expected dealer decided");
+            match result {
+                Ok(events) => {
+                    assert_eq!(
+                        events[..2],
+                        vec![
+                            GameEvent::CutForDealAcknowledged { player: PLAYER1 },
+                            GameEvent::CutForDealDecided {
+                                dealer: Dealer::from(PLAYER0)
                             }
-                            break;
-                        }
-                    }
-                    Err(error) => {
-                        panic!("unexpected error {error}");
-                    }
+                        ]
+                    );
+                    let deals = events
+                        .iter()
+                        .filter_map(|e| matches!(e, GameEvent::HandDealt { .. }).then_some(e))
+                        .collect::<Vec<_>>();
+                    assert_eq!(deals.len(), 2);
+                }
+                Err(error) => {
+                    panic!("unexpected error {error}");
                 }
             }
         }
@@ -684,6 +792,7 @@ mod test {
             let name = function_name!();
 
             let cut0 = card!("AS");
+            let cut1 = card!("AH");
             let preconditions = vec![
                 GameEvent::ComputerGameStarted {
                     game_id,
@@ -695,102 +804,32 @@ mod test {
                     player: PLAYER0,
                     cut: cut0,
                 },
+                GameEvent::CutForDealMade {
+                    player: PLAYER1,
+                    cut: cut1,
+                },
+                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
             ];
 
-            loop {
-                let result = GameTestFramework::with(GameServices)
-                    .given(preconditions.clone())
-                    .when(GameCommand::CutForDeal { player: PLAYER1 })
-                    .inspect_result();
+            let result = GameTestFramework::with(GameServices)
+                .given(preconditions.clone())
+                .when(GameCommand::AcknowledgeCutForDeal { player: PLAYER1 })
+                .inspect_result();
 
-                match result {
-                    Ok(events) => {
-                        let Some(GameEvent::CutForDealMade { cut, .. }) = events
-                            .iter()
-                            .find(|e| matches!(e, GameEvent::CutForDealMade { .. }))
-                        else {
-                            panic!("expected event not found");
-                        };
-                        if cut0.face() == cut.face() {
-                            assert!(events.iter().contains(&GameEvent::CutForDealTied));
-                            break;
-                        }
-                    }
-                    Err(error) => {
-                        panic!("unexpected error {error}");
-                    }
+            match result {
+                Ok(events) => {
+                    assert_eq!(
+                        events,
+                        vec![
+                            GameEvent::CutForDealAcknowledged { player: PLAYER1 },
+                            GameEvent::CutForDealTied
+                        ]
+                    )
+                }
+                Err(error) => {
+                    panic!("unexpected error {error}");
                 }
             }
-        }
-
-        #[test]
-        fn start_game_when_dealer_decided() {
-            let game_id = GameId::new();
-            let host = UserId::new();
-            let guest = UserId::new();
-            let name = function_name!();
-
-            let cut0 = card!("AS");
-            let cut1 = card!("QH");
-            let preconditions = vec![
-                GameEvent::ComputerGameStarted {
-                    game_id,
-                    host,
-                    guest,
-                    name,
-                },
-                GameEvent::CutForDealMade {
-                    player: PLAYER0,
-                    cut: cut0,
-                },
-                GameEvent::CutForDealMade {
-                    player: PLAYER1,
-                    cut: cut1,
-                },
-                GameEvent::CutForDealDecided {
-                    dealer: Dealer::from(PLAYER0),
-                },
-                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
-            ];
-
-            GameTestFramework::with(GameServices)
-                .given(preconditions)
-                .when(GameCommand::AcknowledgeCutForDeal { player: PLAYER1 })
-                .then_expect_events(vec![GameEvent::CutForDealAcknowledged { player: PLAYER1 }]);
-        }
-
-        #[test]
-        fn redraw_when_dealed_undecided() {
-            let game_id = GameId::new();
-            let host = UserId::new();
-            let guest = UserId::new();
-            let name = function_name!();
-
-            let cut0 = card!("QS");
-            let cut1 = card!("QH");
-            let preconditions = vec![
-                GameEvent::ComputerGameStarted {
-                    game_id,
-                    host,
-                    guest,
-                    name,
-                },
-                GameEvent::CutForDealMade {
-                    player: PLAYER0,
-                    cut: cut0,
-                },
-                GameEvent::CutForDealMade {
-                    player: PLAYER1,
-                    cut: cut1,
-                },
-                GameEvent::CutForDealTied,
-                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
-            ];
-
-            GameTestFramework::with(GameServices)
-                .given(preconditions)
-                .when(GameCommand::AcknowledgeCutForDeal { player: PLAYER1 })
-                .then_expect_events(vec![GameEvent::CutForDealAcknowledged { player: PLAYER1 }]);
         }
     }
 

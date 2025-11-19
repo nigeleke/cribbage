@@ -1,22 +1,31 @@
+use anyhow::Error as AnyhowError;
 use thiserror::*;
 
 #[derive(Debug, Error)]
 pub enum ServerError {
-    #[error(transparent)]
-    ServiceError(#[from] crate::services::ServiceError),
+    #[error("forbidden request: {0}")]
+    Forbidden(String),
+
+    #[error("not found")]
+    NotFound,
 
     #[error(transparent)]
-    DatabaseError(#[from] crate::database::DatabaseError),
+    Domain(#[from] crate::domain::DomainError),
 
-    #[error("mutex error: {0}")]
-    MutexError(String),
+    #[error("internal server error")]
+    Internal(
+        #[from]
+        #[source]
+        AnyhowError,
+    ),
+}
 
-    #[error(transparent)]
-    StreamingError(#[from] tokio::sync::broadcast::error::RecvError),
+impl ServerError {
+    pub fn bug(msg: impl std::fmt::Display) -> Self {
+        ServerError::Internal(anyhow::anyhow!("BUG: {msg}"))
+    }
 
-    #[error(transparent)]
-    StreamingMappingError(#[from] tokio_stream::wrappers::errors::BroadcastStreamRecvError),
-
-    #[error("internal error: {0}")]
-    InternalError(String),
+    pub fn bug_fmt(msg: impl std::fmt::Display, args: std::fmt::Arguments<'_>) -> Self {
+        ServerError::Internal(anyhow::anyhow!("BUG: {msg}{args}"))
+    }
 }

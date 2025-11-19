@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use sqlx::{Acquire, Postgres, Result};
 use uuid::Uuid;
 
-use crate::database::{AvailableGameRow, DatabaseError};
+use crate::database::AvailableGameRow;
 
 pub struct AvailableGamesChunk {
     pub games: Vec<AvailableGameRow>,
@@ -18,7 +18,7 @@ pub async fn select_available_games<'a, A>(
     last_created_at: Option<DateTime<Utc>>,
     filter: Option<String>,
     user_id: Uuid,
-) -> Result<AvailableGamesChunk, DatabaseError>
+) -> Result<AvailableGamesChunk>
 where
     A: Acquire<'a, Database = Postgres>,
 {

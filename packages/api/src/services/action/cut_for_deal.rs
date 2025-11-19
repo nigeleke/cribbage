@@ -3,14 +3,13 @@ use dioxus::fullstack::extract::State;
 use dioxus::prelude::*;
 
 #[post("/api/{user_id}/game/{game_id}/cut_for_deal", State(server_state): State<server::ServerState>)]
-pub async fn cut_for_deal(user_id: UserIdDTO, game_id: GameIdDTO) -> Result<(), ServerFnError> {
+pub async fn cut_for_deal(user_id: UserIdDTO, game_id: GameIdDTO) -> Result<()> {
     use server::action::cut_for_deal;
     use server::domain::{GameId, UserId};
 
     let user_id = UserId::from(user_id.value());
     let game_id = GameId::from(game_id.value());
 
-    cut_for_deal(server_state, user_id, game_id)
-        .await
-        .map_err(ServerFnError::new)
+    let _ = cut_for_deal(server_state, user_id, game_id).await?;
+    Ok(())
 }

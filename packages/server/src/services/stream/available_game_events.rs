@@ -1,12 +1,11 @@
 use crate::{
-    convertors::{self},
+    convertors::game_row_to_game,
     database::{Change, GameRow, Notification},
     domain::{Game, GameId, UserId},
+    error::ServerError,
     server_state::ServerState,
-    services::error::ServiceError,
 };
 
-use dioxus::prelude::*;
 use futures::{Stream, TryStreamExt};
 use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 
@@ -18,35 +17,35 @@ pub enum AvailableGameEvent {
 pub async fn available_game_events(
     server_state: ServerState,
     user_id: UserId,
-) -> Result<impl Stream<Item = AvailableGameEvent>, ServiceError> {
+) -> Result<impl Stream<Item = AvailableGameEvent>, ServerError> {
     let stream = BroadcastStream::new(server_state.database_changes_sender.subscribe())
-        .map_err(ServiceError::from);
+        .map_err(ServerError::bug);
 
     let stream = stream.try_filter_map(move |notification| async move {
         let notification_to_game_row_change = move |notification: Notification| {
             let change = (notification.table_name == "games")
                 .then_some(notification.as_change::<GameRow>())
                 .transpose()?;
-            Ok::<_, ServiceError>(change)
+            Ok::<_, ServerError>(change)
         };
 
         let row_change_to_game_change = move |change: Change<GameRow>| {
             let change = match change {
                 Change::Insert { t } => {
-                    let t = convertors::game_row_to_game(t)?;
+                    let t = game_row_to_game(t)?;
                     Change::Insert { t }
                 }
                 Change::Update { old_t, new_t } => {
-                    let old_t = convertors::game_row_to_game(old_t)?;
-                    let new_t = convertors::game_row_to_game(new_t)?;
+                    let old_t = game_row_to_game(old_t)?;
+                    let new_t = game_row_to_game(new_t)?;
                     Change::Update { old_t, new_t }
                 }
                 Change::Delete { t } => {
-                    let t = convertors::game_row_to_game(t)?;
+                    let t = game_row_to_game(t)?;
                     Change::Delete { t }
                 }
             };
-            Ok::<_, ServiceError>(change)
+            Ok::<_, ServerError>(change)
         };
 
         let game_change_to_event = move |change: Change<Game>| {
@@ -87,7 +86,7 @@ pub async fn available_game_events(
     let stream = stream.filter_map(|result| match result {
         Ok(event) => Some(event),
         Err(error) => {
-            warn!("server:services:available_game_events: error: {error}");
+            dioxus::prelude::warn!("server:services:available_game_events: error: {error}");
             None
         }
     });

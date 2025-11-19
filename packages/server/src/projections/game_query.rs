@@ -1,8 +1,11 @@
-use crate::convertors;
-use crate::database::{self, DatabaseError, NewGame};
+use crate::database::{self, NewGame};
 use crate::domain::{Game, GameEvent};
-use crate::projections::error::ProjectionError;
+use crate::{
+    convertors::{game_row_to_game, state_to_json},
+    error::ServerError,
+};
 use cqrs_es::{EventEnvelope, Query};
+use dioxus::prelude::*;
 use sqlx::PgPool;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -21,16 +24,18 @@ impl GameQuery {
         pool: Arc<PgPool>,
         aggregate_id: &str,
         events: &[GameEvent],
-    ) -> Result<(), ProjectionError> {
-        let mut tx = pool.begin().await?;
+    ) -> Result<(), ServerError> {
+        let mut tx = pool.begin().await.map_err(ServerError::bug)?;
 
-        let game_id = Uuid::from_str(aggregate_id)?;
+        let game_id = Uuid::from_str(aggregate_id).map_err(ServerError::bug)?;
 
-        let game = database::select_game(&mut *tx, game_id).await?;
+        let game = database::select_game(&mut *tx, game_id)
+            .await
+            .map_err(ServerError::bug)?;
 
         let mut game = match game {
             None => Game::default(),
-            Some(game) => convertors::game_row_to_game(game)?,
+            Some(game) => game_row_to_game(game).map_err(ServerError::bug)?,
         };
 
         game.apply_events(events);
@@ -40,12 +45,14 @@ impl GameQuery {
             name: game.name().clone(),
             host_id: game.host().value(),
             guest_id: game.guest().map(|g| g.value()),
-            state: convertors::state_to_json(game.state()),
+            state: state_to_json(game.state()),
         };
 
-        database::upsert_game(&mut *tx, &new_game).await?;
+        database::upsert_game(&mut *tx, &new_game)
+            .await
+            .map_err(ServerError::bug)?;
 
-        tx.commit().await.map_err(DatabaseError::SqlxError)?;
+        tx.commit().await.map_err(ServerError::bug)?;
         Ok(())
     }
 }
@@ -64,7 +71,7 @@ impl Query<Game> for GameQuery {
 
         let pool = self.pool.clone();
         if let Err(error) = GameQuery::try_dispatch(pool, aggregate_id, &events).await {
-            dioxus::prelude::error!("Failed to apply events: {error}");
+            error!("Failed to apply events: {error}");
         };
     }
 }

@@ -32,7 +32,7 @@ pub async fn get_available_games(
     user_id: UserIdDTO,
     filter: Option<String>,
     since: Since,
-) -> Result<Response, ServerFnError> {
+) -> Result<Response> {
     use crate::dto::GameIdDTO;
     use server::domain::{AvailableGameSource, UserId};
     use server::view::get_available_games;
@@ -40,9 +40,8 @@ pub async fn get_available_games(
     let user_id = UserId::from(user_id.value());
     let filter = filter.unwrap_or_default();
 
-    let (games, has_more, since) = get_available_games(server_state, user_id, filter, since)
-        .await
-        .map_err(ServerFnError::new)?;
+    let (games, has_more, since) =
+        get_available_games(server_state, user_id, filter, since).await?;
 
     let games = games
         .into_iter()

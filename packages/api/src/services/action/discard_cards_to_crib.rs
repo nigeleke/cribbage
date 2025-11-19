@@ -7,7 +7,7 @@ pub async fn discard_cards_to_crib(
     user_id: UserIdDTO,
     game_id: GameIdDTO,
     cards: Vec<CardIdDTO>,
-) -> Result<(), ServerFnError> {
+) -> Result<()> {
     use server::action::discard_cards_to_crib;
     use server::domain::{Card, GameId, UserId};
     use std::str::FromStr;
@@ -20,7 +20,6 @@ pub async fn discard_cards_to_crib(
         .collect::<Result<_, _>>()
         .map_err(ServerFnError::new)?;
 
-    discard_cards_to_crib(server_state, user_id, game_id, cards)
-        .await
-        .map_err(ServerFnError::new)
+    let _ = discard_cards_to_crib(server_state, user_id, game_id, cards).await?;
+    Ok(())
 }

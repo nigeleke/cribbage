@@ -1,9 +1,9 @@
 use sqlx::{Executor, Postgres, Result};
 use uuid::Uuid;
 
-use crate::database::{DatabaseError, GameRow, NewGame, UpdateGame};
+use crate::database::{GameRow, NewGame, UpdateGame};
 
-pub async fn insert_game<'e, E>(executor: E, game: &NewGame) -> Result<Uuid, DatabaseError>
+pub async fn insert_game<'e, E>(executor: E, game: &NewGame) -> Result<Uuid>
 where
     E: Executor<'e, Database = Postgres>,
 {
@@ -25,10 +25,7 @@ where
     Ok(game.id)
 }
 
-pub async fn select_game<'e, E>(
-    executor: E,
-    game_id: Uuid,
-) -> Result<Option<GameRow>, DatabaseError>
+pub async fn select_game<'e, E>(executor: E, game_id: Uuid) -> Result<Option<GameRow>>
 where
     E: Executor<'e, Database = Postgres>,
 {
@@ -47,7 +44,7 @@ where
     Ok(game_row)
 }
 
-pub async fn update_game<'e, E>(executor: E, game: &UpdateGame) -> Result<GameRow, DatabaseError>
+pub async fn update_game<'e, E>(executor: E, game: &UpdateGame) -> Result<GameRow>
 where
     E: Executor<'e, Database = Postgres>,
 {
@@ -75,7 +72,7 @@ where
     Ok(game_row)
 }
 
-pub async fn upsert_game<'e, E>(executor: E, game: &NewGame) -> Result<GameRow, DatabaseError>
+pub async fn upsert_game<'e, E>(executor: E, game: &NewGame) -> Result<GameRow>
 where
     E: Executor<'e, Database = Postgres>,
 {

@@ -3,7 +3,7 @@ use crate::domain::constants::{
     CARDS_DISCARDED_TO_CRIB, CARDS_KEPT_PER_HAND, CARDS_REQUIRED_IN_CRIB, PLAYER_COUNT,
 };
 use crate::domain::{
-    Card, Crib, CutsForDeal, Dealer, Deck, Discarding, GameCommand, GameError, GameEvent, GameId,
+    Card, Crib, CutsForDeal, Dealer, Deck, Discarding, DomainError, GameCommand, GameEvent, GameId,
     Hand, Hands, HasCutsForDeal, HasDeck, HasHands, HasPending, PLAYER0, PLAYER1, Pending,
     PlayState, Player, Playing, Roles, Scoreboard, Starting, State, UserId, WaitingForDiscards,
 };
@@ -63,8 +63,8 @@ impl Game {
 }
 
 impl Game {
-    fn host_game(&self, host: UserId, game_id: GameId) -> Result<Vec<GameEvent>, GameError> {
-        let not_permitted = || Err(GameError::NotPermitted(String::from("host game")));
+    fn host_game(&self, host: UserId, game_id: GameId) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted(String::from("host game")));
 
         if self.id != GameId::default() {
             not_permitted()
@@ -79,23 +79,23 @@ impl Game {
         }
     }
 
-    fn join_game(&self, guest: UserId) -> Result<Vec<GameEvent>, GameError> {
-        let not_permitted = || Err(GameError::NotPermitted(String::from("join game")));
+    fn join_game(&self, guest: UserId) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted(String::from("join game")));
 
         if self.id == GameId::default() {
             not_permitted()
         } else if self.guest.is_some() {
             not_permitted()
         } else if self.host == guest {
-            Err(GameError::InvalidOpponent(guest))
+            Err(DomainError::InvalidOpponent(guest))
         } else {
             let events = vec![GameEvent::LobbyGameJoined { guest }];
             Ok(events)
         }
     }
 
-    fn play_computer(&self, host: UserId, game_id: GameId) -> Result<Vec<GameEvent>, GameError> {
-        let not_permitted = || Err(GameError::NotPermitted(String::from("play computer")));
+    fn play_computer(&self, host: UserId, game_id: GameId) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted(String::from("play computer")));
 
         if self.id != GameId::default() {
             not_permitted()
@@ -112,8 +112,8 @@ impl Game {
         }
     }
 
-    fn cut_for_deal(&self, player: Player) -> Result<Vec<GameEvent>, GameError> {
-        let not_permitted = || Err(GameError::NotPermitted(String::from("cut for deal")));
+    fn cut_for_deal(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted(String::from("cut for deal")));
 
         let cut_for_deal = |starting: &Starting| {
             let (cuts, deck, pending) = &mut starting.clone().into_parts();
@@ -141,9 +141,9 @@ impl Game {
         }
     }
 
-    fn acknowledge_cut_for_deal(&self, player: Player) -> Result<Vec<GameEvent>, GameError> {
+    fn acknowledge_cut_for_deal(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
         let not_permitted = || {
-            Err(GameError::NotPermitted(String::from(
+            Err(DomainError::NotPermitted(String::from(
                 "acknowledge cut for deal",
             )))
         };
@@ -198,18 +198,18 @@ impl Game {
         &self,
         player: Player,
         cards: Vec<Card>,
-    ) -> Result<Vec<GameEvent>, GameError> {
-        let not_permitted = || Err(GameError::NotPermitted("discard cards to crib".into()));
+    ) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted("discard cards to crib".into()));
 
         let discard_cards_to_crib = |discarding: &Discarding| {
             if !discarding.pending().waiting_on(player) {
                 not_permitted()
             } else if !discarding.hand(player).contains_all(&cards) {
-                Err(GameError::InvalidDiscards(format_vec(&cards)))
+                Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else if cards.len() != CARDS_DISCARDED_TO_CRIB {
-                Err(GameError::InvalidDiscards(format_vec(&cards)))
+                Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else if discarding.hand(player).len() - cards.len() != CARDS_KEPT_PER_HAND {
-                Err(GameError::InvalidDiscards(format_vec(&cards)))
+                Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else {
                 let events = vec![GameEvent::CardsDiscardedToCrib {
                     player: player.clone(),
@@ -232,7 +232,7 @@ impl Game {
         }
     }
 
-    pub fn handle_command(&self, command: GameCommand) -> Result<Vec<GameEvent>, GameError> {
+    pub fn handle_command(&self, command: GameCommand) -> Result<Vec<GameEvent>, DomainError> {
         debug!("Game:handle_command: {:?}", command);
         match command {
             GameCommand::HostGame { user_id, game_id } => self.host_game(user_id, game_id),
@@ -389,7 +389,7 @@ impl Aggregate for Game {
 
     type Command = GameCommand;
     type Event = GameEvent;
-    type Error = GameError;
+    type Error = DomainError;
     type Services = GameServices;
 
     async fn handle(
@@ -486,7 +486,7 @@ mod test {
     /// number.
     mod players {
         use super::GameTestFramework;
-        use crate::domain::{GameCommand, GameError, GameEvent, GameId, GameServices, UserId};
+        use crate::domain::{DomainError, GameCommand, GameEvent, GameId, GameServices, UserId};
         use crate::function_name;
 
         #[test]
@@ -591,7 +591,7 @@ mod test {
             GameTestFramework::with(GameServices)
                 .given(preconditions)
                 .when(GameCommand::JoinGame { user_id: guest2 })
-                .then_expect_error(GameError::NotPermitted(String::from("join game")));
+                .then_expect_error(DomainError::NotPermitted(String::from("join game")));
         }
 
         #[test]
@@ -610,7 +610,7 @@ mod test {
             GameTestFramework::with(GameServices)
                 .given(preconditions)
                 .when(GameCommand::JoinGame { user_id: guest })
-                .then_expect_error(GameError::InvalidOpponent(guest));
+                .then_expect_error(DomainError::InvalidOpponent(guest));
         }
     }
 

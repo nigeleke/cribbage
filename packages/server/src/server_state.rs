@@ -1,11 +1,10 @@
-use crate::database::{DatabaseError, Notification};
+use crate::database::Notification;
 use crate::error::ServerError;
 use crate::{domain::Game, domain::GameServices, projections::GameQuery};
 
 use cqrs_es::QueryWrapper;
 use dioxus::fullstack::FullstackContext;
 use dioxus::fullstack::extract::FromRef;
-use dioxus::prelude::*;
 use postgres_es::{PostgresCqrs, default_postgress_pool, postgres_aggregate_cqrs};
 use sqlx::postgres::*;
 use sqlx::{PgPool, migrate};
@@ -27,7 +26,9 @@ impl ServerState {
 
 impl FromRef<FullstackContext> for ServerState {
     fn from_ref(state: &FullstackContext) -> Self {
-        state.extension::<ServerState>().unwrap()
+        state
+            .extension::<ServerState>()
+            .expect("server state must be defined")
     }
 }
 
@@ -63,12 +64,12 @@ async fn create_database_changes_sender(
 ) -> Result<broadcast::Sender<Notification>, ServerError> {
     let mut listener = PgListener::connect_with(&postgres_pool)
         .await
-        .map_err(DatabaseError::from)?;
+        .map_err(ServerError::bug)?;
 
     listener
         .listen_all(["events_change", "games_change"])
         .await
-        .map_err(DatabaseError::from)?;
+        .map_err(ServerError::bug)?;
 
     let (tx, _rx): (broadcast::Sender<Notification>, _) = broadcast::channel(10);
     let tx2 = tx.clone();
@@ -82,7 +83,7 @@ async fn create_database_changes_sender(
                     }
                 }
                 Err(e) => {
-                    error!("server_state:database_listener: failed: {e}");
+                    dioxus::prelude::error!("server_state:database_listener: failed: {e}");
                     break;
                 }
             }

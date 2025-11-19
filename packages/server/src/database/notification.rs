@@ -1,8 +1,10 @@
+use crate::error::ServerError;
+
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use sqlx::types::JsonValue;
 
-use crate::database::DatabaseError;
+type Result<T> = std::result::Result<T, ServerError>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Change<T> {
@@ -34,11 +36,11 @@ pub struct Notification {
 }
 
 impl Notification {
-    pub fn as_change<T>(&self) -> Result<Change<T>, DatabaseError>
+    pub fn as_change<T>(&self) -> Result<Change<T>>
     where
         T: DeserializeOwned,
     {
-        let missing = |s: &str| DatabaseError::MissingData(s.into());
+        let missing = |s: &str| ServerError::bug(format!("{s} notification data missing"));
         let old_row = || self.old_row_as::<T>()?.ok_or_else(|| missing("old_row"));
         let new_row = || self.new_row_as::<T>()?.ok_or_else(|| missing("new_row"));
 
@@ -54,27 +56,25 @@ impl Notification {
         Ok(change)
     }
 
-    fn new_row_as<T>(&self) -> Result<Option<T>, DatabaseError>
+    fn new_row_as<T>(&self) -> Result<Option<T>>
     where
         T: DeserializeOwned,
     {
-        let t = self
-            .new_row
+        self.new_row
             .clone()
             .map(|r| serde_json::from_value::<T>(r))
-            .transpose()?;
-        Ok(t)
+            .transpose()
+            .map_err(ServerError::bug)
     }
 
-    fn old_row_as<T>(&self) -> Result<Option<T>, DatabaseError>
+    fn old_row_as<T>(&self) -> Result<Option<T>>
     where
         T: DeserializeOwned,
     {
-        let t = self
-            .old_row
+        self.old_row
             .clone()
             .map(|r| serde_json::from_value::<T>(r))
-            .transpose()?;
-        Ok(t)
+            .transpose()
+            .map_err(ServerError::bug)
     }
 }

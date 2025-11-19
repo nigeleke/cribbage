@@ -3,7 +3,7 @@ use thiserror::Error;
 use crate::domain::{Card, Player, UserId};
 
 #[derive(Debug, Error, PartialEq, Eq)]
-pub enum GameError {
+pub enum DomainError {
     #[error("invalid user {0}")]
     InvalidUser(UserId),
 

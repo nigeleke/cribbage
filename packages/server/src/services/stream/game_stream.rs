@@ -1,19 +1,18 @@
-use dioxus::prelude::*;
 use futures::{Stream, TryStreamExt};
 use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 
 use crate::convertors;
 use crate::database::{Change, GameRow, Notification};
 use crate::domain::{Game, GameId};
+use crate::error::ServerError;
 use crate::server_state::ServerState;
-use crate::services::error::ServiceError;
 
 pub async fn game_stream(
     server_state: ServerState,
     game_id: GameId,
-) -> Result<impl Stream<Item = Game>, ServiceError> {
+) -> Result<impl Stream<Item = Game>, ServerError> {
     let stream = BroadcastStream::new(server_state.database_changes_sender.subscribe())
-        .map_err(ServiceError::from);
+        .map_err(ServerError::bug);
 
     let stream = stream.try_filter_map(move |notification| async move {
         let game_id = game_id.clone();
@@ -22,7 +21,7 @@ pub async fn game_stream(
             let change = (notification.table_name == "games")
                 .then_some(notification.as_change::<GameRow>())
                 .transpose()?;
-            Ok::<_, ServiceError>(change)
+            Ok::<_, ServerError>(change)
         };
 
         let row_change_to_game_change = move |change: Change<GameRow>| {
@@ -41,7 +40,7 @@ pub async fn game_stream(
                     Change::Delete { t }
                 }
             };
-            Ok::<_, ServiceError>(change)
+            Ok::<_, ServerError>(change)
         };
 
         let game_change_to_game = move |change: Change<Game>| match change {
@@ -60,7 +59,7 @@ pub async fn game_stream(
     let stream = stream.filter_map(|result| match result {
         Ok(game) => Some(game),
         Err(error) => {
-            warn!("server:services:game_stream: error: {error}");
+            dioxus::prelude::warn!("server:services:game_stream: error: {error}");
             None
         }
     });

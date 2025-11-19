@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.100"
 chrono = { version = "0.4.42", features = ["serde"] }
 cqrs-es = { git = "https://github.com/nigeleke/cqrs.git" }
 dioxus = { workspace = true, features = ["fullstack"] }

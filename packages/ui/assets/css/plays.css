@@ -1,0 +1,36 @@
+.plays {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+}
+
+.plays__play {
+    justify-self: start;
+    display: flex;
+}
+
+.plays__card {
+    margin-left: -80px;
+}
+
+.plays__card:first-child {
+    margin-left: 0;
+}
+
+.plays__current {
+    display: flex;
+    opacity: 95%;
+}
+
+.plays__previous {
+    display: flex;
+    opacity: 50%;
+}
+
+.plays__user {
+    transform: translateY(-10px);
+}
+
+.plays__opponent {
+    transform: translateY(10px);
+}

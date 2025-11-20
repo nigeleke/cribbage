@@ -5,7 +5,10 @@ use dioxus::prelude::*;
 
 /// The `PlayingHand` component shows a set of cards (in the order provided).
 #[component]
-pub fn PlayingHand(cards: ReadSignal<Vec<CardDTO>>, plays: ReadSignal<PlaysDTO>) -> Element {
+pub fn PlayingHand(
+    cards: ReadSignal<Vec<CardDTO>>,
+    plays: ReadSignal<Option<PlaysDTO>>,
+) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
     let game_id = use_context::<GameIdDTO>();
 
@@ -43,8 +46,14 @@ pub fn PlayingHand(cards: ReadSignal<Vec<CardDTO>>, plays: ReadSignal<PlaysDTO>)
 
     let on_card_selection = move |i: usize| {
         move |_| {
-            let users_turn = plays.read().next_action == PlayActionDTO::Play(PlayerDTO::User);
-            let legal_play = plays.read().legal_plays.contains(&card_cids.read()[i]);
+            let users_turn = plays().map_or(false, |plays| {
+                plays.next_action == PlayActionDTO::Play(PlayerDTO::User)
+            });
+
+            let legal_play = plays().map_or(false, |plays| {
+                plays.legal_plays.contains(&card_cids.read()[i])
+            });
+
             if users_turn && legal_play {
                 let selected = selections.read()[i];
                 selection.set(Some((i, !selected)))
@@ -97,8 +106,8 @@ pub fn PlayingHand(cards: ReadSignal<Vec<CardDTO>>, plays: ReadSignal<PlaysDTO>)
                     }
                 }
             }
-            match plays().next_action {
-                PlayActionDTO::Play(player) => rsx! {
+            match plays().map(|plays| plays.next_action) {
+                Some(PlayActionDTO::Play(player)) => rsx! {
                     if player == PlayerDTO::User {
                         button {
                             onclick: on_play,
@@ -109,7 +118,7 @@ pub fn PlayingHand(cards: ReadSignal<Vec<CardDTO>>, plays: ReadSignal<PlaysDTO>)
                         WaitingForOpponent {  }
                     }
                 },
-                PlayActionDTO::Pass(player) => rsx! {
+                Some(PlayActionDTO::Pass(player)) => rsx! {
                    if player == PlayerDTO::User {
                        button {
                            onclick: on_pass,
@@ -119,9 +128,10 @@ pub fn PlayingHand(cards: ReadSignal<Vec<CardDTO>>, plays: ReadSignal<PlaysDTO>)
                        WaitingForOpponent { }
                    }
                 },
-                PlayActionDTO::ScorePone => rsx! {
+                Some(PlayActionDTO::ScorePone) => rsx! {
                     button { "Score pone" }
                 },
+                _ => rsx! { p { } }
             }
         }
     }

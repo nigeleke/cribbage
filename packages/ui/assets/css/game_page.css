@@ -43,14 +43,14 @@
     justify-content: center;
 }
 
+.middle-section {
+    align-content: center;
+}
+
 .card-container {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-}
-
-.middle-section {
-    background-color: white;
 }
 
 .crib-cut-container {

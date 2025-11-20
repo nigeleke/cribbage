@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 
 /// The `Hand` component shows a set of cards in the order provided.
 #[component]
-pub fn Hand(mut cards: Vec<CardDTO>) -> Element {
+pub fn Hand(cards: Vec<CardDTO>) -> Element {
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/hand.css")},
         div {

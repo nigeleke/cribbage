@@ -81,12 +81,12 @@ impl UserGameDTO {
 
 #[cfg(feature = "server")]
 mod server_only {
-    use crate::dto::plays::PlayActionDTO;
+    use crate::{PlayDTO, dto::plays::PlayActionDTO};
 
     use super::*;
     use server::domain::{
         Game, HasCrib, HasCutsForDeal, HasHands, HasPending, HasPlayState, HasRoles, HasScoreboard,
-        HasStarterCut, PLAYER0, PLAYER1, Player, Roles, State, UserId,
+        HasStarterCut, PLAYER0, PLAYER1, Play, Player, Roles, State, UserId,
     };
 
     fn players(game: &Game, user_id: UserId) -> (Player, Player) {
@@ -176,15 +176,27 @@ mod server_only {
             }
         };
 
-        let current = Vec::default();
+        let plays_to_dto = |plays: &Vec<Play>| {
+            plays
+                .iter()
+                .map(|play| {
+                    (
+                        *player_dto_map.get(&play.player()).expect("valid player"),
+                        CardDTO::face_up(&play.card()),
+                    )
+                })
+                .collect::<Vec<_>>()
+        };
 
-        let historic = Vec::default();
+        let current = plays_to_dto(&play_state.current_plays());
+
+        let previous = plays_to_dto(&play_state.previous_plays());
 
         PlaysDTO {
             next_action,
             legal_plays,
             current,
-            historic,
+            previous,
         }
     }
 

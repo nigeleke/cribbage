@@ -1,8 +1,8 @@
-use api::{GameIdDTO, PendingDTO, PhaseDTO, PlayActionDTO, PlayerStateDTO, UserGameDTO, UserIdDTO};
+use api::{GameIdDTO, PendingDTO, PhaseDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 use crate::components::{
-    CardView, CribAndCut, DiscardingHand, Hand, PlayingHand, Scoreboard, WaitingForOpponent,
+    CardView, CribAndCut, DiscardingHand, Hand, PlayingHand, Plays, Scoreboard, WaitingForOpponent,
 };
 use crate::route::Route;
 
@@ -169,17 +169,19 @@ fn InProgress(game: ReadSignal<UserGameDTO>) -> Element {
                 }
                 div {
                     class: "card-container",
-                    if phase == PhaseDTO::Discarding {
-                        DiscardingHand { cards: user_hand }
-                    } else if phase == PhaseDTO::Playing {
-                        PlayingHand { cards: user_hand, plays: plays.expect("plays must be defined") }
-                    } else {
-                        Hand { cards: user_hand }
+                    match phase {
+                        PhaseDTO::Discarding => rsx! {
+                            DiscardingHand { cards: user_hand }
+                        },
+                        PhaseDTO::Playing => rsx! {
+                            PlayingHand { cards: user_hand, plays: plays.clone() }
+                        },
+                        _ => rsx! { Hand { cards: user_hand } }
                     }
                 }
                 div {
                     class: "middle-section",
-                    p { "middle" }
+                    Plays { plays }
                 }
                 div {
                     class: "card-container",

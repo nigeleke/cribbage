@@ -15,5 +15,5 @@ pub struct PlaysDTO {
     pub next_action: PlayActionDTO,
     pub legal_plays: Vec<CardIdDTO>,
     pub current: Vec<PlayDTO>,
-    pub historic: Vec<PlayDTO>,
+    pub previous: Vec<PlayDTO>,
 }

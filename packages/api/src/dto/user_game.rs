@@ -157,22 +157,26 @@ mod server_only {
         let play_state = s.play_state();
 
         let (legal_plays, next_action) = {
-            let next_to_play = play_state.next_to_play();
-            let next_to_play_dto = player_dto_map
-                .get(&next_to_play)
-                .expect("next player must be defined");
-
-            let legal_plays = play_state.legal_plays(next_to_play);
-            let legal_play_cids = legal_plays.iter().map(|card| card.cid().clone());
-
-            let can_play = !legal_plays.is_empty();
-            if can_play {
-                (
-                    Vec::from_iter(legal_play_cids),
-                    PlayActionDTO::Play(*next_to_play_dto),
-                )
+            if play_state.all_cards_are_played() {
+                (vec![], PlayActionDTO::ScorePone)
             } else {
-                (Vec::default(), PlayActionDTO::Pass(*next_to_play_dto))
+                let next_to_play = play_state.next_to_play();
+                let next_to_play_dto = player_dto_map
+                    .get(&next_to_play)
+                    .expect("next player must be defined");
+
+                let legal_plays = play_state.legal_plays(next_to_play);
+                let legal_play_cids = legal_plays
+                    .iter()
+                    .map(|card| card.cid().clone())
+                    .collect::<Vec<_>>();
+
+                let can_play = !legal_plays.is_empty();
+                if can_play {
+                    (legal_play_cids, PlayActionDTO::Play(*next_to_play_dto))
+                } else {
+                    (vec![], PlayActionDTO::Pass(*next_to_play_dto))
+                }
             }
         };
 

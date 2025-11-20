@@ -5,6 +5,8 @@ use dioxus::prelude::*;
 #[component]
 pub fn Plays(plays: ReadSignal<Option<PlaysDTO>>) -> Element {
     if let Some(plays) = plays() {
+        let running_total = plays.running_total;
+
         rsx! {
             document::Stylesheet { href: asset!("/assets/css/plays.css")},
             div {
@@ -24,7 +26,10 @@ pub fn Plays(plays: ReadSignal<Option<PlaysDTO>>) -> Element {
                         }
                     }
                 }
-                div { "Running total" }
+                h2 {
+                    hidden: running_total == 0,
+                    "{running_total}"
+                }
             }
         }
     } else {

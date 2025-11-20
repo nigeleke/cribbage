@@ -1,6 +1,12 @@
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Value(usize);
 
+impl Value {
+    pub fn value(&self) -> usize {
+        self.0
+    }
+}
+
 impl From<usize> for Value {
     fn from(value: usize) -> Self {
         Self(value)

@@ -16,4 +16,5 @@ pub struct PlaysDTO {
     pub legal_plays: Vec<CardIdDTO>,
     pub current: Vec<PlayDTO>,
     pub previous: Vec<PlayDTO>,
+    pub running_total: u8,
 }

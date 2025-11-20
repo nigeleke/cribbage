@@ -81,7 +81,7 @@ impl UserGameDTO {
 
 #[cfg(feature = "server")]
 mod server_only {
-    use crate::{PlayDTO, dto::plays::PlayActionDTO};
+    use crate::dto::plays::PlayActionDTO;
 
     use super::*;
     use server::domain::{
@@ -189,14 +189,15 @@ mod server_only {
         };
 
         let current = plays_to_dto(&play_state.current_plays());
-
         let previous = plays_to_dto(&play_state.previous_plays());
+        let running_total = play_state.running_total().value() as u8;
 
         PlaysDTO {
             next_action,
             legal_plays,
             current,
             previous,
+            running_total,
         }
     }
 

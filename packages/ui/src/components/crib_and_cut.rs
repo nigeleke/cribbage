@@ -3,9 +3,13 @@ use api::{CardDTO, PlayerDTO};
 use dioxus::prelude::*;
 
 #[component]
-pub fn CribAndCut(dealer: PlayerDTO, cards: Vec<CardDTO>, starter_cut: Option<CardDTO>) -> Element {
-    let user_crib = (dealer == PlayerDTO::User).then(|| cards.clone());
-    let opponent_crib = (dealer == PlayerDTO::Opponent).then(|| cards.clone());
+pub fn CribAndCut(
+    dealer: ReadSignal<PlayerDTO>,
+    cards: ReadSignal<Vec<CardDTO>>,
+    starter_cut: ReadSignal<Option<CardDTO>>,
+) -> Element {
+    let user_crib = use_memo(move || (*dealer.read() == PlayerDTO::User).then(|| cards()));
+    let opponent_crib = use_memo(move || (*dealer.read() == PlayerDTO::Opponent).then(|| cards()));
 
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/crib_and_cut.css")},
@@ -19,8 +23,8 @@ pub fn CribAndCut(dealer: PlayerDTO, cards: Vec<CardDTO>, starter_cut: Option<Ca
 }
 
 #[component]
-fn PlayerCrib(cards: Option<Vec<CardDTO>>) -> Element {
-    if let Some(cards) = cards {
+fn PlayerCrib(cards: ReadSignal<Option<Vec<CardDTO>>>) -> Element {
+    if let Some(cards) = cards() {
         let card = cards.first().cloned();
         rsx! { CardView { card } }
     } else {
@@ -29,8 +33,8 @@ fn PlayerCrib(cards: Option<Vec<CardDTO>>) -> Element {
 }
 
 #[component]
-fn CutView(starter_cut: Option<CardDTO>) -> Element {
-    if let Some(card) = starter_cut {
+fn CutView(starter_cut: ReadSignal<Option<CardDTO>>) -> Element {
+    if let Some(card) = starter_cut() {
         rsx! { CardView { card } }
     } else {
         rsx! { p {} }

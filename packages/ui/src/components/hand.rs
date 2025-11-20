@@ -4,12 +4,12 @@ use dioxus::prelude::*;
 
 /// The `Hand` component shows a set of cards in the order provided.
 #[component]
-pub fn Hand(cards: Vec<CardDTO>) -> Element {
+pub fn Hand(cards: ReadSignal<Vec<CardDTO>>) -> Element {
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/hand.css")},
         div {
             class: "hand",
-            for card in cards { CardView { card }  }
+            for card in cards() { CardView { card }  }
         }
     }
 }

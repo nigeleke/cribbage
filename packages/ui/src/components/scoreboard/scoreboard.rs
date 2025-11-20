@@ -6,7 +6,10 @@ use dioxus::prelude::*;
 /// Show the scoreboard.
 /// TODO: In a small screen just show the scores.
 #[component]
-pub fn Scoreboard(user_score: ScoreDTO, opponent_score: ScoreDTO) -> Element {
+pub fn Scoreboard(
+    user_score: ReadSignal<ScoreDTO>,
+    opponent_score: ReadSignal<ScoreDTO>,
+) -> Element {
     rsx! {
         div {
             svg { height: "85vh", view_box: "0 0 84 314",
@@ -18,10 +21,10 @@ pub fn Scoreboard(user_score: ScoreDTO, opponent_score: ScoreDTO) -> Element {
                 rect { width: "100%", height: "100%", rx: "5", ry: "5", fill: "goldenrod" }
                 g { transform: "translate(2,2)",
                     rect { width: "80", height: "310", rx: "4", ry: "4", fill: "url(#woodPattern)" }
-                    text { x: "10", y: "15", font_size: "7", fill: "palegoldenrod", "You: ", "{user_score.front_peg}" }
+                    text { x: "10", y: "15", font_size: "7", fill: "palegoldenrod", "You: ", "{user_score().front_peg}" }
                     Track { x_offset: 10, y_offset: 27, player: PlayerDTO::User, score: user_score }
                     Track { x_offset: 50, y_offset: 27, player: PlayerDTO::Opponent, score: opponent_score }
-                    text { x: "10", y: "300", font_size: "7", fill: "palegoldenrod", "Opponent: ", "{opponent_score.front_peg}" }
+                    text { x: "10", y: "300", font_size: "7", fill: "palegoldenrod", "Opponent: ", "{opponent_score().front_peg}" }
                 }
             }
         }

@@ -12,7 +12,7 @@ pub fn PlayingHand(
     let user_id = use_context::<Signal<UserIdDTO>>();
     let game_id = use_context::<GameIdDTO>();
 
-    let card_cids = use_signal(|| {
+    let card_cids = use_memo(move || {
         cards()
             .iter()
             .filter_map(|c| match c {
@@ -46,11 +46,11 @@ pub fn PlayingHand(
 
     let on_card_selection = move |i: usize| {
         move |_| {
-            let users_turn = plays().map_or(false, |plays| {
+            let users_turn = plays().as_ref().map_or(false, |plays| {
                 plays.next_action == PlayActionDTO::Play(PlayerDTO::User)
             });
 
-            let legal_play = plays().map_or(false, |plays| {
+            let legal_play = plays().as_ref().map_or(false, |plays| {
                 plays.legal_plays.contains(&card_cids.read()[i])
             });
 

@@ -5,7 +5,12 @@ use dioxus::prelude::*;
 
 /// Show a graphical scoring track in the scoreboard.
 #[component]
-pub fn Track(x_offset: usize, y_offset: usize, player: PlayerDTO, score: ScoreDTO) -> Element {
+pub fn Track(
+    x_offset: usize,
+    y_offset: usize,
+    player: PlayerDTO,
+    score: ReadSignal<ScoreDTO>,
+) -> Element {
     let translate = format!("translate({},{})", x_offset, y_offset);
 
     rsx! {

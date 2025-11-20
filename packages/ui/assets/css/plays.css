@@ -7,6 +7,7 @@
 .plays__play {
     justify-self: start;
     display: flex;
+    gap: 10px;
 }
 
 .plays__card {

@@ -13,7 +13,7 @@ pub fn Block(
     up_range: Range<usize>,
     down_range: Range<usize>,
     player: PlayerDTO,
-    score: ScoreDTO,
+    score: ReadSignal<ScoreDTO>,
 ) -> Element {
     let translate = format!("translate({},{})", x_offset, y_offset);
     let zipped = up_range.zip(down_range.rev()).enumerate();

@@ -148,15 +148,15 @@ fn Starting(game: ReadSignal<UserGameDTO>) -> Element {
 
 #[component]
 fn InProgress(game: ReadSignal<UserGameDTO>) -> Element {
-    let phase = game().phase;
-    let user_score = game().user_state.score;
-    let user_hand = game().user_state.hand;
-    let opponent_score = game().opponent_state.score;
-    let opponent_hand = game().opponent_state.hand;
-    let dealer = game().dealer.expect("dealer must have been selected");
-    let crib = game().crib.cards;
-    let starter_cut = game().crib.starter_cut;
-    let plays = game().plays;
+    let phase = use_memo(move || game().phase);
+    let user_score = use_memo(move || game().user_state.score);
+    let user_hand = use_memo(move || game().user_state.hand);
+    let opponent_score = use_memo(move || game().opponent_state.score);
+    let opponent_hand = use_memo(move || game().opponent_state.hand);
+    let dealer = use_memo(move || game().dealer.expect("dealer must have been selected"));
+    let crib = use_memo(move || game().crib.cards);
+    let starter_cut = use_memo(move || game().crib.starter_cut);
+    let plays = use_memo(move || game().plays);
 
     rsx! {
         div {
@@ -169,7 +169,7 @@ fn InProgress(game: ReadSignal<UserGameDTO>) -> Element {
                 }
                 div {
                     class: "card-container",
-                    match phase {
+                    match *phase.read() {
                         PhaseDTO::Discarding => rsx! {
                             DiscardingHand { cards: user_hand }
                         },

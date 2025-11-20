@@ -8,7 +8,7 @@ pub fn Hole(
     y_offset: usize,
     representation: usize,
     player: PlayerDTO,
-    score: ScoreDTO,
+    score: ReadSignal<ScoreDTO>,
 ) -> Element {
     let colour = (if player == PlayerDTO::User {
         "lime"
@@ -19,8 +19,8 @@ pub fn Hole(
 
     let fill = match representation {
         0 => colour,
-        n if score.front_peg % 60 == n => colour,
-        n if score.back_peg % 60 == n => colour,
+        n if score.read().front_peg % 60 == n => colour,
+        n if score.read().back_peg % 60 == n => colour,
         n if n >= 121 => colour,
         _ => "gray".into(),
     };

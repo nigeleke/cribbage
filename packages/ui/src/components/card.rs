@@ -6,11 +6,14 @@ use dioxus::prelude::*;
 /// The card can be "selectable", if on_click is provided, in which case it will be
 /// triggered when the card is selected / unselected.
 #[component]
-pub fn CardView(
+pub fn Card(
     card: ReadSignal<Option<CardDTO>>,
     selected: Option<bool>,
     on_click: Option<EventHandler<CardDTO>>,
 ) -> Element {
+    const WIDTH: &str = "100px";
+    const HEIGHT: &str = "135px";
+
     let is_selected = selected.unwrap_or(false);
 
     let onclick = move |_| {
@@ -23,54 +26,32 @@ pub fn CardView(
 
     rsx! {
         document::Script { src: asset!("/assets/js/elements.cardmeister.min.js")},
-        document::Stylesheet { href: asset!("/assets/css/card_view.css")},
+        document::Stylesheet { href: asset!("/assets/css/card.css")},
         div {
-            class: "card-view",
-            class: if is_selected { "selected" },
-            class: if on_click.is_some() { "selectable" },
+            class: "card",
+            class: if is_selected { "card__selected" },
+            class: if on_click.is_some() { "card__selectable" },
+            class: if card().is_none() { "card__placeholder" },
             onclick,
             match card() {
-                Some(CardDTO::FaceDown) => rsx! { CardBack {} },
-                Some(CardDTO::FaceUp { cid }) => rsx! { CardFace { cid } },
-                None => rsx! { CardPlaceholder {} },
+                Some(CardDTO::FaceDown) => rsx! {
+                    div {
+                        dangerous_inner_html: format!("<playing-card cid='00' backcolor='#546F82' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
+                    }
+                },
+                Some(CardDTO::FaceUp { cid }) => rsx! {
+                    div {
+                        dangerous_inner_html: format!("<playing-card cid='{cid}' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
+                    }
+                },
+                None => rsx! {
+                    div {
+                        min_width: WIDTH,
+                        min_height: HEIGHT,
+                        span {}
+                    }
+                },
             }
-        }
-    }
-}
-
-const WIDTH: &str = "100px";
-const HEIGHT: &str = "135px";
-
-#[component]
-fn CardFace(cid: String) -> Element {
-    rsx! {
-        document::Script { src: asset!("/assets/js/elements.cardmeister.min.js")},
-        document::Stylesheet { href: asset!("/assets/css/card_view.css")},
-        div {
-            class: "card",
-            dangerous_inner_html: format!("<playing-card cid='{cid}' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
-        }
-    }
-}
-
-#[component]
-fn CardBack() -> Element {
-    rsx! {
-        div {
-            class: "card",
-            dangerous_inner_html: format!("<playing-card cid='00' backcolor='#546F82' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
-        }
-    }
-}
-
-#[component]
-fn CardPlaceholder() -> Element {
-    rsx! {
-        div {
-            class: "placeholder",
-            min_width: WIDTH,
-            min_height: HEIGHT,
-            span {}
         }
     }
 }

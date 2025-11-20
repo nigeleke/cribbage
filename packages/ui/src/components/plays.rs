@@ -1,4 +1,4 @@
-use super::CardView;
+use crate::components::Card;
 use api::{CardDTO, PlayerDTO, PlaysDTO};
 use dioxus::prelude::*;
 
@@ -47,7 +47,7 @@ fn PlayedCard(player_id: PlayerDTO, card: CardDTO) -> Element {
     rsx! {
         div {
             class: "plays__card {whom}",
-            CardView { card }
+            Card { card }
         }
     }
 }

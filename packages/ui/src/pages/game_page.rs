@@ -2,7 +2,7 @@ use api::{GameIdDTO, PendingDTO, PhaseDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 use crate::components::{
-    CardView, CribAndCut, DiscardingHand, Hand, PlayingHand, Plays, Scoreboard, WaitingForOpponent,
+    Card, CribAndCut, DiscardingHand, Hand, PlayingHand, Plays, Scoreboard, WaitingForOpponent,
 };
 use crate::route::Route;
 
@@ -131,8 +131,8 @@ fn Starting(game: ReadSignal<UserGameDTO>) -> Element {
             class: "game-page",
             div {
                 class: "starting",
-                CardView { card: user_cut() }
-                CardView { card: opponent_cut() }
+                Card { card: user_cut() }
+                Card { card: opponent_cut() }
             }
             match (user_cut(), opponent_cut(), dealer()) {
                 (None, _, _) => cut_for_deal_button,

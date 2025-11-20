@@ -8,8 +8,9 @@
 
 .join-game {
     display: grid;
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto 1fr auto;
     gap: 1rem;
+    overflow: hidden;
 }
 
 .new-game {
@@ -28,10 +29,10 @@
 }
 
 .games-list {
-    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 }
 
 .game-items {

@@ -1,4 +1,4 @@
-use super::CardView;
+use crate::components::Card;
 use api::CardDTO;
 use dioxus::prelude::*;
 
@@ -9,7 +9,7 @@ pub fn Hand(cards: ReadSignal<Vec<CardDTO>>) -> Element {
         document::Stylesheet { href: asset!("/assets/css/hand.css")},
         div {
             class: "hand",
-            for card in cards() { CardView { card }  }
+            for card in cards() { Card { card }  }
         }
     }
 }

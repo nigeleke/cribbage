@@ -1,4 +1,4 @@
-use super::CardView;
+use crate::components::Card;
 use api::{CardDTO, PlayerDTO};
 use dioxus::prelude::*;
 
@@ -26,7 +26,7 @@ pub fn CribAndCut(
 fn PlayerCrib(cards: ReadSignal<Option<Vec<CardDTO>>>) -> Element {
     if let Some(cards) = cards() {
         let card = cards.first().cloned();
-        rsx! { CardView { card } }
+        rsx! { Card { card } }
     } else {
         rsx! { p {} }
     }
@@ -35,7 +35,7 @@ fn PlayerCrib(cards: ReadSignal<Option<Vec<CardDTO>>>) -> Element {
 #[component]
 fn CutView(starter_cut: ReadSignal<Option<CardDTO>>) -> Element {
     if let Some(card) = starter_cut() {
-        rsx! { CardView { card } }
+        rsx! { Card { card } }
     } else {
         rsx! { p {} }
     }

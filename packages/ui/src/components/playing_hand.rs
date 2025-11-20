@@ -1,4 +1,4 @@
-use crate::components::{CardView, WaitingForOpponent};
+use crate::components::{Card, WaitingForOpponent};
 use crate::route::Route;
 use api::{CardDTO, GameIdDTO, PlayActionDTO, PlayerDTO, PlaysDTO, UserIdDTO};
 use dioxus::prelude::*;
@@ -106,7 +106,7 @@ pub fn PlayingHand(
             class: "playing-hand",
             div {
                 for (i, card) in cards().into_iter().enumerate() {
-                    CardView {
+                    Card {
                         card,
                         selected: selections.read()[i],
                         on_click: on_card_selection(i)

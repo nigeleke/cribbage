@@ -1,23 +1,20 @@
-.card-view {
+.card {
     --ease-time: 300ms;
     transition: transform var(--ease-time) ease;
     width: fit-content;
     height: fit-content;
 }
 
-.card-view .card {
-}
-
-.card-view .placeholder {
+.card.card__placeholder {
     border: dashed 2px var(--border-color);
     border-radius: 5px;
 }
 
-.card-view.selected {
+.card.card__selected {
     transform: translateY(-20px) rotate(5deg);
     transition: transform var(--ease-time) ease;
 }
 
-.card-view.selectable {
+.card.card__selectable {
     cursor: pointer;
 }

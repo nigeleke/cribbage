@@ -47,8 +47,7 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
 #[component]
 fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
     match game().phase {
-        PhaseDTO::InLobby => rsx! { Starting { game } },
-        PhaseDTO::CuttingForDeal => {
+        PhaseDTO::InLobby | PhaseDTO::CuttingForDeal => {
             rsx! { Starting { game } }
         }
         PhaseDTO::Discarding | PhaseDTO::Playing => {
@@ -157,7 +156,7 @@ fn InProgress(game: ReadSignal<UserGameDTO>) -> Element {
     let dealer = game().dealer.expect("dealer must have been selected");
     let crib = game().crib.cards;
     let starter_cut = game().crib.starter_cut;
-    let next_play_action = game().plays.map(|p| p.next_action);
+    let plays = game().plays;
 
     rsx! {
         div {
@@ -173,7 +172,7 @@ fn InProgress(game: ReadSignal<UserGameDTO>) -> Element {
                     if phase == PhaseDTO::Discarding {
                         DiscardingHand { cards: user_hand }
                     } else if phase == PhaseDTO::Playing {
-                        PlayingHand { cards: user_hand, action: next_play_action.expect("plays must be defined") }
+                        PlayingHand { cards: user_hand, plays: plays.expect("plays must be defined") }
                     } else {
                         Hand { cards: user_hand }
                     }

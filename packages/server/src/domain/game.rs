@@ -4,8 +4,9 @@ use crate::domain::constants::{
 };
 use crate::domain::{
     Card, Crib, CutsForDeal, Dealer, Deck, Discarding, DomainError, GameCommand, GameEvent, GameId,
-    Hand, Hands, HasCutsForDeal, HasDeck, HasHands, HasPending, PLAYER0, PLAYER1, Pending,
-    PlayState, Player, Playing, Roles, Scoreboard, Starting, State, UserId, WaitingForDiscards,
+    Hand, Hands, HasCutsForDeal, HasDeck, HasHands, HasPending, HasPlayState, PLAYER0, PLAYER1,
+    Pending, PlayState, Player, Playing, Roles, Scoreboard, Starting, State, UserId,
+    WaitingForDiscards,
 };
 use crate::name_builder::generate_game_name;
 use cqrs_es::Aggregate;
@@ -231,6 +232,34 @@ impl Game {
         }
     }
 
+    fn play_card(&self, player: Player, card: Card) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted("play card".into()));
+
+        let play_card = |playing: &Playing| {
+            let play_state = playing.play_state();
+            if play_state.next_to_play() != player {
+                Err(DomainError::NotPlayersTurn(player))
+            } else if !play_state.legal_plays(player).contains(&card) {
+                Err(DomainError::InvalidPlay(card))
+            } else {
+                let events = vec![GameEvent::CardPlayed { player, card }];
+                Ok(events)
+            }
+        };
+
+        if self.id == GameId::default() {
+            not_permitted()
+        } else {
+            match &self.state {
+                State::Playing(playing) => {
+                    let events = play_card(playing)?;
+                    Ok(events)
+                }
+                _ => not_permitted(),
+            }
+        }
+    }
+
     pub fn handle_command(&self, command: GameCommand) -> Result<Vec<GameEvent>, DomainError> {
         debug!("Game:handle_command: {:?}", command);
         match command {
@@ -242,8 +271,8 @@ impl Game {
             GameCommand::DiscardCardsToCrib { player, cards } => {
                 self.discard_cards_to_crib(player, cards)
             }
+            GameCommand::PlayCard { player, card } => self.play_card(player, card),
             _ => unimplemented!("handle {command:?}"),
-            // GameCommand::PlayCard { player, card } => {}
             // GameCommand::Pass { player } => {}
             // GameCommand::AcknowledgePoneScore { player } => {}
             // GameCommand::AcknowledgeDealerScore { player } => {}
@@ -343,6 +372,12 @@ impl Game {
         }
     }
 
+    fn card_played(&mut self, player: Player, card: Card) {
+        if let State::Playing(playing) = &mut self.state {
+            playing.play_card(player, card);
+        }
+    }
+
     pub fn apply_event(&mut self, event: GameEvent) {
         debug!("Game:apply_event: {:?}", event);
         match event {
@@ -366,6 +401,7 @@ impl Game {
             GameEvent::CardsDiscardedToCrib { player, cards } => {
                 self.cards_discarded_to_crib(player, &cards)
             }
+            GameEvent::CardPlayed { player, card } => self.card_played(player, card),
             _ => unimplemented!("apply: {event:?}"),
         }
     }

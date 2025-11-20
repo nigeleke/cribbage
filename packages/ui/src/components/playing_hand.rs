@@ -1,13 +1,23 @@
 use crate::components::{CardView, WaitingForOpponent};
 use crate::route::Route;
-use api::{CardDTO, GameIdDTO, PlayActionDTO, PlayerDTO, UserIdDTO};
+use api::{CardDTO, GameIdDTO, PlayActionDTO, PlayerDTO, PlaysDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 /// The `PlayingHand` component shows a set of cards (in the order provided).
 #[component]
-pub fn PlayingHand(cards: ReadSignal<Vec<CardDTO>>, action: PlayActionDTO) -> Element {
+pub fn PlayingHand(cards: ReadSignal<Vec<CardDTO>>, plays: ReadSignal<PlaysDTO>) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
     let game_id = use_context::<GameIdDTO>();
+
+    let card_cids = use_signal(|| {
+        cards()
+            .iter()
+            .filter_map(|c| match c {
+                CardDTO::FaceUp { cid } => Some(cid.clone()),
+                CardDTO::FaceDown => unreachable!(),
+            })
+            .collect::<Vec<_>>()
+    });
 
     let mut selections = use_signal(|| vec![false; cards().len()]);
     let mut selection = use_signal(|| None);
@@ -33,8 +43,12 @@ pub fn PlayingHand(cards: ReadSignal<Vec<CardDTO>>, action: PlayActionDTO) -> El
 
     let on_card_selection = move |i: usize| {
         move |_| {
-            let selected = selections.read()[i];
-            selection.set(Some((i, !selected)))
+            let users_turn = plays.read().next_action == PlayActionDTO::Play(PlayerDTO::User);
+            let legal_play = plays.read().legal_plays.contains(&card_cids.read()[i]);
+            if users_turn && legal_play {
+                let selected = selections.read()[i];
+                selection.set(Some((i, !selected)))
+            }
         }
     };
 
@@ -42,24 +56,25 @@ pub fn PlayingHand(cards: ReadSignal<Vec<CardDTO>>, action: PlayActionDTO) -> El
 
     let on_play = move |_| {
         spawn(async move {
-            // let cards = cards()
-            //     .into_iter()
-            //     .zip(selections())
-            //     .filter_map(|(card, keep)| keep.then_some(card))
-            //     .filter_map(|card| match card {
-            //         CardDTO::FaceUp { cid } => Some(cid),
-            //         CardDTO::FaceDown => None, // unreachable
-            //     })
-            //     .collect::<Vec<_>>();
+            let card = cards()
+                .into_iter()
+                .zip(selections())
+                .filter_map(|(card, keep)| keep.then_some(card))
+                .filter_map(|card| match card {
+                    CardDTO::FaceUp { cid } => Some(cid),
+                    CardDTO::FaceDown => None, // unreachable
+                })
+                .next()
+                .expect("card must have been selected");
 
-            // match api::action::discard_cards_to_crib(*user_id.read(), game_id, cards).await {
-            //     Ok(_) => {}
-            //     Err(error) => {
-            //         warn!("GamePage:discard_cards_to_crib:error {error:?}");
-            //         let error = error.to_string();
-            //         navigator.push(Route::ErrorPage { error });
-            //     }
-            // }
+            match api::action::play_card(*user_id.read(), game_id, card).await {
+                Ok(_) => {}
+                Err(error) => {
+                    warn!("GamePage:play:error {error:?}");
+                    let error = error.to_string();
+                    navigator.push(Route::ErrorPage { error });
+                }
+            }
         });
     };
 
@@ -82,17 +97,24 @@ pub fn PlayingHand(cards: ReadSignal<Vec<CardDTO>>, action: PlayActionDTO) -> El
                     }
                 }
             }
-            match action {
+            match plays().next_action {
                 PlayActionDTO::Play(player) => rsx! {
                     if player == PlayerDTO::User {
-                        button { onclick: on_play, "Play" }
+                        button {
+                            onclick: on_play,
+                            disabled: selected_count() != 1,
+                            "Play"
+                        }
                     } else {
                         WaitingForOpponent {  }
                     }
                 },
                 PlayActionDTO::Pass(player) => rsx! {
                    if player == PlayerDTO::User {
-                       button { onclick: on_pass, "Pass" }
+                       button {
+                           onclick: on_pass,
+                           "Pass"
+                       }
                    } else {
                        WaitingForOpponent { }
                    }

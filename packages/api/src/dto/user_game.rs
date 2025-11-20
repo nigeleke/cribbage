@@ -156,16 +156,23 @@ mod server_only {
     fn plays<T: HasPlayState>(s: &T, player_dto_map: &HashMap<Player, PlayerDTO>) -> PlaysDTO {
         let play_state = s.play_state();
 
-        let next_action = {
+        let (legal_plays, next_action) = {
             let next_to_play = play_state.next_to_play();
             let next_to_play_dto = player_dto_map
                 .get(&next_to_play)
                 .expect("next player must be defined");
-            let can_play = !play_state.legal_plays(next_to_play).is_empty();
+
+            let legal_plays = play_state.legal_plays(next_to_play);
+            let legal_play_cids = legal_plays.iter().map(|card| card.cid().clone());
+
+            let can_play = !legal_plays.is_empty();
             if can_play {
-                PlayActionDTO::Play(*next_to_play_dto)
+                (
+                    Vec::from_iter(legal_play_cids),
+                    PlayActionDTO::Play(*next_to_play_dto),
+                )
             } else {
-                PlayActionDTO::Pass(*next_to_play_dto)
+                (Vec::default(), PlayActionDTO::Pass(*next_to_play_dto))
             }
         };
 
@@ -175,6 +182,7 @@ mod server_only {
 
         PlaysDTO {
             next_action,
+            legal_plays,
             current,
             historic,
         }

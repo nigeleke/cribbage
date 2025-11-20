@@ -260,6 +260,34 @@ impl Game {
         }
     }
 
+    fn pass(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted("pass".into()));
+
+        let pass = |playing: &Playing| {
+            let play_state = playing.play_state();
+            if play_state.next_to_play() != player {
+                Err(DomainError::NotPlayersTurn(player))
+            } else if !play_state.legal_plays(player).is_empty() {
+                Err(DomainError::InvalidPass)
+            } else {
+                let events = vec![GameEvent::Passed { player }];
+                Ok(events)
+            }
+        };
+
+        if self.id == GameId::default() {
+            not_permitted()
+        } else {
+            match &self.state {
+                State::Playing(playing) => {
+                    let events = pass(playing)?;
+                    Ok(events)
+                }
+                _ => not_permitted(),
+            }
+        }
+    }
+
     pub fn handle_command(&self, command: GameCommand) -> Result<Vec<GameEvent>, DomainError> {
         debug!("Game:handle_command: {:?}", command);
         match command {
@@ -272,8 +300,8 @@ impl Game {
                 self.discard_cards_to_crib(player, cards)
             }
             GameCommand::PlayCard { player, card } => self.play_card(player, card),
+            GameCommand::Pass { player } => self.pass(player),
             _ => unimplemented!("handle {command:?}"),
-            // GameCommand::Pass { player } => {}
             // GameCommand::AcknowledgePoneScore { player } => {}
             // GameCommand::AcknowledgeDealerScore { player } => {}
             // GameCommand::AcknowledgeCribScore { player } => {}
@@ -378,6 +406,12 @@ impl Game {
         }
     }
 
+    fn passed(&mut self, player: Player) {
+        if let State::Playing(playing) = &mut self.state {
+            playing.pass(player);
+        }
+    }
+
     pub fn apply_event(&mut self, event: GameEvent) {
         debug!("Game:apply_event: {:?}", event);
         match event {
@@ -402,6 +436,7 @@ impl Game {
                 self.cards_discarded_to_crib(player, &cards)
             }
             GameEvent::CardPlayed { player, card } => self.card_played(player, card),
+            GameEvent::Passed { player } => self.passed(player),
             _ => unimplemented!("apply: {event:?}"),
         }
     }

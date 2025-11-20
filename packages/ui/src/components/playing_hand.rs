@@ -89,7 +89,14 @@ pub fn PlayingHand(
 
     let on_pass = move |_| {
         spawn(async move {
-            //
+            match api::action::pass(*user_id.read(), game_id).await {
+                Ok(_) => {}
+                Err(error) => {
+                    warn!("GamePage:pass:error {error:?}");
+                    let error = error.to_string();
+                    navigator.push(Route::ErrorPage { error });
+                }
+            }
         });
     };
 

@@ -1,11 +1,9 @@
-use api::{GameIdDTO, PendingDTO, PhaseDTO, UserGameDTO, UserIdDTO};
-use dioxus::prelude::*;
-
 use crate::components::{
-    Card, CribAndCut, DiscardingControls, Hand, PlayingControls, Plays, Scoreboard, UserHand,
-    WaitingForOpponent,
+    CribAndCut, DiscardingControls, OpponentHand, PlayingControls, Plays, Scoreboard, UserHand,
+    phases::{CuttingForDeal, Discarding, InLobby},
 };
-use crate::route::Route;
+use api::{GameIdDTO, PhaseDTO, UserGameDTO, UserIdDTO};
+use dioxus::prelude::*;
 
 #[component]
 pub fn GamePage(game_id: GameIdDTO) -> Element {
@@ -32,14 +30,12 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
 
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/game_page.css") }
-        if let Some(game) = game() {
-            ActiveGame {
-                game
-            }
-        } else {
-            div {
-                class: "game-page",
-                "Loading..."
+        div {
+            class: "game-page",
+            if let Some(game) = game() {
+                ActiveGame { game }
+            } else {
+                div { "Loading..." }
             }
         }
     }
@@ -50,161 +46,68 @@ fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
     provide_context(game);
 
     match game().phase {
-        PhaseDTO::InLobby | PhaseDTO::CuttingForDeal => {
-            rsx! { Starting { } }
-        }
-        PhaseDTO::Discarding | PhaseDTO::Playing => {
-            rsx! { InProgress { } }
-        }
-        _ => unimplemented!(),
+        PhaseDTO::InLobby => rsx! { InLobby {} },
+        PhaseDTO::CuttingForDeal => rsx! { CuttingForDeal {} },
+        PhaseDTO::Discarding => rsx! { Discarding {} },
+        PhaseDTO::Playing => rsx! {},
+        PhaseDTO::ScoringPone => rsx! {},
+        PhaseDTO::ScoringDealer => rsx! {},
+        PhaseDTO::ScoringCrib => rsx! {},
+        PhaseDTO::Finished => rsx! {},
     }
 }
 
-#[component]
-fn Starting() -> Element {
-    let user_id = use_context::<Signal<UserIdDTO>>();
-    let game_id = use_context::<GameIdDTO>();
+// #[component]
+// fn InProgress() -> Element {
+//     let game = use_context::<ReadSignal<UserGameDTO>>();
 
-    let game = use_context::<ReadSignal<UserGameDTO>>();
+//     let phase = use_memo(move || game().phase);
+//     let user_score = use_memo(move || game().user_state.score);
+//     let user_hand = use_memo(move || game().user_state.hand);
+//     let opponent_score = use_memo(move || game().opponent_state.score);
+//     let opponent_hand = use_memo(move || game().opponent_state.hand);
+//     let dealer = use_memo(move || game().dealer.expect("dealer must have been selected"));
+//     let crib = use_memo(move || game().crib.cards);
+//     let starter_cut = use_memo(move || game().crib.starter_cut);
+//     let plays = use_memo(move || game().plays);
 
-    let navigator = use_navigator();
-
-    let on_cut_for_deal = move |_| {
-        spawn(async move {
-            match api::action::cut_for_deal(*user_id.read(), game_id).await {
-                Ok(_) => {}
-                Err(error) => {
-                    warn!("GamePage:cut_for_deal:error {error:?}");
-                    let error = error.to_string();
-                    navigator.push(Route::ErrorPage { error });
-                }
-            }
-        });
-    };
-
-    let on_acknowledge = move |_| {
-        spawn(async move {
-            match api::action::acknowledge_cut_for_deal(*user_id.read(), game_id).await {
-                Ok(_) => {}
-                Err(error) => {
-                    warn!("GamePage:acknowledge:error {error:?}");
-                    let error = error.to_string();
-                    navigator.push(Route::ErrorPage { error });
-                }
-            }
-        });
-    };
-
-    let waiting_for_opponent = rsx! { WaitingForOpponent {  } };
-
-    let cut_for_deal_button = rsx! {
-        button {
-            onclick: on_cut_for_deal,
-            "Cut for deal"
-        }
-    };
-
-    let redraw_button = rsx! {
-        button {
-            onclick: on_acknowledge,
-            "Redraw"
-        }
-    };
-
-    let start_button = rsx! {
-        button {
-            onclick: on_acknowledge,
-            "Start"
-        }
-    };
-
-    let mut user_cut = use_signal(|| game().user_state.cut);
-    let mut opponent_cut = use_signal(|| game().opponent_state.cut);
-    let mut dealer = use_signal(|| game().dealer);
-    let mut pending = use_signal(|| game().pending);
-
-    use_effect(move || {
-        let game = game();
-        user_cut.set(game.user_state.cut);
-        opponent_cut.set(game.opponent_state.cut);
-        dealer.set(game.dealer);
-        pending.set(game.pending);
-    });
-
-    rsx! {
-        div {
-            class: "game-page",
-            div {
-                class: "starting",
-                Card { card: user_cut() }
-                Card { card: opponent_cut() }
-            }
-            match (user_cut(), opponent_cut(), dealer()) {
-                (None, _, _) => cut_for_deal_button,
-                (_, None, _) => waiting_for_opponent,
-                (_, _, None) if pending() == PendingDTO::User => redraw_button,
-                (_, _, None) => waiting_for_opponent,
-                (_, _, Some(_)) if pending() == PendingDTO::User => start_button,
-                (_, _, Some(_)) => waiting_for_opponent,
-            }
-        }
-    }
-}
-
-#[component]
-fn InProgress() -> Element {
-    let game = use_context::<ReadSignal<UserGameDTO>>();
-
-    let phase = use_memo(move || game().phase);
-    let user_score = use_memo(move || game().user_state.score);
-    let user_hand = use_memo(move || game().user_state.hand);
-    let opponent_score = use_memo(move || game().opponent_state.score);
-    let opponent_hand = use_memo(move || game().opponent_state.hand);
-    let dealer = use_memo(move || game().dealer.expect("dealer must have been selected"));
-    let crib = use_memo(move || game().crib.cards);
-    let starter_cut = use_memo(move || game().crib.starter_cut);
-    let plays = use_memo(move || game().plays);
-
-    rsx! {
-        div {
-            class: "game-page",
-            div {
-                class: "in-progress",
-                div {
-                    class: "scoreboard",
-                    Scoreboard { user_score, opponent_score }
-                }
-                div {
-                    class: "card-container",
-                    match *phase.read() {
-                        PhaseDTO::Discarding => rsx! {
-                            UserHand {
-                                cards: user_hand,
-                                DiscardingControls { }
-                            }
-                        },
-                        PhaseDTO::Playing => rsx! {
-                            UserHand {
-                                cards: user_hand,
-                                PlayingControls { }
-                            }
-                        },
-                        _ => rsx! {"unsupported phase"}
-                    }
-                }
-                div {
-                    class: "middle-section",
-                    Plays { plays }
-                }
-                div {
-                    class: "card-container",
-                    Hand { cards: opponent_hand }
-                }
-                div {
-                    class: "crib-cut-container",
-                    CribAndCut { dealer, cards: crib, starter_cut }
-                }
-            }
-        }
-    }
-}
+//     rsx! {
+//         div {
+//             class: "game-game__in-progress",
+//             div {
+//                 class: "scoreboard",
+//                 Scoreboard { user_score, opponent_score }
+//             }
+//             div {
+//                 class: "card-container",
+//                 match *phase.read() {
+//                     PhaseDTO::Discarding => rsx! {
+//                         UserHand {
+//                             cards: user_hand,
+//                             DiscardingControls { }
+//                         }
+//                     },
+//                     PhaseDTO::Playing => rsx! {
+//                         UserHand {
+//                             cards: user_hand,
+//                             PlayingControls { }
+//                         }
+//                     },
+//                     _ => rsx! {"unsupported phase"}
+//                 }
+//             }
+//             div {
+//                 class: "middle-section",
+//                 Plays { plays }
+//             }
+//             div {
+//                 class: "card-container",
+//                 Hand { cards: opponent_hand }
+//             }
+//             div {
+//                 class: "crib-cut-container",
+//                 CribAndCut { dealer, cards: crib, starter_cut }
+//             }
+//         }
+//     }
+// }

@@ -1,6 +1,5 @@
 mod available_game;
 mod card;
-mod crib;
 mod error;
 mod events;
 mod game_id;
@@ -15,7 +14,6 @@ mod user_id;
 
 pub use available_game::AvailableGameDTO;
 pub use card::{CardDTO, CardIdDTO};
-pub use crib::CribDTO;
 pub use error::DTOError;
 pub use events::AvailableGameEventDTO;
 pub use game_id::GameIdDTO;

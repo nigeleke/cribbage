@@ -26,7 +26,7 @@ fn NewGameSection() -> Element {
         spawn(async move {
             match api::action::host_game(*user_id.read()).await {
                 Ok(game_id) => {
-                    navigator.push(Route::LobbyPage { game_id });
+                    navigator.push(Route::GamePage { game_id });
                 }
                 Err(error) => {
                     warn!("HomePage:host_game:error {error:?}");

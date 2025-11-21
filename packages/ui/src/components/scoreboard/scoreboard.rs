@@ -1,15 +1,16 @@
 use super::track::Track;
 
-use api::{PlayerDTO, ScoreDTO};
+use api::{PlayerDTO, UserGameDTO};
 use dioxus::prelude::*;
 
 /// Show the scoreboard.
 /// TODO: In a small screen just show the scores.
 #[component]
-pub fn Scoreboard(
-    user_score: ReadSignal<ScoreDTO>,
-    opponent_score: ReadSignal<ScoreDTO>,
-) -> Element {
+pub fn Scoreboard() -> Element {
+    let game = use_context::<ReadSignal<UserGameDTO>>();
+    let user_score = use_memo(move || game().user_state.score);
+    let opponent_score = use_memo(move || game().opponent_state.score);
+
     rsx! {
         div {
             svg { height: "85vh", view_box: "0 0 84 314",

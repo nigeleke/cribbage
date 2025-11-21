@@ -1,5 +1,5 @@
 use crate::components::Card;
-use api::{CardDTO, CardIdDTO};
+use api::{CardDTO, CardIdDTO, UserGameDTO};
 use dioxus::prelude::*;
 
 /// The `UserHand` component shows a set of cards (in the order provided).
@@ -7,7 +7,10 @@ use dioxus::prelude::*;
 /// The children are any elements such as controls or other messages related to
 /// the user's hand.
 #[component]
-pub fn UserHand(cards: ReadSignal<Vec<CardDTO>>, children: Element) -> Element {
+pub fn UserHand(children: Element) -> Element {
+    let game = use_context::<ReadSignal<UserGameDTO>>();
+    let cards = use_memo(move || game().user_state.hand);
+
     let mut card_dtos = use_signal(Vec::<CardIdDTO>::default);
     let mut selections = use_signal(Vec::<bool>::default);
     let mut selection = use_signal(Option::<(usize, bool)>::default);

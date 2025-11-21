@@ -1,6 +1,4 @@
-use crate::{
-    CardDTO, CribDTO, PendingDTO, PhaseDTO, PlayerDTO, PlayerStateDTO, PlaysDTO, ScoreDTO,
-};
+use crate::{CardDTO, PendingDTO, PhaseDTO, PlayerDTO, PlayerStateDTO, PlaysDTO, ScoreDTO};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -12,7 +10,8 @@ pub struct UserGameDTO {
     pub dealer: Option<PlayerDTO>,
     pub user_state: PlayerStateDTO,
     pub opponent_state: PlayerStateDTO,
-    pub crib: CribDTO,
+    pub crib: Vec<CardDTO>,
+    pub starter_cut: Option<CardDTO>,
     pub plays: Option<PlaysDTO>,
     pub winner: Option<PlayerDTO>,
 }
@@ -26,7 +25,8 @@ impl UserGameDTO {
             dealer: None,
             user_state: PlayerStateDTO::default(),
             opponent_state: PlayerStateDTO::default(),
-            crib: CribDTO::default(),
+            crib: Vec::default(),
+            starter_cut: None,
             plays: None,
             winner: None,
         }
@@ -69,7 +69,8 @@ impl UserGameDTO {
         cards: Vec<CardDTO>,
         starter_cut: Option<CardDTO>,
     ) -> Self {
-        self.crib = CribDTO { starter_cut, cards };
+        self.crib = cards;
+        self.starter_cut = starter_cut;
         self
     }
 

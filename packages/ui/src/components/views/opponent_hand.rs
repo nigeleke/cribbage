@@ -1,14 +1,17 @@
 use crate::components::Card;
-use api::CardDTO;
+use api::UserGameDTO;
 use dioxus::prelude::*;
 
 /// The `Hand` component shows a set of cards in the order provided.
 #[component]
-pub fn Hand(cards: ReadSignal<Vec<CardDTO>>) -> Element {
+pub fn OpponentHand() -> Element {
+    let game = use_context::<ReadSignal<UserGameDTO>>();
+    let cards = use_memo(move || game().opponent_state.hand);
+
     rsx! {
-        document::Stylesheet { href: asset!("/assets/css/hand.css")},
+        document::Stylesheet { href: asset!("/assets/css/opponent_hand.css")},
         div {
-            class: "hand",
+            class: "opponent-hand",
             for card in cards() { Card { card }  }
         }
     }

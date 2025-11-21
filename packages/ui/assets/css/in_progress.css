@@ -1,0 +1,33 @@
+.in-progress {
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr;
+    block-size: 100%;
+    justify-items: center;
+}
+
+.in-progress__east {
+    display: flex;
+}
+
+.in-progress__west {
+    display: flex;
+}
+
+.in-progress__middle {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.in-progress__north {
+    display: flex;
+}
+
+.in-progress__south {
+    display: flex;
+}
+
+.in-progress__centre {
+    justify-self: stretch;
+    display: flex;
+}

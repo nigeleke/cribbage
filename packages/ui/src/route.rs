@@ -10,8 +10,6 @@ pub enum Route {
     #[layout(Layout)]
     #[route("/")]
     HomePage {},
-    #[route("/lobby/:game_id")]
-    LobbyPage { game_id: GameIdDTO },
     #[route("/game/:game_id")]
     GamePage { game_id: GameIdDTO },
     #[route("/error/")]

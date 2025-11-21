@@ -1,35 +1,25 @@
 .game-page {
-    display: grid;
-    grid-auto-rows: auto;
-    gap: 1rem;
+    block-size: 80%;
 }
 
-.starting {
+.game-page__starting {
     display: grid;
     grid-template-columns: auto auto;
     gap: 1em;
 }
 
-.game-page button {
-    justify-self: center;
-}
-
-.game-page h2 {
-    justify-self: center;
-}
-
-.in-progress {
+.game-page__in-progress {
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
     grid-template-rows: 1fr 1fr 1fr;
     gap: 16px;
 }
 
-.in-progress > :nth-child(2) {
+.game-page__in-progress > :nth-child(2) {
     align-self: start;
 }
 
-.in-progress > :nth-child(4) {
+.game-page__in-progress > :nth-child(4) {
     align-self: end;
 }
 

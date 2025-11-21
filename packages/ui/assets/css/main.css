@@ -58,11 +58,9 @@ body {
 #main {
     display: grid;
     grid-template-rows: auto 1fr auto;
-    justify-items: center;
-    justify-self: center;
     overflow: hidden;
     block-size: 100%;
-    max-inline-size: 200ch;
+    justify-items: center;
 }
 
 header,
@@ -71,8 +69,8 @@ footer {
 }
 
 main {
+    block-size: 100%;
     min-block-size: 0;
-    place-items: center;
 }
 
 button {

@@ -1,0 +1,13 @@
+.cutting-for-deal {
+    display: grid;
+    grid-template-rows: auto auto;
+    justify-items: center;
+    gap: 2em;
+}
+
+.cutting-for-deal__cuts {
+    display: flex;
+    gap: 2em;
+}
+
+/*.cutting-for-deal__controls { }*/

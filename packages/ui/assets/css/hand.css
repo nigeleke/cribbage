@@ -1,6 +1,4 @@
 .hand {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    grid-template-rows: 1fr;
+    display: flex;
     gap: 5px;
 }

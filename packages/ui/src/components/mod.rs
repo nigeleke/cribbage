@@ -1,22 +1,24 @@
 mod card;
 mod crib_and_cut;
 mod debounced_input;
-mod discarding_hand;
+mod discarding_controls;
 mod error;
 mod hand;
-mod playing_hand;
+mod playing_controls;
 mod plays;
 mod scoreboard;
 mod toast;
+mod user_hand;
 mod waiting_for_opponent;
 
 pub use card::Card;
 pub use crib_and_cut::CribAndCut;
 pub use debounced_input::DebouncedInput;
-pub use discarding_hand::DiscardingHand;
+pub use discarding_controls::DiscardingControls;
 pub use hand::Hand;
-pub use playing_hand::PlayingHand;
+pub use playing_controls::PlayingControls;
 pub use plays::Plays;
 pub use scoreboard::Scoreboard;
 pub use toast::Toast;
+pub use user_hand::UserHand;
 pub use waiting_for_opponent::WaitingForOpponent;

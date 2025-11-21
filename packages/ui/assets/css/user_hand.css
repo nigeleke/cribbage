@@ -1,0 +1,13 @@
+.user-hand {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: 5px;
+    justify-items: center;
+}
+
+.user-hand__cards {
+    display: flex;
+    gap: 5px;
+}
+
+/*.user-hand__controls {}*/

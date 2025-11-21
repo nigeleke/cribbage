@@ -2,7 +2,8 @@ use api::{GameIdDTO, PendingDTO, PhaseDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 use crate::components::{
-    Card, CribAndCut, DiscardingHand, Hand, PlayingHand, Plays, Scoreboard, WaitingForOpponent,
+    Card, CribAndCut, DiscardingControls, Hand, PlayingControls, Plays, Scoreboard, UserHand,
+    WaitingForOpponent,
 };
 use crate::route::Route;
 
@@ -11,7 +12,7 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
     let game_id = provide_context(game_id);
 
-    let mut game = use_signal(|| None::<UserGameDTO>);
+    let mut game = use_signal(Option::<UserGameDTO>::default);
 
     let mut game_stream = use_action(move || async move {
         let mut stream = api::stream::user_game_stream(*user_id.read(), game_id).await?;
@@ -46,21 +47,25 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
 
 #[component]
 fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
+    provide_context(game);
+
     match game().phase {
         PhaseDTO::InLobby | PhaseDTO::CuttingForDeal => {
-            rsx! { Starting { game } }
+            rsx! { Starting { } }
         }
         PhaseDTO::Discarding | PhaseDTO::Playing => {
-            rsx! { InProgress { game } }
+            rsx! { InProgress { } }
         }
         _ => unimplemented!(),
     }
 }
 
 #[component]
-fn Starting(game: ReadSignal<UserGameDTO>) -> Element {
+fn Starting() -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
     let game_id = use_context::<GameIdDTO>();
+
+    let game = use_context::<ReadSignal<UserGameDTO>>();
 
     let navigator = use_navigator();
 
@@ -147,7 +152,9 @@ fn Starting(game: ReadSignal<UserGameDTO>) -> Element {
 }
 
 #[component]
-fn InProgress(game: ReadSignal<UserGameDTO>) -> Element {
+fn InProgress() -> Element {
+    let game = use_context::<ReadSignal<UserGameDTO>>();
+
     let phase = use_memo(move || game().phase);
     let user_score = use_memo(move || game().user_state.score);
     let user_hand = use_memo(move || game().user_state.hand);
@@ -171,12 +178,18 @@ fn InProgress(game: ReadSignal<UserGameDTO>) -> Element {
                     class: "card-container",
                     match *phase.read() {
                         PhaseDTO::Discarding => rsx! {
-                            DiscardingHand { cards: user_hand }
+                            UserHand {
+                                cards: user_hand,
+                                DiscardingControls { }
+                            }
                         },
                         PhaseDTO::Playing => rsx! {
-                            PlayingHand { cards: user_hand, plays: plays.clone() }
+                            UserHand {
+                                cards: user_hand,
+                                PlayingControls { }
+                            }
                         },
-                        _ => rsx! { Hand { cards: user_hand } }
+                        _ => rsx! {"unsupported phase"}
                     }
                 }
                 div {

@@ -1,7 +1,4 @@
 .game-page {
-    width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
     display: grid;
     grid-auto-rows: auto;
     gap: 1rem;

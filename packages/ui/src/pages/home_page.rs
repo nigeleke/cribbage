@@ -54,10 +54,10 @@ fn NewGameSection() -> Element {
 
     rsx! {
         section {
-            class: "new-game",
+            class: "home-page__new-game-section",
             h2 { "Start a New Game" }
             div {
-                class: "new-game-buttons",
+                class: "home-page__new-game__buttons",
                 button { onclick: host_game, "Play with Friends" }
                 button { disabled: true, onclick: play_computer, "Play with Computer" }
             }
@@ -125,7 +125,7 @@ fn JoinGameSection() -> Element {
 
     rsx! {
         section {
-            class: "join-game",
+            class: "home-page__join-game-section",
             h2 { "Join a Game" }
             DebouncedInput {
                 placeholder: "🔍 Search games...",
@@ -140,7 +140,7 @@ fn JoinGameSection() -> Element {
             }
             GameList { games }
             button {
-                class: "more-button",
+                class: "home-page__join-game__more-button",
                 disabled: !has_more(),
                 onclick: move |_| {
                     async move {
@@ -185,13 +185,14 @@ fn GameList(games: ReadSignal<Vec<AvailableGameDTO>>) -> Element {
 
     rsx! {
         div {
-            class: "games-list",
+            class: "home-page__join-game__list",
             ul {
-                class: "game-items",
+                class: "home-page__join-game__list-items",
                 for game in games().into_iter() {
                     li {
-                        class: "game-item",
+                        class: "home-page__join-game__list-item",
                         class: if matches!(game, AvailableGameDTO::Active { .. }) { "active" },
+                        title: "{game.name()}",
                         key: "{game.id()}",
                         onclick: select_game(game),
                         span { "{game.name()}" }

@@ -22,8 +22,7 @@
 
 html,
 body {
-    height: 100%;
-    height: 100dvh;
+    block-size: 100%;
     margin: 0;
     padding: 0;
 }
@@ -59,24 +58,31 @@ body {
 #main {
     display: grid;
     grid-template-rows: auto 1fr auto;
-    height: 100%;
+    justify-items: center;
+    justify-self: center;
+    overflow: hidden;
+    block-size: 100%;
+    max-inline-size: 200ch;
 }
 
 header,
 footer {
-    text-align: center;
     padding: 0.5rem;
 }
 
+main {
+    min-block-size: 0;
+    place-items: center;
+}
+
 button {
-    border-radius: 1em;
-    padding: 0.5em 1em;
-    height: fit-content;
-    width: fit-content;
+    border-radius: 1rem;
+    padding: 0.5rem 1rem;
+    inline-size: fit-content;
 }
 
 input {
-    border-radius: 1em;
-    width: fit-content;
-    padding: 0.5em 1em;
+    border-radius: 1rem;
+    padding: 0.5rem 1rem;
+    inline-size: fit-content;
 }

@@ -15,8 +15,8 @@ edition = "2024"
 license = "BSD-3"
 
 [workspace.dependencies]
-dioxus = { version = "0.7.1" }
-dioxus-sdk = { git = "https://github.com/ealmloff/dioxus-std", branch = "0.7" }
+dioxus = "0.7.1"
+dioxus-sdk = "0.7.0"
 
 ui = { path = "packages/ui" }
 api = { path = "packages/api" }

@@ -1,3 +1,4 @@
+mod available_games_filter;
 mod host_game;
 mod pass;
 mod play;

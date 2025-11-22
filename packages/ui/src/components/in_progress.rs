@@ -17,19 +17,16 @@ pub fn InProgress(
                 {east}
             }
             div {
-                class: "in-progress__middle",
-                div {
-                    class: "in-progress__north",
-                    {north}
-                }
-                div {
-                    class: "in-progress__centre",
-                    {centre}
-                }
-                div {
-                    class: "in-progress__south",
-                    {south}
-                }
+                class: "in-progress__north",
+                {north}
+            }
+            div {
+                class: "in-progress__centre",
+                {centre}
+            }
+            div {
+                class: "in-progress__south",
+                {south}
             }
             div {
                 class: "in-progress__west",

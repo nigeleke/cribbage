@@ -1,7 +1,4 @@
-use crate::components::{
-    CribAndCut, DiscardingControls, OpponentHand, PlayingControls, Plays, Scoreboard, UserHand,
-    phases::{CuttingForDeal, Discarding, InLobby},
-};
+use crate::components::phases::{CuttingForDeal, Discarding, InLobby, Playing};
 use api::{GameIdDTO, PhaseDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
@@ -49,7 +46,7 @@ fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
         PhaseDTO::InLobby => rsx! { InLobby {} },
         PhaseDTO::CuttingForDeal => rsx! { CuttingForDeal {} },
         PhaseDTO::Discarding => rsx! { Discarding {} },
-        PhaseDTO::Playing => rsx! {},
+        PhaseDTO::Playing => rsx! { Playing {} },
         PhaseDTO::ScoringPone => rsx! {},
         PhaseDTO::ScoringDealer => rsx! {},
         PhaseDTO::ScoringCrib => rsx! {},

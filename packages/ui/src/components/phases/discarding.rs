@@ -7,9 +7,7 @@ use dioxus::prelude::*;
 pub fn Discarding() -> Element {
     rsx! {
         InProgress {
-            north: rsx! {
-                UserHand { DiscardingControls {} }
-            },
+            north: rsx! { UserHand { DiscardingControls {} } },
             south: rsx! { OpponentHand {} },
             east: rsx! { Scoreboard {} },
             west: rsx! { CribAndCut { } },

@@ -1,0 +1,8 @@
+.scoreboard {
+    block-size: 100%;
+}
+
+.scoreboard__svg {
+    /*block-size: 100%;*/
+    max-block-size: 100vh;
+}

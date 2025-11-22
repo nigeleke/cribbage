@@ -1,14 +1,14 @@
 use crate::components::Card;
-use api::{CardDTO, PlayerDTO, PlaysDTO};
+use api::{CardDTO, PlayerDTO, UserGameDTO};
 use dioxus::prelude::*;
 
 #[component]
-pub fn Plays(plays: ReadSignal<Option<PlaysDTO>>) -> Element {
-    if let Some(plays) = plays() {
-        let running_total = plays.running_total;
+pub fn Plays() -> Element {
+    let game = use_context::<ReadSignal<UserGameDTO>>();
 
-        rsx! {
-            document::Stylesheet { href: asset!("/assets/css/plays.css")},
+    rsx! {
+        document::Stylesheet { href: asset!("/assets/css/plays.css")},
+        if let Some(plays) = game().plays {
             div {
                 class: "plays",
                 div {
@@ -27,13 +27,12 @@ pub fn Plays(plays: ReadSignal<Option<PlaysDTO>>) -> Element {
                     }
                 }
                 h2 {
-                    hidden: running_total == 0,
-                    "{running_total}"
+                    class: "plays__running-total",
+                    hidden: plays.running_total == 0,
+                    "{plays.running_total}"
                 }
             }
         }
-    } else {
-        rsx! {}
     }
 }
 

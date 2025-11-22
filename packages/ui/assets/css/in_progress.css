@@ -1,33 +1,38 @@
 .in-progress {
     display: grid;
     grid-template-columns: 1fr 3fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
     block-size: 100%;
-    justify-items: center;
+    grid-template-areas:
+        "east north  west"
+        "east centre west"
+        "east south  west";
+    gap: 16px;
 }
 
 .in-progress__east {
-    display: flex;
+    grid-area: east;
+    justify-self: start;
+    block-size: 100%;
 }
 
 .in-progress__west {
-    display: flex;
-}
-
-.in-progress__middle {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    grid-area: west;
+    justify-self: center;
 }
 
 .in-progress__north {
-    display: flex;
+    grid-area: north;
+    align-self: start;
 }
 
 .in-progress__south {
-    display: flex;
+    grid-area: south;
+    align-self: end;
+    justify-self: center;
 }
 
 .in-progress__centre {
-    justify-self: stretch;
-    display: flex;
+    grid-area: centre;
+    align-self: center;
 }

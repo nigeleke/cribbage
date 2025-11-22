@@ -10,6 +10,10 @@
     gap: 10px;
 }
 
+.plays__running-total {
+    justify-self: end;
+}
+
 .plays__card {
     margin-left: -80px;
 }

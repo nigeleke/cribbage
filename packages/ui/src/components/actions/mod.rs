@@ -1,5 +1,9 @@
+mod host_game;
 mod pass;
-pub use pass::PassAction;
-
 mod play;
+mod play_computer;
+
+pub use host_game::HostGameAction;
+pub use pass::PassAction;
 pub use play::PlayAction;
+pub use play_computer::PlayComputerAction;

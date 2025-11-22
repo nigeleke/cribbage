@@ -2,7 +2,7 @@
 use api::{AvailableGameDTO, AvailableGameEventDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-use crate::components::{DebouncedInput, Toast};
+use crate::components::{DebouncedInput, HostGameAction, PlayComputerAction, Toast};
 use crate::route::Route;
 
 #[component]
@@ -19,47 +19,14 @@ pub fn HomePage() -> Element {
 
 #[component]
 fn NewGameSection() -> Element {
-    let user_id = use_context::<Signal<UserIdDTO>>();
-    let navigator = use_navigator();
-
-    let host_game = move |_| {
-        spawn(async move {
-            match api::action::host_game(*user_id.read()).await {
-                Ok(game_id) => {
-                    navigator.push(Route::GamePage { game_id });
-                }
-                Err(error) => {
-                    warn!("HomePage:host_game:error {error:?}");
-                    let error = error.to_string();
-                    navigator.push(Route::ErrorPage { error });
-                }
-            }
-        });
-    };
-
-    let play_computer = move |_| {
-        spawn(async move {
-            match api::action::play_computer(*user_id.read()).await {
-                Ok(game_id) => {
-                    navigator.push(Route::GamePage { game_id });
-                }
-                Err(error) => {
-                    warn!("HomePage:play_computer:error {error:?}");
-                    let error = error.to_string();
-                    navigator.push(Route::ErrorPage { error });
-                }
-            };
-        });
-    };
-
     rsx! {
         section {
             class: "home-page__new-game-section",
             h2 { "Start a New Game" }
             div {
-                class: "home-page__new-game__buttons",
-                button { onclick: host_game, "Play with Friends" }
-                button { disabled: true, onclick: play_computer, "Play with Computer" }
+                class: "home-page__new-game__actions",
+                HostGameAction {}
+                PlayComputerAction {}
             }
         }
     }

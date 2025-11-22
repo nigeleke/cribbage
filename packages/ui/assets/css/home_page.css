@@ -18,7 +18,7 @@
     overflow: hidden;
 }
 
-.home-page__new-game__buttons {
+.home-page__new-game__actions {
     display: flex;
     gap: 1rem;
 }

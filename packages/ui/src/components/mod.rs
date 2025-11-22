@@ -1,19 +1,22 @@
+mod actions;
 mod controls;
 mod debounced_input;
 mod error;
 mod in_progress;
-pub mod phases;
+mod phases;
 mod scoreboard;
 mod toast;
 mod views;
 mod waiting_for_opponent;
 
+pub use actions::*;
 pub use card::Card;
 pub use controls::*;
 pub use crib_and_cut::CribAndCut;
 pub use debounced_input::DebouncedInput;
 pub use in_progress::InProgress;
 pub use opponent_hand::OpponentHand;
+pub use phases::*;
 pub use plays::Plays;
 pub use scoreboard::Scoreboard;
 pub use toast::Toast;

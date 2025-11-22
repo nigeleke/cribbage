@@ -15,7 +15,6 @@ pub fn Scoreboard() -> Element {
         document::Stylesheet { href: asset!("/assets/css/scoreboard.css")},
         div {
             class: "scoreboard",
-            //         preserve_aspect_ratio: "xMidYMid meet",
             svg {
                 class: "scoreboard__svg",
                 view_box: "0 0 84 314",

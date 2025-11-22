@@ -1,6 +1,6 @@
 mod block;
+mod core;
 mod hole;
-mod scoreboard;
 mod track;
 
-pub use scoreboard::Scoreboard;
+pub use core::Scoreboard;

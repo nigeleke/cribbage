@@ -1,4 +1,4 @@
-use crate::components::phases::{CuttingForDeal, Discarding, InLobby, Playing};
+use crate::components::{CuttingForDeal, Discarding, InLobby, Playing};
 use api::{GameIdDTO, PhaseDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 

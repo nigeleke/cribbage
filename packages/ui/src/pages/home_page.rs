@@ -2,7 +2,9 @@
 use api::{AvailableGameDTO, AvailableGameEventDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-use crate::components::{DebouncedInput, HostGameAction, PlayComputerAction, Toast};
+use crate::components::{
+    DebouncedInput, HostGameAction, PlayComputerAction, SelectGameAction, Toast,
+};
 use crate::route::Route;
 
 #[component]
@@ -123,33 +125,6 @@ fn JoinGameSection() -> Element {
 
 #[component]
 fn GameList(games: ReadSignal<Vec<AvailableGameDTO>>) -> Element {
-    let user_id = use_context::<Signal<UserIdDTO>>();
-    let navigator = use_navigator();
-
-    let mut join_game = use_action(move |game_id| async move {
-        match api::action::join_game(user_id(), game_id).await {
-            Ok(_) => navigator.push(Route::GamePage { game_id }),
-            Err(error) => {
-                warn!("HomePage:join_game:error {error:?}");
-                let error = error.to_string();
-                navigator.push(Route::ErrorPage { error })
-            }
-        };
-
-        dioxus::Ok(())
-    });
-
-    let select_game = |available_game: AvailableGameDTO| {
-        move |_| match available_game {
-            AvailableGameDTO::Lobby { game_id, .. } => {
-                join_game.call(game_id);
-            }
-            AvailableGameDTO::Active { game_id, .. } => {
-                navigator.push(Route::GamePage { game_id });
-            }
-        }
-    };
-
     rsx! {
         div {
             class: "home-page__join-game__list",
@@ -158,11 +133,10 @@ fn GameList(games: ReadSignal<Vec<AvailableGameDTO>>) -> Element {
                 for game in games().into_iter() {
                     li {
                         class: "home-page__join-game__list-item",
-                        class: if matches!(game, AvailableGameDTO::Active { .. }) { "active" },
+                        class: if matches!(&game, AvailableGameDTO::Active { .. }) { "active" },
                         title: "{game.name()}",
                         key: "{game.id()}",
-                        onclick: select_game(game),
-                        span { "{game.name()}" }
+                        SelectGameAction { game: game.clone() }
                     }
                 }
             }

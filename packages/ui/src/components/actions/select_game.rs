@@ -41,9 +41,8 @@ pub fn SelectGameAction(game: ReadSignal<AvailableGameDTO>) -> Element {
 
     rsx! {
         div {
-            class: "select-game-action",
             onclick: select_game(game()),
-            span { class: "game-name", "{name}" }
+            "{name}"
         }
     }
 }

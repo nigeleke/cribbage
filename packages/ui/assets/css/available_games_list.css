@@ -1,0 +1,47 @@
+.available-games-list {
+    overflow-y: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.available-games-list__list-items {
+    flex-grow: 1;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    margin-top: 0;
+    min-height: 0;
+}
+
+.available-games-list__list-item {
+    --gap: 0.25em;
+    cursor: pointer;
+    padding: var(--gap) var(--gap);
+    max-inline-size: 40ch;
+    min-inline-size: 10ch;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.active {
+        font-weight: bold;
+    }
+
+    &:first-child {
+        padding-top: var(--gap);
+        padding-bottom: 0;
+    }
+
+    &:last-child {
+        padding-bottom: var(--gap);
+    }
+
+    &:hover {
+        background-color: var(--highlight-color);
+    }
+}
+
+.available-games-list__more-button {
+    align-self: end;
+}

@@ -5,8 +5,7 @@ use dioxus::prelude::*;
 #[post("/api/{user_id}/game/{game_id}/pass", State(server_state): State<server::ServerState>)]
 pub async fn pass(user_id: UserIdDTO, game_id: GameIdDTO) -> Result<()> {
     use server::action::pass;
-    use server::domain::{Card, GameId, UserId};
-    use std::str::FromStr;
+    use server::domain::{GameId, UserId};
 
     let user_id = UserId::from(user_id.value());
     let game_id = GameId::from(game_id.value());

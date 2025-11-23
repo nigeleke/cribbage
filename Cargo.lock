@@ -686,8 +686,9 @@ dependencies = [
 [[package]]
 name = "cqrs-es"
 version = "0.5.0"
-source = "git+https://github.com/nigeleke/cqrs.git#64ceef4601910b649664d1638c3b3f01da111ac8"
+source = "git+https://github.com/serverlesstechnology/cqrs.git#29f8bc4ba7e93440c074df514ff8ccd7e050dab9"
 dependencies = [
+ "async-trait",
  "serde",
  "serde_json",
  "thiserror 2.0.17",
@@ -2990,7 +2991,7 @@ dependencies = [
 [[package]]
 name = "postgres-es"
 version = "0.5.0"
-source = "git+https://github.com/nigeleke/cqrs.git#64ceef4601910b649664d1638c3b3f01da111ac8"
+source = "git+https://github.com/serverlesstechnology/cqrs.git#29f8bc4ba7e93440c074df514ff8ccd7e050dab9"
 dependencies = [
  "cqrs-es",
  "futures",
@@ -3547,6 +3548,7 @@ name = "server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "chrono",
  "cqrs-es",
  "dioxus",

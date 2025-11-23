@@ -9,7 +9,7 @@ use crate::domain::{
     WaitingForDiscards,
 };
 use crate::name_builder::generate_game_name;
-use cqrs_es::Aggregate;
+use cqrs_es::{Aggregate, Query, event_sink::EventSink};
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -461,11 +461,16 @@ impl Aggregate for Game {
     type Services = GameServices;
 
     async fn handle(
-        &self,
+        &mut self,
         command: Self::Command,
         _services: &Self::Services,
-    ) -> Result<Vec<Self::Event>, Self::Error> {
-        self.handle_command(command)
+        sink: &EventSink<Self>,
+    ) -> Result<(), Self::Error> {
+        let events = self.handle_command(command)?;
+        for event in events {
+            sink.write(event, self).await;
+        }
+        Ok(())
     }
 
     fn apply(&mut self, event: Self::Event) {
@@ -710,8 +715,6 @@ mod test {
     /// right to shuffle last, and he presents the cards to the non-dealer for the cut prior to the
     /// deal. (In some games, there is no cut at this time.)
     mod deal_cut {
-        use itertools::Itertools;
-
         use super::*;
         use crate::domain::{
             Dealer, GameCommand, GameEvent, GameId, GameServices, PLAYER0, PLAYER1, UserId,

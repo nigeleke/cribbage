@@ -57,12 +57,9 @@ impl GameQuery {
     }
 }
 
+#[async_trait::async_trait]
 impl Query<Game> for GameQuery {
-    async fn dispatch<'a, 'b, 'c>(
-        &'a self,
-        aggregate_id: &'b str,
-        events: &'c [EventEnvelope<Game>],
-    ) {
+    async fn dispatch(&self, aggregate_id: &str, events: &[EventEnvelope<Game>]) {
         let events = events
             .iter()
             .map(|e| &e.payload)

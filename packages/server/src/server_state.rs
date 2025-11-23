@@ -2,7 +2,7 @@ use crate::database::Notification;
 use crate::error::ServerError;
 use crate::{domain::Game, domain::GameServices, projections::GameQuery};
 
-use cqrs_es::QueryWrapper;
+use cqrs_es::Query;
 use dioxus::fullstack::FullstackContext;
 use dioxus::fullstack::extract::FromRef;
 use postgres_es::{PostgresCqrs, default_postgress_pool, postgres_aggregate_cqrs};
@@ -43,9 +43,9 @@ pub async fn initialize_server_state() -> Result<ServerState, ServerError> {
 
     let pool = Arc::new(pool);
 
-    let queries: Vec<QueryWrapper<Game>> = vec![QueryWrapper::new(GameQuery::new(pool.clone()))];
+    let queries: Vec<Box<dyn Query<Game>>> = vec![Box::new(GameQuery::new(pool.clone()))];
     let services = GameServices {};
-    let cqrs = postgres_aggregate_cqrs((*pool).clone(), queries, services);
+    let cqrs = postgres_aggregate_cqrs::<Game>((*pool).clone(), queries, services);
     let cqrs = Arc::new(cqrs);
 
     let database_changes_sender = create_database_changes_sender((*pool).clone()).await?;

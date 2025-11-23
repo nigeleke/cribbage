@@ -12,7 +12,6 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
     let mut game_stream = use_action(move || async move {
         let mut stream = api::stream::user_game_stream(*user_id.read(), game_id).await?;
         while let Some(Ok(updated_game)) = stream.next().await {
-            debug!("GamePage: updated for {user_id} {updated_game:?}");
             game.set(Some(updated_game));
         }
         dioxus::Ok(())

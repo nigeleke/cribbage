@@ -21,12 +21,6 @@ pub async fn get_available_games(
             .await
             .map_err(ServerError::bug)?;
 
-    dioxus::prelude::debug!(
-        "server:services:get_available_games: more: {} len: {}",
-        chunk.has_more,
-        chunk.games.len()
-    );
-
     let games = chunk
         .games
         .into_iter()

@@ -11,7 +11,7 @@ mod scoring;
 mod state;
 mod types;
 
-pub use available_game::{AvailableGame, Source as AvailableGameSource};
+pub use available_game::*;
 pub use cards::*;
 pub use commands::*;
 pub use error::*;

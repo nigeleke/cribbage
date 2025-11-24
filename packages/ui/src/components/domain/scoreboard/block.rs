@@ -1,6 +1,6 @@
 use super::hole::Hole;
 
-use api::{PlayerDTO, ScoreDTO};
+use api::dto::{PlayerDTO, ScoreDTO};
 use dioxus::prelude::*;
 
 use std::ops::Range;

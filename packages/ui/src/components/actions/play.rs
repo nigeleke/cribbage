@@ -1,6 +1,6 @@
-use crate::components::WaitingForOpponent;
+use crate::components::{WaitingForOpponent, button::Button};
 use crate::route::Route;
-use api::{CardIdDTO, GameIdDTO, PlayActionDTO, PlayerDTO, PlaysDTO, UserIdDTO};
+use api::dto::{CardIdDTO, GameIdDTO, PlayActionDTO, PlayerDTO, PlaysDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 #[component]
@@ -42,7 +42,7 @@ pub fn PlayAction() -> Element {
     rsx! {
         if let PlayActionDTO::Play(player) = next_action {
             if player == PlayerDTO::User {
-                button {
+                Button {
                     onclick: on_play,
                     disabled: !can_play,
                     "Play"

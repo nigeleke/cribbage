@@ -13,6 +13,10 @@ impl UserIdDTO {
     pub fn value(self) -> Uuid {
         self.0
     }
+
+    pub fn short_name(&self) -> String {
+        String::from(&self.0.to_string()[..8])
+    }
 }
 
 impl Default for UserIdDTO {

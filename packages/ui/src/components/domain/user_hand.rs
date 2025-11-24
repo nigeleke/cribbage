@@ -1,5 +1,5 @@
 use crate::components::Card;
-use api::{CardDTO, CardIdDTO, UserGameDTO};
+use api::dto::{CardDTO, CardIdDTO, UserGameDTO};
 use dioxus::prelude::*;
 
 /// The `UserHand` component shows a set of cards (in the order provided).

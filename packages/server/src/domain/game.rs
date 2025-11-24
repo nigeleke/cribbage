@@ -88,7 +88,7 @@ impl Game {
         } else if self.guest.is_some() {
             not_permitted()
         } else if self.host == guest {
-            Err(DomainError::InvalidOpponent(guest))
+            Ok(vec![])
         } else {
             let events = vec![GameEvent::LobbyGameJoined { guest }];
             Ok(events)

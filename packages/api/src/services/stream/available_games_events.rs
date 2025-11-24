@@ -1,4 +1,4 @@
-use crate::{AvailableGameEventDTO, GameIdDTO, UserIdDTO};
+use crate::dto::{AvailableGameEventDTO, GameIdDTO, UserIdDTO};
 use dioxus::fullstack::extract::State;
 use dioxus::fullstack::{JsonEncoding, Streaming};
 use dioxus::prelude::*;

@@ -1,11 +1,11 @@
 #![feature(coverage_attribute)]
 
 //! This crate contains all shared fullstack server functions.
-mod dto;
-mod error;
+pub mod dto;
+pub mod error;
 mod services;
 
-pub use {dto::*, error::*, services::*};
+pub use services::*;
 
 #[cfg(feature = "server")]
 pub use server::initialize_server_state;

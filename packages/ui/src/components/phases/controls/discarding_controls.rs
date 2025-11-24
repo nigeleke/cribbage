@@ -1,5 +1,6 @@
+use crate::components::button::*;
 use crate::route::Route;
-use api::{CardIdDTO, GameIdDTO, UserIdDTO};
+use api::dto::{CardIdDTO, GameIdDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 #[component]
@@ -32,7 +33,7 @@ pub fn DiscardingControls() -> Element {
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/discarding_hand.css")},
         div {
-            button {
+            Button {
                 onclick: on_discard,
                 disabled: !can_discard,
                 "Discard"

@@ -1,5 +1,5 @@
 use crate::components::Card;
-use api::{CardDTO, PlayerDTO, UserGameDTO};
+use api::dto::{CardDTO, PlayerDTO, UserGameDTO};
 use dioxus::prelude::*;
 
 #[component]

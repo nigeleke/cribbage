@@ -26,31 +26,37 @@ where
 
     let filter_pattern = filter.map(|f| format!("%{}%", f));
 
-    let query = r#"
-        SELECT id, user_id, source, name, created_at
-        FROM available_games
-        WHERE (
-            $1::timestamp with time zone IS NULL
-            OR created_at > $1
+    let rows = sqlx::query_as!(
+        AvailableGameRow,
+        r#"WITH filter AS (
+            SELECT
+                id,
+                name,
+                CASE
+                    WHEN host_id = $1 THEN 'Private'
+                    WHEN guest_id = $1 THEN 'Private'
+                    WHEN (host_id != $1 AND guest_id IS NULL) THEN 'Public'
+                    ELSE 'NotAvailable'
+                END AS "availability!",
+                created_at
+            FROM games
+            WHERE
+                ($2::text IS NULL OR name ILIKE $2)
+            AND ($3::timestamp with time zone IS NULL
+                OR created_at < $3)
         )
-        AND ($2::text IS NULL OR name ILIKE $2)
-        AND ((user_id != $3 AND source = 'Lobby')
-            OR
-            (user_id = $3 AND source = 'Active'))
+        SELECT *
+        FROM filter
+        WHERE "availability!" != 'NotAvailable'
         ORDER BY
-            CASE WHEN source = 'Active' THEN 0 ELSE 1 END,
-            CASE WHEN source = 'Active' THEN created_at END DESC,
-            CASE WHEN source = 'Lobby' THEN created_at END ASC
-        LIMIT $4
-    "#;
-
-    let rows = sqlx::query_as::<_, AvailableGameRow>(query)
-        .bind(last_created_at)
-        .bind(filter_pattern)
-        .bind(user_id)
-        .bind(chunk_size as i64 + 1)
-        .fetch_all(connection.deref_mut())
-        .await?;
+            CASE WHEN "availability!" = 'Private' THEN 0 ELSE 1 END,
+            created_at DESC"#,
+        user_id,
+        filter_pattern,
+        last_created_at
+    )
+    .fetch_all(connection.deref_mut())
+    .await?;
 
     let has_more = rows.len() as u32 > chunk_size;
     let games = rows

@@ -1,5 +1,6 @@
+use crate::components::button::*;
 use crate::route::Route;
-use api::UserIdDTO;
+use api::dto::UserIdDTO;
 use dioxus::prelude::*;
 
 #[component]
@@ -7,7 +8,7 @@ pub fn PlayComputerAction() -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
     let navigator = use_navigator();
 
-    let play_computer = move |_| {
+    let onclick = move |_| {
         spawn(async move {
             match api::action::play_computer(*user_id.read()).await {
                 Ok(game_id) => {
@@ -23,6 +24,11 @@ pub fn PlayComputerAction() -> Element {
     };
 
     rsx! {
-        button { disabled: true, onclick: play_computer, "Play with Computer" }
+        Button {
+            variant: ButtonVariant::Primary,
+            disabled: true,
+            onclick,
+            "Play with Computer"
+        }
     }
 }

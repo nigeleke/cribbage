@@ -1,4 +1,4 @@
-use crate::{CardDTO, PendingDTO, PhaseDTO, PlayerDTO, PlayerStateDTO, PlaysDTO, ScoreDTO};
+use crate::dto::{CardDTO, PendingDTO, PhaseDTO, PlayerDTO, PlayerStateDTO, PlaysDTO, ScoreDTO};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

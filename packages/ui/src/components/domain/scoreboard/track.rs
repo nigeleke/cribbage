@@ -1,6 +1,6 @@
 use super::block::Block;
 
-use api::{PlayerDTO, ScoreDTO};
+use api::dto::{PlayerDTO, ScoreDTO};
 use dioxus::prelude::*;
 
 /// Show a graphical scoring track in the scoreboard.

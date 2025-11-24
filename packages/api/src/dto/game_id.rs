@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::DTOError;
+use crate::dto::DTOError;
 
 /// Data transfer object for a game identifier, wrapping a ULID for unique, sortable identification.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

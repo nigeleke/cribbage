@@ -1,4 +1,4 @@
-use crate::{CardIdDTO, GameIdDTO, UserIdDTO};
+use crate::dto::{CardIdDTO, GameIdDTO, UserIdDTO};
 use dioxus::fullstack::extract::State;
 use dioxus::prelude::*;
 

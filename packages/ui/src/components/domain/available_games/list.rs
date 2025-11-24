@@ -1,9 +1,13 @@
-use super::filter::Filter;
-use super::load_more::LoadMore;
-use crate::components::SelectGameAction;
+use crate::components::{DebouncedInput, SelectGameAction, button::*, scroll_area::*};
+use api::dto::{AvailabilityDTO, AvailableGameDTO, UserIdDTO};
 use api::view::Since;
-use api::{AvailableGameDTO, UserIdDTO};
 use dioxus::prelude::*;
+use dioxus_primitives::scroll_area::ScrollDirection;
+
+enum FetchAction {
+    Replace,
+    Append,
+}
 
 #[component]
 pub fn AvailableGamesList() -> Element {
@@ -11,86 +15,131 @@ pub fn AvailableGamesList() -> Element {
 
     let mut games = use_signal(Vec::<AvailableGameDTO>::default);
     let mut filter = use_signal(String::default);
-    let mut since = use_signal(Since::default);
+
+    let show = |what: &str, items: &[AvailableGameDTO]| {
+        debug!("***** WHAT: {what}");
+        let items = items
+            .iter()
+            .map(|g| format!("{} {}", g.name, g.game_id.value()))
+            .collect::<Vec<_>>();
+        debug!("{:#?}", items);
+        debug!("*****");
+    };
+
+    let mut last_since = use_signal(Since::default);
+
+    let filtered_games = use_memo(move || {
+        let filter = filter.read().to_ascii_lowercase();
+
+        let f = if filter.is_empty() {
+            games.read().clone()
+        } else {
+            games
+                .read()
+                .iter()
+                .filter(|g| g.name.to_ascii_lowercase().contains(&filter))
+                .cloned()
+                .collect::<Vec<_>>()
+        };
+
+        show("filtered_games: f", &f);
+        debug!("filtered_games: since: {:?}", last_since());
+
+        f
+    });
+
     let mut has_more = use_signal(|| false);
 
-    let fetch_games = {
-        move |current_games: Vec<AvailableGameDTO>,
-              filter: String,
-              since_when: Since,
-              replace: bool| async move {
-            let result =
-                api::view::get_available_games(*user_id.read(), Some(filter), since_when).await;
-            match result {
-                Ok(response) => {
-                    if replace {
-                        games.set(Vec::from(response.games()));
-                    } else {
-                        let mut new_games = response
-                            .games()
-                            .iter()
-                            .filter_map(|g| (!current_games.contains(g)).then_some(g.clone()))
-                            .collect::<Vec<_>>();
-                        games.write().append(&mut new_games);
-                    }
-                    since.set(response.since().clone());
-                    has_more.set(response.has_more());
-                }
-                Err(e) => {
-                    error!("Failed to fetch games: '{e}'");
+    let fetch_games = move |action: FetchAction, filter: String, since: Since| async move {
+        let result = api::view::get_available_games(*user_id.read(), Some(filter), since).await;
+
+        match result {
+            Ok(response) => {
+                has_more.set(response.has_more());
+                last_since.set(response.since().clone());
+                let mut fetched_games = Vec::from(response.games());
+                show("fetch_games: fetched_games:", &fetched_games);
+                debug!("fetch_games: since: {:?}", response.since());
+                match action {
+                    FetchAction::Replace => games.set(fetched_games),
+                    FetchAction::Append => games.write().append(&mut fetched_games),
                 }
             }
+
+            Err(e) => error!("Failed to fetch games: '{e}'"),
         }
     };
 
-    let _ = use_resource({
-        let games = games.read().clone();
-        let filter = filter.read().clone();
-        let since = since.read().clone();
-        move || {
-            let games = games.clone();
-            let filter = filter.clone();
-            let since = since.clone();
-            async move { fetch_games(games, filter, since, false).await }
-        }
+    let _ = use_resource(move || async move {
+        fetch_games(FetchAction::Replace, "".into(), Since::default()).await
     });
 
     let on_filter_changed = move |value: String| {
-        filter.set(value.clone());
-        spawn(async move {
-            fetch_games(games(), value, api::view::Since::default(), true).await;
-        });
+        filter.set(value);
     };
 
     let on_load_more = move |_| async move {
-        fetch_games(games(), "".into(), since(), false).await;
+        show("on_load_more: games:", &games.read());
+        debug!("on_load_more: since: {:?}", last_since());
+        fetch_games(FetchAction::Append, filter(), last_since()).await;
     };
 
     rsx! {
         Filter { on_filter_changed }
-        InnerList { games }
-        LoadMore { has_more, on_load_more }
+        InnerList { games: filtered_games() }
+        LoadMoreButton { has_more, on_load_more }
     }
 }
 
 #[component]
-fn InnerList(games: ReadSignal<Vec<AvailableGameDTO>>) -> Element {
+fn InnerList(games: Vec<AvailableGameDTO>) -> Element {
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/available_games_list.css") }
-        div {
+        ScrollArea {
             class: "available-games-list",
+            direction: ScrollDirection::Vertical,
             ul {
-                class: "available-games-list__list-items",
-                for game in games().into_iter() {
+                class: "available-games-list__list_items",
+                for game in games.into_iter() {
                     li {
-                        class: "available-games-list__list-item",
-                        class: if matches!(&game, AvailableGameDTO::Active { .. }) { "active" },
-                        title: "{game.name()}",
-                        key: "{game.id()}",
+                        class: if matches!(&game.availability, AvailabilityDTO::Private) { "active" },
+                        title: "{game.name}",
+                        key: "{game.game_id.value()}",
                         SelectGameAction { game: game.clone() }
                     }
                 }
             }
+        }
+    }
+}
+
+#[component]
+fn Filter(on_filter_changed: Callback<String>) -> Element {
+    let mut filter = use_signal(|| String::default());
+
+    let on_debounced_input = move |value: String| {
+        filter.set(value.clone());
+        on_filter_changed.call(value);
+    };
+
+    rsx! {
+        DebouncedInput {
+            value: filter,
+            placeholder: "🔍 Search games...",
+            name: "available_games_filter",
+            on_debounced_input,
+        }
+    }
+}
+
+#[component]
+fn LoadMoreButton(has_more: ReadSignal<bool>, on_load_more: Callback<()>) -> Element {
+    rsx! {
+        Button {
+            variant: ButtonVariant::Outline,
+            disabled: !has_more(),
+            onclick: move |_| on_load_more(()),
+            "More..."
         }
     }
 }

@@ -12,7 +12,7 @@ mod score;
 mod user_game;
 mod user_id;
 
-pub use available_game::AvailableGameDTO;
+pub use available_game::{AvailabilityDTO, AvailableGameDTO};
 pub use card::{CardDTO, CardIdDTO};
 pub use error::DTOError;
 pub use events::AvailableGameEventDTO;

@@ -1,5 +1,5 @@
 use crate::components::{Card, CuttingForDealControls};
-use api::UserGameDTO;
+use api::dto::UserGameDTO;
 use dioxus::prelude::*;
 
 #[component]

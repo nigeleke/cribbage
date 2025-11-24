@@ -7,13 +7,13 @@ use serde::{Deserialize, Serialize};
 pub type Since = Option<DateTime<Utc>>;
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Response {
+pub struct AvailableGamesResponse {
     games: Vec<AvailableGameDTO>,
     has_more: bool,
     since: Since,
 }
 
-impl Response {
+impl AvailableGamesResponse {
     pub fn games(&self) -> &[AvailableGameDTO] {
         &self.games
     }
@@ -32,9 +32,9 @@ pub async fn get_available_games(
     user_id: UserIdDTO,
     filter: Option<String>,
     since: Since,
-) -> Result<Response> {
-    use crate::dto::GameIdDTO;
-    use server::domain::{AvailableGameSource, UserId};
+) -> Result<AvailableGamesResponse> {
+    use crate::dto::{AvailabilityDTO, GameIdDTO};
+    use server::domain::{Availability, UserId};
     use server::view::get_available_games;
 
     let user_id = UserId::from(user_id.value());
@@ -48,15 +48,21 @@ pub async fn get_available_games(
         .map(|game| {
             let game_id = GameIdDTO::from(game.id().value());
             let name = game.name().clone();
-            let source = game.source();
-            match source {
-                AvailableGameSource::Lobby => AvailableGameDTO::Lobby { game_id, name },
-                AvailableGameSource::Active => AvailableGameDTO::Active { game_id, name },
+            let availability = match game.availability() {
+                Availability::Private => AvailabilityDTO::Private,
+                Availability::Public => AvailabilityDTO::Public,
+            };
+            let created_at = game.created_at().clone();
+            AvailableGameDTO {
+                game_id,
+                name,
+                availability,
+                created_at,
             }
         })
         .collect::<Vec<_>>();
 
-    let response = Response {
+    let response = AvailableGamesResponse {
         games,
         has_more,
         since,

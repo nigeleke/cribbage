@@ -1,4 +1,4 @@
-use api::{GameIdDTO, UserIdDTO};
+use api::dto::{GameIdDTO, UserIdDTO};
 use dioxus::prelude::*;
 use dioxus_sdk::storage::*;
 
@@ -21,13 +21,14 @@ pub enum Route {
 #[component]
 fn Layout() -> Element {
     let user_id = use_persistent("user_id", || UserIdDTO::new());
-    let display_user_id = &user_id.to_string()[..8];
+    let display_user_id = use_memo(move || user_id.read().short_name());
     provide_context(user_id);
 
     rsx! {
+        document::Stylesheet { href: asset!("/assets/css/dx-components-theme.css") }
         document::Stylesheet { href: asset!("/assets/css/main.css") }
         document::Link { rel: "icon", href: asset!("/assets/favicon.ico"), type: "image/x-icon" }
-        document::Script { r#type: "module", src: asset!("/assets/js/listen_unhandled_promises.js") }
+        // document::Script { r#type: "module", src: asset!("/assets/js/listen_unhandled_promises.js") }
 
         header { h1 { "Cribbage"  } }
         main {

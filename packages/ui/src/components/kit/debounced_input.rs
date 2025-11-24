@@ -1,13 +1,14 @@
-use std::time::Duration;
-
+use crate::components::input::*;
 use dioxus::prelude::*;
 use dioxus_sdk::time::use_debounce;
+use std::time::Duration;
 
 #[component]
 pub fn DebouncedInput(
     value: ReadSignal<String>,
-    on_debounced_input: EventHandler<String>,
+    name: String,
     placeholder: Option<String>,
+    on_debounced_input: EventHandler<String>,
 ) -> Element {
     let mut value = use_signal(|| value());
 
@@ -15,13 +16,17 @@ pub fn DebouncedInput(
         on_debounced_input.call(value);
     });
 
+    let oninput = move |e: FormEvent| {
+        value.set(e.data().value());
+        debounce.action(value());
+    };
+
     rsx! {
-        input {
-            placeholder,
+        Input {
             value,
-            oninput: move |e| {
-                value.set(e.data().value());
-                debounce.action(value()) },
+            name,
+            placeholder,
+            oninput,
         }
     }
 }

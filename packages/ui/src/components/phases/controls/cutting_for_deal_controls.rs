@@ -1,6 +1,6 @@
-use crate::components::WaitingForOpponent;
+use crate::components::{WaitingForOpponent, button::Button};
 use crate::route::Route;
-use api::{GameIdDTO, PendingDTO, UserGameDTO, UserIdDTO};
+use api::dto::{GameIdDTO, PendingDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 #[component]
@@ -46,19 +46,19 @@ pub fn CuttingForDealControls() -> Element {
     rsx! {
         match (user_cut(), opponent_cut(), dealer()) {
             (None, _, _) => rsx! {
-                button {
+                Button {
                     onclick: on_cut_for_deal,
                     "Cut for deal"
                 }
             },
             (_, Some(_), None) if pending() == PendingDTO::User => rsx! {
-                button {
+                Button {
                     onclick: on_acknowledge,
                     "Redraw"
                 }
             },
             (_, Some(_), Some(_)) if pending() == PendingDTO::User => rsx! {
-                button {
+                Button {
                     onclick: on_acknowledge,
                     "Start"
                 }

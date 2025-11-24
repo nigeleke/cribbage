@@ -1,30 +1,18 @@
 @media (prefers-color-scheme: light) {
     :root {
-        --background-color: lightgreen;
-        --text-color: grey;
-        --primary-color: #1a73e8;
-        --secondary-color: #e8f0fe;
-        --border-color: #444444;
-        --highlight-color: #f0f8ff;
+        --cribbage-theme-color: lightgreen;
     }
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --background-color: darkgreen;
-        --text-color: ghostwhite;
-        --primary-color: #8ab4f8;
-        --secondary-color: #1e1e1e;
-        --border-color: #cccccc;
-        --highlight-color: #80a080;
+        --cribbage-theme-color: darkgreen;
     }
 }
 
 html,
 body {
     block-size: 100%;
-    margin: 0;
-    padding: 0;
 }
 
 * {
@@ -32,26 +20,22 @@ body {
 }
 
 html {
-    --background-color-light: color-mix(
+    --cribbage-theme-color-light: color-mix(
         in hsl,
-        var(--background-color) red 50%
+        var(--cribbage-theme-color) red 50%
     );
-    --background-color-dark: color-mix(
+    --cribbage-theme-color-dark: color-mix(
         in hsl,
-        var(--background-color) blue 50%
+        var(--cribbage-theme-color) blue 50%
     );
-    background-color: var(--background-color);
-    color: var(--text-color);
+    background-color: var(--cribbage-theme-color);
 }
 
 body {
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-        Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     background: radial-gradient(
         circle at left top,
-        var(--background-color-light),
-        var(--background-color-dark)
+        var(--cribbage-theme-color-light),
+        var(--cribbage-theme-color-dark)
     );
 }
 
@@ -81,6 +65,6 @@ button {
 
 input {
     border-radius: 1rem;
-    padding: 0.5rem 1rem;
+    padding: 1rem 1rem;
     inline-size: fit-content;
 }

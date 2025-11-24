@@ -1,5 +1,6 @@
+use crate::components::button::*;
 use crate::route::Route;
-use api::UserIdDTO;
+use api::dto::UserIdDTO;
 use dioxus::prelude::*;
 
 #[component]
@@ -23,6 +24,10 @@ pub fn HostGameAction() -> Element {
     };
 
     rsx! {
-         button { onclick: host_game, "Play with Friends" }
+         Button {
+             variant: ButtonVariant::Primary,
+             onclick: host_game,
+             "Play with Friends"
+         }
     }
 }

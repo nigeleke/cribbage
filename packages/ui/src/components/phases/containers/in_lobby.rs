@@ -1,4 +1,4 @@
-use api::UserGameDTO;
+use api::dto::UserGameDTO;
 use dioxus::prelude::*;
 
 #[component]

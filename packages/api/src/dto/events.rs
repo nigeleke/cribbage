@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::GameIdDTO;
+use crate::dto::GameIdDTO;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AvailableGameEventDTO {

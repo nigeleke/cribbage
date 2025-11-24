@@ -3,7 +3,7 @@ use std::str::FromStr;
 use serde_json::json;
 
 use crate::database::{AvailableGameRow, GameRow};
-use crate::domain::{AvailableGame, AvailableGameSource, Game, GameId, State, UserId};
+use crate::domain::{Availability, AvailableGame, Game, GameId, State, UserId};
 use crate::error::ServerError;
 
 pub fn available_game_row_to_available_game(
@@ -11,10 +11,10 @@ pub fn available_game_row_to_available_game(
 ) -> Result<AvailableGame, ServerError> {
     let id = GameId::from(row.id);
     let name = row.name;
-    let user = UserId::from(row.user_id);
-    let source = AvailableGameSource::from_str(&row.source).map_err(ServerError::bug)?;
+    let availability = Availability::from_str(&row.availability).map_err(ServerError::bug)?;
+    let created_at = row.created_at;
 
-    let game = AvailableGame::new(id, user, name, source);
+    let game = AvailableGame::new(id, name, availability, created_at);
 
     Ok(game)
 }

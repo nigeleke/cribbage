@@ -1,4 +1,4 @@
-use api::{PlayerDTO, ScoreDTO};
+use api::dto::{PlayerDTO, ScoreDTO};
 use dioxus::prelude::*;
 
 /// Show a single hole in the scoreboard.

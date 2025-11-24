@@ -1,29 +1,34 @@
+use crate::domain::GameId;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use strum::{AsRefStr, EnumString};
+use strum::EnumString;
 
-use crate::domain::{GameId, UserId};
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, AsRefStr, EnumString)]
-pub enum Source {
-    Lobby,
-    Active,
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, EnumString)]
+pub enum Availability {
+    Private,
+    Public,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AvailableGame {
     id: GameId,
-    user: UserId,
     name: String,
-    source: Source,
+    availability: Availability,
+    created_at: DateTime<Utc>,
 }
 
 impl AvailableGame {
-    pub fn new(id: GameId, user: UserId, name: String, source: Source) -> Self {
+    pub fn new(
+        id: GameId,
+        name: String,
+        availability: Availability,
+        created_at: DateTime<Utc>,
+    ) -> Self {
         Self {
             id,
-            user,
             name,
-            source,
+            availability,
+            created_at,
         }
     }
 
@@ -31,15 +36,15 @@ impl AvailableGame {
         &self.id
     }
 
-    pub fn user(&self) -> &UserId {
-        &self.user
-    }
-
     pub fn name(&self) -> &String {
         &self.name
     }
 
-    pub fn source(&self) -> &Source {
-        &self.source
+    pub fn availability(&self) -> &Availability {
+        &self.availability
+    }
+
+    pub fn created_at(&self) -> &DateTime<Utc> {
+        &self.created_at
     }
 }

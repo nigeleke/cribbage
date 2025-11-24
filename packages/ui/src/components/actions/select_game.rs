@@ -1,14 +1,10 @@
 use crate::route::Route;
-use api::{AvailableGameDTO, UserIdDTO};
+use api::dto::{AvailabilityDTO, AvailableGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 #[component]
 pub fn SelectGameAction(game: ReadSignal<AvailableGameDTO>) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
-    let name = match game() {
-        AvailableGameDTO::Lobby { name, .. } => name,
-        AvailableGameDTO::Active { name, .. } => name,
-    };
 
     let navigator = use_navigator();
 
@@ -33,16 +29,16 @@ pub fn SelectGameAction(game: ReadSignal<AvailableGameDTO>) -> Element {
     });
 
     let select_game = |available_game: AvailableGameDTO| {
-        move |_| match available_game {
-            AvailableGameDTO::Lobby { game_id, .. } => join_game.call(game_id),
-            AvailableGameDTO::Active { game_id, .. } => rejoin_game.call(game_id),
+        move |_| match available_game.availability {
+            AvailabilityDTO::Public => join_game.call(available_game.game_id),
+            AvailabilityDTO::Private => rejoin_game.call(available_game.game_id),
         }
     };
 
     rsx! {
         div {
             onclick: select_game(game()),
-            "{name}"
+            "{game().name}"
         }
     }
 }

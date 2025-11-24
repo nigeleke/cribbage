@@ -1,4 +1,4 @@
-use api::CardDTO;
+use api::dto::CardDTO;
 use dioxus::prelude::*;
 
 /// The component to display a card. The card itself can be presented face-up, face-down,

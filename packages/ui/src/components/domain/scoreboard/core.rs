@@ -1,6 +1,6 @@
 use super::track::Track;
 
-use api::{PlayerDTO, UserGameDTO};
+use api::dto::{PlayerDTO, UserGameDTO};
 use dioxus::prelude::*;
 
 /// Show the scoreboard.

@@ -1,8 +1,6 @@
-// use api::AvailableGamesStreamEvent;
-use api::{AvailableGameDTO, AvailableGameEventDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-use crate::components::{AvailableGamesList, HostGameAction, PlayComputerAction, Toast};
+use crate::components::{AvailableGamesList, HostGameAction, PlayComputerAction};
 
 #[component]
 pub fn HomePage() -> Element {
@@ -38,7 +36,6 @@ fn JoinGameSection() -> Element {
             class: "home-page__join-game-section",
             h2 { "Join a Game" }
             AvailableGamesList {}
-            // Toast { toasts }
         }
     }
 }

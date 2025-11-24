@@ -1,12 +1,12 @@
 .card {
     --ease-time: 300ms;
     transition: transform var(--ease-time) ease;
-    width: fit-content;
-    height: fit-content;
+    inline-size: 100px;
+    block-size: 135px;
 }
 
 .card.card__placeholder {
-    border: dashed 2px var(--border-color);
+    border: dashed 2px var(--secondary-color-5);
     border-radius: 5px;
 }
 

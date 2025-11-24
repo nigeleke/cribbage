@@ -11,8 +11,8 @@ pub fn Card(
     selected: Option<bool>,
     on_click: Option<EventHandler<CardDTO>>,
 ) -> Element {
-    const WIDTH: &str = "100px";
-    const HEIGHT: &str = "135px";
+    const INLINE_SIZE: &str = "100px";
+    const BLOCK_SIZE: &str = "135px";
 
     let is_selected = selected.unwrap_or(false);
 
@@ -36,20 +36,16 @@ pub fn Card(
             match card() {
                 Some(CardDTO::FaceDown) => rsx! {
                     div {
-                        dangerous_inner_html: format!("<playing-card cid='00' backcolor='#546F82' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
+                        dangerous_inner_html: format!("<playing-card cid='00' backcolor='#546F82' style='display: inline-block; inline-size: {INLINE_SIZE}; block-size: {BLOCK_SIZE};' />"),
                     }
                 },
                 Some(CardDTO::FaceUp { cid }) => rsx! {
                     div {
-                        dangerous_inner_html: format!("<playing-card cid='{cid}' style='display: inline-block; width: {WIDTH}; height: {HEIGHT};' />"),
+                        dangerous_inner_html: format!("<playing-card cid='{cid}' style='display: inline-block; inline-size: {INLINE_SIZE}; block-size: {BLOCK_SIZE};' />"),
                     }
                 },
                 None => rsx! {
-                    div {
-                        min_width: WIDTH,
-                        min_height: HEIGHT,
-                        span {}
-                    }
+                    div {}
                 },
             }
         }

@@ -1,20 +1,23 @@
-use crate::database::Notification;
-use crate::error::ServerError;
-use crate::{domain::Game, domain::GameServices, projections::GameQuery};
+use std::sync::Arc;
 
 use cqrs_es::Query;
-use dioxus::fullstack::FullstackContext;
-use dioxus::fullstack::extract::FromRef;
-use postgres_es::{PostgresCqrs, default_postgress_pool, postgres_aggregate_cqrs};
-use sqlx::postgres::*;
-use sqlx::{PgPool, migrate};
-use std::sync::Arc;
+use dioxus::fullstack::{FullstackContext, extract::FromRef};
+use postgres_es::{PostgresCqrs, PostgresViewRepository, default_postgress_pool, postgres_cqrs};
+use sqlx::{PgPool, migrate, postgres::*};
 use tokio::sync::broadcast;
+
+use crate::{
+    database::Notification,
+    domain::{Game, GameServices},
+    error::ServerError,
+    projections::{GameQuery, GameView},
+};
 
 #[derive(Clone)]
 pub struct ServerState {
     pub pool: Arc<PgPool>,
     pub cqrs: Arc<PostgresCqrs<Game>>,
+    pub game_view_repo: Arc<PostgresViewRepository<GameView, Game>>,
     pub database_changes_sender: broadcast::Sender<Notification>,
 }
 
@@ -43,9 +46,14 @@ pub async fn initialize_server_state() -> Result<ServerState, ServerError> {
 
     let pool = Arc::new(pool);
 
-    let queries: Vec<Box<dyn Query<Game>>> = vec![Box::new(GameQuery::new(pool.clone()))];
+    let game_view_repo = Arc::new(PostgresViewRepository::new("game_query", (*pool).clone()));
+
+    let mut game_query = GameQuery::new(game_view_repo.clone());
+    game_query.use_error_handler(Box::new(|e| dioxus::prelude::error!("{e}")));
+
+    let queries: Vec<Box<dyn Query<Game>>> = vec![Box::new(game_query)];
     let services = GameServices {};
-    let cqrs = postgres_aggregate_cqrs::<Game>((*pool).clone(), queries, services);
+    let cqrs = postgres_cqrs::<Game>((*pool).clone(), queries, services);
     let cqrs = Arc::new(cqrs);
 
     let database_changes_sender = create_database_changes_sender((*pool).clone()).await?;
@@ -53,6 +61,7 @@ pub async fn initialize_server_state() -> Result<ServerState, ServerError> {
     let state = ServerState {
         pool,
         cqrs,
+        game_view_repo,
         database_changes_sender,
     };
 

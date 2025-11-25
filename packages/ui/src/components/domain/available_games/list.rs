@@ -74,8 +74,9 @@ pub fn AvailableGamesList() -> Element {
         fetch_games(FetchAction::Replace, "".into(), Since::default()).await
     });
 
-    let on_filter_changed = move |value: String| {
-        filter.set(value);
+    let on_filter_changed = move |value: String| async move {
+        filter.set(value.clone());
+        fetch_games(FetchAction::Replace, value, Since::default()).await;
     };
 
     let on_load_more = move |_| async move {

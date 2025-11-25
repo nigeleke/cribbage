@@ -203,12 +203,16 @@ impl Game {
 
         let discard_cards_to_crib = |discarding: &Discarding| {
             if !discarding.pending().waiting_on(player) {
+                debug!("dicard 1");
                 not_permitted()
             } else if !discarding.hand(player).contains_all(&cards) {
+                debug!("dicard 2");
                 Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else if cards.len() != CARDS_DISCARDED_TO_CRIB {
+                debug!("dicard 3");
                 Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else if discarding.hand(player).len() - cards.len() != CARDS_KEPT_PER_HAND {
+                debug!("dicard 4");
                 Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else {
                 let events = vec![GameEvent::CardsDiscardedToCrib {
@@ -220,14 +224,20 @@ impl Game {
         };
 
         if self.id == GameId::default() {
+            debug!("dicard A");
             not_permitted()
         } else {
             match &self.state {
                 State::Discarding(discarding) => {
+                    debug!("dicard B");
                     let events = discard_cards_to_crib(discarding)?;
+                    debug!("dicard C");
                     Ok(events)
                 }
-                _ => not_permitted(),
+                _ => {
+                    debug!("dicard D {:?}", self.state);
+                    not_permitted()
+                }
             }
         }
     }
@@ -379,14 +389,18 @@ impl Game {
     }
 
     fn cards_discarded_to_crib(&mut self, player: Player, cards: &[Card]) {
+        debug!("cards_discarded_to_crib {player} {cards:?}");
         if let State::Discarding(discarding) = &self.state {
+            debug!("cards_discarded_to_crib 2 {player} {}", self.state);
             let (scoreboard, roles, mut hands, mut crib, mut deck, pending) =
                 discarding.clone().into_parts();
 
             hands[player].remove_all(cards);
             crib.add_all(cards);
 
+            debug!("cards_discarded_to_crib 3 {crib}");
             if crib.len() == CARDS_REQUIRED_IN_CRIB {
+                debug!("cards_discarded_to_crib 4");
                 let starter_cut = deck.cut();
                 let play_state = PlayState::new(roles.pone().player())
                     .with_pending_plays(PLAYER0, hands[PLAYER0].as_ref())
@@ -394,6 +408,7 @@ impl Game {
                 let playing = Playing::new(scoreboard, roles, hands, play_state, crib, starter_cut);
                 self.state = State::Playing(playing);
             } else {
+                debug!("cards_discarded_to_crib 5");
                 let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
                 self.state = State::Discarding(discarding);
             }
@@ -413,7 +428,7 @@ impl Game {
     }
 
     pub fn apply_event(&mut self, event: GameEvent) {
-        debug!("Game:apply_event: {:?}", event);
+        debug!("******************** Game:apply_event: {:?}", event);
         match event {
             GameEvent::LobbyGameCreated {
                 game_id,
@@ -466,15 +481,18 @@ impl Aggregate for Game {
         _services: &Self::Services,
         sink: &EventSink<Self>,
     ) -> Result<(), Self::Error> {
-        let events = self.handle_command(command)?;
+        let result = self.handle_command(command);
+        debug!("handled {result:?}");
+        let events = result?;
         for event in events {
             sink.write(event, self).await;
         }
+        debug!("sunk events");
         Ok(())
     }
 
     fn apply(&mut self, event: Self::Event) {
-        self.apply_event(event);
+        // self.apply_event(event);
     }
 }
 

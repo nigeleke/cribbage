@@ -1,13 +1,24 @@
 use dioxus::prelude::*;
 
-use crate::domain::{GameCommand, GameId, UserId};
-use crate::server_state::ServerState;
+use crate::{
+    domain::{GameCommand, GameId, UserId},
+    error::ServerError,
+    server_state::ServerState,
+};
 
-pub async fn join_game(server_state: ServerState, user_id: UserId, game_id: GameId) -> Result<()> {
+pub async fn join_game(
+    server_state: ServerState,
+    user_id: UserId,
+    game_id: GameId,
+) -> Result<(), ServerError> {
     let aggregate_id = game_id.value().to_string();
 
     let command = GameCommand::JoinGame { user_id };
-    let _ = server_state.cqrs.execute(&aggregate_id, command).await?;
+    let _ = server_state
+        .cqrs
+        .execute(&aggregate_id, command)
+        .await
+        .map_err(ServerError::bug)?;
 
     Ok(())
 }

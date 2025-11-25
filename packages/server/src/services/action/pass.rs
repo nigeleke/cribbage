@@ -1,7 +1,9 @@
-use crate::domain::{Card, GameCommand, GameId, UserId};
-use crate::error::ServerError;
-use crate::server_state::ServerState;
-use crate::services::view::get_game;
+use crate::{
+    domain::{GameCommand, GameId, UserId},
+    error::ServerError,
+    server_state::ServerState,
+    services::view::get_game,
+};
 
 pub async fn pass(
     server_state: ServerState,

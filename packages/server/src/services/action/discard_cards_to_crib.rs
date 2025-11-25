@@ -17,11 +17,15 @@ pub async fn discard_cards_to_crib(
         let aggregate_id = game_id.value().to_string();
 
         let command = GameCommand::DiscardCardsToCrib { player, cards };
-        let _ = server_state
+        let result = server_state
             .cqrs
             .execute(&aggregate_id, command)
             .await
-            .map_err(ServerError::bug)?;
+            .map_err(ServerError::bug);
+
+        dioxus::prelude::debug!("server::discard_cards_to_crib: {result:?}");
+
+        let _ = result?;
 
         Ok(())
     } else {

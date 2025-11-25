@@ -1,7 +1,7 @@
-use crate::components::button::*;
-use crate::route::Route;
-use api::dto::{CardIdDTO, GameIdDTO, UserIdDTO};
+use api::dto::{CardDTO, CardIdDTO, GameIdDTO, UserIdDTO};
 use dioxus::prelude::*;
+
+use crate::{components::button::*, route::Route};
 
 #[component]
 pub fn DiscardingControls() -> Element {
@@ -13,21 +13,16 @@ pub fn DiscardingControls() -> Element {
 
     let can_discard = selected_count == 2;
 
-    let navigator = use_navigator();
+    let mut discard_action = use_action(move |cards: Vec<CardIdDTO>| async move {
+        let result = api::action::discard_cards_to_crib(*user_id.read(), game_id, cards).await;
+        debug!("{:?}", result);
+        // TODO: Toast errors...
+        result
+    });
 
     let on_discard = move |_| {
-        spawn(async move {
-            match api::action::discard_cards_to_crib(*user_id.read(), game_id, selected_cards())
-                .await
-            {
-                Ok(_) => {}
-                Err(error) => {
-                    warn!("GamePage:discard_cards_to_crib:error {error:?}");
-                    let error = error.to_string();
-                    navigator.push(Route::ErrorPage { error });
-                }
-            }
-        });
+        let cards = selected_cards();
+        discard_action.call(cards);
     };
 
     rsx! {

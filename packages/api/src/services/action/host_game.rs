@@ -1,11 +1,13 @@
-use crate::dto::{GameIdDTO, UserIdDTO};
-use dioxus::fullstack::extract::State;
-use dioxus::prelude::*;
+use dioxus::{fullstack::extract::State, prelude::*};
+
+use crate::{
+    dto::{GameIdDTO, UserIdDTO},
+    error::ApiError,
+};
 
 #[post("/api/{user_id}/host_game/", State(server_state): State<server::ServerState>)]
-pub async fn host_game(user_id: UserIdDTO) -> Result<GameIdDTO> {
-    use server::action::host_game;
-    use server::domain::UserId;
+pub async fn host_game(user_id: UserIdDTO) -> Result<GameIdDTO, ApiError> {
+    use server::{action::host_game, domain::UserId};
 
     let user_id = UserId::from(user_id.value());
 

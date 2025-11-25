@@ -1,7 +1,9 @@
-use crate::domain::{Card, GameCommand, GameId, UserId};
-use crate::error::ServerError;
-use crate::server_state::ServerState;
-use crate::services::view::get_game;
+use crate::{
+    domain::{Card, GameCommand, GameId, UserId},
+    error::ServerError,
+    server_state::ServerState,
+    services::view::get_game,
+};
 
 pub async fn discard_cards_to_crib(
     server_state: ServerState,
@@ -17,15 +19,11 @@ pub async fn discard_cards_to_crib(
         let aggregate_id = game_id.value().to_string();
 
         let command = GameCommand::DiscardCardsToCrib { player, cards };
-        let result = server_state
+        server_state
             .cqrs
             .execute(&aggregate_id, command)
             .await
-            .map_err(ServerError::bug);
-
-        dioxus::prelude::debug!("server::discard_cards_to_crib: {result:?}");
-
-        let _ = result?;
+            .map_err(ServerError::bug)?;
 
         Ok(())
     } else {

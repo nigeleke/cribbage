@@ -1,8 +1,11 @@
-use crate::components::{DebouncedInput, SelectGameAction, button::*, scroll_area::*};
-use api::dto::{AvailabilityDTO, AvailableGameDTO, UserIdDTO};
-use api::view::Since;
+use api::{
+    dto::{AvailabilityDTO, AvailableGameDTO, UserIdDTO},
+    view::Since,
+};
 use dioxus::prelude::*;
 use dioxus_primitives::scroll_area::ScrollDirection;
+
+use crate::components::{DebouncedInput, SelectGameAction, button::*, scroll_area::*};
 
 enum FetchAction {
     Replace,
@@ -16,22 +19,12 @@ pub fn AvailableGamesList() -> Element {
     let mut games = use_signal(Vec::<AvailableGameDTO>::default);
     let mut filter = use_signal(String::default);
 
-    let show = |what: &str, items: &[AvailableGameDTO]| {
-        debug!("***** WHAT: {what}");
-        let items = items
-            .iter()
-            .map(|g| format!("{} {}", g.name, g.game_id.value()))
-            .collect::<Vec<_>>();
-        debug!("{:#?}", items);
-        debug!("*****");
-    };
-
     let mut last_since = use_signal(Since::default);
 
     let filtered_games = use_memo(move || {
         let filter = filter.read().to_ascii_lowercase();
 
-        let f = if filter.is_empty() {
+        if filter.is_empty() {
             games.read().clone()
         } else {
             games
@@ -40,12 +33,7 @@ pub fn AvailableGamesList() -> Element {
                 .filter(|g| g.name.to_ascii_lowercase().contains(&filter))
                 .cloned()
                 .collect::<Vec<_>>()
-        };
-
-        show("filtered_games: f", &f);
-        debug!("filtered_games: since: {:?}", last_since());
-
-        f
+        }
     });
 
     let mut has_more = use_signal(|| false);
@@ -58,8 +46,6 @@ pub fn AvailableGamesList() -> Element {
                 has_more.set(response.has_more());
                 last_since.set(response.since().clone());
                 let mut fetched_games = Vec::from(response.games());
-                show("fetch_games: fetched_games:", &fetched_games);
-                debug!("fetch_games: since: {:?}", response.since());
                 match action {
                     FetchAction::Replace => games.set(fetched_games),
                     FetchAction::Append => games.write().append(&mut fetched_games),
@@ -80,8 +66,6 @@ pub fn AvailableGamesList() -> Element {
     };
 
     let on_load_more = move |_| async move {
-        show("on_load_more: games:", &games.read());
-        debug!("on_load_more: since: {:?}", last_since());
         fetch_games(FetchAction::Append, filter(), last_since()).await;
     };
 

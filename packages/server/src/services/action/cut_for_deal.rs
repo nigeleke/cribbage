@@ -1,7 +1,10 @@
-use crate::domain::{GameCommand, GameId, UserId};
-use crate::error::ServerError;
-use crate::server_state::ServerState;
-use crate::services::view::get_game;
+use crate::{
+    bug,
+    domain::{GameCommand, GameId, UserId},
+    error::ServerError,
+    server_state::ServerState,
+    services::view::get_game,
+};
 
 pub async fn cut_for_deal(
     server_state: ServerState,
@@ -22,7 +25,7 @@ pub async fn cut_for_deal(
             .cqrs
             .execute(&aggregate_id, command)
             .await
-            .map_err(ServerError::bug)?;
+            .map_err(bug!())?;
 
         Ok(())
     } else {

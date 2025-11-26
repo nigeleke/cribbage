@@ -1,24 +1,23 @@
-use crate::convertors::game_row_to_game;
-use crate::database::select_game;
-use crate::domain::{Game, GameId};
-
-use crate::error::ServerError;
-use crate::server_state::ServerState;
+use crate::{
+    bug,
+    domain::{Game, GameId},
+    error::ServerError,
+    server_state::ServerState,
+};
 
 pub async fn get_game(
     server_state: ServerState,
     game_id: GameId,
 ) -> Result<Option<Game>, ServerError> {
-    let pool = server_state.pool.clone();
+    use cqrs_es::persist::ViewRepository;
 
-    let game = select_game(&*pool, game_id.value())
+    let game = server_state
+        .game_view_repo
+        .load(&game_id.value().to_string())
         .await
-        .map_err(ServerError::bug)?;
+        .map_err(bug!())?;
 
-    let game = game
-        .map(game_row_to_game)
-        .transpose()
-        .map_err(ServerError::bug)?;
+    let game = game.map(|g| g.instance().clone());
 
     Ok(game)
 }

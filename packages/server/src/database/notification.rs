@@ -1,8 +1,7 @@
-use crate::error::ServerError;
-
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use sqlx::types::JsonValue;
+
+use crate::{bug, error::ServerError};
 
 type Result<T> = std::result::Result<T, ServerError>;
 
@@ -40,7 +39,7 @@ impl Notification {
     where
         T: DeserializeOwned,
     {
-        let missing = |s: &str| ServerError::bug(format!("{s} notification data missing"));
+        let missing = |s: &str| bug!()(format!("{s} notification data missing"));
         let old_row = || self.old_row_as::<T>()?.ok_or_else(|| missing("old_row"));
         let new_row = || self.new_row_as::<T>()?.ok_or_else(|| missing("new_row"));
 
@@ -64,7 +63,7 @@ impl Notification {
             .clone()
             .map(|r| serde_json::from_value::<T>(r))
             .transpose()
-            .map_err(ServerError::bug)
+            .map_err(bug!())
     }
 
     fn old_row_as<T>(&self) -> Result<Option<T>>
@@ -75,6 +74,6 @@ impl Notification {
             .clone()
             .map(|r| serde_json::from_value::<T>(r))
             .transpose()
-            .map_err(ServerError::bug)
+            .map_err(bug!())
     }
 }

@@ -1,45 +1,50 @@
 use futures::{Stream, TryStreamExt};
 use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 
-use crate::convertors;
-use crate::database::{Change, GameRow, Notification};
-use crate::domain::{Game, GameId};
-use crate::error::ServerError;
-use crate::server_state::ServerState;
+use crate::{
+    bug, convertors,
+    database::{Change, GameQueryRow, Notification},
+    domain::{Game, GameId},
+    error::ServerError,
+    server_state::ServerState,
+};
 
 pub async fn game_stream(
     server_state: ServerState,
     game_id: GameId,
 ) -> Result<impl Stream<Item = Game>, ServerError> {
-    let stream = BroadcastStream::new(server_state.database_changes_sender.subscribe())
-        .map_err(ServerError::bug);
+    let stream =
+        BroadcastStream::new(server_state.database_changes_sender.subscribe()).map_err(bug!());
 
     let stream = stream.try_filter_map(move |notification| async move {
+        dioxus::prelude::debug!("&&&&& game_stream {game_id} {notification:?}");
+
         let game_id = game_id.clone();
 
         let notification_to_game_row_change = move |notification: Notification| {
-            let change = (notification.table_name == "games")
-                .then_some(notification.as_change::<GameRow>())
+            let change = (notification.table_name == "game_query")
+                .then_some(notification.as_change::<GameQueryRow>())
                 .transpose()?;
             Ok::<_, ServerError>(change)
         };
 
-        let row_change_to_game_change = move |change: Change<GameRow>| {
+        let row_change_to_game_change = move |change: Change<GameQueryRow>| {
             let change = match change {
                 Change::Insert { t } => {
-                    let t = convertors::game_row_to_game(t)?;
+                    let t = convertors::game_query_row_to_game(t)?;
                     Change::Insert { t }
                 }
                 Change::Update { old_t, new_t } => {
-                    let old_t = convertors::game_row_to_game(old_t)?;
-                    let new_t = convertors::game_row_to_game(new_t)?;
+                    let old_t = convertors::game_query_row_to_game(old_t)?;
+                    let new_t = convertors::game_query_row_to_game(new_t)?;
                     Change::Update { old_t, new_t }
                 }
                 Change::Delete { t } => {
-                    let t = convertors::game_row_to_game(t)?;
+                    let t = convertors::game_query_row_to_game(t)?;
                     Change::Delete { t }
                 }
             };
+
             Ok::<_, ServerError>(change)
         };
 

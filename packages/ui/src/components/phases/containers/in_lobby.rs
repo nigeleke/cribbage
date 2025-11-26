@@ -12,7 +12,7 @@ pub fn InLobby() -> Element {
             class: "in-lobby",
             p {
                 "The game "
-                span { class: "game-name", "{name}" }
+                span { class: "in-lobby__game-name", "{name}" }
                 " is waiting for an opponent"
             }
         }

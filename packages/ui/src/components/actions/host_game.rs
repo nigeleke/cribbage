@@ -1,27 +1,35 @@
-use crate::components::button::*;
-use crate::route::Route;
 use api::dto::UserIdDTO;
 use dioxus::prelude::*;
+
+use crate::{components::button::*, route::Route};
 
 #[component]
 pub fn HostGameAction() -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
+
+    let mut game_id = use_signal(|| None);
+
     let navigator = use_navigator();
 
-    let host_game = move |_| {
-        spawn(async move {
-            match api::action::host_game(*user_id.read()).await {
-                Ok(game_id) => {
-                    navigator.push(Route::GamePage { game_id });
-                }
-                Err(error) => {
-                    warn!("HomePage:host_game:error {error:?}");
-                    let error = error.to_string();
-                    navigator.push(Route::ErrorPage { error });
-                }
+    use_effect(move || {
+        if let Some(game_id) = game_id() {
+            navigator.push(Route::GamePage { game_id });
+        }
+    });
+
+    let mut host_game_action = use_action(move || async move {
+        let result = api::action::host_game(*user_id.read()).await;
+        match result {
+            Ok(id) => game_id.set(Some(id)),
+            Err(ref error) => {
+                warn!("HostGameAction:error {error:?}");
+                // TODO: Toast
             }
-        });
-    };
+        }
+        result
+    });
+
+    let host_game = move |_| host_game_action.call();
 
     rsx! {
          Button {

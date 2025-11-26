@@ -1,6 +1,6 @@
 mod available_game;
 mod event;
-mod game;
+mod game_query;
 
 pub use available_game::AvailableGameRow;
-pub use game::{GameRow, NewGame, UpdateGame};
+pub use game_query::GameQueryRow;

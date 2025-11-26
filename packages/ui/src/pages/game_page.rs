@@ -1,6 +1,7 @@
-use crate::components::{CuttingForDeal, Discarding, InLobby, Playing};
 use api::dto::{GameIdDTO, PhaseDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
+
+use crate::components::{CuttingForDeal, Discarding, InLobby, Playing};
 
 #[component]
 pub fn GamePage(game_id: GameIdDTO) -> Element {
@@ -52,58 +53,3 @@ fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
         PhaseDTO::Finished => rsx! {},
     }
 }
-
-// #[component]
-// fn InProgress() -> Element {
-//     let game = use_context::<ReadSignal<UserGameDTO>>();
-
-//     let phase = use_memo(move || game().phase);
-//     let user_score = use_memo(move || game().user_state.score);
-//     let user_hand = use_memo(move || game().user_state.hand);
-//     let opponent_score = use_memo(move || game().opponent_state.score);
-//     let opponent_hand = use_memo(move || game().opponent_state.hand);
-//     let dealer = use_memo(move || game().dealer.expect("dealer must have been selected"));
-//     let crib = use_memo(move || game().crib.cards);
-//     let starter_cut = use_memo(move || game().crib.starter_cut);
-//     let plays = use_memo(move || game().plays);
-
-//     rsx! {
-//         div {
-//             class: "game-game__in-progress",
-//             div {
-//                 class: "scoreboard",
-//                 Scoreboard { user_score, opponent_score }
-//             }
-//             div {
-//                 class: "card-container",
-//                 match *phase.read() {
-//                     PhaseDTO::Discarding => rsx! {
-//                         UserHand {
-//                             cards: user_hand,
-//                             DiscardingControls { }
-//                         }
-//                     },
-//                     PhaseDTO::Playing => rsx! {
-//                         UserHand {
-//                             cards: user_hand,
-//                             PlayingControls { }
-//                         }
-//                     },
-//                     _ => rsx! {"unsupported phase"}
-//                 }
-//             }
-//             div {
-//                 class: "middle-section",
-//                 Plays { plays }
-//             }
-//             div {
-//                 class: "card-container",
-//                 Hand { cards: opponent_hand }
-//             }
-//             div {
-//                 class: "crib-cut-container",
-//                 CribAndCut { dealer, cards: crib, starter_cut }
-//             }
-//         }
-//     }
-// }

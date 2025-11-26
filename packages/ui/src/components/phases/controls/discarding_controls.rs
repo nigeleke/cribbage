@@ -15,7 +15,6 @@ pub fn DiscardingControls() -> Element {
 
     let mut discard_action = use_action(move |cards: Vec<CardIdDTO>| async move {
         let result = api::action::discard_cards_to_crib(*user_id.read(), game_id, cards).await;
-        debug!("{:?}", result);
         // TODO: Toast errors...
         result
     });

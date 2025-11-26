@@ -38,4 +38,5 @@ insta = { version = "1.44.0", features = ["filters"] }
 
 [features]
 server = ["dioxus/server"]
+backtrace = []
 # server = ["dioxus/server", "dep:cqrs-es", "dep:postgres-es", "dep:goofy-animals", "dep:rand", "dep:rand_chacha", "dep:sqlx"]

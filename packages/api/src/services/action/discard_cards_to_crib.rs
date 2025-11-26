@@ -24,7 +24,7 @@ pub async fn discard_cards_to_crib(
         .iter()
         .map(|cid| Card::from_str(&cid))
         .collect::<Result<_, _>>()
-        .map_err(|e| ApiError::BadRequest(format!("invalid cards: {:#?}", cards)))?;
+        .map_err(|error| ApiError::BadRequest(error.to_string()))?;
 
     let _ = discard_cards_to_crib(server_state, user_id, game_id, cards).await?;
 

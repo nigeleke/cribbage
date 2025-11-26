@@ -1,8 +1,8 @@
-use crate::dto::{AvailableGameDTO, UserIdDTO};
 use chrono::{DateTime, Utc};
-use dioxus::fullstack::extract::State;
-use dioxus::prelude::*;
+use dioxus::{fullstack::extract::State, prelude::*};
 use serde::{Deserialize, Serialize};
+
+use crate::dto::{AvailableGameDTO, UserIdDTO};
 
 pub type Since = Option<DateTime<Utc>>;
 
@@ -33,9 +33,12 @@ pub async fn get_available_games(
     filter: Option<String>,
     since: Since,
 ) -> Result<AvailableGamesResponse> {
+    use server::{
+        domain::{Availability, UserId},
+        view::get_available_games,
+    };
+
     use crate::dto::{AvailabilityDTO, GameIdDTO};
-    use server::domain::{Availability, UserId};
-    use server::view::get_available_games;
 
     let user_id = UserId::from(user_id.value());
     let filter = filter.unwrap_or_default();
@@ -52,12 +55,10 @@ pub async fn get_available_games(
                 Availability::Private => AvailabilityDTO::Private,
                 Availability::Public => AvailabilityDTO::Public,
             };
-            let created_at = game.created_at().clone();
             AvailableGameDTO {
                 game_id,
                 name,
                 availability,
-                created_at,
             }
         })
         .collect::<Vec<_>>();

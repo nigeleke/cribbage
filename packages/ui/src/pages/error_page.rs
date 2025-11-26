@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 
 #[component]
 pub fn ErrorPage(error: String) -> Element {
-    debug!("***** ***** ***** ***** ErrorPage:error: '{error}'");
+    debug!("ErrorPage:error: '{error}'");
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/error_page.css") }
         div {

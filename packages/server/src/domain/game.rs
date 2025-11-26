@@ -1,17 +1,20 @@
-use crate::display::format_vec;
-use crate::domain::constants::{
-    CARDS_DISCARDED_TO_CRIB, CARDS_KEPT_PER_HAND, CARDS_REQUIRED_IN_CRIB, PLAYER_COUNT,
-};
-use crate::domain::{
-    Card, Crib, CutsForDeal, Dealer, Deck, Discarding, DomainError, GameCommand, GameEvent, GameId,
-    Hand, Hands, HasCutsForDeal, HasDeck, HasHands, HasPending, HasPlayState, PLAYER0, PLAYER1,
-    Pending, PlayState, Player, Playing, Roles, Scoreboard, Starting, State, UserId,
-    WaitingForDiscards,
-};
-use crate::name_builder::generate_game_name;
 use cqrs_es::{Aggregate, Query, event_sink::EventSink};
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    display::format_vec,
+    domain::{
+        Card, Crib, CutsForDeal, Dealer, Deck, Discarding, DomainError, GameCommand, GameEvent,
+        GameId, Hand, Hands, HasCutsForDeal, HasDeck, HasHands, HasPending, HasPlayState, PLAYER0,
+        PLAYER1, Pending, PlayState, Player, Playing, Roles, Scoreboard, Starting, State, UserId,
+        WaitingForDiscards,
+        constants::{
+            CARDS_DISCARDED_TO_CRIB, CARDS_KEPT_PER_HAND, CARDS_REQUIRED_IN_CRIB, PLAYER_COUNT,
+        },
+    },
+    name_builder::generate_game_name,
+};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Game {
@@ -203,16 +206,12 @@ impl Game {
 
         let discard_cards_to_crib = |discarding: &Discarding| {
             if !discarding.pending().waiting_on(player) {
-                debug!("dicard 1");
                 not_permitted()
             } else if !discarding.hand(player).contains_all(&cards) {
-                debug!("dicard 2");
                 Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else if cards.len() != CARDS_DISCARDED_TO_CRIB {
-                debug!("dicard 3");
                 Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else if discarding.hand(player).len() - cards.len() != CARDS_KEPT_PER_HAND {
-                debug!("dicard 4");
                 Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else {
                 let events = vec![GameEvent::CardsDiscardedToCrib {
@@ -224,20 +223,14 @@ impl Game {
         };
 
         if self.id == GameId::default() {
-            debug!("dicard A");
             not_permitted()
         } else {
             match &self.state {
                 State::Discarding(discarding) => {
-                    debug!("dicard B");
                     let events = discard_cards_to_crib(discarding)?;
-                    debug!("dicard C");
                     Ok(events)
                 }
-                _ => {
-                    debug!("dicard D {:?}", self.state);
-                    not_permitted()
-                }
+                _ => not_permitted(),
             }
         }
     }
@@ -299,7 +292,7 @@ impl Game {
     }
 
     pub fn handle_command(&self, command: GameCommand) -> Result<Vec<GameEvent>, DomainError> {
-        debug!("Game:handle_command: {:?}", command);
+        debug!("***** COMMAND ***** Game:handle_command: {:?}", command);
         match command {
             GameCommand::HostGame { user_id, game_id } => self.host_game(user_id, game_id),
             GameCommand::JoinGame { user_id } => self.join_game(user_id),
@@ -389,18 +382,14 @@ impl Game {
     }
 
     fn cards_discarded_to_crib(&mut self, player: Player, cards: &[Card]) {
-        debug!("cards_discarded_to_crib {player} {cards:?}");
         if let State::Discarding(discarding) = &self.state {
-            debug!("cards_discarded_to_crib 2 {player} {}", self.state);
             let (scoreboard, roles, mut hands, mut crib, mut deck, pending) =
                 discarding.clone().into_parts();
 
             hands[player].remove_all(cards);
             crib.add_all(cards);
 
-            debug!("cards_discarded_to_crib 3 {crib}");
             if crib.len() == CARDS_REQUIRED_IN_CRIB {
-                debug!("cards_discarded_to_crib 4");
                 let starter_cut = deck.cut();
                 let play_state = PlayState::new(roles.pone().player())
                     .with_pending_plays(PLAYER0, hands[PLAYER0].as_ref())
@@ -408,7 +397,6 @@ impl Game {
                 let playing = Playing::new(scoreboard, roles, hands, play_state, crib, starter_cut);
                 self.state = State::Playing(playing);
             } else {
-                debug!("cards_discarded_to_crib 5");
                 let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
                 self.state = State::Discarding(discarding);
             }
@@ -428,7 +416,7 @@ impl Game {
     }
 
     pub fn apply_event(&mut self, event: GameEvent) {
-        debug!("******************** Game:apply_event: {:?}", event);
+        debug!("***** EVENT ***** Game:apply_event: {:?}", event);
         match event {
             GameEvent::LobbyGameCreated {
                 game_id,
@@ -481,18 +469,17 @@ impl Aggregate for Game {
         _services: &Self::Services,
         sink: &EventSink<Self>,
     ) -> Result<(), Self::Error> {
-        let result = self.handle_command(command);
-        debug!("handled {result:?}");
-        let events = result?;
+        let events = self.handle_command(command)?;
+
         for event in events {
             sink.write(event, self).await;
         }
-        debug!("sunk events");
+
         Ok(())
     }
 
     fn apply(&mut self, event: Self::Event) {
-        // self.apply_event(event);
+        self.apply_event(event);
     }
 }
 
@@ -530,8 +517,9 @@ impl From<State> for Game {
 #[cfg(test)]
 #[coverage(off)]
 mod test {
-    use super::*;
     use cqrs_es::test::TestFramework;
+
+    use super::*;
 
     type GameTestFramework = TestFramework<Game>;
     //     use std::str::FromStr;
@@ -577,8 +565,10 @@ mod test {
     /// number.
     mod players {
         use super::GameTestFramework;
-        use crate::domain::{DomainError, GameCommand, GameEvent, GameId, GameServices, UserId};
-        use crate::function_name;
+        use crate::{
+            domain::{DomainError, GameCommand, GameEvent, GameId, GameServices, UserId},
+            function_name,
+        };
 
         #[test]
         fn a_user_can_host_game() {
@@ -733,12 +723,16 @@ mod test {
     /// right to shuffle last, and he presents the cards to the non-dealer for the cut prior to the
     /// deal. (In some games, there is no cut at this time.)
     mod deal_cut {
-        use super::*;
-        use crate::domain::{
-            Dealer, GameCommand, GameEvent, GameId, GameServices, PLAYER0, PLAYER1, UserId,
-        };
-        use crate::{card, function_name};
         use std::str::FromStr;
+
+        use super::*;
+        use crate::{
+            card,
+            domain::{
+                Dealer, GameCommand, GameEvent, GameId, GameServices, PLAYER0, PLAYER1, UserId,
+            },
+            function_name,
+        };
 
         #[test]
         fn user_must_cut_for_dealer_1() {

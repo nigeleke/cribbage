@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::dto::GameIdDTO;
@@ -19,6 +18,4 @@ pub struct AvailableGameDTO {
     pub name: String,
 
     pub availability: AvailabilityDTO,
-
-    pub created_at: DateTime<Utc>,
 }

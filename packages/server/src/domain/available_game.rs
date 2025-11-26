@@ -1,7 +1,7 @@
-use crate::domain::GameId;
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use strum::EnumString;
+
+use crate::domain::GameId;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, EnumString)]
 pub enum Availability {
@@ -14,21 +14,14 @@ pub struct AvailableGame {
     id: GameId,
     name: String,
     availability: Availability,
-    created_at: DateTime<Utc>,
 }
 
 impl AvailableGame {
-    pub fn new(
-        id: GameId,
-        name: String,
-        availability: Availability,
-        created_at: DateTime<Utc>,
-    ) -> Self {
+    pub fn new(id: GameId, name: String, availability: Availability) -> Self {
         Self {
             id,
             name,
             availability,
-            created_at,
         }
     }
 
@@ -42,9 +35,5 @@ impl AvailableGame {
 
     pub fn availability(&self) -> &Availability {
         &self.availability
-    }
-
-    pub fn created_at(&self) -> &DateTime<Utc> {
-        &self.created_at
     }
 }

@@ -1,4 +1,5 @@
 use crate::{
+    bug,
     domain::{Card, GameCommand, GameId, UserId},
     error::ServerError,
     server_state::ServerState,
@@ -23,7 +24,7 @@ pub async fn discard_cards_to_crib(
             .cqrs
             .execute(&aggregate_id, command)
             .await
-            .map_err(ServerError::bug)?;
+            .map_err(bug!())?;
 
         Ok(())
     } else {

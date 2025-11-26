@@ -7,6 +7,7 @@ use sqlx::{PgPool, migrate, postgres::*};
 use tokio::sync::broadcast;
 
 use crate::{
+    bug,
     database::Notification,
     domain::{Game, GameServices},
     error::ServerError,
@@ -73,12 +74,12 @@ async fn create_database_changes_sender(
 ) -> Result<broadcast::Sender<Notification>, ServerError> {
     let mut listener = PgListener::connect_with(&postgres_pool)
         .await
-        .map_err(ServerError::bug)?;
+        .map_err(bug!())?;
 
     listener
-        .listen_all(["events_change", "games_change"])
+        .listen_all(["game_query_change"])
         .await
-        .map_err(ServerError::bug)?;
+        .map_err(bug!())?;
 
     let (tx, _rx): (broadcast::Sender<Notification>, _) = broadcast::channel(10);
     let tx2 = tx.clone();

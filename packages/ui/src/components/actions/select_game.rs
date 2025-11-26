@@ -1,30 +1,36 @@
-use crate::route::Route;
 use api::dto::{AvailabilityDTO, AvailableGameDTO, UserIdDTO};
 use dioxus::prelude::*;
+
+use crate::route::Route;
 
 #[component]
 pub fn SelectGameAction(game: ReadSignal<AvailableGameDTO>) -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
 
+    let mut game_id = use_signal(|| None);
+
     let navigator = use_navigator();
 
-    let mut join_game = use_action(move |game_id| async move {
-        match api::action::join_game(user_id(), game_id).await {
-            Ok(_) => {
-                navigator.push(Route::GamePage { game_id });
-            }
-            Err(error) => {
-                warn!("SelectGameAction:error {error:?}");
-                navigator.push(Route::ErrorPage {
-                    error: error.to_string(),
-                });
-            }
-        };
-        dioxus::Ok(())
+    use_effect(move || {
+        if let Some(game_id) = game_id() {
+            navigator.push(Route::GamePage { game_id });
+        }
     });
 
-    let mut rejoin_game = use_action(move |game_id| async move {
-        navigator.push(Route::GamePage { game_id });
+    let mut join_game = use_action(move |id| async move {
+        let result = api::action::join_game(user_id(), id).await;
+        match result {
+            Ok(_) => game_id.set(Some(id)),
+            Err(ref error) => {
+                warn!("SelectGameAction:error {error:?}");
+                // TODO: Toast
+            }
+        };
+        result
+    });
+
+    let mut rejoin_game = use_action(move |id| async move {
+        game_id.set(Some(id));
         dioxus::Ok(())
     });
 

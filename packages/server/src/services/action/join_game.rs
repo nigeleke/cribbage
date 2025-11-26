@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::{
+    bug,
     domain::{GameCommand, GameId, UserId},
     error::ServerError,
     server_state::ServerState,
@@ -18,7 +19,7 @@ pub async fn join_game(
         .cqrs
         .execute(&aggregate_id, command)
         .await
-        .map_err(ServerError::bug)?;
+        .map_err(bug!())?;
 
     Ok(())
 }

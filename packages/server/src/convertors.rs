@@ -1,43 +1,26 @@
 use std::str::FromStr;
 
-use serde_json::json;
-
-use crate::database::{AvailableGameRow, GameRow};
-use crate::domain::{Availability, AvailableGame, Game, GameId, State, UserId};
-use crate::error::ServerError;
+use crate::{
+    bug,
+    database::{AvailableGameRow, GameQueryRow},
+    domain::{Availability, AvailableGame, Game, GameId},
+    error::ServerError,
+};
 
 pub fn available_game_row_to_available_game(
     row: AvailableGameRow,
 ) -> Result<AvailableGame, ServerError> {
     let id = GameId::from(row.id);
     let name = row.name;
-    let availability = Availability::from_str(&row.availability).map_err(ServerError::bug)?;
-    let created_at = row.created_at;
+    let availability = Availability::from_str(&row.availability).map_err(bug!())?;
 
-    let game = AvailableGame::new(id, name, availability, created_at);
-
-    Ok(game)
-}
-
-pub fn game_row_to_game(row: GameRow) -> Result<Game, ServerError> {
-    let id = GameId::from(row.id);
-    let name = row.name;
-    let host = UserId::from(row.host_id);
-    let guest = row.guest_id.map(UserId::from);
-    let state = json_to_state(row.state)?;
-
-    let game = Game::new(id, host, guest, &name, state);
+    let game = AvailableGame::new(id, name, availability);
 
     Ok(game)
 }
 
 #[inline]
-pub fn json_to_state(json: serde_json::Value) -> Result<State, ServerError> {
-    let state = serde_json::from_value::<State>(json).map_err(ServerError::bug)?;
-    Ok(state)
-}
-
-#[inline]
-pub fn state_to_json(state: &State) -> serde_json::Value {
-    json!(state).into()
+pub fn game_query_row_to_game(row: GameQueryRow) -> Result<Game, ServerError> {
+    let game = serde_json::from_value::<Game>(row.payload).map_err(bug!())?;
+    Ok(game)
 }

@@ -25,6 +25,7 @@
     }
 }
 
-.available-games-list + button {
-    justify-self: end;
+.available-games-list__more-button {
+    display: flex;
+    justify-content: end;
 }

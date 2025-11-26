@@ -1,7 +1,9 @@
-use crate::domain::GameCommand;
-use crate::domain::{GameId, UserId};
-use crate::error::ServerError;
-use crate::server_state::ServerState;
+use crate::{
+    bug,
+    domain::{GameCommand, GameId, UserId},
+    error::ServerError,
+    server_state::ServerState,
+};
 
 pub async fn play_computer(
     server_state: ServerState,
@@ -15,7 +17,7 @@ pub async fn play_computer(
         .cqrs
         .execute(&aggregate_id, command)
         .await
-        .map_err(ServerError::bug)?;
+        .map_err(bug!())?;
 
     Ok(game_id)
 }

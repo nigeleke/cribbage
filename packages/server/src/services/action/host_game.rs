@@ -1,7 +1,9 @@
-use crate::domain::GameCommand;
-use crate::domain::{GameId, UserId};
-use crate::error::ServerError;
-use crate::server_state::ServerState;
+use crate::{
+    bug,
+    domain::{GameCommand, GameId, UserId},
+    error::ServerError,
+    server_state::ServerState,
+};
 
 pub async fn host_game(server_state: ServerState, user_id: UserId) -> Result<GameId, ServerError> {
     let game_id = GameId::new();
@@ -12,7 +14,7 @@ pub async fn host_game(server_state: ServerState, user_id: UserId) -> Result<Gam
         .cqrs
         .execute(&aggregate_id, command)
         .await
-        .map_err(ServerError::bug)?;
+        .map_err(bug!())?;
 
     Ok(game_id)
 }

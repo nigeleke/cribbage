@@ -1,9 +1,13 @@
-use crate::convertors::available_game_row_to_available_game;
-use crate::database::select_available_games;
-use crate::domain::{AvailableGame, UserId};
-use crate::error::ServerError;
-use crate::server_state::ServerState;
 use chrono::{DateTime, Utc};
+
+use crate::{
+    bug,
+    convertors::available_game_row_to_available_game,
+    database::select_available_games,
+    domain::{AvailableGame, UserId},
+    error::ServerError,
+    server_state::ServerState,
+};
 
 pub async fn get_available_games(
     server_state: ServerState,
@@ -19,13 +23,13 @@ pub async fn get_available_games(
     let chunk =
         select_available_games(&*pool, CHUNK_SIZE, last_created_at, filter, user_id.value())
             .await
-            .map_err(ServerError::bug)?;
+            .map_err(bug!())?;
 
     let games = chunk
         .games
         .into_iter()
         .map(|row| {
-            let game = available_game_row_to_available_game(row).map_err(ServerError::bug)?;
+            let game = available_game_row_to_available_game(row).map_err(bug!())?;
             Ok::<_, ServerError>(game)
         })
         .collect::<Result<Vec<_>, _>>()?;

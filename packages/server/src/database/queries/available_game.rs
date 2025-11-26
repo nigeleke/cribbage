@@ -2,7 +2,7 @@ use std::ops::DerefMut;
 
 use chrono::{DateTime, Utc};
 use sqlx::{Acquire, Postgres, Result};
-use uuid::Uuid;
+use uuid::{Timestamp, Uuid};
 
 use crate::database::AvailableGameRow;
 
@@ -24,35 +24,37 @@ where
 {
     let mut connection = acquirer.acquire().await?;
 
-    let filter_pattern = filter.map(|f| format!("%{}%", f));
-
     let rows = sqlx::query_as!(
         AvailableGameRow,
-        r#"WITH filter AS (
+        r#"
+        WITH filter AS (
             SELECT
-                id,
+                id::uuid AS id,
                 name,
                 CASE
                     WHEN host_id = $1 THEN 'Private'
                     WHEN guest_id = $1 THEN 'Private'
-                    WHEN (host_id != $1 AND guest_id IS NULL) THEN 'Public'
+                    WHEN guest_id IS NULL THEN 'Public'
                     ELSE 'NotAvailable'
-                END AS "availability!",
-                created_at
+                END AS availability
             FROM games
             WHERE
                 ($2::text IS NULL OR name ILIKE $2)
             AND ($3::timestamp with time zone IS NULL
-                OR created_at < $3)
+                OR uuid_extract_timestamp(id) < $3)
         )
-        SELECT *
+        SELECT
+            id           AS "id!",
+            name         AS "name!",
+            availability AS "availability!"
         FROM filter
-        WHERE "availability!" != 'NotAvailable'
+        WHERE availability != 'NotAvailable'
         ORDER BY
-            CASE WHEN "availability!" = 'Private' THEN 0 ELSE 1 END,
-            created_at DESC"#,
-        user_id,
-        filter_pattern,
+            availability = 'Private' DESC,
+            id DESC
+        "#,
+        Some(user_id),
+        filter.map(|f| format!("%{}%", f)),
         last_created_at
     )
     .fetch_all(connection.deref_mut())
@@ -64,7 +66,16 @@ where
         .take(chunk_size as usize)
         .collect::<Vec<_>>();
 
-    let last_created_at = games.last().map(|game| game.created_at);
+    let ts_to_datetime = |ts: Timestamp| {
+        let (s, ns) = ts.to_unix();
+        DateTime::from_timestamp(s as i64, ns)
+    };
+
+    let last_created_at = games
+        .last()
+        .map(|game| game.id.get_timestamp())
+        .and_then(|ts| ts.map(ts_to_datetime))
+        .flatten();
 
     let chunk = AvailableGamesChunk {
         games,

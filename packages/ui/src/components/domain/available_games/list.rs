@@ -1,7 +1,4 @@
-use api::{
-    dto::{AvailabilityDTO, AvailableGameDTO, UserIdDTO},
-    view::Since,
-};
+use api::dto::{AvailabilityDTO, AvailableGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 use dioxus_primitives::scroll_area::ScrollDirection;
 
@@ -19,7 +16,7 @@ pub fn AvailableGamesList() -> Element {
     let mut games = use_signal(Vec::<AvailableGameDTO>::default);
     let mut filter = use_signal(String::default);
 
-    let mut last_since = use_signal(Since::default);
+    let mut last_since = use_signal(api::view::Since::default);
 
     let filtered_games = use_memo(move || {
         let filter = filter.read().to_ascii_lowercase();
@@ -38,7 +35,7 @@ pub fn AvailableGamesList() -> Element {
 
     let mut has_more = use_signal(|| false);
 
-    let fetch_games = move |action: FetchAction, filter: String, since: Since| async move {
+    let fetch_games = move |action: FetchAction, filter: String, since: api::view::Since| async move {
         let result = api::view::get_available_games(*user_id.read(), Some(filter), since).await;
 
         match result {
@@ -57,12 +54,12 @@ pub fn AvailableGamesList() -> Element {
     };
 
     let _ = use_resource(move || async move {
-        fetch_games(FetchAction::Replace, "".into(), Since::default()).await
+        fetch_games(FetchAction::Replace, "".into(), api::view::Since::default()).await
     });
 
     let on_filter_changed = move |value: String| async move {
         filter.set(value.clone());
-        fetch_games(FetchAction::Replace, value, Since::default()).await;
+        fetch_games(FetchAction::Replace, value, api::view::Since::default()).await;
     };
 
     let on_load_more = move |_| async move {
@@ -120,11 +117,15 @@ fn Filter(on_filter_changed: Callback<String>) -> Element {
 #[component]
 fn LoadMoreButton(has_more: ReadSignal<bool>, on_load_more: Callback<()>) -> Element {
     rsx! {
-        Button {
-            variant: ButtonVariant::Outline,
-            disabled: !has_more(),
-            onclick: move |_| on_load_more(()),
-            "More..."
+        div {
+            class: "available-games-list__more-button",
+            Button {
+                variant: ButtonVariant::Outline,
+                disabled: !has_more(),
+                onclick: move |_| on_load_more(()),
+                "More..."
+            }
+
         }
     }
 }

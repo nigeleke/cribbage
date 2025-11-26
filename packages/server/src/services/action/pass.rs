@@ -1,4 +1,5 @@
 use crate::{
+    bug,
     domain::{GameCommand, GameId, UserId},
     error::ServerError,
     server_state::ServerState,
@@ -22,7 +23,7 @@ pub async fn pass(
             .cqrs
             .execute(&aggregate_id, command)
             .await
-            .map_err(ServerError::bug)?;
+            .map_err(bug!())?;
 
         Ok(())
     } else {

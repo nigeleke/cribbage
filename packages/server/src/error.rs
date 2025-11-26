@@ -53,27 +53,3 @@ macro_rules! bug {
         |e| $crate::bug_inner!(format_args!("{}: {}", format_args!($($msg)*), e))
     }};
 }
-
-impl ServerError {
-    #[track_caller]
-    pub fn bug(msg: impl std::fmt::Display) -> Self {
-        let location = std::panic::Location::caller();
-        ServerError::Internal(anyhow::anyhow!(
-            "BUG at {} {} {}: {msg}",
-            location.file(),
-            location.line(),
-            location.column()
-        ))
-    }
-
-    //     #[track_caller]
-    //     pub fn bug_fmt(msg: impl std::fmt::Display, args: std::fmt::Arguments<'_>) -> Self {
-    //         let location = std::panic::Location::caller();
-    //         ServerError::Internal(anyhow::anyhow!(
-    //             "BUG at {} {} {}: {msg}{args}",
-    //             location.file(),
-    //             location.line(),
-    //             location.column()
-    //         ))
-    //     }
-}

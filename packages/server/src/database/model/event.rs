@@ -1,7 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
-use sqlx::types::JsonValue;
+use sqlx::{FromRow, types::JsonValue};
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 pub struct EventRow {
@@ -13,28 +12,4 @@ pub struct EventRow {
     pub payload: JsonValue,
     pub metadata: JsonValue,
     pub timestamp: DateTime<Utc>,
-}
-
-impl EventRow {
-    pub fn new(
-        aggregate_type: String,
-        aggregate_id: String,
-        sequence: u64,
-        event_type: String,
-        event_version: String,
-        payload: JsonValue,
-        metadata: JsonValue,
-        timestamp: DateTime<Utc>,
-    ) -> Self {
-        Self {
-            aggregate_type,
-            aggregate_id,
-            sequence,
-            event_type,
-            event_version,
-            payload,
-            metadata,
-            timestamp,
-        }
-    }
 }

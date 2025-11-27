@@ -8,13 +8,3 @@ pub struct AvailableGameRow {
     pub name: String,
     pub availability: String,
 }
-
-impl AvailableGameRow {
-    pub fn new(id: Uuid, name: String, availability: String) -> Self {
-        Self {
-            id,
-            name,
-            availability,
-        }
-    }
-}

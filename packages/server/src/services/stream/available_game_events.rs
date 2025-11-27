@@ -24,7 +24,7 @@ pub async fn available_game_events(
 
     let stream = stream.try_filter_map(move |notification| async move {
         let notification_to_game_row_change = move |notification: Notification| {
-            let change = (notification.table_name == "games")
+            let change = (notification.table_name == "game_query")
                 .then_some(notification.as_change::<GameQueryRow>())
                 .transpose()?;
             Ok::<_, ServerError>(change)
@@ -50,7 +50,6 @@ pub async fn available_game_events(
         };
 
         let game_change_to_event = move |change: Change<Game>| {
-            let user_is_host = |game: &Game| game.host() == &user_id;
             let user_can_join = |game: &Game| game.host() != &user_id && game.guest().is_none();
             let player = |game: &Game| game.validate_user(user_id).is_some();
             let joined = |old_game: &Game, new_game: &Game| !player(old_game) && player(new_game);
@@ -70,7 +69,6 @@ pub async fn available_game_events(
             };
 
             match &change {
-                Change::Insert { t } if user_is_host(t) => created(t),
                 Change::Insert { t } if user_can_join(t) => created(t),
                 Change::Update { old_t, new_t } if !joined(old_t, new_t) => removed(new_t),
                 Change::Delete { t } if player(t) => removed(t),

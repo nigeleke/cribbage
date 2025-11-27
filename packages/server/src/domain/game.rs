@@ -91,7 +91,7 @@ impl Game {
         } else if self.guest.is_some() {
             not_permitted()
         } else if self.host == guest {
-            Ok(vec![])
+            Err(DomainError::InvalidOpponent)
         } else {
             let events = vec![GameEvent::LobbyGameJoined { guest }];
             Ok(events)
@@ -689,7 +689,7 @@ mod test {
             GameTestFramework::with(GameServices)
                 .given(preconditions)
                 .when(GameCommand::JoinGame { user_id: guest })
-                .then_expect_error(DomainError::InvalidOpponent(guest));
+                .then_expect_error(DomainError::InvalidOpponent);
         }
     }
 
@@ -857,7 +857,7 @@ mod test {
                         .iter()
                         .filter_map(|e| matches!(e, GameEvent::HandDealt { .. }).then_some(e))
                         .collect::<Vec<_>>();
-                    assert_eq!(deals.len(), 2);
+                    assert_eq!(deals.len(), PLAYER_COUNT);
                 }
                 Err(error) => {
                     panic!("unexpected error {error}");
@@ -914,41 +914,80 @@ mod test {
         }
     }
 
-    //     /// ## The Deal
-    //     ///
-    //     /// The dealer distributes six cards face down to his opponent and himself, beginning with the
-    //     /// opponent.
-    //     mod deal {
-    //         use super::*;
-    //         use crate::domain::STANDARD_DECK_SIZE;
-    //         use crate::domain::constants::{CARDS_DEALT_PER_HAND, PLAYER_COUNT};
+    /// ## The Deal
+    ///
+    /// The dealer distributes six cards face down to his opponent and himself, beginning with the
+    /// opponent.
+    mod deal {
+        use std::str::FromStr;
 
-    //         #[test]
-    //         fn dealer_deals_six_cards_each() {
-    //             loop {
-    //                 let (_, _, state) = initial_game_post_cuts();
+        use super::*;
+        use crate::{
+            card,
+            domain::constants::{CARDS_DEALT_PER_HAND, PLAYER_COUNT},
+            function_name,
+        };
 
-    //                 match state {
-    //                     State::Discarding(discarding) => {
-    //                         let deck = discarding.deck();
-    //                         let player0_hand = discarding.hand(PLAYER0);
-    //                         let player1_hand = discarding.hand(PLAYER1);
+        #[test]
+        fn dealer_deals_six_cards_each() {
+            let game_id = GameId::new();
+            let host = UserId::new();
+            let guest = UserId::new();
+            let name = function_name!();
 
-    //                         assert_eq!(
-    //                             deck.len(),
-    //                             STANDARD_DECK_SIZE - (CARDS_DEALT_PER_HAND * PLAYER_COUNT)
-    //                         );
-    //                         assert_eq!(player0_hand.len(), CARDS_DEALT_PER_HAND);
-    //                         assert_eq!(player1_hand.len(), CARDS_DEALT_PER_HAND);
-    //                         assert!(deck.contains_none(player0_hand.as_ref()));
-    //                         assert!(deck.contains_none(player1_hand.as_ref()));
-    //                         break;
-    //                     }
-    //                     _ => {}
-    //                 }
-    //             }
-    //         }
-    //     }
+            let cut0 = card!("AS");
+            let cut1 = card!("QH");
+            let preconditions = vec![
+                GameEvent::ComputerGameStarted {
+                    game_id,
+                    host,
+                    guest,
+                    name,
+                },
+                GameEvent::CutForDealMade {
+                    player: PLAYER0,
+                    cut: cut0,
+                },
+                GameEvent::CutForDealMade {
+                    player: PLAYER1,
+                    cut: cut1,
+                },
+                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
+            ];
+
+            let result = GameTestFramework::with(GameServices)
+                .given(preconditions.clone())
+                .when(GameCommand::AcknowledgeCutForDeal { player: PLAYER1 })
+                .inspect_result();
+
+            match result {
+                Ok(events) => {
+                    assert_eq!(
+                        events[..2],
+                        vec![
+                            GameEvent::CutForDealAcknowledged { player: PLAYER1 },
+                            GameEvent::CutForDealDecided {
+                                dealer: Dealer::from(PLAYER0)
+                            }
+                        ]
+                    );
+                    let hands = events
+                        .into_iter()
+                        .filter_map(|event| match event {
+                            GameEvent::HandDealt { hand, player: _ } => Some(hand),
+                            _ => None,
+                        })
+                        .collect::<Vec<_>>();
+                    assert_eq!(hands.len(), PLAYER_COUNT);
+                    assert_eq!(hands[PLAYER0].len(), CARDS_DEALT_PER_HAND);
+                    assert_eq!(hands[PLAYER1].len(), CARDS_DEALT_PER_HAND);
+                }
+                Err(error) => {
+                    panic!("unexpected error {error}");
+                }
+            }
+        }
+    }
 
     //     /// ## Object of the Game
 
@@ -1069,7 +1108,7 @@ mod test {
     //                 .when(DiscardCardsToCrib::new(game_id, PLAYER0, &discards1))
     //                 .expect_error(DomainError::InvalidDiscards(expected_discards));
     //         }
-    //     }
+    // }
 
     //     /// ## Before the Play
     //     ///

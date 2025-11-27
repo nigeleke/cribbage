@@ -1,14 +1,14 @@
 use thiserror::Error;
 
-use crate::domain::{Card, Player, UserId};
+use crate::domain::{Card, Player};
 
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum DomainError {
-    #[error("invalid user {0}")]
-    InvalidUser(UserId),
+    #[error("invalid user")]
+    InvalidUser,
 
-    #[error("invalid opponent {0}")]
-    InvalidOpponent(UserId),
+    #[error("invalid opponent")]
+    InvalidOpponent,
 
     #[error("{0} is not permitted")]
     NotPermitted(String),

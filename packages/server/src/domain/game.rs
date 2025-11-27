@@ -989,11 +989,11 @@ mod test {
         }
     }
 
-    //     /// ## Object of the Game
+    /// ## Object of the Game
 
-    //     /// The goal is to be the first player to score 121 points. (Some games are to 61 points.)
-    //     /// Players earn points during play and for making various card combinations.
-    //     mod object_of_the_game {}
+    /// The goal is to be the first player to score 121 points. (Some games are to 61 points.)
+    /// Players earn points during play and for making various card combinations.
+    mod object_of_the_game {}
 
     //     /// ## The Crib
     //     ///

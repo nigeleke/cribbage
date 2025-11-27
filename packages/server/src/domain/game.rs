@@ -120,13 +120,11 @@ impl Game {
         let not_permitted = || Err(DomainError::NotPermitted(String::from("cut for deal")));
 
         let cut_for_deal = |starting: &Starting| {
-            let (cuts, deck, pending) = &mut starting.clone().into_parts();
-            if !pending.waiting_on(player) {
+            if !starting.pending().waiting_on(player) {
                 not_permitted()
             } else {
+                let mut deck = starting.deck().clone();
                 let cut = deck.cut();
-                cuts[player] = Some(cut);
-
                 let events = vec![GameEvent::CutForDealMade { player, cut }];
                 Ok(events)
             }
@@ -155,11 +153,9 @@ impl Game {
         let acknowledge_cut_for_deal = |starting: &Starting| {
             let mut events = vec![GameEvent::CutForDealAcknowledged { player }];
 
-            let (cuts, _, mut pending) = starting.clone().into_parts();
-
-            let proceed = pending.acknowledge(player);
+            let proceed = starting.pending().clone().acknowledge(player);
             if proceed {
-                if let Some(roles) = Roles::from_cuts(&cuts) {
+                if let Some(roles) = Roles::from_cuts(starting.cuts_for_deal()) {
                     let mut deck = Deck::shuffled_pack();
                     let hands = deck.deal(PLAYER_COUNT);
 

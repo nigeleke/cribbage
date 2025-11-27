@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::display::format_vec;
-use crate::domain::{CutsForDeal, Deck, HasCutsForDeal, HasDeck, HasPending, Pending, Roles};
+use crate::{
+    display::format_vec,
+    domain::{CutsForDeal, Deck, HasCutsForDeal, HasDeck, HasPending, Pending, Roles},
+};
 
 pub type WaitingForCuts = Pending;
 
@@ -19,15 +21,6 @@ impl Starting {
             deck,
             pending,
         }
-    }
-
-    pub fn into_parts(self) -> (CutsForDeal, Deck, WaitingForCuts) {
-        let Self {
-            cuts_for_deal,
-            deck,
-            pending,
-        } = self;
-        (cuts_for_deal, deck, pending)
     }
 
     pub fn roles(&self) -> Option<Roles> {

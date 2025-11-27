@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::display::format_vec;
-use crate::domain::{
-    Crib, Hands, HasCrib, HasHands, HasPending, HasRoles, HasScoreboard, HasStarterCut, Pending,
-    Roles, ScoreBreakdown, Scoreboard, StarterCut,
+use crate::{
+    display::format_vec,
+    domain::{
+        Crib, Hands, HasCrib, HasHands, HasPending, HasRoles, HasScoreboard, HasStarterCut,
+        Pending, Roles, ScoreBreakdown, Scoreboard, StarterCut,
+    },
 };
 
 pub type WaitingForScoresViewed = Pending;
@@ -40,30 +42,6 @@ impl<T> Scoring<T> {
             pending,
             _marker: std::marker::PhantomData,
         }
-    }
-
-    pub fn into_parts(
-        self,
-    ) -> (
-        Scoreboard,
-        Roles,
-        Hands,
-        Crib,
-        StarterCut,
-        ScoreBreakdown,
-        WaitingForScoresViewed,
-    ) {
-        #[rustfmt::skip]
-        let Self { scoreboard, roles, hands, crib, starter_cut, breakdown, pending, _marker } = self;
-        (
-            scoreboard,
-            roles,
-            hands,
-            crib,
-            starter_cut,
-            breakdown,
-            pending,
-        )
     }
 
     pub fn breakdown(&self) -> &ScoreBreakdown {

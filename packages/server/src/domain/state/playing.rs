@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::display::format_vec;
-use crate::domain::{
-    Card, Crib, Hands, HasCrib, HasHands, HasPlayState, HasRoles, HasScoreboard, HasStarterCut,
-    PlayState, Player, Roles, ScoreBreakdown, Scoreboard, StarterCut,
+use crate::{
+    display::format_vec,
+    domain::{
+        Card, Crib, Hands, HasCrib, HasHands, HasPlayState, HasRoles, HasScoreboard, HasStarterCut,
+        PlayState, Player, Roles, ScoreBreakdown, Scoreboard, StarterCut,
+    },
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -40,12 +42,6 @@ impl Playing {
             scoreboard.peg(player, &ScoreBreakdown::pass(&self.play_state));
             self.play_state.start_new_play();
         }
-    }
-
-    pub fn into_parts(self) -> (Scoreboard, Roles, Hands, PlayState, Crib, StarterCut) {
-        #[rustfmt::skip]
-        let Self { scoreboard, roles, hands, play_state, crib, starter_cut: cut } = self;
-        (scoreboard, roles, hands, play_state, crib, cut)
     }
 }
 

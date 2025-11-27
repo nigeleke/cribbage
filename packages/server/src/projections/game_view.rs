@@ -16,7 +16,6 @@ impl GameView {
 
 impl View<Game> for GameView {
     fn update(&mut self, event: &EventEnvelope<Game>) {
-        dioxus::prelude::debug!("GameView:update: {event:?}");
         self.instance.apply_event(event.payload.clone());
     }
 }

@@ -21,6 +21,12 @@ pub fn available_game_row_to_available_game(
 
 #[inline]
 pub fn game_query_row_to_game(row: GameQueryRow) -> Result<Game, ServerError> {
-    let game = serde_json::from_value::<Game>(row.payload).map_err(bug!())?;
+    let instance_value = row
+        .payload
+        .get("instance")
+        .cloned()
+        .ok_or_else(|| ServerError::Internal(anyhow::anyhow!("missing field 'instance'")))?;
+
+    let game = serde_json::from_value::<Game>(instance_value).map_err(bug!())?;
     Ok(game)
 }

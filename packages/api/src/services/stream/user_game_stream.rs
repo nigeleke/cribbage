@@ -21,7 +21,6 @@ pub async fn user_game_stream(
 
     let stream = game_stream(server_state, game_id).await?;
     let stream = stream.filter_map(move |game| async move {
-        debug!("________________ user_game_stream: tick {user_id} {game_id}");
         game.validate_user(user_id)
             .map(|_| UserGameDTO::from((user_id, &game)))
     });

@@ -81,24 +81,30 @@ async fn create_database_changes_sender(
         .await
         .map_err(bug!())?;
 
-    let (tx, _rx): (broadcast::Sender<Notification>, _) = broadcast::channel(10);
-    let tx2 = tx.clone();
+    let (sender, _): (broadcast::Sender<Notification>, _) = broadcast::channel(10);
+    let task_sender = sender.clone();
+
     tokio::spawn(async move {
         loop {
             match listener.recv().await {
                 Ok(notification) => {
                     let payload = serde_json::from_str::<Notification>(notification.payload());
-                    if let Ok(parsed) = payload {
-                        let _ = tx2.send(parsed);
+                    match payload {
+                        Ok(payload) => {
+                            let _ = task_sender.send(payload);
+                        }
+                        Err(error) => {
+                            dioxus::prelude::warn!("server_state: {error}");
+                        }
                     }
                 }
-                Err(e) => {
-                    dioxus::prelude::error!("server_state:database_listener: failed: {e}");
+                Err(error) => {
+                    dioxus::prelude::error!("server_state:database_listener: failed: {error}");
                     break;
                 }
             }
         }
     });
 
-    Ok(tx)
+    Ok(sender)
 }

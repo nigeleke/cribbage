@@ -17,8 +17,6 @@ pub async fn game_stream(
         BroadcastStream::new(server_state.database_changes_sender.subscribe()).map_err(bug!());
 
     let stream = stream.try_filter_map(move |notification| async move {
-        dioxus::prelude::debug!("&&&&& game_stream {game_id} {notification:?}");
-
         let game_id = game_id.clone();
 
         let notification_to_game_row_change = move |notification: Notification| {

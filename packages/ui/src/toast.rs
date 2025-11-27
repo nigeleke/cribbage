@@ -18,6 +18,6 @@ impl Toast {
     }
 
     pub fn command_error(command: &str, error: String) {
-        Self::toast(command, &error, ToastType::Warning, false);
+        Self::toast(command, &error, ToastType::Error, false);
     }
 }

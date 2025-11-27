@@ -1,7 +1,7 @@
 use api::dto::{CardIdDTO, GameIdDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-use crate::components::button::*;
+use crate::{components::button::*, toast::Toast};
 
 #[component]
 pub fn DiscardingControls() -> Element {
@@ -17,9 +17,9 @@ pub fn DiscardingControls() -> Element {
         let result = api::action::discard_cards_to_crib(*user_id.read(), game_id, cards).await;
         match result {
             Ok(_) => (),
-            Err(error) => {
+            Err(ref error) => {
                 warn!("{error}");
-                todo!() // Toast errors
+                Toast::command_error("Discard", error.to_string());
             }
         }
         result

@@ -1,7 +1,10 @@
 use api::dto::{GameIdDTO, PlayActionDTO, PlayerDTO, PlaysDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-use crate::components::{WaitingForOpponent, button::Button};
+use crate::{
+    components::{WaitingForOpponent, button::Button},
+    toast::Toast,
+};
 
 #[component]
 pub fn PassAction() -> Element {
@@ -14,9 +17,9 @@ pub fn PassAction() -> Element {
         let result = api::action::pass(*user_id.read(), game_id).await;
         match result {
             Ok(_) => (),
-            Err(error) => {
+            Err(ref error) => {
                 warn!("{error:?}");
-                todo!()
+                Toast::command_error("Pass", error.to_string());
             }
         }
         result

@@ -24,7 +24,7 @@ pub enum ApiError {
     Unexpected,
 
     #[cfg(debug_assertions)]
-    #[error("unexpected")]
+    #[error("unexpected {message}")]
     Unexpected { message: String },
 }
 

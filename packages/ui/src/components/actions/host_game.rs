@@ -1,7 +1,7 @@
 use api::dto::UserIdDTO;
 use dioxus::prelude::*;
 
-use crate::{components::button::*, route::Route};
+use crate::{components::button::*, route::Route, toast::Toast};
 
 #[component]
 pub fn HostGameAction() -> Element {
@@ -23,7 +23,7 @@ pub fn HostGameAction() -> Element {
             Ok(id) => game_id.set(Some(id)),
             Err(ref error) => {
                 warn!("{error}");
-                todo!() // Toast errors
+                Toast::command_error("Host game", error.to_string());
             }
         }
         result

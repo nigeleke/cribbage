@@ -4,6 +4,7 @@ use dioxus::prelude::*;
 use crate::{
     components::{WaitingForOpponent, button::Button},
     route::Route,
+    toast::Toast,
 };
 
 #[component]
@@ -30,9 +31,9 @@ pub fn PlayAction() -> Element {
             let result = api::action::play_card(*user_id.read(), game_id, cid.clone()).await;
             match result {
                 Ok(_) => (),
-                Err(error) => {
+                Err(ref error) => {
                     warn!("{error:?}");
-                    todo!() // Toast error
+                    Toast::command_error("Play", error.to_string());
                 }
             }
             result

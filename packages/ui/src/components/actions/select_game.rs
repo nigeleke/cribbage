@@ -1,7 +1,7 @@
 use api::dto::{AvailabilityDTO, AvailableGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-use crate::route::Route;
+use crate::{route::Route, toast::Toast};
 
 #[component]
 pub fn SelectGameAction(game: ReadSignal<AvailableGameDTO>) -> Element {
@@ -23,7 +23,7 @@ pub fn SelectGameAction(game: ReadSignal<AvailableGameDTO>) -> Element {
             Ok(_) => game_id.set(Some(id)),
             Err(ref error) => {
                 warn!("SelectGameAction:error {error:?}");
-                todo!()
+                Toast::command_error("Join game", error.to_string());
             }
         };
         result

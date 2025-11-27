@@ -2,7 +2,7 @@ use api::dto::{GameIdDTO, UserIdDTO};
 use dioxus::prelude::*;
 use dioxus_sdk::storage::*;
 
-use crate::pages::*;
+use crate::{components::toast::ToastProvider, pages::*};
 
 #[derive(Clone, PartialEq, Routable)]
 #[rustfmt::skip]
@@ -28,13 +28,15 @@ fn Layout() -> Element {
         document::Stylesheet { href: asset!("/assets/css/dx-components-theme.css") }
         document::Stylesheet { href: asset!("/assets/css/main.css") }
         document::Link { rel: "icon", href: asset!("/assets/favicon.ico"), type: "image/x-icon" }
-        // document::Script { r#type: "module", src: asset!("/assets/js/listen_unhandled_promises.js") }
+        document::Script { r#type: "module", src: asset!("/assets/js/listen_unhandled_promises.js") }
 
         header { h1 { "Cribbage"  } }
         main {
             ErrorBoundary {
                 handle_error: |errors| rsx! { UnexpectedErrorPage { errors } },
-                Outlet::<Route> {}
+                ToastProvider {
+                    Outlet::<Route> {}
+                }
             }
         }
         footer { "{display_user_id}" " - Copyright © 2025; Nigel Eke. All rights reserved." }

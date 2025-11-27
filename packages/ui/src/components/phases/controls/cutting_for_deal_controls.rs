@@ -1,7 +1,10 @@
-use crate::components::{WaitingForOpponent, button::Button};
-use crate::route::Route;
-use api::dto::{GameIdDTO, PendingDTO, UserGameDTO, UserIdDTO};
+use api::dto::{GameIdDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
+
+use crate::{
+    Toast,
+    components::{Confirmation, WaitingForOpponent, button::Button},
+};
 
 #[component]
 pub fn CuttingForDealControls() -> Element {
@@ -13,59 +16,68 @@ pub fn CuttingForDealControls() -> Element {
     let user_cut = use_memo(move || game().user_state.cut);
     let opponent_cut = use_memo(move || game().opponent_state.cut);
     let dealer = use_memo(move || game().dealer);
-    let pending = use_memo(move || game().pending);
 
-    let navigator = use_navigator();
+    let mut cut_for_deal_action = use_action(move || async move {
+        let result = api::action::cut_for_deal(*user_id.read(), game_id).await;
 
-    let on_cut_for_deal = move |_| {
-        spawn(async move {
-            match api::action::cut_for_deal(*user_id.read(), game_id).await {
-                Ok(_) => {}
-                Err(error) => {
-                    warn!("CuttingForDealControls:error {error:?}");
-                    let error = error.to_string();
-                    navigator.push(Route::ErrorPage { error });
-                }
+        match result {
+            Ok(_) => (),
+            Err(ref error) => {
+                warn!("CuttingForDealControls:error {error:?}");
+                Toast::command_error("Cut for deal", error.to_string());
             }
-        });
-    };
+        }
 
-    let on_acknowledge = move |_| {
-        spawn(async move {
-            match api::action::acknowledge_cut_for_deal(*user_id.read(), game_id).await {
-                Ok(_) => {}
-                Err(error) => {
-                    warn!("GamePage:acknowledge:error {error:?}");
-                    let error = error.to_string();
-                    navigator.push(Route::ErrorPage { error });
-                }
+        result
+    });
+
+    let on_cut_for_deal = move |_| cut_for_deal_action.call();
+
+    let mut acknowledge_action = use_action(move || async move {
+        let result = api::action::acknowledge_cut_for_deal(*user_id.read(), game_id).await;
+
+        match result {
+            Ok(_) => (),
+            Err(ref error) => {
+                warn!("GamePage:acknowledge:error {error:?}");
+                Toast::command_error("Acknowledge cut for deal", error.to_string());
             }
-        });
-    };
+        }
+
+        result
+    });
+
+    let on_acknowledge = move |_| acknowledge_action.call();
+
+    let cuts_and_dealer = (
+        user_cut.read().is_some(),
+        opponent_cut.read().is_some(),
+        dealer.read().is_some(),
+    );
 
     rsx! {
-        match (user_cut(), opponent_cut(), dealer()) {
-            (None, _, _) => rsx! {
-                Button {
-                    onclick: on_cut_for_deal,
-                    "Cut for deal"
-                }
-            },
-            (_, Some(_), None) if pending() == PendingDTO::User => rsx! {
+        if matches!(cuts_and_dealer, (false, _, _)) {
+            Button {
+                onclick: on_cut_for_deal,
+                "Cut for deal"
+            }
+        }
+        else if matches!(cuts_and_dealer, (_, true, false)) {
+            Confirmation {
                 Button {
                     onclick: on_acknowledge,
                     "Redraw"
                 }
-            },
-            (_, Some(_), Some(_)) if pending() == PendingDTO::User => rsx! {
+            }
+        } else if matches!(cuts_and_dealer, (_, true, true)) {
+            Confirmation {
                 Button {
                     onclick: on_acknowledge,
                     "Start"
                 }
-            },
-            _ => rsx! {
-                WaitingForOpponent { }
-            },
+            }
+        } else {
+            WaitingForOpponent {}
         }
     }
 }

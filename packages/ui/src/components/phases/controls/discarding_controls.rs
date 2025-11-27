@@ -1,7 +1,10 @@
 use api::dto::{CardIdDTO, GameIdDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-use crate::{components::button::*, toast::Toast};
+use crate::{
+    components::{Confirmation, button::*},
+    toast::Toast,
+};
 
 #[component]
 pub fn DiscardingControls() -> Element {
@@ -34,10 +37,12 @@ pub fn DiscardingControls() -> Element {
         document::Stylesheet { href: asset!("/assets/css/discarding_hand.css")},
         div {
             class: "discarding-hand",
-            Button {
-                onclick: on_discard,
-                disabled: !can_discard,
-                "Discard"
+            Confirmation {
+                Button {
+                    onclick: on_discard,
+                    disabled: !can_discard,
+                    "Discard"
+                }
             }
         }
     }

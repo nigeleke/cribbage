@@ -3,7 +3,6 @@ use dioxus::prelude::*;
 
 use crate::{
     components::{WaitingForOpponent, button::Button},
-    route::Route,
     toast::Toast,
 };
 

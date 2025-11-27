@@ -2,10 +2,7 @@ use dioxus::logger::tracing::field::debug;
 use serde::{Deserialize, Serialize};
 
 use super::{Dealer, Pone};
-use crate::{
-    domain::constants::PLAYER_COUNT,
-    domain::{CutsForDeal, PLAYER0, PLAYER1},
-};
+use crate::domain::{CutsForDeal, PLAYER0, PLAYER1, constants::PLAYER_COUNT};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Roles {
@@ -16,6 +13,14 @@ pub struct Roles {
 pub trait HasRoles {
     fn roles(&self) -> &Roles;
     fn roles_mut(&mut self) -> &mut Roles;
+
+    fn dealer(&self) -> &Dealer {
+        &self.roles().dealer
+    }
+
+    fn pone(&self) -> &Pone {
+        &self.roles().pone
+    }
 }
 
 impl Roles {

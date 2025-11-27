@@ -2,7 +2,7 @@ use api::dto::{AvailabilityDTO, AvailableGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 use dioxus_primitives::scroll_area::ScrollDirection;
 
-use crate::components::{DebouncedInput, SelectGameAction, button::*, scroll_area::*};
+use crate::components::{SelectGameAction, button::*, debounced_input::*, scroll_area::*};
 
 enum FetchAction {
     Replace,

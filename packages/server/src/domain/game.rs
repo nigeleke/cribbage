@@ -1,4 +1,4 @@
-use cqrs_es::{Aggregate, Query, event_sink::EventSink};
+use cqrs_es::{Aggregate, event_sink::EventSink};
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -6,9 +6,9 @@ use crate::{
     display::format_vec,
     domain::{
         Card, Crib, CutsForDeal, Dealer, Deck, Discarding, DomainError, GameCommand, GameEvent,
-        GameId, Hand, Hands, HasCutsForDeal, HasDeck, HasHands, HasPending, HasPlayState, PLAYER0,
-        PLAYER1, Pending, PlayState, Player, Playing, Roles, Scoreboard, Starting, State, UserId,
-        WaitingForDiscards,
+        GameId, Hand, Hands, HasCrib, HasCutsForDeal, HasDeck, HasHands, HasPending, HasPlayState,
+        HasRoles, HasScoreboard, PLAYER0, PLAYER1, Pending, PlayState, Player, Playing, Roles,
+        Scoreboard, Starting, State, UserId, WaitingForDiscards,
         constants::{
             CARDS_DISCARDED_TO_CRIB, CARDS_KEPT_PER_HAND, CARDS_REQUIRED_IN_CRIB, PLAYER_COUNT,
         },
@@ -382,23 +382,25 @@ impl Game {
     }
 
     fn cards_discarded_to_crib(&mut self, player: Player, cards: &[Card]) {
-        if let State::Discarding(discarding) = &self.state {
-            let (scoreboard, roles, mut hands, mut crib, mut deck, pending) =
-                discarding.clone().into_parts();
+        if let State::Discarding(discarding) = &mut self.state {
+            discarding.hand_mut(player).remove_all(cards);
+            discarding.crib_mut().add_all(cards);
+            discarding.pending_mut().acknowledge(player);
 
-            hands[player].remove_all(cards);
-            crib.add_all(cards);
-
-            if crib.len() == CARDS_REQUIRED_IN_CRIB {
-                let starter_cut = deck.cut();
-                let play_state = PlayState::new(roles.pone().player())
-                    .with_pending_plays(PLAYER0, hands[PLAYER0].as_ref())
-                    .with_pending_plays(PLAYER1, hands[PLAYER1].as_ref());
-                let playing = Playing::new(scoreboard, roles, hands, play_state, crib, starter_cut);
+            if discarding.crib().len() == CARDS_REQUIRED_IN_CRIB {
+                let starter_cut = discarding.deck_mut().cut();
+                let play_state = PlayState::new(discarding.pone().player())
+                    .with_pending_plays(PLAYER0, discarding.hand(PLAYER0).as_ref())
+                    .with_pending_plays(PLAYER1, discarding.hand(PLAYER1).as_ref());
+                let playing = Playing::new(
+                    discarding.scoreboard().clone(),
+                    discarding.roles().clone(),
+                    discarding.hands().clone(),
+                    play_state,
+                    discarding.crib().clone(),
+                    starter_cut,
+                );
                 self.state = State::Playing(playing);
-            } else {
-                let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
-                self.state = State::Discarding(discarding);
             }
         }
     }

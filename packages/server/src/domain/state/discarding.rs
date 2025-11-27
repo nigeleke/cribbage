@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::display::format_vec;
-use crate::domain::{
-    Card, Crib, Deck, Hands, HasCrib, HasDeck, HasHands, HasPending, HasRoles, HasScoreboard,
-    Pending, Player, Roles, Scoreboard,
+use crate::{
+    display::format_vec,
+    domain::{
+        Card, Crib, Deck, Hands, HasCrib, HasDeck, HasHands, HasPending, HasRoles, HasScoreboard,
+        Pending, Player, Roles, Scoreboard,
+    },
 };
 
 pub type WaitingForDiscards = Pending;
@@ -41,12 +43,6 @@ impl Discarding {
         self.hands[player].remove_all(discards);
         self.crib.add_all(discards);
         self.pending.acknowledge(player);
-    }
-
-    pub fn into_parts(self) -> (Scoreboard, Roles, Hands, Crib, Deck, WaitingForDiscards) {
-        #[rustfmt::skip]
-        let Self { scoreboard, roles, hands, crib, deck, pending } = self;
-        (scoreboard, roles, hands, crib, deck, pending)
     }
 }
 

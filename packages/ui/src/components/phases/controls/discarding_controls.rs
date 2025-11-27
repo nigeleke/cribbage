@@ -1,7 +1,7 @@
-use api::dto::{CardDTO, CardIdDTO, GameIdDTO, UserIdDTO};
+use api::dto::{CardIdDTO, GameIdDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-use crate::{components::button::*, route::Route};
+use crate::components::button::*;
 
 #[component]
 pub fn DiscardingControls() -> Element {
@@ -15,7 +15,13 @@ pub fn DiscardingControls() -> Element {
 
     let mut discard_action = use_action(move |cards: Vec<CardIdDTO>| async move {
         let result = api::action::discard_cards_to_crib(*user_id.read(), game_id, cards).await;
-        // TODO: Toast errors...
+        match result {
+            Ok(_) => (),
+            Err(error) => {
+                warn!("{error}");
+                todo!() // Toast errors
+            }
+        }
         result
     });
 
@@ -27,15 +33,12 @@ pub fn DiscardingControls() -> Element {
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/discarding_hand.css")},
         div {
+            class: "discarding-hand",
             Button {
                 onclick: on_discard,
                 disabled: !can_discard,
                 "Discard"
             }
-
-            // } else {
-            //     WaitingForOpponent {}
-            // }
         }
     }
 }

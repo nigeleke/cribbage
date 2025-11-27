@@ -23,7 +23,7 @@ pub fn SelectGameAction(game: ReadSignal<AvailableGameDTO>) -> Element {
             Ok(_) => game_id.set(Some(id)),
             Err(ref error) => {
                 warn!("SelectGameAction:error {error:?}");
-                // TODO: Toast
+                todo!()
             }
         };
         result

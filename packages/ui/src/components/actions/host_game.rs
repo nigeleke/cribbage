@@ -22,8 +22,8 @@ pub fn HostGameAction() -> Element {
         match result {
             Ok(id) => game_id.set(Some(id)),
             Err(ref error) => {
-                warn!("HostGameAction:error {error:?}");
-                // TODO: Toast
+                warn!("{error}");
+                todo!() // Toast errors
             }
         }
         result

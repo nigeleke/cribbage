@@ -1,7 +1,7 @@
-use crate::components::{WaitingForOpponent, button::Button};
-use crate::route::Route;
 use api::dto::{GameIdDTO, PlayActionDTO, PlayerDTO, PlaysDTO, UserIdDTO};
 use dioxus::prelude::*;
+
+use crate::components::{WaitingForOpponent, button::Button};
 
 #[component]
 pub fn PassAction() -> Element {
@@ -10,20 +10,19 @@ pub fn PassAction() -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
     let game_id = use_context::<GameIdDTO>();
 
-    let navigator = use_navigator();
-
-    let on_pass = move |_| {
-        spawn(async move {
-            match api::action::pass(*user_id.read(), game_id).await {
-                Ok(_) => {}
-                Err(error) => {
-                    warn!("GamePage:pass:error {error:?}");
-                    let error = error.to_string();
-                    navigator.push(Route::ErrorPage { error });
-                }
+    let mut pass_action = use_action(move || async move {
+        let result = api::action::pass(*user_id.read(), game_id).await;
+        match result {
+            Ok(_) => (),
+            Err(error) => {
+                warn!("{error:?}");
+                todo!()
             }
-        });
-    };
+        }
+        result
+    });
+
+    let on_pass = move |_| pass_action.call();
 
     rsx! {
         if let PlayActionDTO::Pass(player) = plays().next_action {

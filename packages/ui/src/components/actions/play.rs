@@ -1,7 +1,10 @@
-use crate::components::{WaitingForOpponent, button::Button};
-use crate::route::Route;
 use api::dto::{CardIdDTO, GameIdDTO, PlayActionDTO, PlayerDTO, PlaysDTO, UserIdDTO};
 use dioxus::prelude::*;
+
+use crate::{
+    components::{WaitingForOpponent, button::Button},
+    route::Route,
+};
 
 #[component]
 pub fn PlayAction() -> Element {
@@ -22,22 +25,23 @@ pub fn PlayAction() -> Element {
         false
     };
 
-    let navigator = use_navigator();
-
-    let on_play = move |_| {
-        spawn(async move {
-            if let Some(cid) = selected_cards().first() {
-                match api::action::play_card(*user_id.read(), game_id, cid.clone()).await {
-                    Ok(_) => {}
-                    Err(error) => {
-                        warn!("GamePage:play:error {error:?}");
-                        let error = error.to_string();
-                        navigator.push(Route::ErrorPage { error });
-                    }
+    let mut play_action = use_action(move || async move {
+        if let Some(cid) = selected_cards().first() {
+            let result = api::action::play_card(*user_id.read(), game_id, cid.clone()).await;
+            match result {
+                Ok(_) => (),
+                Err(error) => {
+                    warn!("{error:?}");
+                    todo!() // Toast error
                 }
             }
-        });
-    };
+            result
+        } else {
+            Ok(())
+        }
+    });
+
+    let on_play = move |_| play_action.call();
 
     rsx! {
         if let PlayActionDTO::Play(player) = next_action {

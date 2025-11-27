@@ -60,3 +60,9 @@
 .button[data-style="destructive"]:hover {
     background-color: var(--secondary-error-color);
 }
+
+.button:disabled,
+.button:disabled:hover {
+    background-color: var(--secondary-color-5);
+    cursor: default;
+}

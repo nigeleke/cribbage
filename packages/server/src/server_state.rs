@@ -40,10 +40,10 @@ pub async fn initialize_server_state() -> Result<ServerState, ServerError> {
     let database_url = std::env::var("DATABASE_URL").expect("Database url is not specified");
 
     let pool = default_postgress_pool(&database_url).await;
-    migrate!().run(&pool).await.expect(&format!(
-        "Failed to migrate data in database: {}",
-        database_url
-    ));
+    migrate!()
+        .run(&pool)
+        .await
+        .unwrap_or_else(|_| panic!("Failed to migrate data in database: {database_url}"));
 
     let pool = Arc::new(pool);
 

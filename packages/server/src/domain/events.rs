@@ -2,9 +2,7 @@ use cqrs_es::DomainEvent;
 use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 
-use crate::domain::{
-    Card, Crib, Dealer, GameId, Hand, Player, Points, ScoreBreakdown, StarterCut, UserId,
-};
+use crate::domain::{Card, Crib, Dealer, GameId, Hand, Player, ScoreBreakdown, StarterCut, UserId};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, AsRefStr)]
 pub enum GameEvent {

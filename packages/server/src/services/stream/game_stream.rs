@@ -17,8 +17,6 @@ pub async fn game_stream(
         BroadcastStream::new(server_state.database_changes_sender.subscribe()).map_err(bug!());
 
     let stream = stream.try_filter_map(move |notification| async move {
-        let game_id = game_id.clone();
-
         let notification_to_game_row_change = move |notification: Notification| {
             let change = (notification.table_name == "game_query")
                 .then_some(notification.as_change::<GameQueryRow>())
@@ -54,7 +52,7 @@ pub async fn game_stream(
 
         let change = notification_to_game_row_change(notification)?;
         let change = change.map(row_change_to_game_change).transpose()?;
-        let game = change.map(game_change_to_game).flatten();
+        let game = change.and_then(game_change_to_game);
 
         Ok(game)
     });

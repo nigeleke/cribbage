@@ -48,4 +48,14 @@ impl Toast {
             false,
         );
     }
+
+    pub fn server_error(service: &str, error: String) {
+        Self::toast(
+            service,
+            &error,
+            ToastType::Warning,
+            Duration::from_secs(30),
+            true,
+        );
+    }
 }

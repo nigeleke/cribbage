@@ -17,6 +17,12 @@ impl GameIdDTO {
     }
 }
 
+impl Default for GameIdDTO {
+    fn default() -> Self {
+        Self(Uuid::nil())
+    }
+}
+
 impl std::fmt::Display for GameIdDTO {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)

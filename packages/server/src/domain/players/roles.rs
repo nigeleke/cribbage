@@ -34,7 +34,7 @@ impl Roles {
     pub fn from_cuts(cuts: &CutsForDeal) -> Option<Self> {
         use std::cmp::Ordering;
 
-        let defined_cuts = cuts.iter().filter_map(|c| c.clone()).collect::<Vec<_>>();
+        let defined_cuts = cuts.iter().filter_map(|c| *c).collect::<Vec<_>>();
 
         (defined_cuts.len() == PLAYER_COUNT)
             .then(|| {
@@ -49,7 +49,7 @@ impl Roles {
                     Ordering::Equal => None,
                 };
 
-                dealer.map(|dealer| Self::new(dealer))
+                dealer.map(Self::new)
             })
             .flatten()
     }

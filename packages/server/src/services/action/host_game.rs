@@ -10,7 +10,8 @@ pub async fn host_game(server_state: ServerState, user_id: UserId) -> Result<Gam
     let aggregate_id = game_id.value().to_string();
 
     let command = GameCommand::HostGame { user_id, game_id };
-    let _ = server_state
+
+    server_state
         .cqrs
         .execute(&aggregate_id, command)
         .await

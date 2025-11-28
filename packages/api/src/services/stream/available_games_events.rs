@@ -1,15 +1,23 @@
-use crate::dto::{AvailableGameEventDTO, GameIdDTO, UserIdDTO};
+#[cfg(feature = "server")]
 use dioxus::fullstack::extract::State;
-use dioxus::fullstack::{JsonEncoding, Streaming};
-use dioxus::prelude::*;
-use futures::StreamExt;
+use dioxus::{
+    fullstack::{JsonEncoding, Streaming},
+    prelude::*,
+};
+
+use crate::dto::{AvailableGameEventDTO, UserIdDTO};
 
 #[get("/api/{user_id}/available_games/events", State(server_state): State<server::ServerState>)]
 pub async fn available_games_events(
     user_id: UserIdDTO,
 ) -> Result<Streaming<AvailableGameEventDTO, JsonEncoding>> {
-    use server::domain::UserId;
-    use server::stream::{AvailableGameEvent, available_game_events};
+    use futures::StreamExt;
+    use server::{
+        domain::UserId,
+        stream::{AvailableGameEvent, available_game_events},
+    };
+
+    use crate::dto::GameIdDTO;
 
     let user_id = UserId::from(user_id.value());
 

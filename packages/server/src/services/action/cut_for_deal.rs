@@ -21,7 +21,8 @@ pub async fn cut_for_deal(
         let aggregate_id = game_id.value().to_string();
 
         let command = GameCommand::CutForDeal { player };
-        let _ = server_state
+
+        server_state
             .cqrs
             .execute(&aggregate_id, command)
             .await

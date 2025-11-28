@@ -1,5 +1,7 @@
 use chrono::{DateTime, Utc};
-use dioxus::{fullstack::extract::State, prelude::*};
+#[cfg(feature = "server")]
+use dioxus::fullstack::extract::State;
+use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::dto::{AvailableGameDTO, UserIdDTO};

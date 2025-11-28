@@ -15,7 +15,8 @@ pub async fn join_game(
     let aggregate_id = game_id.value().to_string();
 
     let command = GameCommand::JoinGame { user_id };
-    let _ = server_state
+
+    server_state
         .cqrs
         .execute(&aggregate_id, command)
         .await

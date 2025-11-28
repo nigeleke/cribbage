@@ -78,7 +78,7 @@ pub async fn available_game_events(
 
         let change = notification_to_game_row_change(notification)?;
         let change = change.map(row_change_to_game_change).transpose()?;
-        let event = change.map(game_change_to_event).flatten();
+        let event = change.and_then(game_change_to_event);
         Ok(event)
     });
 

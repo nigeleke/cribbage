@@ -1,7 +1,9 @@
-use crate::components::input::*;
+use std::time::Duration;
+
 use dioxus::prelude::*;
 use dioxus_sdk::time::use_debounce;
-use std::time::Duration;
+
+use crate::components::input::*;
 
 #[component]
 pub fn DebouncedInput(
@@ -10,7 +12,7 @@ pub fn DebouncedInput(
     placeholder: Option<String>,
     on_debounced_input: EventHandler<String>,
 ) -> Element {
-    let mut value = use_signal(|| value());
+    let mut value = use_signal(&*value);
 
     let mut debounce = use_debounce(Duration::from_millis(300), move |value| {
         on_debounced_input.call(value);

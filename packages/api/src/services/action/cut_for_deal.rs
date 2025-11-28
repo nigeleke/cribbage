@@ -1,4 +1,6 @@
-use dioxus::{fullstack::extract::State, prelude::*};
+#[cfg(feature = "server")]
+use dioxus::fullstack::extract::State;
+use dioxus::prelude::*;
 
 use crate::{
     dto::{GameIdDTO, UserIdDTO},

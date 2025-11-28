@@ -41,7 +41,7 @@ pub fn AvailableGamesList() -> Element {
         match result {
             Ok(response) => {
                 has_more.set(response.has_more());
-                last_since.set(response.since().clone());
+                last_since.set(*response.since());
                 let mut fetched_games = Vec::from(response.games());
                 match action {
                     FetchAction::Replace => games.set(fetched_games),
@@ -53,6 +53,7 @@ pub fn AvailableGamesList() -> Element {
         }
     };
 
+    #[allow(clippy::let_underscore_future)]
     let _ = use_resource(move || async move {
         fetch_games(FetchAction::Replace, "".into(), api::view::Since::default()).await
     });
@@ -97,7 +98,7 @@ fn InnerList(games: Vec<AvailableGameDTO>) -> Element {
 
 #[component]
 fn Filter(on_filter_changed: Callback<String>) -> Element {
-    let mut filter = use_signal(|| String::default());
+    let mut filter = use_signal(String::default);
 
     let on_debounced_input = move |value: String| {
         filter.set(value.clone());

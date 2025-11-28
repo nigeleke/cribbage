@@ -13,7 +13,8 @@ pub async fn play_computer(
     let aggregate_id = game_id.value().to_string();
 
     let command = GameCommand::PlayComputer { user_id, game_id };
-    let _ = server_state
+
+    server_state
         .cqrs
         .execute(&aggregate_id, command)
         .await

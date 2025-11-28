@@ -10,12 +10,18 @@ use crate::{
 pub fn HomePage() -> Element {
     let user_id = use_context::<Signal<UserIdDTO>>();
 
-    let _ = use_resource(move || async move {
+    let available_games_events_result = use_resource(move || async move {
         let mut stream = api::stream::available_games_events(user_id()).await?;
         while let Some(Ok(event)) = stream.next().await {
             Toast::available_game(event);
         }
         dioxus::Ok(())
+    });
+
+    use_effect(move || {
+        if let Some(Err(error)) = available_games_events_result.result() {
+            Toast::server_error("available games events", error.to_string());
+        }
     });
 
     rsx! {

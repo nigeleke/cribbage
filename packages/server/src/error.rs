@@ -24,19 +24,19 @@ pub enum ServerError {
 macro_rules! bug_inner {
     ($msg:expr) => {{
         let location = std::panic::Location::caller();
-        let mut msg = format!("BUG at {}:{}:{} — {}",
+        let message = format!("BUG at {}:{}:{} — {}",
             location.file(), location.line(), location.column(), $msg);
 
         #[cfg(feature = "backtrace")]
         {
-            let bt = std::backtrace::Backtrace::capture();
-            if bt.status() == std::backtrace::BacktraceStatus::Captured {
+            let backtrace = std::backtrace::Backtrace::capture();
+            if backtrace.status() == std::backtrace::BacktraceStatus::Captured {
                 use std::fmt::Write;
-                let _ = writeln!(msg, "\n\nBacktrace:\n{bt:?}");
+                let _ = writeln!(message.clone(), "\n\nBacktrace:\n{backtrace:?}");
             }
         }
 
-        ServerError::Internal(anyhow::anyhow!(msg))
+        ServerError::Internal(anyhow::anyhow!(message))
     }};
     ($fmt:expr, $($arg:tt)*) => { bug_inner!(format_args!($fmt, $($arg)*)) };
 }

@@ -86,9 +86,7 @@ impl Game {
     fn join_game(&self, guest: UserId) -> Result<Vec<GameEvent>, DomainError> {
         let not_permitted = || Err(DomainError::NotPermitted(String::from("join game")));
 
-        if self.id == GameId::default() {
-            not_permitted()
-        } else if self.guest.is_some() {
+        if self.id == GameId::default() || self.guest.is_some() {
             not_permitted()
         } else if self.host == guest {
             Err(DomainError::InvalidOpponent)
@@ -185,7 +183,7 @@ impl Game {
         } else {
             match &self.state {
                 State::Starting(starting) => {
-                    let events = acknowledge_cut_for_deal(&starting);
+                    let events = acknowledge_cut_for_deal(starting);
                     Ok(events)
                 }
                 _ => not_permitted(),
@@ -203,15 +201,14 @@ impl Game {
         let discard_cards_to_crib = |discarding: &Discarding| {
             if !discarding.pending().waiting_on(player) {
                 not_permitted()
-            } else if !discarding.hand(player).contains_all(&cards) {
-                Err(DomainError::InvalidDiscards(format_vec(&cards)))
-            } else if cards.len() != CARDS_DISCARDED_TO_CRIB {
-                Err(DomainError::InvalidDiscards(format_vec(&cards)))
-            } else if discarding.hand(player).len() - cards.len() != CARDS_KEPT_PER_HAND {
+            } else if !discarding.hand(player).contains_all(&cards)
+                || cards.len() != CARDS_DISCARDED_TO_CRIB
+                || discarding.hand(player).len() - cards.len() != CARDS_KEPT_PER_HAND
+            {
                 Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else {
                 let mut events = vec![GameEvent::CardsDiscardedToCrib {
-                    player: player.clone(),
+                    player,
                     cards: cards.clone(),
                 }];
 
@@ -403,7 +400,7 @@ impl Game {
                 .with_pending_plays(PLAYER1, discarding.hand(PLAYER1).as_ref());
             let playing = Playing::new(
                 discarding.scoreboard().clone(),
-                discarding.roles().clone(),
+                *discarding.roles(),
                 discarding.hands().clone(),
                 play_state,
                 discarding.crib().clone(),
@@ -442,7 +439,7 @@ impl Game {
     fn winner_declared(&mut self, winner: Player) {
         let (scoreboard, roles, hands, crib, cut) = match &self.state {
             State::Starting(_) => unreachable!(),
-            State::Discarding(s) => unreachable!(),
+            State::Discarding(_) => unreachable!(),
             State::Playing(s) => (
                 s.scoreboard(),
                 s.roles(),

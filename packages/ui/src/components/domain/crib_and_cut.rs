@@ -1,6 +1,7 @@
-use crate::components::Card;
 use api::dto::{CardDTO, PlayerDTO, UserGameDTO};
 use dioxus::prelude::*;
+
+use crate::components::Card;
 
 #[component]
 pub fn CribAndCut() -> Element {
@@ -9,17 +10,11 @@ pub fn CribAndCut() -> Element {
     let dealer = use_memo(move || game().dealer);
     let crib = use_memo(move || game().crib);
 
-    let user_crib = use_memo(move || {
-        dealer()
-            .map(|dealer| (dealer == PlayerDTO::User).then(|| crib()))
-            .flatten()
-    });
+    let user_crib =
+        use_memo(move || dealer().and_then(|dealer| (dealer == PlayerDTO::User).then(&*crib)));
 
-    let opponent_crib = use_memo(move || {
-        dealer()
-            .map(|dealer| (dealer == PlayerDTO::Opponent).then(|| crib()))
-            .flatten()
-    });
+    let opponent_crib =
+        use_memo(move || dealer().and_then(|dealer| (dealer == PlayerDTO::Opponent).then(&*crib)));
 
     let starter_cut = use_memo(move || game().starter_cut);
 

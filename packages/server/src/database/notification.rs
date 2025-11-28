@@ -13,16 +13,18 @@ pub enum Change<T> {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 enum Operation {
-    INSERT,
-    UPDATE,
-    DELETE,
+    Insert,
+    Update,
+    Delete,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 enum Timing {
-    BEFORE,
-    AFTER,
+    Before,
+    After,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -44,12 +46,12 @@ impl Notification {
         let new_row = || self.new_row_as::<T>()?.ok_or_else(|| missing("new_row"));
 
         let change = match self.operation {
-            Operation::INSERT => Change::Insert { t: new_row()? },
-            Operation::UPDATE => Change::Update {
+            Operation::Insert => Change::Insert { t: new_row()? },
+            Operation::Update => Change::Update {
                 old_t: old_row()?,
                 new_t: new_row()?,
             },
-            Operation::DELETE => Change::Delete { t: old_row()? },
+            Operation::Delete => Change::Delete { t: old_row()? },
         };
 
         Ok(change)

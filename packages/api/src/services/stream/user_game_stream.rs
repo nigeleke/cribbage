@@ -1,8 +1,9 @@
+#[cfg(feature = "server")]
+use dioxus::fullstack::extract::State;
 use dioxus::{
-    fullstack::{JsonEncoding, Streaming, extract::State},
+    fullstack::{JsonEncoding, Streaming},
     prelude::*,
 };
-use futures::StreamExt;
 
 use crate::dto::{GameIdDTO, UserGameDTO, UserIdDTO};
 
@@ -11,6 +12,7 @@ pub async fn user_game_stream(
     user_id: UserIdDTO,
     game_id: GameIdDTO,
 ) -> Result<Streaming<UserGameDTO, JsonEncoding>> {
+    use futures::StreamExt;
     use server::{
         domain::{GameId, UserId},
         stream::game_stream,

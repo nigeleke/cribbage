@@ -1,6 +1,9 @@
-use crate::dto::{CardDTO, PendingDTO, PhaseDTO, PlayerDTO, PlayerStateDTO, PlaysDTO, ScoreDTO};
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "server")]
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::dto::{CardDTO, PendingDTO, PhaseDTO, PlayerDTO, PlayerStateDTO, PlaysDTO};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UserGameDTO {
@@ -16,6 +19,7 @@ pub struct UserGameDTO {
     pub winner: Option<PlayerDTO>,
 }
 
+#[cfg(feature = "server")]
 impl UserGameDTO {
     fn new(name: &str, phase: PhaseDTO) -> Self {
         Self {
@@ -82,13 +86,13 @@ impl UserGameDTO {
 
 #[cfg(feature = "server")]
 mod server_only {
-    use crate::dto::plays::PlayActionDTO;
-
-    use super::*;
     use server::domain::{
         Game, HasCrib, HasCutsForDeal, HasHands, HasPending, HasPlayState, HasRoles, HasScoreboard,
         HasStarterCut, PLAYER0, PLAYER1, Play, Player, Roles, State, UserId,
     };
+
+    use super::*;
+    use crate::dto::plays::PlayActionDTO;
 
     fn players(game: &Game, user_id: UserId) -> (Player, Player) {
         let is_host = game.host() == &user_id;

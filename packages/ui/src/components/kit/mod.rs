@@ -1,3 +1,4 @@
+#![allow(unused)]
 pub mod button;
 pub mod debounced_input;
 pub mod input;

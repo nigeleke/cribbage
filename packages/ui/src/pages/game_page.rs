@@ -1,7 +1,10 @@
 use api::dto::{GameIdDTO, PhaseDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
-use crate::components::{CuttingForDeal, Discarding, InLobby, Playing};
+use crate::{
+    components::{CuttingForDeal, Discarding, InLobby, Playing},
+    toast::Toast,
+};
 
 #[component]
 pub fn GamePage(game_id: GameIdDTO) -> Element {
@@ -18,11 +21,17 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
         dioxus::Ok(())
     });
 
-    let _ = use_resource(move || async move {
+    let get_game_result = use_resource(move || async move {
         let current_game = api::view::get_game(*user_id.read(), game_id).await?;
         game_stream.call();
         game.set(Some(current_game));
         dioxus::Ok(())
+    });
+
+    use_effect(move || {
+        if let Some(Err(error)) = get_game_result.result() {
+            Toast::server_error("get game", error.to_string());
+        }
     });
 
     rsx! {

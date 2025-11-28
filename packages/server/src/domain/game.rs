@@ -995,120 +995,117 @@ mod test {
     /// Players earn points during play and for making various card combinations.
     mod object_of_the_game {}
 
-    //     /// ## The Crib
-    //     ///
-    //     /// Each player looks at his six cards and "lays away" (discards) two of them face down to
-    //     /// reduce the hand to four. The four cards laid away together constitute "the crib". The crib
-    //     /// belongs to the dealer, but these cards are not exposed or used until after the hands have
-    //     /// been played.
-    //     mod the_crib {
-    //         use std::str::FromStr;
+    /// ## The Crib
+    ///
+    /// Each player looks at his six cards and "lays away" (discards) two of them face down to
+    /// reduce the hand to four. The four cards laid away together constitute "the crib". The crib
+    /// belongs to the dealer, but these cards are not exposed or used until after the hands have
+    /// been played.
+    mod the_crib {
+        use std::str::FromStr;
 
-    //         use super::*;
-    //         use crate::card;
-    //         use crate::display::format_vec;
-    //         use crate::domain::{Card, DiscardCardsToCrib, DomainError};
-    //         use crate::test::*;
+        use super::*;
+        use crate::{
+            card, cards,
+            domain::{Card, GameEvent, GameId, PLAYER0, PLAYER1, UserId},
+            function_name, hand,
+        };
 
-    //         #[test]
-    //         fn player_can_discard_own_cards_to_the_crib() {
-    //             let discarding = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-    //                 .into_discarding();
+        fn preconditions(name: String) -> Vec<GameEvent> {
+            let game_id = GameId::new();
+            let host = UserId::new();
+            let guest = UserId::new();
 
-    //             let game = Game::from(State::Discarding(discarding.clone()));
-    //             let game_id = game.id;
+            vec![
+                GameEvent::ComputerGameStarted {
+                    game_id,
+                    host,
+                    guest,
+                    name,
+                },
+                GameEvent::CutForDealMade {
+                    player: PLAYER0,
+                    cut: card!("AH"),
+                },
+                GameEvent::CutForDealMade {
+                    player: PLAYER1,
+                    cut: card!("QH"),
+                },
+                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
+                GameEvent::CutForDealAcknowledged { player: PLAYER1 },
+                GameEvent::CutForDealDecided {
+                    dealer: Dealer::from(PLAYER0),
+                },
+                GameEvent::HandDealt {
+                    player: PLAYER0,
+                    hand: hand!("AH2H3H4H5H6H"),
+                },
+                GameEvent::HandDealt {
+                    player: PLAYER1,
+                    hand: hand!("AC2C3C4C5C6C"),
+                },
+            ]
+        }
 
-    //             let discards = vec![card!("AH"), card!("2H")];
+        #[test]
+        fn player_can_discard_own_cards_to_the_crib() {
+            GameTestFramework::with(GameServices)
+                .given(preconditions(function_name!()))
+                .when(GameCommand::DiscardCardsToCrib {
+                    player: PLAYER0,
+                    cards: cards!("AH2H"),
+                })
+                .then_expect_events(vec![GameEvent::CardsDiscardedToCrib {
+                    player: PLAYER0,
+                    cards: cards!("AH2H"),
+                }]);
+        }
 
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(DiscardCardsToCrib::new(game_id, PLAYER0, &discards))
-    //                 .assert_reply(|reply| assert!(!reply))
-    //                 .assert_event(|event| {
-    //                     let EventKind::StateUpdated { id, state } = event.kind() else {
-    //                         panic!("unexpected event")
-    //                     };
+        #[test]
+        fn player_cannot_discard_other_than_two_held_cards_to_the_crib() {
+            for cards in vec!["AH2H3H", "AH"] {
+                let cards = cards!(cards);
+                let expected_error_text = format_vec(&cards);
+                GameTestFramework::with(GameServices)
+                    .given(preconditions(function_name!()))
+                    .when(GameCommand::DiscardCardsToCrib {
+                        player: PLAYER0,
+                        cards,
+                    })
+                    .then_expect_error(DomainError::InvalidDiscards(expected_error_text));
+            }
+        }
 
-    //                     assert_eq!(id, &game_id);
-    //                     assert!(matches!(state, State::Discarding(_)));
-    //                 })
-    //                 .assert_entity(|game| {
-    //                     let State::Discarding(actual_discarding) = game.state() else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
+        #[test]
+        fn player_cannot_discard_unowned_cards_to_the_crib() {
+            let cards = cards!("AC2C");
+            let expected_error_text = format_vec(&cards);
+            GameTestFramework::with(GameServices)
+                .given(preconditions(function_name!()))
+                .when(GameCommand::DiscardCardsToCrib {
+                    player: PLAYER0,
+                    cards,
+                })
+                .then_expect_error(DomainError::InvalidDiscards(expected_error_text));
+        }
 
-    //                     assert_eq!(actual_discarding.scoreboard(), discarding.scoreboard());
-    //                     assert_eq!(actual_discarding.dealer(), discarding.dealer());
+        #[test]
+        fn player_cannot_discard_if_already_discarded() {
+            let mut preconditions = preconditions(function_name!());
+            preconditions.push(GameEvent::CardsDiscardedToCrib {
+                player: PLAYER0,
+                cards: cards!("AH2H"),
+            });
 
-    //                     assert!(actual_discarding.hand(PLAYER0).contains_none(&discards));
-    //                     assert!(actual_discarding.crib().contains_all(&discards));
-    //                     assert_eq!(actual_discarding.hand(PLAYER1), discarding.hand(PLAYER1));
-    //                     assert_eq!(actual_discarding.deck(), discarding.deck());
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn player_cannot_discard_other_than_two_held_cards_to_the_crib() {
-    //             let discarding = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-    //                 .into_discarding();
-
-    //             // TODO!:
-    //             for discards in vec![
-    //                 vec![card!("AH"), card!("2H"), card!("3H")],
-    //                 vec![card!("AH")],
-    //             ] {
-    //                 let game = Game::from(State::Discarding(discarding.clone()));
-    //                 let game_id = game.id;
-
-    //                 let expected_discards = format_vec(&discards);
-
-    //                 GameTestFramework::new(game_id, game)
-    //                     .when(DiscardCardsToCrib::new(game_id, PLAYER0, &discards))
-    //                     .expect_error(DomainError::InvalidDiscards(expected_discards));
-    //             }
-    //         }
-
-    //         #[test]
-    //         fn player_cannot_discard_unowned_cards_to_the_crib() {
-    //             let discarding = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-    //                 .into_discarding();
-
-    //             let game = Game::from(State::Discarding(discarding.clone()));
-    //             let game_id = game.id;
-
-    //             let discards = vec![card!("AC"), card!("2C")];
-    //             let expected_discards = format_vec(&discards);
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(DiscardCardsToCrib::new(game_id, PLAYER0, &discards))
-    //                 .expect_error(DomainError::InvalidDiscards(expected_discards));
-    //         }
-
-    //         #[test]
-    //         fn player_cannot_discard_if_already_discarded() {
-    //             let discarding = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-    //                 .into_discarding();
-
-    //             let game = Game::from(State::Discarding(discarding.clone()));
-    //             let game_id = game.id;
-
-    //             let discards0 = vec![card!("3H"), card!("AH")];
-    //             let discards1 = vec![card!("3H"), card!("4H")];
-    //             let expected_discards = format_vec(&discards1);
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .execute(DiscardCardsToCrib::new(game_id, PLAYER0, &discards0))
-    //                 .when(DiscardCardsToCrib::new(game_id, PLAYER0, &discards1))
-    //                 .expect_error(DomainError::InvalidDiscards(expected_discards));
-    //         }
-    // }
+            GameTestFramework::with(GameServices)
+                .given(preconditions)
+                .when(GameCommand::DiscardCardsToCrib {
+                    player: PLAYER0,
+                    cards: cards!("5H6H"),
+                })
+                .then_expect_error(DomainError::NotPermitted("discard cards to crib".into()));
+        }
+    }
 
     //     /// ## Before the Play
     //     ///

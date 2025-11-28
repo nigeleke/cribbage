@@ -12,14 +12,14 @@ macro_rules! pile {
     };
 }
 
-/// Create a Vec<Card>.
+/// Create a typed Vec<Card>.
 #[macro_export]
 macro_rules! cards {
     ($str:expr) => {
         Vec::from(
-            Pile::<std::any::TypeId>::from_str($str)
-                .expect("valid pile")
-                .as_ref(),
+            crate::domain::test::Cards::from_str($str)
+                .expect("valid cards")
+                .value(),
         )
     };
 }

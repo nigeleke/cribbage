@@ -9,6 +9,8 @@ mod plays;
 mod scoreboard;
 mod scoring;
 mod state;
+#[cfg(test)]
+pub mod test;
 mod types;
 
 pub use available_game::*;

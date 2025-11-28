@@ -2,8 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::display::format_vec;
-use crate::domain::Card;
+use crate::{display::format_vec, domain::Card};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Pile<T: Clone> {
@@ -127,32 +126,16 @@ mod test {
     use super::*;
     use crate::{card, cards, pile};
 
-    impl<T: Clone> FromStr for Pile<T> {
+    impl<T: Clone> std::str::FromStr for Pile<T> {
         type Err = String;
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            if s.len().is_multiple_of(2) {
-                let card_chunks = |cards: &str| {
-                    cards
-                        .chars()
-                        .collect::<Vec<_>>()
-                        .chunks(2)
-                        .map(|chunk| chunk.iter().collect::<String>())
-                        .collect::<Vec<_>>()
-                };
+            let cards = cards!(s);
 
-                let cards = card_chunks(s)
-                    .iter()
-                    .flat_map(|cid| Card::from_str(cid.as_str()))
-                    .collect::<Vec<_>>();
-
-                Ok(Self {
-                    cards,
-                    _marker: Default::default(),
-                })
-            } else {
-                Err("invalid string length for cards".into())
-            }
+            Ok(Self {
+                cards,
+                _marker: Default::default(),
+            })
         }
     }
 

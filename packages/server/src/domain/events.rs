@@ -45,7 +45,7 @@ pub enum GameEvent {
         cut: StarterCut,
     },
     PointsScored {
-        points: Points,
+        player: Player,
         reasons: ScoreBreakdown,
     },
     CardPlayed {

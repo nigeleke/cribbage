@@ -2,10 +2,11 @@ use itertools::*;
 use serde::{Deserialize, Serialize};
 
 use super::constants::*;
-use crate::display::format_vec;
-use crate::domain::constants::*;
-use crate::domain::{
-    Card, Crib, Hand, PlayState, Points, ScoreEvent, ScoreKind, StarterCut, Value,
+use crate::{
+    display::format_vec,
+    domain::{
+        Card, Crib, Hand, PlayState, Points, ScoreEvent, ScoreKind, StarterCut, Value, constants::*,
+    },
 };
 
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -19,6 +20,13 @@ impl Breakdown {
 
     pub fn points(&self) -> Points {
         self.0.iter().map(ScoreEvent::points).sum()
+    }
+
+    #[cfg(test)]
+    pub fn test(points: usize) -> Self {
+        let mut breakdown = Self::default();
+        breakdown.add_event(ScoreKind::Test, &[], Points::from(points));
+        breakdown
     }
 
     pub fn his_heels(cut: Card) -> Self {
@@ -273,8 +281,11 @@ mod test {
     use std::str::FromStr;
 
     use super::*;
-    use crate::domain::{Card, Hand, PLAYER0, PLAYER1};
-    use crate::{card, hand};
+    use crate::{
+        card,
+        domain::{Card, Hand, PLAYER0, PLAYER1},
+        hand,
+    };
 
     #[test]
     #[should_panic]

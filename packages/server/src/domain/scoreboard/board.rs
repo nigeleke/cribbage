@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::display::format_vec;
-use crate::domain::constants::*;
-use crate::domain::{PLAYER0, PLAYER1, Pegging, Peggings, Player, Points, ScoreBreakdown};
+use crate::{
+    display::format_vec,
+    domain::{PLAYER0, PLAYER1, Pegging, Peggings, Player, Points, ScoreBreakdown, constants::*},
+};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Scoreboard {

@@ -5,14 +5,14 @@ use serde::{Deserialize, Serialize};
 use crate::{
     display::format_vec,
     domain::{
-        Card, Crib, CutsForDeal, Dealer, Deck, Discarding, DomainError, GameCommand, GameEvent,
-        GameId, Hand, Hands, HasCrib, HasCutsForDeal, HasDeck, HasHands, HasPending, HasPlayState,
-        HasRoles, HasScoreboard, PLAYER0, PLAYER1, Pending, PlayState, Player, Playing, Roles,
-        Scoreboard, Starting, State, UserId, WaitingForDiscards,
-        constants::{
-            CARDS_DISCARDED_TO_CRIB, CARDS_KEPT_PER_HAND, CARDS_REQUIRED_IN_CRIB, PLAYER_COUNT,
-        },
+        Card, Crib, CutsForDeal, Dealer, Deck, Discarding, DomainError, Finished, GameCommand,
+        GameEvent, GameId, Hand, Hands, HasCrib, HasCutsForDeal, HasDeck, HasHands, HasPending,
+        HasPlayState, HasRoles, HasScoreboard, HasStarterCut, PLAYER0, PLAYER1, Pending, PlayState,
+        Player, Playing, Roles, ScoreBreakdown, Scoreboard, StarterCut, Starting, State, UserId,
+        WaitingForDiscards,
+        constants::{CARDS_DISCARDED_TO_CRIB, CARDS_KEPT_PER_HAND, PLAYER_COUNT},
     },
+    extensions::HasScoreboardExt,
     name_builder::generate_game_name,
 };
 
@@ -210,10 +210,21 @@ impl Game {
             } else if discarding.hand(player).len() - cards.len() != CARDS_KEPT_PER_HAND {
                 Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else {
-                let events = vec![GameEvent::CardsDiscardedToCrib {
+                let mut events = vec![GameEvent::CardsDiscardedToCrib {
                     player: player.clone(),
                     cards: cards.clone(),
                 }];
+
+                let proceed = discarding.pending().clone().acknowledge(player);
+                if proceed {
+                    let dealer = discarding.dealer().player();
+                    let cut = discarding.deck().clone().cut();
+                    events.push(GameEvent::StarterSelected { cut });
+                    events.append(
+                        &mut discarding.award_points(dealer, ScoreBreakdown::his_heels(cut)),
+                    );
+                }
+
                 Ok(events)
             }
         };
@@ -382,23 +393,38 @@ impl Game {
             discarding.hand_mut(player).remove_all(cards);
             discarding.crib_mut().add_all(cards);
             discarding.pending_mut().acknowledge(player);
-
-            if discarding.crib().len() == CARDS_REQUIRED_IN_CRIB {
-                let starter_cut = discarding.deck_mut().cut();
-                let play_state = PlayState::new(discarding.pone().player())
-                    .with_pending_plays(PLAYER0, discarding.hand(PLAYER0).as_ref())
-                    .with_pending_plays(PLAYER1, discarding.hand(PLAYER1).as_ref());
-                let playing = Playing::new(
-                    discarding.scoreboard().clone(),
-                    discarding.roles().clone(),
-                    discarding.hands().clone(),
-                    play_state,
-                    discarding.crib().clone(),
-                    starter_cut,
-                );
-                self.state = State::Playing(playing);
-            }
         }
+    }
+
+    fn starter_selected(&mut self, starter_cut: StarterCut) {
+        if let State::Discarding(discarding) = &mut self.state {
+            let play_state = PlayState::new(discarding.pone().player())
+                .with_pending_plays(PLAYER0, discarding.hand(PLAYER0).as_ref())
+                .with_pending_plays(PLAYER1, discarding.hand(PLAYER1).as_ref());
+            let playing = Playing::new(
+                discarding.scoreboard().clone(),
+                discarding.roles().clone(),
+                discarding.hands().clone(),
+                play_state,
+                discarding.crib().clone(),
+                starter_cut,
+            );
+            self.state = State::Playing(playing);
+        }
+    }
+
+    fn points_scored(&mut self, player: Player, reasons: ScoreBreakdown) {
+        let scoreboard = match &mut self.state {
+            State::Starting(_) => unreachable!(),
+            State::Discarding(s) => s.scoreboard_mut(),
+            State::Playing(s) => s.scoreboard_mut(),
+            State::ScoringPone(s) => s.scoreboard_mut(),
+            State::ScoringDealer(s) => s.scoreboard_mut(),
+            State::ScoringCrib(s) => s.scoreboard_mut(),
+            State::Finished(_) => unreachable!(),
+        };
+
+        scoreboard.peg(player, &reasons);
     }
 
     fn card_played(&mut self, player: Player, card: Card) {
@@ -411,6 +437,51 @@ impl Game {
         if let State::Playing(playing) = &mut self.state {
             playing.pass(player);
         }
+    }
+
+    fn winner_declared(&mut self, winner: Player) {
+        let (scoreboard, roles, hands, crib, cut) = match &self.state {
+            State::Starting(_) => unreachable!(),
+            State::Discarding(s) => unreachable!(),
+            State::Playing(s) => (
+                s.scoreboard(),
+                s.roles(),
+                s.hands(),
+                s.crib(),
+                s.starter_cut(),
+            ),
+            State::ScoringPone(s) => (
+                s.scoreboard(),
+                s.roles(),
+                s.hands(),
+                s.crib(),
+                s.starter_cut(),
+            ),
+            State::ScoringDealer(s) => (
+                s.scoreboard(),
+                s.roles(),
+                s.hands(),
+                s.crib(),
+                s.starter_cut(),
+            ),
+            State::ScoringCrib(s) => (
+                s.scoreboard(),
+                s.roles(),
+                s.hands(),
+                s.crib(),
+                s.starter_cut(),
+            ),
+            State::Finished(_) => unreachable!(),
+        };
+        let finished = Finished::new(
+            winner,
+            scoreboard.clone(),
+            *roles,
+            hands.clone(),
+            crib.clone(),
+            *cut,
+        );
+        self.state = State::Finished(finished);
     }
 
     pub fn apply_event(&mut self, event: GameEvent) {
@@ -436,8 +507,11 @@ impl Game {
             GameEvent::CardsDiscardedToCrib { player, cards } => {
                 self.cards_discarded_to_crib(player, &cards)
             }
+            GameEvent::StarterSelected { cut } => self.starter_selected(cut),
+            GameEvent::PointsScored { player, reasons } => self.points_scored(player, reasons),
             GameEvent::CardPlayed { player, card } => self.card_played(player, card),
             GameEvent::Passed { player } => self.passed(player),
+            GameEvent::WinnerDeclared { player } => self.winner_declared(player),
             _ => unimplemented!("apply: {event:?}"),
         }
     }
@@ -1107,175 +1181,201 @@ mod test {
         }
     }
 
-    //     /// ## Before the Play
-    //     ///
-    //     /// After the crib is laid away, the non-dealer cuts the pack. The dealer turns up the top card
-    //     /// of the lower packet and places it face up on top of the pack. This card is the "starter." If
-    //     /// the starter is a jack, it is called "His Heels," and the dealer pegs (scores) 2 points at
-    //     /// once. The starter is not used in the play phase of Cribbage , but is used later for making
-    //     /// various card combinations that score points.
-    //     mod before_the_play {
-    //         use super::*;
-    //         use crate::domain::constants::*;
-    //         use crate::domain::{
-    //             AcknowledgePoneScore, Cut, Dealer, DiscardCardsToCrib, Points, Pone, Scoreboard, State,
-    //         };
-    //         use crate::test::{GameBuilder, GameTestFramework};
+    /// ## Before the Play
+    ///
+    /// After the crib is laid away, the non-dealer cuts the pack. The dealer turns up the top card
+    /// of the lower packet and places it face up on top of the pack. This card is the "starter." If
+    /// the starter is a jack, it is called "His Heels," and the dealer pegs (scores) 2 points at
+    /// once. The starter is not used in the play phase of Cribbage , but is used later for making
+    /// various card combinations that score points.
+    mod before_the_play {
+        use std::{ops::Add, str::FromStr};
 
-    //         fn after_discards_common_tests() -> (Scoreboard, Scoreboard, Cut, Dealer, Pone) {
-    //             let discarding0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-    //                 .into_discarding();
+        use super::*;
+        use crate::{
+            card, cards,
+            domain::{
+                Card, GameEvent, GameId, HasScoreboard, HasStarterCut, PLAYER0, PLAYER1, Points,
+                UserId,
+            },
+            function_name, hand,
+        };
 
-    //             let scoreboard0 = discarding0.scoreboard().clone();
-    //             let dealer0 = discarding0.dealer();
-    //             let pone0 = discarding0.pone();
+        fn preconditions(name: String) -> Vec<GameEvent> {
+            let game_id = GameId::new();
+            let host = UserId::new();
+            let guest = UserId::new();
 
-    //             let mut player_hand0 = discarding0.hand(PLAYER0).clone();
-    //             let player_discards = player_hand0.take(2);
+            vec![
+                GameEvent::ComputerGameStarted {
+                    game_id,
+                    host,
+                    guest,
+                    name,
+                },
+                GameEvent::CutForDealMade {
+                    player: PLAYER0,
+                    cut: card!("AH"),
+                },
+                GameEvent::CutForDealMade {
+                    player: PLAYER1,
+                    cut: card!("QH"),
+                },
+                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
+                GameEvent::CutForDealAcknowledged { player: PLAYER1 },
+                GameEvent::CutForDealDecided {
+                    dealer: Dealer::from(PLAYER0),
+                },
+                GameEvent::HandDealt {
+                    player: PLAYER0,
+                    hand: hand!("AH2H3H4H5H6H"),
+                },
+                GameEvent::HandDealt {
+                    player: PLAYER1,
+                    hand: hand!("AC2C3C4C5C6C"),
+                },
+                GameEvent::CardsDiscardedToCrib {
+                    player: PLAYER0,
+                    cards: cards!("AH2H"),
+                },
+            ]
+        }
 
-    //             let mut opponent_hand0 = discarding0.hand(PLAYER1).clone();
-    //             let opponent_discards = opponent_hand0.take(2);
+        #[test]
+        fn start_the_play_after_discards() {
+            let result = GameTestFramework::with(GameServices)
+                .given(preconditions(function_name!()))
+                .when(GameCommand::DiscardCardsToCrib {
+                    player: PLAYER1,
+                    cards: cards!("AC2C"),
+                })
+                .inspect_result();
 
-    //             let deck0 = discarding0.deck().clone();
+            match result {
+                Ok(events) => {
+                    assert!(events.contains(&GameEvent::CardsDiscardedToCrib {
+                        player: PLAYER1,
+                        cards: cards!("AC2C"),
+                    }));
+                    let Some(GameEvent::StarterSelected { cut }) = events
+                        .iter()
+                        .find(|e| matches!(e, GameEvent::StarterSelected { .. }))
+                    else {
+                        panic!("expected event not found");
+                    };
 
-    //             let game = Game::from(State::Discarding(discarding0.clone()));
-    //             let game_id = game.id;
+                    let mut game = Game::default();
+                    game.apply_events(&preconditions(function_name!()));
+                    game.apply_events(&events);
+                    if let State::Playing(playing) = game.state() {
+                        assert_eq!(playing.starter_cut(), cut);
 
-    //             let test = GameTestFramework::new(game.id, game)
-    //                 .execute(DiscardCardsToCrib::new(game_id, PLAYER0, &player_discards))
-    //                 .execute(DiscardCardsToCrib::new(
-    //                     game_id,
-    //                     PLAYER1,
-    //                     &opponent_discards,
-    //                 ))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
+                        if cut.is_jack() {
+                            let dealer = playing.dealer().player();
+                            let pone = playing.pone().player();
+                            assert_eq!(
+                                playing.pegging(dealer).points(),
+                                Scoreboard::default()
+                                    .pegging(dealer)
+                                    .points()
+                                    .add(Points::from(2))
+                            );
+                            assert_eq!(playing.pegging(pone), Scoreboard::default().pegging(pone));
+                        } else {
+                            assert_eq!(playing.scoreboard(), &Scoreboard::default());
+                        }
+                    } else {
+                        panic!("unexpected state {}", game.state());
+                    }
+                }
+                Err(error) => {
+                    panic!("unexpected error {error}");
+                }
+            }
+        }
 
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer();
-    //                     let player_hand1 = playing1.hand(PLAYER0);
-    //                     let opponent_hand1 = playing1.hand(PLAYER1);
-    //                     let play_state1 = playing1.play_state();
-    //                     let cut1 = playing1.cut();
-    //                     let crib1 = playing1.crib();
+        #[test]
+        fn score_his_heels_when_jack_cut_after_discards() {
+            loop {
+                let result = GameTestFramework::with(GameServices)
+                    .given(preconditions(function_name!()))
+                    .when(GameCommand::DiscardCardsToCrib {
+                        player: PLAYER1,
+                        cards: cards!("AC2C"),
+                    })
+                    .inspect_result();
 
-    //                     assert_eq!(dealer1, dealer0);
+                match result {
+                    Ok(events) => {
+                        if let Some(GameEvent::StarterSelected { cut }) = events
+                            .iter()
+                            .find(|e| matches!(e, GameEvent::StarterSelected { .. }))
+                        {
+                            if cut.is_jack() {
+                                if let Some(GameEvent::PointsScored { player, reasons }) = events
+                                    .iter()
+                                    .find(|e| matches!(e, GameEvent::PointsScored { .. }))
+                                {
+                                    assert_eq!(player, &PLAYER0);
+                                    assert_eq!(reasons.points(), Points::from(2));
+                                    assert_eq!(reasons, &ScoreBreakdown::his_heels(*cut));
+                                    break;
+                                } else {
+                                    panic!("expected his heels to be scored");
+                                }
+                            }
+                        }
+                    }
+                    Err(error) => {
+                        panic!("unexpected error {error}");
+                    }
+                }
+            }
+        }
 
-    //                     assert!(player_hand1.contains_none(&player_discards));
-    //                     assert!(crib1.contains_all(&player_discards));
+        #[test]
+        fn finish_game_when_jack_cut_after_discards() {
+            loop {
+                let mut preconditions = preconditions(function_name!());
+                preconditions.push(GameEvent::PointsScored {
+                    player: PLAYER0,
+                    reasons: ScoreBreakdown::test(119),
+                });
 
-    //                     assert!(opponent_hand1.contains_none(&opponent_discards));
-    //                     assert!(crib1.contains_all(&opponent_discards));
-    //                     assert!(deck0.contains(cut1));
+                let result = GameTestFramework::with(GameServices)
+                    .given(preconditions)
+                    .when(GameCommand::DiscardCardsToCrib {
+                        player: PLAYER1,
+                        cards: cards!("AC2C"),
+                    })
+                    .inspect_result();
 
-    //                     assert_eq!(crib1.len(), CARDS_REQUIRED_IN_CRIB);
-    //                     assert_eq!(
-    //                         play_state1.legal_plays(pone0.player()).as_slice(),
-    //                         playing1.hand(pone0.player()).as_ref()
-    //                     );
-    //                     assert_eq!(
-    //                         play_state1.legal_plays(dealer0.player()).as_slice(),
-    //                         playing1.hand(dealer0.player()).as_ref()
-    //                     );
-    //                     assert!(!play_state1.all_players_passed());
-    //                     assert_eq!(play_state1.current_plays(), []);
-    //                     assert_eq!(play_state1.previous_plays(), []);
-    //                 });
-
-    //             let State::Playing(playing) = test.entity().state() else {
-    //                 panic!("test internal error");
-    //             };
-
-    //             (
-    //                 scoreboard0,
-    //                 playing.scoreboard().clone(),
-    //                 playing.cut(),
-    //                 *playing.dealer(),
-    //                 *pone0,
-    //             )
-    //         }
-
-    //         #[test]
-    //         fn start_the_play_after_discards() {
-    //             let (scoreboard0, scoreboard1, cut, dealer, pone) = after_discards_common_tests();
-    //             if cut.face().is_jack() {
-    //                 assert_eq!(
-    //                     *scoreboard0.pegging(dealer.player()) + Points::from(2),
-    //                     *scoreboard1.pegging(dealer.player())
-    //                 );
-    //                 assert_eq!(
-    //                     *scoreboard0.pegging(pone.player()),
-    //                     *scoreboard1.pegging(pone.player())
-    //                 );
-    //             } else {
-    //                 assert_eq!(scoreboard0, scoreboard1)
-    //             }
-    //         }
-
-    //         #[test]
-    //         fn score_his_heels_when_jack_cut_after_discards() {
-    //             loop {
-    //                 let (scoreboard0, scoreboard1, cut, dealer, pone) = after_discards_common_tests();
-    //                 if cut.face().is_jack() {
-    //                     assert_eq!(
-    //                         *scoreboard0.pegging(dealer.player()) + Points::from(2),
-    //                         *scoreboard1.pegging(dealer.player())
-    //                     );
-    //                     assert_eq!(
-    //                         *scoreboard0.pegging(pone.player()),
-    //                         *scoreboard1.pegging(pone.player())
-    //                     );
-    //                     break;
-    //                 }
-    //             }
-    //         }
-
-    //         #[test]
-    //         fn finish_game_when_jack_cut_after_discards() {
-    //             loop {
-    //                 let discarding0 = GameBuilder::default()
-    //                     .with_peggings(120, 120)
-    //                     .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-    //                     .into_discarding();
-
-    //                 let mut player_hand0 = discarding0.hand(PLAYER0).clone();
-    //                 let player_discards = player_hand0.take(2);
-
-    //                 let mut opponent_hand0 = discarding0.hand(PLAYER1).clone();
-    //                 let opponent_discards = opponent_hand0.take(2);
-
-    //                 let game = Game::from(State::Discarding(discarding0.clone()));
-    //                 let game_id = game.id;
-    //                 let test = GameTestFramework::new(game.id, game)
-    //                     .execute(DiscardCardsToCrib::new(game_id, PLAYER0, &player_discards))
-    //                     .execute(DiscardCardsToCrib::new(
-    //                         game_id,
-    //                         PLAYER1,
-    //                         &opponent_discards,
-    //                     ))
-    //                     .assert_entity(|game| {
-    //                         if let State::Playing(playing1) = &game.state {
-    //                             assert!(!playing1.cut().face().is_jack())
-    //                         } else if let State::Finished(finished1) = &game.state {
-    //                             let scoreboard1 = finished1.scoreboard();
-    //                             assert_eq!(scoreboard1.winner(), Some(PLAYER0));
-    //                             assert_eq!(scoreboard1.pegging(PLAYER0).points(), Points::from(122));
-    //                             assert_eq!(scoreboard1.pegging(PLAYER1).points(), Points::from(120));
-    //                         } else {
-    //                             panic!("unexpected state: {}", game.state)
-    //                         };
-    //                     });
-
-    //                 if let State::Finished(_) = test.entity().state() {
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //     }
+                match result {
+                    Ok(events) => {
+                        if let Some(GameEvent::StarterSelected { cut }) = events
+                            .iter()
+                            .find(|e| matches!(e, GameEvent::StarterSelected { .. }))
+                        {
+                            if cut.is_jack() {
+                                if let Some(GameEvent::WinnerDeclared { player }) = events
+                                    .iter()
+                                    .find(|e| matches!(e, GameEvent::WinnerDeclared { .. }))
+                                {
+                                    assert_eq!(player, &PLAYER0);
+                                    break;
+                                } else {
+                                    panic!("expected his heels to be scored");
+                                }
+                            }
+                        }
+                    }
+                    Err(error) => {
+                        panic!("unexpected error {error}");
+                    }
+                }
+            }
+        }
+    }
 
     //     /// ## The Play
     //     ///

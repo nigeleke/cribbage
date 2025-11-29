@@ -33,7 +33,7 @@ pub async fn available_games_events(
     };
 
     let stream = available_game_events(server_state, user_id).await?;
-    let stream = stream.map(move |event| game_event_to_dto(event));
+    let stream = stream.map(game_event_to_dto);
 
     Ok(Streaming::new(stream))
 }

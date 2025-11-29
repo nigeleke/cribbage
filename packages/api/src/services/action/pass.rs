@@ -17,6 +17,6 @@ pub async fn pass(user_id: UserIdDTO, game_id: GameIdDTO) -> Result<(), ApiError
     let user_id = UserId::from(user_id.value());
     let game_id = GameId::from(game_id.value());
 
-    let _ = pass(server_state, user_id, game_id).await?;
+    pass(server_state, user_id, game_id).await?;
     Ok(())
 }

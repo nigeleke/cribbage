@@ -32,7 +32,6 @@ pub(crate) mod constants {
     pub const CARDS_DEALT_PER_HAND: usize = 6;
     pub const CARDS_KEPT_PER_HAND: usize = 4;
     pub const CARDS_DISCARDED_TO_CRIB: usize = CARDS_DEALT_PER_HAND - CARDS_KEPT_PER_HAND;
-    pub const CARDS_REQUIRED_IN_CRIB: usize = CARDS_DISCARDED_TO_CRIB * PLAYER_COUNT;
 
     pub const PLAY_TARGET: usize = 31;
 

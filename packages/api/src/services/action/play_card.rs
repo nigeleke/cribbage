@@ -24,6 +24,6 @@ pub async fn play_card(
     let game_id = GameId::from(game_id.value());
     let card = Card::from_str(&card).map_err(ServerFnError::new)?;
 
-    let _ = play_card(server_state, user_id, game_id, card).await?;
+    play_card(server_state, user_id, game_id, card).await?;
     Ok(())
 }

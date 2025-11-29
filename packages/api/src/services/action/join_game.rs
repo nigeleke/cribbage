@@ -17,6 +17,6 @@ pub async fn join_game(user_id: UserIdDTO, game_id: GameIdDTO) -> Result<(), Api
     let user_id = UserId::from(user_id.value());
     let game_id = GameId::from(game_id.value());
 
-    let _ = join_game(server_state, user_id, game_id).await?;
+    join_game(server_state, user_id, game_id).await?;
     Ok(())
 }

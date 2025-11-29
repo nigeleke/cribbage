@@ -3,7 +3,9 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::dto::{CardDTO, PendingDTO, PhaseDTO, PlayerDTO, PlayerStateDTO, PlaysDTO, ScoreDTO};
+#[cfg(feature = "server")]
+use crate::dto::ScoreDTO;
+use crate::dto::{CardDTO, PendingDTO, PhaseDTO, PlayerDTO, PlayerStateDTO, PlaysDTO};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UserGameDTO {
@@ -126,9 +128,7 @@ mod server_only {
         roles: Option<Roles>,
         player_dto_map: &HashMap<Player, PlayerDTO>,
     ) -> Option<PlayerDTO> {
-        roles
-            .map(|roles| dealer_from_roles(&roles, player_dto_map))
-            .flatten()
+        roles.and_then(|roles| dealer_from_roles(&roles, player_dto_map))
     }
 
     fn dealer<T: HasRoles>(

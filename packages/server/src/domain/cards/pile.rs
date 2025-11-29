@@ -142,15 +142,6 @@ mod test {
     #[derive(Clone)]
     struct TestType {}
 
-    #[derive(Clone)]
-    struct OtherTestType {}
-
-    #[derive(Clone)]
-    struct SourceType {}
-
-    #[derive(Clone)]
-    struct TargetType {}
-
     #[test]
     fn default_pile_will_be_empty() {
         let pile = Pile::<TestType>::default();

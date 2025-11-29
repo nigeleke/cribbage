@@ -9,6 +9,14 @@ impl From<usize> for Rank {
     }
 }
 
+impl std::ops::Add<usize> for Rank {
+    type Output = Rank;
+
+    fn add(self, rhs: usize) -> Self::Output {
+        Self(self.0 + rhs)
+    }
+}
+
 impl std::ops::Sub for Rank {
     type Output = usize;
 

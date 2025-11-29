@@ -13,6 +13,4 @@ pub enum Kind {
     ThirtyOne,
     HisHeels,
     Nobs,
-    #[cfg(test)]
-    Test,
 }

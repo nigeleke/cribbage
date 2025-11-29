@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::display::format_vec;
-use crate::domain::constants::*;
-use crate::domain::{Card, Hand, Hands, PLAYER0, PLAYER1, PLAYERS, Play, Player, Value};
+use crate::{
+    display::format_vec,
+    domain::{Card, Hand, Hands, PLAYER0, PLAYER1, PLAYERS, Play, Player, Value, constants::*},
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayState {
@@ -35,6 +36,7 @@ impl PlayState {
             .map(|card| Play::new(player, *card))
             .collect::<Vec<_>>();
         self.pending_plays.append(&mut plays);
+
         self
     }
 
@@ -138,18 +140,18 @@ impl PlayState {
     }
 
     #[cfg(test)]
-    pub fn force_current_play(&mut self, player: Player, card: Card) {
-        self.current_plays.push(Play::new(player, card))
+    pub fn pass_count_mut(&mut self) -> &mut usize {
+        &mut self.pass_count
     }
 
     #[cfg(test)]
-    pub fn force_previous_play(&mut self, player: Player, card: Card) {
-        self.previous_plays.push(Play::new(player, card))
+    pub fn current_plays_mut(&mut self) -> &mut Vec<Play> {
+        &mut self.current_plays
     }
 
     #[cfg(test)]
-    pub const fn force_pass_count(&mut self, n: usize) {
-        self.pass_count = n;
+    pub fn previous_plays_mut(&mut self) -> &mut Vec<Play> {
+        &mut self.previous_plays
     }
 }
 

@@ -9,6 +9,14 @@ pub struct Pegging {
 }
 
 impl Pegging {
+    #[cfg(test)]
+    pub fn new(points: usize) -> Self {
+        Self {
+            back_peg: Points::from(0),
+            front_peg: Points::from(points),
+        }
+    }
+
     pub const fn back_peg(&self) -> Points {
         self.back_peg
     }

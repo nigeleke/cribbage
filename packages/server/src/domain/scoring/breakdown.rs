@@ -5,7 +5,8 @@ use super::constants::*;
 use crate::{
     display::format_vec,
     domain::{
-        Card, Crib, Hand, PlayState, Points, ScoreEvent, ScoreKind, StarterCut, Value, constants::*,
+        Card, Crib, Hand, Play, PlayState, Points, ScoreEvent, ScoreKind, StarterCut, Value,
+        constants::*,
     },
 };
 
@@ -13,30 +14,37 @@ use crate::{
 pub struct Breakdown(Vec<ScoreEvent>);
 
 impl Breakdown {
-    fn add_event(&mut self, kind: ScoreKind, cards: &[Card], points: Points) {
+    pub fn add_event(mut self, kind: ScoreKind, cards: &[Card], points: Points) -> Self {
         let event = ScoreEvent::new(kind, Vec::from(cards), points);
         self.0.push(event);
+        self
+    }
+
+    pub fn add_event_if(
+        mut self,
+        condition: bool,
+        kind: ScoreKind,
+        cards: &[Card],
+        points: Points,
+    ) -> Self {
+        if condition {
+            let event = ScoreEvent::new(kind, Vec::from(cards), points);
+            self.0.push(event);
+        }
+        self
     }
 
     pub fn points(&self) -> Points {
         self.0.iter().map(ScoreEvent::points).sum()
     }
 
-    #[cfg(test)]
-    pub fn test(points: usize) -> Self {
-        let mut breakdown = Self::default();
-        breakdown.add_event(ScoreKind::Test, &[], Points::from(points));
-        breakdown
-    }
-
     pub fn his_heels(cut: Card) -> Self {
-        let mut breakdown = Self::default();
-
-        if cut.is_jack() {
-            breakdown.add_event(ScoreKind::HisHeels, &[cut], Points::from(SCORE_HIS_HEELS));
-        }
-
-        breakdown
+        Self::default().add_event_if(
+            cut.is_jack(),
+            ScoreKind::HisHeels,
+            &[cut],
+            Points::from(SCORE_HIS_HEELS),
+        )
     }
 
     pub fn play_card(play_state: &PlayState) -> Self {
@@ -47,109 +55,106 @@ impl Breakdown {
             .play_card_last(play_state)
     }
 
-    fn play_card_fifteens(mut self, play_state: &PlayState) -> Self {
+    fn play_card_fifteens(self, play_state: &PlayState) -> Self {
         let cards = play_state
             .current_plays()
             .into_iter()
             .map(|p| p.card())
             .collect::<Vec<_>>();
 
-        if play_state.running_total() == Value::from(15) {
-            self.add_event(
-                ScoreKind::Fifteen,
-                cards.as_slice(),
-                Points::from(SCORE_FIFTEEN),
-            )
-        }
-
-        self
+        self.add_event_if(
+            play_state.running_total() == Value::from(15),
+            ScoreKind::Fifteen,
+            cards.as_slice(),
+            Points::from(SCORE_FIFTEEN),
+        )
     }
 
-    fn play_card_pairs(mut self, play_state: &PlayState) -> Self {
-        let mut cards = play_state
+    fn play_card_pairs(self, play_state: &PlayState) -> Self {
+        let cards = play_state
             .current_plays()
-            .into_iter()
+            .iter()
+            .rev()
+            .map(Play::card)
+            .collect::<Vec<_>>();
+
+        let pair_info = cards.split_first().and_then(|(first, rest)| {
+            let same_face = |card: &&Card| card.face() == first.face();
+            let count = 1 + rest.iter().take_while(same_face).count();
+            match count {
+                2 => Some((ScoreKind::Pair, SCORE_PAIR)),
+                3 => Some((ScoreKind::Triplet, SCORE_ROYAL_PAIR)),
+                4 => Some((ScoreKind::Quadruplet, SCORE_DOUBLE_ROYAL_PAIR)),
+                _ => None,
+            }
+            .map(|(kind, pts)| (kind, pts, count))
+        });
+
+        match pair_info {
+            Some((kind, points, count)) => self.add_event(kind, &cards[..count], points.into()),
+            None => self,
+        }
+    }
+
+    fn play_card_runs(self, play_state: &PlayState) -> Self {
+        let cards = play_state
+            .current_plays()
+            .iter()
+            .rev()
+            .map(Play::card)
+            .collect::<Vec<_>>();
+
+        let longest_run = (MINIMUM_RUN_LENGTH..=cards.len())
+            .rev()
+            .find(|&len| {
+                let slice = &cards[..len];
+                let mut ranks: Vec<_> = slice.iter().map(|c| c.rank()).collect();
+                ranks.sort_unstable();
+                ranks.windows(2).all(|w| w[1] == w[0] + 1)
+            })
+            .map(|len| {
+                let mut run = cards[..len].to_vec();
+                run.sort_by_key(|c| c.rank());
+                (run, Points::from(len))
+            });
+
+        if let Some((cards, points)) = longest_run {
+            self.add_event(ScoreKind::Run, cards.as_slice(), points)
+        } else {
+            self
+        }
+    }
+
+    fn play_card_last(self, play_state: &PlayState) -> Self {
+        let cards: Vec<_> = play_state
+            .current_plays()
+            .iter()
             .map(|p| p.card())
-            .rev();
+            .collect();
 
-        let first = cards.next().expect("cards.next");
-        let matching = cards.take_while(|c| c.face() == first.face());
+        let is_31 = play_state.running_total() == PLAY_TARGET.into();
+        let is_finished = play_state.is_current_play_finished();
 
-        let mut cards = Vec::from_iter(matching);
-        cards.push(first);
-
-        if let Some((kind, points)) = match cards.len() {
-            1 => None,
-            2 => Some((ScoreKind::Pair, SCORE_PAIR.into())),
-            3 => Some((ScoreKind::Triplet, SCORE_ROYAL_PAIR.into())),
-            4 => Some((ScoreKind::Quadruplet, SCORE_DOUBLE_ROYAL_PAIR.into())),
-            _ => unreachable!("never >4 cards with same face"),
-        } {
-            self.add_event(kind, cards.as_slice(), points);
+        if !is_finished {
+            self
+        } else if is_31 {
+            self.add_event(ScoreKind::ThirtyOne, &cards, SCORE_THIRTY_ONE.into())
+        } else {
+            self.add_event(ScoreKind::Go, &[], SCORE_UNDER_THIRTY_ONE.into())
         }
-
-        self
-    }
-
-    fn play_card_runs(mut self, play_state: &PlayState) -> Self {
-        let current_plays = &play_state.current_plays();
-
-        for len in (MINIMUM_RUN_LENGTH..=current_plays.len()).rev() {
-            let current_plays = current_plays.iter().rev();
-            let mut cards = current_plays
-                .map(|p| p.card())
-                .take(len)
-                .collect::<Vec<_>>();
-
-            cards.sort_by(|&a, &b| a.rank().cmp(&b.rank()));
-
-            let differences = cards
-                .windows(2)
-                .map(|w| w[1].rank() - w[0].rank())
-                .collect::<Vec<_>>();
-
-            let sequential = differences.iter().all(|d| *d == 1);
-            if sequential {
-                self.add_event(ScoreKind::Run, cards.as_slice(), Points::from(len));
-                break;
-            }
-        }
-
-        self
-    }
-
-    fn play_card_last(mut self, play_state: &PlayState) -> Self {
-        if play_state.is_current_play_finished() {
-            let cards = play_state
-                .current_plays()
-                .iter()
-                .map(|p| p.card())
-                .collect::<Vec<_>>();
-
-            if play_state.running_total() == Value::from(PLAY_TARGET) {
-                self.add_event(
-                    ScoreKind::ThirtyOne,
-                    cards.as_slice(),
-                    Points::from(SCORE_THIRTY_ONE),
-                );
-            } else {
-                self.add_event(ScoreKind::Go, &[], Points::from(SCORE_UNDER_THIRTY_ONE));
-            }
-        }
-
-        self
     }
 
     pub fn pass(play_state: &PlayState) -> Self {
         Self::default().pass_last_card(play_state)
     }
 
-    fn pass_last_card(mut self, play_state: &PlayState) -> Self {
-        if play_state.is_current_play_finished() && play_state.all_players_passed() {
-            self.add_event(ScoreKind::Go, &[], Points::from(SCORE_UNDER_THIRTY_ONE))
-        }
-
-        self
+    fn pass_last_card(self, play_state: &PlayState) -> Self {
+        self.add_event_if(
+            play_state.is_current_play_finished() && play_state.all_players_passed(),
+            ScoreKind::Go,
+            &[],
+            Points::from(SCORE_UNDER_THIRTY_ONE),
+        )
     }
 
     pub fn hand(hand: &Hand, cut: StarterCut) -> Self {
@@ -164,108 +169,90 @@ impl Breakdown {
             .nobs(hand.as_ref(), cut)
     }
 
-    pub fn crib(hand: &Crib, cut: StarterCut) -> Self {
-        let mut all = hand.clone();
+    pub fn crib(crib: &Crib, cut: StarterCut) -> Self {
+        let mut all = crib.clone();
         all.add(cut);
 
         Self::default()
             .fifteens(all.as_ref())
             .pairs(all.as_ref())
             .runs(all.as_ref())
-            .flush(hand.as_ref(), cut, 5)
-            .nobs(hand.as_ref(), cut)
+            .flush(crib.as_ref(), cut, 5)
+            .nobs(crib.as_ref(), cut)
     }
 
-    fn fifteens(mut self, cards: &[Card]) -> Self {
-        for n in 2..=cards.len() {
-            for combination in cards.as_ref().iter().combinations(n) {
-                let combination_total: Value = combination.iter().map(|c| c.value()).sum();
+    fn fifteens(self, cards: &[Card]) -> Self {
+        (2..=cards.len())
+            .flat_map(|n| cards.iter().combinations(n))
+            .filter(|combo| combo.iter().map(|c| c.value()).sum::<Value>() == 15.into())
+            .fold(self, |acc, combo| {
+                let combo_cards: Vec<Card> = combo.iter().copied().copied().collect();
+                acc.add_event(ScoreKind::Fifteen, &combo_cards, SCORE_FIFTEEN.into())
+            })
+    }
 
-                if combination_total == 15.into() {
-                    let cards = combination.iter().map(|c| **c).collect::<Vec<_>>();
-                    self.add_event(ScoreKind::Fifteen, &cards, Points::from(SCORE_FIFTEEN));
-                }
-            }
+    fn pairs(self, cards: &[Card]) -> Self {
+        cards
+            .iter()
+            .copied()
+            .combinations(2)
+            .filter(|pair| pair[0].face() == pair[1].face())
+            .fold(self, |acc, pair| {
+                acc.add_event(ScoreKind::Pair, &pair, SCORE_PAIR.into())
+            })
+    }
+
+    fn runs(self, cards: &[Card]) -> Self {
+        let mut sorted: Vec<Card> = cards.to_vec();
+        sorted.sort_by_key(|c| c.rank());
+
+        let run = (MINIMUM_RUN_LENGTH..=sorted.len()).rev().find_map(|len| {
+            sorted
+                .iter()
+                .copied()
+                .combinations(len)
+                .find(|combo| combo.windows(2).all(|w| w[1].rank() == w[0].rank() + 1))
+                .map(|combo| {
+                    let points = Points::from(len);
+                    (combo, points)
+                })
+        });
+
+        if let Some((cards, points)) = run {
+            self.add_event(ScoreKind::Run, cards.as_slice(), points)
+        } else {
+            self
         }
-
-        self
     }
 
-    fn pairs(mut self, cards: &[Card]) -> Self {
-        for combination in cards.as_ref().iter().combinations(2) {
-            let mut combination = combination.into_iter();
-            let (one, two) = (combination.next().unwrap(), combination.next().unwrap());
-            if one.face() == two.face() {
-                self.add_event(ScoreKind::Pair, &[*one, *two], Points::from(SCORE_PAIR));
-            }
-        }
-
-        self
-    }
-
-    fn runs(mut self, cards: &[Card]) -> Self {
-        let mut cards = Vec::from(cards);
-        cards.sort_by_key(|c| c.rank());
-
-        for len in (MINIMUM_RUN_LENGTH..=cards.len()).rev() {
-            let mut points = Points::default();
-
-            for combination in cards.iter().combinations(len) {
-                let differences = combination
-                    .windows(2)
-                    .map(|cs| cs[1].rank() - cs[0].rank())
-                    .collect::<Vec<_>>();
-
-                let sequential = differences.iter().all(|d| *d == 1);
-                if sequential {
-                    let combination = combination.into_iter().cloned().collect::<Vec<_>>();
-                    points = Points::from(combination.len());
-                    self.add_event(ScoreKind::Run, &combination, points);
-                }
-            }
-
-            if points != Points::default() {
-                break;
-            }
-        }
-
-        self
-    }
-
-    fn flush(mut self, cards: &[Card], cut: StarterCut, constaint: usize) -> Self {
-        let flush = |cards: &[Card]| {
-            let suit = cards.first().map(|c| c.suit()).unwrap();
-            let same_suit = cards.iter().all(|c| c.suit() == suit);
-            if same_suit {
-                Points::from(cards.len())
-            } else {
-                Points::default()
-            }
-        };
-
+    fn flush(self, cards: &[Card], cut: StarterCut, constraint: usize) -> Self {
         let mut all = Vec::from(cards);
         all.push(cut);
 
-        let flush_all = flush(&all);
-        let flush_cards = flush(cards);
+        let all_same_suit = |cs: &[Card]| cs.iter().map(|c| c.suit()).all_equal();
 
-        if flush_all >= Points::from(constaint) {
-            self.add_event(ScoreKind::Flush, &all, flush_all);
-        } else if flush_cards >= Points::from(constaint) {
-            self.add_event(ScoreKind::Fifteen, cards, flush_cards);
+        let points_if_flush = |cs: &[Card]| {
+            (cs.len() >= constraint)
+                .then_some(all_same_suit(cs).then(|| Points::from(cs.len())))
+                .flatten()
+        };
+
+        if let Some(points) = points_if_flush(&all) {
+            self.add_event(ScoreKind::Flush, &all, points)
+        } else if let Some(points) = points_if_flush(cards) {
+            self.add_event(ScoreKind::Flush, cards, points)
+        } else {
+            self
         }
-
-        self
     }
 
-    fn nobs(mut self, cards: &[Card], cut: StarterCut) -> Self {
-        for card in cards {
-            if card.is_jack() && card.suit() == cut.suit() {
-                self.add_event(ScoreKind::Nobs, cards, Points::from(SCORE_NOBS));
-            }
-        }
-
-        self
+    fn nobs(self, cards: &[Card], cut: StarterCut) -> Self {
+        self.add_event_if(
+            cards.iter().any(|c| c.is_jack() && c.suit() == cut.suit()),
+            ScoreKind::Nobs,
+            cards,
+            SCORE_NOBS.into(),
+        )
     }
 }
 
@@ -288,8 +275,7 @@ mod test {
     };
 
     #[test]
-    #[should_panic]
-    fn impossible_pairs_will_panic() {
+    fn impossible_pairs_will_return_0() {
         let hand1 = hand!("AHACADASAH");
         let hand2 = hand!("");
 
@@ -302,6 +288,9 @@ mod test {
         play_state.play(card!("AS"));
         play_state.play(card!("AH"));
 
-        let _ = Breakdown::play_card(&play_state).points();
+        assert_eq!(
+            Breakdown::play_card(&play_state).points(),
+            Points::default()
+        );
     }
 }

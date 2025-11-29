@@ -2,6 +2,8 @@ use cqrs_es::DomainEvent;
 use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 
+#[cfg(test)]
+use crate::domain::Game;
 use crate::domain::{Card, Crib, Dealer, GameId, Hand, Player, ScoreBreakdown, StarterCut, UserId};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, AsRefStr)]
@@ -65,6 +67,12 @@ pub enum GameEvent {
     },
     WinnerDeclared {
         player: Player,
+    },
+
+    // TEST-ONLY
+    #[cfg(test)]
+    GamePreloaded {
+        game: Game,
     },
 }
 

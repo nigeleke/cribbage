@@ -53,8 +53,18 @@ impl Game {
         &self.name
     }
 
+    #[cfg(test)]
+    pub fn name_mut(&mut self) -> &mut String {
+        &mut self.name
+    }
+
     pub fn state(&self) -> &State {
         &self.state
+    }
+
+    #[cfg(test)]
+    pub fn state_mut(&mut self) -> &mut State {
+        &mut self.state
     }
 
     pub fn validate_user(&self, user_id: UserId) -> Option<Player> {
@@ -249,7 +259,12 @@ impl Game {
             } else if !play_state.legal_plays(player).contains(&card) {
                 Err(DomainError::InvalidPlay(card))
             } else {
-                let events = vec![GameEvent::CardPlayed { player, card }];
+                let mut play_state = play_state.clone();
+                play_state.play(card);
+                let mut events = vec![GameEvent::CardPlayed { player, card }];
+                events.append(
+                    &mut playing.award_points(player, ScoreBreakdown::play_card(&play_state)),
+                );
                 Ok(events)
             }
         };
@@ -296,7 +311,7 @@ impl Game {
     }
 
     pub fn handle_command(&self, command: GameCommand) -> Result<Vec<GameEvent>, DomainError> {
-        debug!("***** COMMAND ***** Game:handle_command: {:?}", command);
+        debug!("COMMAND --- Game:handle_command: {:?}", command);
         match command {
             GameCommand::HostGame { user_id, game_id } => self.host_game(user_id, game_id),
             GameCommand::JoinGame { user_id } => self.join_game(user_id),
@@ -482,7 +497,7 @@ impl Game {
     }
 
     pub fn apply_event(&mut self, event: GameEvent) {
-        debug!("***** EVENT ***** Game:apply_event: {:?}", event);
+        debug!("EVENT ----- Game:apply_event: {:?}", event);
         match event {
             GameEvent::LobbyGameCreated {
                 game_id,
@@ -509,6 +524,10 @@ impl Game {
             GameEvent::CardPlayed { player, card } => self.card_played(player, card),
             GameEvent::Passed { player } => self.passed(player),
             GameEvent::WinnerDeclared { player } => self.winner_declared(player),
+
+            #[cfg(test)]
+            GameEvent::GamePreloaded { game, .. } => *self = game,
+
             _ => unimplemented!("apply: {event:?}"),
         }
     }
@@ -591,41 +610,9 @@ mod test {
     use super::*;
 
     type GameTestFramework = TestFramework<Game>;
-    //     use std::str::FromStr;
 
-    //     use super::*;
-    //     use crate::domain::{Cut, CutForDeal, PLAYER0, PLAYER1, Starting};
-    //     use crate::test::GameTestFramework;
-    //     use crate::{cut, prettify};
-
-    //     fn kinds_to_events(game_id: GameId, events: &[EventKind]) -> Vec<Event> {
-    //         events
-    //             .iter()
-    //             .map(|k| Event::new(game_id, k.clone()))
-    //             .collect()
-    //     }
-
-    //     fn initial_game_post_cuts() -> (Cut, Cut, State) {
-    //         let starting = Starting::default();
-    //         let game = Game::from(State::Starting(starting));
-    //         let game_id = *game.id();
-    //         let cut0 = std::cell::RefCell::new(card!("AH"));
-    //         let cut1 = std::cell::RefCell::new(card!("AH"));
-
-    //         let game = GameTestFramework::new(game_id, game)
-    //             .execute_using_result(CutForDeal::new(game_id, PLAYER0), |reply| {
-    //                 *cut0.borrow_mut() = reply.cut();
-    //             })
-    //             .when(CutForDeal::new(game_id, PLAYER1))
-    //             .assert_reply(|reply| *cut1.borrow_mut() = reply.cut())
-    //             .entity()
-    //             .clone();
-
-    //         (*cut0.borrow(), *cut1.borrow(), game.state().clone())
-    //     }
-
-    //     /// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
-    //     #[allow(clippy::expect_used)]
+    /// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
+    #[allow(clippy::expect_used)]
 
     /// ## Number of Players
     ///
@@ -633,7 +620,7 @@ mod test {
     /// Cribbage is basically best played by two people, and the rules that follow are for that
     /// number.
     mod players {
-        use super::GameTestFramework;
+        use super::*;
         use crate::{
             domain::{DomainError, GameCommand, GameEvent, GameId, GameServices, UserId},
             function_name,
@@ -1077,51 +1064,19 @@ mod test {
 
         use super::*;
         use crate::{
-            card, cards,
-            domain::{Card, GameEvent, GameId, PLAYER0, PLAYER1, UserId},
-            function_name, hand,
+            cards,
+            domain::{GameEvent, PLAYER0, test::GameBuilder},
+            function_name, scenario,
         };
-
-        fn preconditions(name: String) -> Vec<GameEvent> {
-            let game_id = GameId::new();
-            let host = UserId::new();
-            let guest = UserId::new();
-
-            vec![
-                GameEvent::ComputerGameStarted {
-                    game_id,
-                    host,
-                    guest,
-                    name,
-                },
-                GameEvent::CutForDealMade {
-                    player: PLAYER0,
-                    cut: card!("AH"),
-                },
-                GameEvent::CutForDealMade {
-                    player: PLAYER1,
-                    cut: card!("QH"),
-                },
-                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
-                GameEvent::CutForDealAcknowledged { player: PLAYER1 },
-                GameEvent::CutForDealDecided {
-                    dealer: Dealer::from(PLAYER0),
-                },
-                GameEvent::HandDealt {
-                    player: PLAYER0,
-                    hand: hand!("AH2H3H4H5H6H"),
-                },
-                GameEvent::HandDealt {
-                    player: PLAYER1,
-                    hand: hand!("AC2C3C4C5C6C"),
-                },
-            ]
-        }
 
         #[test]
         fn player_can_discard_own_cards_to_the_crib() {
             GameTestFramework::with(GameServices)
-                .given(preconditions(function_name!()))
+                .given(scenario!(into_discarding;
+                    with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C"),
+                    with_cut("QD"),
+                    with_crib("")
+                ))
                 .when(GameCommand::DiscardCardsToCrib {
                     player: PLAYER0,
                     cards: cards!("AH2H"),
@@ -1138,7 +1093,12 @@ mod test {
                 let cards = cards!(cards);
                 let expected_error_text = format_vec(&cards);
                 GameTestFramework::with(GameServices)
-                    .given(preconditions(function_name!()))
+                    .given(scenario!(
+                        into_discarding;
+                        with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C"),
+                        with_cut("QD"),
+                        with_crib("")
+                    ))
                     .when(GameCommand::DiscardCardsToCrib {
                         player: PLAYER0,
                         cards,
@@ -1152,7 +1112,12 @@ mod test {
             let cards = cards!("AC2C");
             let expected_error_text = format_vec(&cards);
             GameTestFramework::with(GameServices)
-                .given(preconditions(function_name!()))
+                .given(scenario!(
+                    into_discarding;
+                    with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C"),
+                    with_cut("QD"),
+                    with_crib("")
+                ))
                 .when(GameCommand::DiscardCardsToCrib {
                     player: PLAYER0,
                     cards,
@@ -1162,14 +1127,14 @@ mod test {
 
         #[test]
         fn player_cannot_discard_if_already_discarded() {
-            let mut preconditions = preconditions(function_name!());
-            preconditions.push(GameEvent::CardsDiscardedToCrib {
-                player: PLAYER0,
-                cards: cards!("AH2H"),
-            });
-
             GameTestFramework::with(GameServices)
-                .given(preconditions)
+                .given(scenario!(
+                    into_discarding;
+                    with_hands("3H4H5H6H", "AC2C3C4C5C6C"),
+                    with_ack(0),
+                    with_cut("QD"),
+                    with_crib("AH2H")
+                ))
                 .when(GameCommand::DiscardCardsToCrib {
                     player: PLAYER0,
                     cards: cards!("5H6H"),
@@ -1186,62 +1151,25 @@ mod test {
     /// once. The starter is not used in the play phase of Cribbage , but is used later for making
     /// various card combinations that score points.
     mod before_the_play {
-        use std::{ops::Add, str::FromStr};
+        use std::str::FromStr;
 
         use super::*;
         use crate::{
             card, cards,
-            domain::{
-                Card, GameEvent, GameId, HasScoreboard, HasStarterCut, PLAYER0, PLAYER1, Points,
-                UserId,
-            },
-            function_name, hand,
+            domain::{GameEvent, PLAYER0, PLAYER1, Points, test::GameBuilder},
+            function_name, scenario,
         };
-
-        fn preconditions(name: String) -> Vec<GameEvent> {
-            let game_id = GameId::new();
-            let host = UserId::new();
-            let guest = UserId::new();
-
-            vec![
-                GameEvent::ComputerGameStarted {
-                    game_id,
-                    host,
-                    guest,
-                    name,
-                },
-                GameEvent::CutForDealMade {
-                    player: PLAYER0,
-                    cut: card!("AH"),
-                },
-                GameEvent::CutForDealMade {
-                    player: PLAYER1,
-                    cut: card!("QH"),
-                },
-                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
-                GameEvent::CutForDealAcknowledged { player: PLAYER1 },
-                GameEvent::CutForDealDecided {
-                    dealer: Dealer::from(PLAYER0),
-                },
-                GameEvent::HandDealt {
-                    player: PLAYER0,
-                    hand: hand!("AH2H3H4H5H6H"),
-                },
-                GameEvent::HandDealt {
-                    player: PLAYER1,
-                    hand: hand!("AC2C3C4C5C6C"),
-                },
-                GameEvent::CardsDiscardedToCrib {
-                    player: PLAYER0,
-                    cards: cards!("AH2H"),
-                },
-            ]
-        }
 
         #[test]
         fn start_the_play_after_discards() {
             let result = GameTestFramework::with(GameServices)
-                .given(preconditions(function_name!()))
+                .given(scenario!(
+                    into_discarding;
+                    with_hands("3H4H5H6H", "AC2C3C4C5C6C"),
+                    with_ack(0),
+                    with_cut("QD"),
+                    with_crib("AH2H")
+                ))
                 .when(GameCommand::DiscardCardsToCrib {
                     player: PLAYER1,
                     cards: cards!("AC2C"),
@@ -1254,36 +1182,12 @@ mod test {
                         player: PLAYER1,
                         cards: cards!("AC2C"),
                     }));
-                    let Some(GameEvent::StarterSelected { cut }) = events
+                    let Some(GameEvent::StarterSelected { .. }) = events
                         .iter()
                         .find(|e| matches!(e, GameEvent::StarterSelected { .. }))
                     else {
                         panic!("expected event not found");
                     };
-
-                    let mut game = Game::default();
-                    game.apply_events(&preconditions(function_name!()));
-                    game.apply_events(&events);
-                    if let State::Playing(playing) = game.state() {
-                        assert_eq!(playing.starter_cut(), cut);
-
-                        if cut.is_jack() {
-                            let dealer = playing.dealer().player();
-                            let pone = playing.pone().player();
-                            assert_eq!(
-                                playing.pegging(dealer).points(),
-                                Scoreboard::default()
-                                    .pegging(dealer)
-                                    .points()
-                                    .add(Points::from(2))
-                            );
-                            assert_eq!(playing.pegging(pone), Scoreboard::default().pegging(pone));
-                        } else {
-                            assert_eq!(playing.scoreboard(), &Scoreboard::default());
-                        }
-                    } else {
-                        panic!("unexpected state {}", game.state());
-                    }
                 }
                 Err(error) => {
                     panic!("unexpected error {error}");
@@ -1293,941 +1197,764 @@ mod test {
 
         #[test]
         fn score_his_heels_when_jack_cut_after_discards() {
-            loop {
-                let result = GameTestFramework::with(GameServices)
-                    .given(preconditions(function_name!()))
-                    .when(GameCommand::DiscardCardsToCrib {
-                        player: PLAYER1,
-                        cards: cards!("AC2C"),
-                    })
-                    .inspect_result();
+            let result = GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_discarding;
+                    with_hands("3H4H5H6H", "AC2C3C4C5C6C"),
+                    with_ack(0),
+                    with_cut("JC"),
+                    with_crib("AH2H")
+                ))
+                .when(GameCommand::DiscardCardsToCrib {
+                    player: PLAYER1,
+                    cards: cards!("AC2C"),
+                })
+                .inspect_result();
 
-                match result {
-                    Ok(events) => {
-                        if let Some(GameEvent::StarterSelected { cut }) = events
-                            .iter()
-                            .find(|e| matches!(e, GameEvent::StarterSelected { .. }))
-                        {
-                            if cut.is_jack() {
-                                if let Some(GameEvent::PointsScored { player, reasons }) = events
-                                    .iter()
-                                    .find(|e| matches!(e, GameEvent::PointsScored { .. }))
-                                {
-                                    assert_eq!(player, &PLAYER0);
-                                    assert_eq!(reasons.points(), Points::from(2));
-                                    assert_eq!(reasons, &ScoreBreakdown::his_heels(*cut));
-                                    break;
-                                } else {
-                                    panic!("expected his heels to be scored");
-                                }
-                            }
-                        }
+            match result {
+                Ok(events) => {
+                    if let Some(GameEvent::PointsScored { player, reasons }) = events
+                        .iter()
+                        .find(|e| matches!(e, GameEvent::PointsScored { .. }))
+                    {
+                        assert_eq!(player, &PLAYER0);
+                        assert_eq!(reasons.points(), Points::from(2));
+                        assert_eq!(reasons, &ScoreBreakdown::his_heels(card!("JC")));
+                    } else {
+                        panic!("expected his heels to be scored");
                     }
-                    Err(error) => {
-                        panic!("unexpected error {error}");
-                    }
+                }
+                Err(error) => {
+                    panic!("unexpected error {error}");
                 }
             }
         }
 
         #[test]
         fn finish_game_when_jack_cut_after_discards() {
-            loop {
-                let mut preconditions = preconditions(function_name!());
-                preconditions.push(GameEvent::PointsScored {
-                    player: PLAYER0,
-                    reasons: ScoreBreakdown::test(119),
-                });
+            let result = GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_discarding;
+                    with_hands("3H4H5H6H", "AC2C3C4C5C6C"),
+                    with_ack(0),
+                    with_cut("JC"),
+                    with_crib("AH2H"),
+                    with_points(119, 0)
+                ))
+                .when(GameCommand::DiscardCardsToCrib {
+                    player: PLAYER1,
+                    cards: cards!("AC2C"),
+                })
+                .inspect_result();
 
-                let result = GameTestFramework::with(GameServices)
-                    .given(preconditions)
-                    .when(GameCommand::DiscardCardsToCrib {
-                        player: PLAYER1,
-                        cards: cards!("AC2C"),
-                    })
-                    .inspect_result();
-
-                match result {
-                    Ok(events) => {
-                        if let Some(GameEvent::StarterSelected { cut }) = events
-                            .iter()
-                            .find(|e| matches!(e, GameEvent::StarterSelected { .. }))
-                        {
-                            if cut.is_jack() {
-                                if let Some(GameEvent::WinnerDeclared { player }) = events
-                                    .iter()
-                                    .find(|e| matches!(e, GameEvent::WinnerDeclared { .. }))
-                                {
-                                    assert_eq!(player, &PLAYER0);
-                                    break;
-                                } else {
-                                    panic!("expected his heels to be scored");
-                                }
-                            }
-                        }
+            match result {
+                Ok(events) => {
+                    if let Some(GameEvent::WinnerDeclared { player }) = events
+                        .iter()
+                        .find(|e| matches!(e, GameEvent::WinnerDeclared { .. }))
+                    {
+                        assert_eq!(player, &PLAYER0);
+                    } else {
+                        panic!("expected his heels to be scored");
                     }
-                    Err(error) => {
-                        panic!("unexpected error {error}");
-                    }
+                }
+                Err(error) => {
+                    panic!("unexpected error {error}");
                 }
             }
         }
     }
 
-    //     /// ## The Play
-    //     ///
-    //     /// After the starter is turned, the non-dealer lays one of his cards face up on the table. The
-    //     /// dealer similarly exposes a card, then non-dealer again, and so on - the hands are exposed
-    //     /// card by card, alternately except for a "Go," (Pass) as noted below. Each player keeps his
-    //     /// cards separate from those of his opponent.
-    //     ///
-    //     /// As each person plays, he announces a running total of pips reached by the addition of the
-    //     /// last card to all those previously2 played. (Example: The non-dealer begins with a four,
-    //     /// saying "Four." The dealer plays a nine, saying "Thirteen".) The kings, queens and jacks
-    //     /// count 10 each; every other card counts its pip value (the ace counts one).
-    //     #[coverage(off)]
-    //     mod the_play {
-    //         use std::str::FromStr;
-
-    //         use crate::domain::{
-    //             Card, DomainError, Game, Hand, PLAYER0, PLAYER1, Play, PlayCard, Points, State,
-    //         };
-    //         use crate::test::*;
-    //         use crate::{card, hand};
-
-    //         #[test]
-    //         fn accept_valid_play() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("9S", "4S")
-    //                 .with_cut("AS")
-    //                 .into_playing(1);
-    //             let pone0 = playing0.pone().player();
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let dealer_hand0 = playing0.hand(dealer0).clone();
-    //             let dealer_score0 = scoreboard0.pegging(dealer0);
-    //             let pone_score0 = scoreboard0.pegging(pone0);
-    //             let play_state0 = playing0.play_state();
-    //             let cut0 = playing0.cut();
-    //             let crib0 = playing0.crib().clone();
-
-    //             assert_eq!(
-    //                 &play_state0.legal_plays(dealer0),
-    //                 &playing0.hand(dealer0).as_ref()
-    //             );
-    //             assert_eq!(&play_state0.legal_plays(pone0), &hand!("4S").as_ref());
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let id = game.id;
-    //             GameTestFramework::new(id, game)
-    //                 .when(PlayCard::new(id, PLAYER1, card!("4S")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-    //                     let dealer_hand1 = playing1.hand(dealer1).clone();
-    //                     let pone_hand1 = playing1.hand(pone1).clone();
-    //                     let play_state1 = playing1.play_state();
-    //                     let cut1 = playing1.cut();
-    //                     let crib1 = playing1.crib();
-    //                     let dealer_score1 = scoreboard1.pegging(dealer1);
-    //                     let pone_score1 = scoreboard1.pegging(pone1);
-
-    //                     assert_eq!(dealer_score1, dealer_score0);
-    //                     assert_eq!(pone_score1, pone_score0);
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(dealer_hand1, dealer_hand0);
-    //                     assert_eq!(pone_hand1, Hand::default());
-    //                     assert_eq!(play_state1.next_to_play(), dealer1);
-    //                     assert_eq!(play_state1.legal_plays(dealer1), dealer_hand1.as_ref());
-    //                     assert_eq!(cut1, cut0);
-    //                     assert_eq!(crib1, &crib0);
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn accept_valid_play_after_opponent_passed() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("9S", "4SAS")
-    //                 .with_cut("AC")
-    //                 .with_current_plays(&[(1, "TC"), (0, "TD"), (0, "5C")])
-    //                 .with_pass()
-    //                 .into_playing(1);
-    //             let pone0 = playing0.pone().player();
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let dealer_hand0 = playing0.hand(dealer0).clone();
-    //             let play_state0 = playing0.play_state();
-    //             let cut0 = playing0.cut();
-    //             let crib0 = playing0.crib().clone();
-    //             let dealer_score0 = scoreboard0.pegging(dealer0);
-    //             let pone_score0 = scoreboard0.pegging(pone0);
-
-    //             assert_eq!(play_state0.legal_plays(dealer0), Hand::default().as_ref());
-    //             assert_eq!(play_state0.legal_plays(pone0), hand!("4SAS").as_ref());
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card!("4S")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-    //                     let dealer_hand1 = playing1.hand(dealer1).clone();
-    //                     let pone_hand1 = playing1.hand(pone1).clone();
-    //                     let play_state1 = playing1.play_state();
-    //                     let cut1 = playing1.cut();
-    //                     let crib1 = playing1.crib();
-    //                     let dealer_score1 = scoreboard1.pegging(dealer1);
-    //                     let pone_score1 = scoreboard1.pegging(pone1);
-
-    //                     assert_eq!(dealer_score1, dealer_score0);
-    //                     assert_eq!(pone_score1, pone_score0);
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(dealer_hand1, dealer_hand0);
-    //                     assert_eq!(pone_hand1, hand!("AS"));
-    //                     assert_eq!(play_state1.next_to_play(), pone1);
-    //                     assert_eq!(play_state1.legal_plays(dealer1), Hand::default().as_ref());
-    //                     assert_eq!(cut1, cut0);
-    //                     assert_eq!(crib1, &crib0);
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn cannot_play_when_unheld_card() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("9S", "4S")
-    //                 .with_cut("AS")
-    //                 .into_playing(1);
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             let card = card!("9S");
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card))
-    //                 .expect_error(DomainError::InvalidPlay(card));
-    //         }
-
-    //         #[test]
-    //         fn cannot_play_when_not_their_turn() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("9S", "4S")
-    //                 .with_cut("AS")
-    //                 .into_playing(1);
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             let card = card!("9S");
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER0, card))
-    //                 .expect_error(DomainError::NotPlayersTurn(PLAYER0));
-    //         }
-
-    //         #[test]
-    //         fn cannot_play_when_play_exceeds_target() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("9S", "4S")
-    //                 .with_cut("AS")
-    //                 .with_current_plays(&[(0, "KH"), (0, "KC"), (0, "KD")])
-    //                 .into_playing(1);
-
-    //             let play_state0 = playing0.play_state();
-    //             assert_eq!(play_state0.legal_plays(PLAYER1), hand!("").as_ref());
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             let card = card!("4S");
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card))
-    //                 .expect_error(DomainError::InvalidPlay(card));
-    //         }
-
-    //         #[test]
-    //         fn score_play_when_target_not_reached_mid_play() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("5S", "5H")
-    //                 .with_cut("AS")
-    //                 .with_current_plays(&[(0, "TH")])
-    //                 .into_playing(1);
-    //             let pone0 = playing0.pone().player();
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let score0_pone = scoreboard0.pegging(pone0);
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             let card = card!("5H");
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let play_state1 = playing1.play_state();
-    //                     let score1_pone = scoreboard1.pegging(pone0);
-
-    //                     assert_eq!(*score1_pone, score0_pone.clone() + Points::from(2));
-    //                     assert_eq!(play_state1.next_to_play(), dealer1);
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_when_target_not_reached_end_play() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("QS", "2H")
-    //                 .with_cut("QC")
-    //                 .with_current_plays(&[(0, "JH"), (0, "QH")])
-    //                 .with_previous_plays(&[(0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
-    //                 .into_playing(1);
-
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-    //             let score0_dealer = scoreboard0.pegging(dealer0);
-    //             let score0_pone = scoreboard0.pegging(pone0);
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card!("2H")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let play_state1 = playing1.play_state();
-    //                     let score1_pone = scoreboard1.pegging(pone0);
-    //                     let score1_dealer = scoreboard1.pegging(dealer1);
-
-    //                     assert_eq!(*score1_pone, score0_pone.clone() + Points::from(1));
-    //                     assert_eq!(score1_dealer, score0_dealer);
-    //                     assert_eq!(play_state1.next_to_play(), dealer1);
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_when_target_not_reached_finished() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 120)
-    //                 .with_hands("AH", "5H")
-    //                 .with_cut("QC")
-    //                 .with_current_plays(&[(0, "JH")])
-    //                 .with_previous_plays(&[(0, "9H"), (0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
-    //                 .into_playing(1);
-
-    //             let scoresboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-    //             let score0_pone = scoresboard0.pegging(pone0);
-    //             let hand0_pone = playing0.hand(pone0).clone();
-    //             let hand0_dealer = playing0.hand(dealer0).clone();
-    //             let crib0 = playing0.crib().clone();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card!("5H")))
-    //                 .assert_entity(|game| {
-    //                     let State::Finished(finished1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let winner1 = finished1.winner();
-    //                     let scoreboard1 = finished1.scoreboard();
-    //                     let score1_pone = scoreboard1.pegging(pone0);
-    //                     let hand1_pone = finished1.hand(pone0).clone();
-    //                     let hand1_dealer = finished1.hand(dealer0);
-    //                     let crib1 = finished1.crib();
-
-    //                     assert_eq!(winner1, pone0);
-    //                     assert_eq!(*score1_pone, score0_pone.clone() + Points::from(2));
-    //                     assert!(!hand1_pone.contains_all(hand0_pone.as_ref()));
-    //                     assert!(!hand1_pone.contains(card!("5H")));
-    //                     assert!(hand1_dealer.contains_all(hand0_dealer.as_ref()));
-    //                     assert!(hand0_dealer.contains_all(hand1_dealer.as_ref()));
-    //                     assert!(crib1.contains_all(crib0.as_ref()));
-    //                     assert!(crib0.contains_all(crib1.as_ref()));
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_when_target_reached_mid_play() {
-    //             let card = card!("AH");
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("9H", "AH")
-    //                 .with_cut("KC")
-    //                 .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "QH")])
-    //                 .with_previous_plays(&[(1, "2S"), (1, "QS"), (1, "6S")])
-    //                 .into_playing(1);
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-    //             let play_state0 = playing0.play_state().clone();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone_hand1 = playing1.hand(PLAYER1);
-    //                     let play_state1 = playing1.play_state();
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone0),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(2)
-    //                     );
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert!(!pone_hand1.contains(card));
-    //                     assert_eq!(play_state1.next_to_play(), dealer0);
-    //                     assert!(play_state1.current_plays().is_empty());
-    //                     for p in play_state0.current_plays().into_iter() {
-    //                         assert!(play_state1.previous_plays().contains(&p))
-    //                     }
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_when_target_reached_end_play() {
-    //             let card = card!("AH");
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_hands("QC", "AH")
-    //                 .with_cut("KC")
-    //                 .with_current_plays(&[(0, "TH"), (0, "JH"), (0, "QH")])
-    //                 .with_previous_plays(&[(1, "2S"), (1, "QS"), (1, "6S")])
-    //                 .into_playing(1);
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-    //             let cut0 = playing0.cut();
-    //             let crib0 = playing0.crib().clone();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let play_state1 = playing1.play_state();
-    //                     let cut1 = playing1.cut();
-    //                     let crib1 = playing1.crib();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone0),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(2)
-    //                     );
-    //                     assert_eq!(play_state1.next_to_play(), dealer1);
-    //                     assert_eq!(cut1, cut0);
-    //                     assert_eq!(crib1, &crib0);
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_when_target_reached_finished() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 120)
-    //                 .with_hands("QC", "AH")
-    //                 .with_cut("KC")
-    //                 .with_current_plays(&[(0, "TH"), (1, "JH"), (0, "QH")])
-    //                 .with_previous_plays(&[(1, "9H"), (1, "5S"), (0, "6S")])
-    //                 .into_playing(1);
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card!("AH")))
-    //                 .assert_entity(|game| {
-    //                     let State::Finished(finished1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let winner1 = finished1.winner();
-    //                     let scoreboard1 = finished1.scoreboard();
-
-    //                     assert_eq!(winner1, pone0);
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone0),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(2)
-    //                     );
-    //                     assert_eq!(scoreboard1.pegging(dealer0), scoreboard0.pegging(dealer0));
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_when_plays_finished_and_game_not_finished() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 60)
-    //                 .with_hands("", "AH")
-    //                 .with_cut("KC")
-    //                 .with_current_plays(&[(0, "8H"), (1, "JH"), (0, "QH")])
-    //                 .with_previous_plays(&[(1, "9H"), (0, "4S"), (1, "5S"), (0, "6S")])
-    //                 .into_playing(1);
-    //             let pone0 = playing0.pone().player();
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card!("AH")))
-    //                 .assert_entity(|game| {
-    //                     let State::ScoringPone(scoring1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let scoreboard1 = scoring1.scoreboard();
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone0),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(1)
-    //                     );
-    //                     assert_eq!(scoreboard1.pegging(dealer0), scoreboard0.pegging(dealer0));
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_when_plays_finished_and_game_finished() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 120)
-    //                 .with_hands("", "AH")
-    //                 .with_cut("KC")
-    //                 .with_current_plays(&[(0, "8H"), (1, "JH"), (0, "QH")])
-    //                 .with_previous_plays(&[(1, "9H"), (0, "4S"), (1, "5S"), (0, "6S")])
-    //                 .into_playing(1);
-    //             let pone0 = playing0.pone().player();
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card!("AH")))
-    //                 .assert_entity(|game| {
-    //                     let State::Finished(finished1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let winner1 = finished1.winner();
-    //                     let scoreboard1 = finished1.scoreboard();
-
-    //                     assert_eq!(winner1, pone0);
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone0),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(1)
-    //                     );
-    //                     assert_eq!(scoreboard1.pegging(dealer0), scoreboard0.pegging(dealer0));
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn swap_player_after_pone_play() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_cut("AS")
-    //                 .with_hands("7H8H8D9C", "4S5STHJH")
-    //                 .into_playing(1);
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card!("4S")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-    //                     let play_state1 = playing1.play_state();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(play_state1.next_to_play(), dealer1);
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn swap_player_after_dealer_play() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_cut("AS")
-    //                 .with_hands("7H8H8D9C", "5STHJH")
-    //                 .with_current_plays(&[(1, "4S")])
-    //                 .into_playing(0);
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, dealer0, card!("9C")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-    //                     let play_state1 = playing1.play_state();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(play_state1.next_to_play(), pone0);
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn reset_play_after_exact_target_reached() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_cut("AS")
-    //                 .with_hands("7H8H8D", "5STH")
-    //                 .with_current_plays(&[(1, "JH"), (0, "9C"), (1, "4S")])
-    //                 .into_playing(0);
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-    //             let play_state0 = playing0.play_state().clone();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, dealer0, card!("8H")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-    //                     let play_state1 = playing1.play_state();
-
-    //                     let last_play = Play::new(dealer0, card!("8H"));
-    //                     let mut expected_current_plays = play_state0.current_plays();
-    //                     expected_current_plays.push(last_play);
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(play_state1.next_to_play(), pone0);
-    //                     assert_eq!(play_state1.previous_plays(), expected_current_plays);
-    //                     assert!(play_state1.current_plays().is_empty());
-    //                     assert!(!play_state1.all_players_passed());
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_points_for_fifteens() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_cut("AS")
-    //                 .with_hands("KH", "8D")
-    //                 .with_current_plays(&[(0, "7D")])
-    //                 .into_playing(1);
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, pone0, card!("8D")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(scoreboard1.pegging(dealer1), scoreboard0.pegging(dealer0));
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone0),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(2)
-    //                     );
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_points_for_pair() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_cut("AS")
-    //                 .with_hands("KH", "8D")
-    //                 .with_current_plays(&[(0, "8S")])
-    //                 .into_playing(1);
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, pone0, card!("8D")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(scoreboard1.pegging(dealer1), scoreboard0.pegging(dealer0));
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone0),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(2)
-    //                     );
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_points_for_triplet() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_cut("AS")
-    //                 .with_hands("KH", "8DAH")
-    //                 .with_current_plays(&[(1, "8C"), (0, "8S")])
-    //                 .into_playing(1);
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, pone0, card!("8D")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(scoreboard1.pegging(dealer1), scoreboard0.pegging(dealer0));
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone0),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(6)
-    //                     );
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_points_for_quartet() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_cut("AS")
-    //                 .with_hands("KH", "7DAH")
-    //                 .with_current_plays(&[(1, "7C"), (0, "7S"), (0, "7H")])
-    //                 .into_playing(1);
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, pone0, card!("7D")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(scoreboard1.pegging(dealer1), scoreboard0.pegging(dealer0));
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone0),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(12)
-    //                     );
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_points_for_run() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_cut("AC")
-    //                 .with_hands("KH", "AS")
-    //                 .with_current_plays(&[(1, "2D"), (0, "3H")])
-    //                 .into_playing(1);
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, pone0, card!("AS")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(scoreboard1.pegging(dealer1), scoreboard0.pegging(dealer0));
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone0),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(3)
-    //                     );
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_points_for_run_edge_case_1() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_cut("AS")
-    //                 .with_hands("5H7H6H", "AH8S7S")
-    //                 .into_playing(1);
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .execute(PlayCard::new(game_id, pone0, card!("8S")))
-    //                 .execute(PlayCard::new(game_id, dealer0, card!("7H")))
-    //                 .execute(PlayCard::new(game_id, pone0, card!("7S")))
-    //                 .when(PlayCard::new(game_id, dealer0, card!("6H")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(dealer1),
-    //                         scoreboard0.pegging(dealer0).clone() + Points::from(2)
-    //                     );
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone1),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(2)
-    //                     );
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn score_play_points_for_run_edge_case_2() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_peggings(0, 0)
-    //                 .with_cut("AS")
-    //                 .with_hands("5H7H6H", "AH9S8S")
-    //                 .into_playing(1);
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .execute(PlayCard::new(game_id, pone0, card!("9S")))
-    //                 .execute(PlayCard::new(game_id, dealer0, card!("6H")))
-    //                 .execute(PlayCard::new(game_id, pone0, card!("8S")))
-    //                 .when(PlayCard::new(game_id, dealer0, card!("7H")))
-    //                 .assert_entity(|game| {
-    //                     let State::Playing(playing1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state)
-    //                     };
-
-    //                     let scoreboard1 = playing1.scoreboard();
-    //                     let dealer1 = playing1.dealer().player();
-    //                     let pone1 = playing1.pone().player();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(dealer1),
-    //                         scoreboard0.pegging(dealer0).clone() + Points::from(2) + Points::from(4)
-    //                     );
-    //                     assert_eq!(scoreboard1.pegging(pone1), scoreboard0.pegging(pone0));
-    //                 });
-    //         }
-    //     }
+    /// ## The Play
+    ///
+    /// After the starter is turned, the non-dealer lays one of his cards face up on the table. The
+    /// dealer similarly exposes a card, then non-dealer again, and so on - the hands are exposed
+    /// card by card, alternately except for a "Go," (Pass) as noted below. Each player keeps his
+    /// cards separate from those of his opponent.
+    ///
+    /// As each person plays, he announces a running total of pips reached by the addition of the
+    /// last card to all those previously2 played. (Example: The non-dealer begins with a four,
+    /// saying "Four." The dealer plays a nine, saying "Thirteen".) The kings, queens and jacks
+    /// count 10 each; every other card counts its pip value (the ace counts one).
+    mod the_play {
+        use std::str::FromStr;
+
+        use super::*;
+        use crate::{
+            card, cards,
+            domain::{
+                Card, GameCommand, GameEvent, GameServices, PLAYER1, Points, ScoreKind,
+                game::test::GameTestFramework, test::GameBuilder,
+            },
+            function_name, scenario,
+        };
+
+        #[test]
+        fn accept_valid_play() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_cut("AC"),
+                    with_hands("QH", "4C")
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("4C"),
+                })
+                .then_expect_events(vec![GameEvent::CardPlayed {
+                    player: PLAYER1,
+                    card: card!("4C"),
+                }]);
+        }
+
+        #[test]
+        fn accept_valid_play_after_opponent_passed() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_cut("AC"),
+                    with_hands("9S", "4SAS"),
+                    with_current_plays(&[(1, "TC"), (0, "TD"), (0, "5C")]),
+                    with_pass()
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("4S"),
+                })
+                .then_expect_events(vec![GameEvent::CardPlayed {
+                    player: PLAYER1,
+                    card: card!("4S"),
+                }]);
+        }
+
+        #[test]
+        fn cannot_play_when_unheld_card() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0,0),
+                    with_hands("9S", "4S"),
+                    with_cut("AS")
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("9S"),
+                })
+                .then_expect_error(DomainError::InvalidPlay(card!("9S")));
+        }
+
+        #[test]
+        fn cannot_play_when_not_their_turn() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_hands("9S", "4S"),
+                    with_cut("AS")
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER0,
+                    card: card!("9S"),
+                })
+                .then_expect_error(DomainError::NotPlayersTurn(PLAYER0));
+        }
+
+        #[test]
+        fn cannot_play_when_play_exceeds_target() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_hands("9S", "4S"),
+                    with_cut("AS"),
+                    with_current_plays(&[(0, "KH"), (0, "KC"), (0, "KD")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("4S"),
+                })
+                .then_expect_error(DomainError::InvalidPlay(card!("4S")));
+        }
+
+        #[test]
+        fn score_play_when_target_not_reached_mid_play() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_hands("5S", "5H"),
+                    with_cut("AS"),
+                    with_current_plays(&[(0, "TH")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("5H"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("5H"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::Fifteen,
+                            &cards!("TH5H"),
+                            Points::from(2),
+                        ),
+                    },
+                ]);
+        }
+
+        #[test]
+        fn score_play_when_target_not_reached_end_play() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_hands("QS", "2H"),
+                    with_cut("QC"),
+                    with_current_plays(&[(0, "JH"), (0, "QH")]),
+                    with_previous_plays(&[(0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("2H"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("2H"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::Go,
+                            &[],
+                            Points::from(1),
+                        ),
+                    },
+                ]);
+        }
+
+        #[test]
+        fn score_play_when_target_not_reached_finished() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 120),
+                    with_hands("AH", "5H"),
+                    with_cut("QC"),
+                    with_current_plays(&[(0, "JH")]),
+                    with_previous_plays(&[(0, "9H"), (0, "7C"), (1, "6S"), (1, "2S"), (1, "KS")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("5H"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("5H"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::Fifteen,
+                            &cards!("JH5H"),
+                            Points::from(2),
+                        ),
+                    },
+                    GameEvent::WinnerDeclared { player: PLAYER1 },
+                ]);
+        }
+
+        #[test]
+        fn score_play_when_target_reached_mid_play() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(into_playing(1);
+                    with_points(0, 0),
+                    with_hands("9H", "AH"),
+                    with_cut("KC"),
+                    with_current_plays(&[(0, "TH"), (0, "JH"), (0, "QH")]),
+                    with_previous_plays(&[(1, "2S"), (1, "QS"), (1, "6S")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("AH"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("AH"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::ThirtyOne,
+                            &cards!("THJHQHAH"),
+                            Points::from(2),
+                        ),
+                    },
+                ]);
+        }
+
+        #[test]
+        fn score_play_when_target_reached_end_play() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(into_playing(1);
+                    with_points(0, 0),
+                    with_hands("QC", "AH"),
+                    with_cut("KC"),
+                    with_current_plays(&[(0, "TH"), (0, "JH"), (0, "QH")]),
+                    with_previous_plays(&[(1, "2S"), (1, "QS"), (1, "6S")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("AH"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("AH"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::ThirtyOne,
+                            &cards!("THJHQHAH"),
+                            Points::from(2),
+                        ),
+                    },
+                ]);
+        }
+
+        #[test]
+        fn score_play_when_target_reached_finished() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 120),
+                    with_hands("QC", "AH"),
+                    with_cut("KC"),
+                    with_current_plays(&[(0, "TH"), (1, "JH"), (0, "QH")]),
+                    with_previous_plays(&[(1, "9H"), (1, "5S"), (0, "6S")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("AH"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("AH"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::ThirtyOne,
+                            &cards!("THJHQHAH"),
+                            Points::from(2),
+                        ),
+                    },
+                    GameEvent::WinnerDeclared { player: PLAYER1 },
+                ]);
+        }
+
+        #[test]
+        fn score_play_when_plays_finished_and_game_not_finished() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 60),
+                    with_hands("", "AH"),
+                    with_cut("KC"),
+                    with_current_plays(&[(0, "8H"), (1, "JH"), (0, "QH")]),
+                    with_previous_plays(&[(1, "9H"), (0, "4S"), (1, "5S"), (0, "6S")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("AH"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("AH"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::Go,
+                            &[],
+                            Points::from(1),
+                        ),
+                    },
+                ]);
+        }
+
+        #[test]
+        fn score_play_when_plays_finished_and_game_finished() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 120),
+                    with_hands("", "AH"),
+                    with_cut("KC"),
+                    with_current_plays(&[(0, "8H"), (1, "JH"), (0, "QH")]),
+                    with_previous_plays(&[(1, "9H"), (0, "4S"), (1, "5S"), (0, "6S")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("AH"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("AH"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::Go,
+                            &[],
+                            Points::from(1),
+                        ),
+                    },
+                    GameEvent::WinnerDeclared { player: PLAYER1 },
+                ]);
+        }
+
+        #[test]
+        #[ignore = "dont know how to test"]
+        fn swap_player_after_pone_play() {
+            //             let playing0 = GameBuilder::default()
+            //                 .with_peggings(0, 0)
+            //                 .with_cut("AS")
+            //                 .with_hands("7H8H8D9C", "4S5STHJH")
+            //                 .into_playing(1);
+            //             let dealer0 = playing0.dealer().player();
+            //             let pone0 = playing0.pone().player();
+
+            //             let game = Game::from(State::Playing(playing0));
+            //             let game_id = game.id;
+
+            //             GameTestFramework::new(game_id, game)
+            //                 .when(PlayCard::new(game_id, PLAYER1, card!("4S")))
+            //                 .assert_entity(|game| {
+            //                     let State::Playing(playing1) = &game.state else {
+            //                         panic!("unexpected state: {}", game.state)
+            //                     };
+
+            //                     let dealer1 = playing1.dealer().player();
+            //                     let pone1 = playing1.pone().player();
+            //                     let play_state1 = playing1.play_state();
+
+            //                     assert_eq!(dealer1, dealer0);
+            //                     assert_eq!(pone1, pone0);
+            //                     assert_eq!(play_state1.next_to_play(), dealer1);
+            //                 });
+        }
+
+        #[test]
+        #[ignore = "dont know how to test"]
+        fn swap_player_after_dealer_play() {
+            //             let playing0 = GameBuilder::default()
+            //                 .with_peggings(0, 0)
+            //                 .with_cut("AS")
+            //                 .with_hands("7H8H8D9C", "5STHJH")
+            //                 .with_current_plays(&[(1, "4S")])
+            //                 .into_playing(0);
+            //             let dealer0 = playing0.dealer().player();
+            //             let pone0 = playing0.pone().player();
+
+            //             let game = Game::from(State::Playing(playing0));
+            //             let game_id = game.id;
+
+            //             GameTestFramework::new(game_id, game)
+            //                 .when(PlayCard::new(game_id, dealer0, card!("9C")))
+            //                 .assert_entity(|game| {
+            //                     let State::Playing(playing1) = &game.state else {
+            //                         panic!("unexpected state: {}", game.state)
+            //                     };
+
+            //                     let dealer1 = playing1.dealer().player();
+            //                     let pone1 = playing1.pone().player();
+            //                     let play_state1 = playing1.play_state();
+
+            //                     assert_eq!(dealer1, dealer0);
+            //                     assert_eq!(pone1, pone0);
+            //                     assert_eq!(play_state1.next_to_play(), pone0);
+            //                 });
+        }
+
+        #[test]
+        #[ignore = "dont know how to test"]
+        fn reset_play_after_exact_target_reached() {
+            //             let playing0 = GameBuilder::default()
+            //                 .with_peggings(0, 0)
+            //                 .with_cut("AS")
+            //                 .with_hands("7H8H8D", "5STH")
+            //                 .with_current_plays(&[(1, "JH"), (0, "9C"), (1, "4S")])
+            //                 .into_playing(0);
+            //             let dealer0 = playing0.dealer().player();
+            //             let pone0 = playing0.pone().player();
+            //             let play_state0 = playing0.play_state().clone();
+
+            //             let game = Game::from(State::Playing(playing0));
+            //             let game_id = game.id;
+
+            //             GameTestFramework::new(game_id, game)
+            //                 .when(PlayCard::new(game_id, dealer0, card!("8H")))
+            //                 .assert_entity(|game| {
+            //                     let State::Playing(playing1) = &game.state else {
+            //                         panic!("unexpected state: {}", game.state)
+            //                     };
+
+            //                     let dealer1 = playing1.dealer().player();
+            //                     let pone1 = playing1.pone().player();
+            //                     let play_state1 = playing1.play_state();
+
+            //                     let last_play = Play::new(dealer0, card!("8H"));
+            //                     let mut expected_current_plays = play_state0.current_plays();
+            //                     expected_current_plays.push(last_play);
+
+            //                     assert_eq!(dealer1, dealer0);
+            //                     assert_eq!(pone1, pone0);
+            //                     assert_eq!(play_state1.next_to_play(), pone0);
+            //                     assert_eq!(play_state1.previous_plays(), expected_current_plays);
+            //                     assert!(play_state1.current_plays().is_empty());
+            //                     assert!(!play_state1.all_players_passed());
+            //                 });
+        }
+
+        #[test]
+        fn score_play_points_for_fifteens() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_cut("AS"),
+                    with_hands("KH", "8D"),
+                    with_current_plays(&[(0, "7D")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("8D"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("8D"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::Fifteen,
+                            &cards!("7D8D"),
+                            Points::from(2),
+                        ),
+                    },
+                ]);
+        }
+
+        #[test]
+        fn score_play_points_for_pair() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_cut("AS"),
+                    with_hands("KH", "8D"),
+                    with_current_plays(&[(0, "8S")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("8D"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("8D"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::Pair,
+                            &cards!("8D8S"),
+                            Points::from(2),
+                        ),
+                    },
+                ]);
+        }
+
+        #[test]
+        fn score_play_points_for_triplet() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_cut("AS"),
+                    with_hands("KH", "8DAH"),
+                    with_current_plays(&[(1, "8C"), (0, "8S")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("8D"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("8D"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::Triplet,
+                            &cards!("8D8S8C"),
+                            Points::from(6),
+                        ),
+                    },
+                ]);
+        }
+
+        #[test]
+        fn score_play_points_for_quartet() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_cut("AS"),
+                    with_hands("KH", "7DAH"),
+                    with_current_plays(&[(1, "7C"), (0, "7S"), (0, "7H")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("7D"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("7D"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::Quadruplet,
+                            &cards!("7D7H7S7C"),
+                            Points::from(12),
+                        ),
+                    },
+                ]);
+        }
+
+        #[test]
+        fn score_play_points_for_run() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_cut("AC"),
+                    with_hands("KH", "AS"),
+                    with_current_plays(&[(1, "2D"), (0, "3H")])
+                ))
+                .when(GameCommand::PlayCard {
+                    player: PLAYER1,
+                    card: card!("AS"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("AS"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER1,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::Run,
+                            &cards!("AS2D3H"),
+                            Points::from(3),
+                        ),
+                    },
+                ]);
+        }
+
+        #[test]
+        fn score_play_points_for_run_edge_case_1() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_cut("AS"),
+                    with_hands("5H7H6H", "AH8S7S")
+                ))
+                .and(vec![
+                    // Scores related to these events ignored...
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("8S"),
+                    },
+                    GameEvent::CardPlayed {
+                        player: PLAYER0,
+                        card: card!("7H"),
+                    },
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("7S"),
+                    },
+                ])
+                .when(GameCommand::PlayCard {
+                    player: PLAYER0,
+                    card: card!("6H"),
+                })
+                .then_expect_events(vec![GameEvent::CardPlayed {
+                    player: PLAYER0,
+                    card: card!("6H"),
+                }]);
+        }
+
+        #[test]
+        fn score_play_points_for_run_edge_case_2() {
+            GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_cut("AS"),
+                    with_hands("5H7H6H", "AH9S8S")
+                ))
+                .and(vec![
+                    // Scores related to these events ignored...
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("9S"),
+                    },
+                    GameEvent::CardPlayed {
+                        player: PLAYER0,
+                        card: card!("6H"),
+                    },
+                    GameEvent::CardPlayed {
+                        player: PLAYER1,
+                        card: card!("8S"),
+                    },
+                ])
+                .when(GameCommand::PlayCard {
+                    player: PLAYER0,
+                    card: card!("7H"),
+                })
+                .then_expect_events(vec![
+                    GameEvent::CardPlayed {
+                        player: PLAYER0,
+                        card: card!("7H"),
+                    },
+                    GameEvent::PointsScored {
+                        player: PLAYER0,
+                        reasons: ScoreBreakdown::default().add_event(
+                            ScoreKind::Run,
+                            &cards!("6H7H8S9S"),
+                            Points::from(4),
+                        ),
+                    },
+                ]);
+        }
+    }
 
     //     /// ## The Go
     //     ///

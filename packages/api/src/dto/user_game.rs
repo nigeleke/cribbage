@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::dto::{CardDTO, PendingDTO, PhaseDTO, PlayerDTO, PlayerStateDTO, PlaysDTO};
+use crate::dto::{CardDTO, PendingDTO, PhaseDTO, PlayerDTO, PlayerStateDTO, PlaysDTO, ScoreDTO};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UserGameDTO {

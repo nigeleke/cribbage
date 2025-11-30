@@ -330,7 +330,7 @@ impl Game {
                 let hand = &hands[pone];
                 let cut = playing.starter_cut();
 
-                let breakdown = ScoreBreakdown::hand(&hand, *cut);
+                let breakdown = ScoreBreakdown::hand(hand, *cut);
                 events.append(&mut playing.award_points(pone, breakdown));
             }
 
@@ -366,7 +366,7 @@ impl Game {
                 let hand = scoring.hand(dealer);
                 let cut = scoring.starter_cut();
 
-                let breakdown = ScoreBreakdown::hand(&hand, *cut);
+                let breakdown = ScoreBreakdown::hand(hand, *cut);
                 events.append(&mut scoring.award_points(dealer, breakdown));
             }
 
@@ -402,7 +402,7 @@ impl Game {
                 let crib = scoring.crib();
                 let cut = scoring.starter_cut();
 
-                let breakdown = ScoreBreakdown::crib(&crib, *cut);
+                let breakdown = ScoreBreakdown::crib(crib, *cut);
                 events.append(&mut scoring.award_points(dealer, breakdown));
             }
 
@@ -667,7 +667,7 @@ impl Game {
             let proceed = scoring.pending_mut().acknowledge(player);
             if proceed {
                 let scoreboard = scoring.scoreboard().clone();
-                let mut roles = scoring.roles().clone();
+                let mut roles = *scoring.roles();
                 roles.swap();
                 let mut deck = Deck::shuffled_pack();
                 let hands = deck.deal(PLAYER_COUNT);

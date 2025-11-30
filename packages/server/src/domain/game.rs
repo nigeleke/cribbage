@@ -2252,7 +2252,6 @@ mod test {
         }
 
         #[test]
-        #[ignore = "dont know how to test"]
         fn reset_play_after_after_dealer_then_pone_pass() {
             let preconditions = scenario!(
                 into_playing(0);

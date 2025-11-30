@@ -7,10 +7,22 @@ on:
     pull_request:
 
 jobs:
+    docker:
+        name: Start Docker services
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Setup containers
+              shell: bash
+              run: docker-compose -f docker/docker-compose up -d
+
     qa:
         uses: nigeleke/github/.github/workflows/dioxus-qa.yml@main
         with:
             platform: web
+            DATABASE_URL: postgres://postgres:password@localhost:5432/cribbage
 
     bundle:
         needs: [qa]

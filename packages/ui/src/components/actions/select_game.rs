@@ -22,7 +22,6 @@ pub fn SelectGameAction(game: ReadSignal<AvailableGameDTO>) -> Element {
         match result {
             Ok(_) => game_id.set(Some(id)),
             Err(ref error) => {
-                warn!("SelectGameAction:error {error:?}");
                 Toast::command_error("Join game", error.to_string());
             }
         };

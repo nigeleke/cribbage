@@ -22,7 +22,6 @@ pub fn HostGameAction() -> Element {
         match result {
             Ok(id) => game_id.set(Some(id)),
             Err(ref error) => {
-                warn!("{error}");
                 Toast::command_error("Host game", error.to_string());
             }
         }

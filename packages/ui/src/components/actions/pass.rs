@@ -18,7 +18,6 @@ pub fn PassAction() -> Element {
         match result {
             Ok(_) => (),
             Err(ref error) => {
-                warn!("{error:?}");
                 Toast::command_error("Pass", error.to_string());
             }
         }

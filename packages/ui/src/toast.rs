@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use api::dto::AvailableGameEventDTO;
+use dioxus::prelude::*;
 use dioxus_primitives::toast::{ToastOptions, ToastType, consume_toast};
 
 pub struct Toast;
@@ -25,6 +26,7 @@ impl Toast {
     }
 
     pub fn command_error(command: &str, error: String) {
+        warn!("{error}");
         Self::toast(
             command,
             &error,

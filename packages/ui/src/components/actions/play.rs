@@ -31,7 +31,6 @@ pub fn PlayAction() -> Element {
             match result {
                 Ok(_) => (),
                 Err(ref error) => {
-                    warn!("{error:?}");
                     Toast::command_error("Play", error.to_string());
                 }
             }

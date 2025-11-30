@@ -23,7 +23,6 @@ pub fn CuttingForDealControls() -> Element {
         match result {
             Ok(_) => (),
             Err(ref error) => {
-                warn!("CuttingForDealControls:error {error:?}");
                 Toast::command_error("Cut for deal", error.to_string());
             }
         }
@@ -39,7 +38,6 @@ pub fn CuttingForDealControls() -> Element {
         match result {
             Ok(_) => (),
             Err(ref error) => {
-                warn!("GamePage:acknowledge:error {error:?}");
                 Toast::command_error("Acknowledge cut for deal", error.to_string());
             }
         }

@@ -1,8 +1,8 @@
-use api::dto::{CardIdDTO, GameIdDTO, PlayActionDTO, PlaysDTO, UserIdDTO};
+use api::dto::{GameIdDTO, PlayActionDTO, PlaysDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 use crate::{
-    components::{Confirmation, WaitingForOpponent, button::Button},
+    components::{Confirmation, button::Button},
     toast::Toast,
 };
 
@@ -14,17 +14,20 @@ pub fn ScorePoneAction() -> Element {
     let plays = use_context::<ReadSignal<PlaysDTO>>();
 
     let next_action = plays().next_action;
-    let current_len = plays().current.len();
-    let previous_len = plays().previous.len();
 
-    let mut score_action = use_action(move || async move { dioxus::Ok(()) });
+    let mut score_action = use_action(move || async move {
+        let result = api::action::acknowledge_plays_ended(*user_id.read(), game_id).await;
+        match result {
+            Ok(_) => {}
+            Err(ref error) => Toast::command_error("Acknowledge plays ended", error.to_string()),
+        };
+        result
+    });
 
     let on_score = move |_| score_action.call();
 
     rsx! {
-        p { "Current len: {current_len}" }
-        p { "Previous len: {previous_len}" }
-        if let PlayActionDTO::ScorePone = next_action {
+        if next_action == PlayActionDTO::ScorePone {
             Confirmation {
                 Button {
                     onclick: on_score,

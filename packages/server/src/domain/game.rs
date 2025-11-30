@@ -580,12 +580,14 @@ impl Game {
         if let State::Playing(playing) = &mut self.state {
             playing.play_card(player, card);
         }
+        debug!("card_played: {}", self.state);
     }
 
     fn passed(&mut self, player: Player) {
         if let State::Playing(playing) = &mut self.state {
             playing.pass(player);
         }
+        debug!("passed: {}", self.state);
     }
 
     fn plays_ended_acknowledged(&mut self, player: Player) {

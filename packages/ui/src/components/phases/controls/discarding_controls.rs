@@ -21,7 +21,6 @@ pub fn DiscardingControls() -> Element {
         match result {
             Ok(_) => (),
             Err(ref error) => {
-                warn!("{error}");
                 Toast::command_error("Discard", error.to_string());
             }
         }

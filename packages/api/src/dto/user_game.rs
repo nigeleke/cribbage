@@ -239,6 +239,7 @@ mod server_only {
                 State::Playing(state) => Self::new(name, PhaseDTO::Playing)
                     .with_scores(score(state, me), score(state, them))
                     .with_dealer(dealer(state, &player_dto_map))
+                    .with_pending(pending(state, me))
                     .with_hands(hand_up(state, me), hand_down(state, them))
                     .with_crib_and_starter_cut(crib_down(state), starter_cut(state))
                     .with_plays(plays(state, &player_dto_map)),

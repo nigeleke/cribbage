@@ -203,26 +203,36 @@ impl Breakdown {
     }
 
     fn runs(self, cards: &[Card]) -> Self {
-        let mut sorted: Vec<Card> = cards.to_vec();
-        sorted.sort_by_key(|c| c.rank());
+        let mut scores = Vec::default();
 
-        let run = (MINIMUM_RUN_LENGTH..=sorted.len()).rev().find_map(|len| {
-            sorted
-                .iter()
-                .copied()
-                .combinations(len)
-                .find(|combo| combo.windows(2).all(|w| w[1].rank() == w[0].rank() + 1))
-                .map(|combo| {
-                    let points = Points::from(len);
-                    (combo, points)
-                })
-        });
+        let mut cards = Vec::from(cards);
+        cards.sort_by_key(|c| c.rank());
 
-        if let Some((cards, points)) = run {
-            self.add_event(ScoreKind::Run, cards.as_slice(), points)
-        } else {
-            self
+        for len in (MINIMUM_RUN_LENGTH..=cards.len()).rev() {
+            let mut points = Points::default();
+
+            for combination in cards.iter().combinations(len) {
+                let differences = combination
+                    .windows(2)
+                    .map(|cs| cs[1].rank() - cs[0].rank())
+                    .collect::<Vec<_>>();
+
+                let sequential = differences.iter().all(|d| *d == 1);
+                if sequential {
+                    let combination = combination.into_iter().cloned().collect::<Vec<_>>();
+                    points = Points::from(combination.len());
+                    scores.push((combination, points))
+                }
+            }
+
+            if points != Points::default() {
+                break;
+            }
         }
+
+        scores
+            .into_iter()
+            .fold(self, |acc, e| acc.add_event(ScoreKind::Run, &e.0, e.1))
     }
 
     fn flush(self, cards: &[Card], cut: StarterCut, constraint: usize) -> Self {

@@ -8,8 +8,8 @@ use crate::{
         Card, Crib, CutsForDeal, Dealer, Deck, Discarding, DomainError, Finished, GameCommand,
         GameEvent, GameId, Hand, Hands, HasCrib, HasCutsForDeal, HasDeck, HasHands, HasPending,
         HasPlayState, HasRoles, HasScoreboard, HasStarterCut, PLAYER0, PLAYER1, Pending, PlayState,
-        Player, Playing, Roles, ScoreBreakdown, Scoreboard, StarterCut, Starting, State, UserId,
-        WaitingForDiscards,
+        Player, Playing, Roles, ScoreBreakdown, Scoreboard, ScoringCrib, ScoringDealer,
+        ScoringPone, StarterCut, Starting, State, UserId, WaitingForDiscards,
         constants::{CARDS_DISCARDED_TO_CRIB, CARDS_KEPT_PER_HAND, PLAYER_COUNT},
     },
     extensions::HasScoreboardExt,
@@ -313,6 +313,138 @@ impl Game {
         }
     }
 
+    fn acknowledge_plays_ended(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || {
+            Err(DomainError::NotPermitted(String::from(
+                "acknowledge plays ended",
+            )))
+        };
+
+        let acknowledge_plays_ended = |playing: &Playing| {
+            let mut events = vec![GameEvent::PlaysEndedAcknowledged { player }];
+
+            let proceed = playing.pending().clone().acknowledge(player);
+            if proceed {
+                let pone = playing.pone().player();
+                let hands = playing.play_state().clone().finish_plays();
+                let hand = &hands[pone];
+                let cut = playing.starter_cut();
+
+                let breakdown = ScoreBreakdown::hand(&hand, *cut);
+                events.append(&mut playing.award_points(pone, breakdown));
+            }
+
+            events
+        };
+
+        if self.id == GameId::default() {
+            not_permitted()
+        } else {
+            match &self.state {
+                State::Playing(playing) => {
+                    let events = acknowledge_plays_ended(playing);
+                    Ok(events)
+                }
+                _ => not_permitted(),
+            }
+        }
+    }
+
+    fn acknowledge_pone_score(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || {
+            Err(DomainError::NotPermitted(String::from(
+                "acknowledge pone score",
+            )))
+        };
+
+        let acknowledge_pone_score = |scoring: &ScoringPone| {
+            let mut events = vec![GameEvent::PoneScoreAcknowledged { player }];
+
+            let proceed = scoring.pending().clone().acknowledge(player);
+            if proceed {
+                let dealer = scoring.dealer().player();
+                let hand = scoring.hand(dealer);
+                let cut = scoring.starter_cut();
+
+                let breakdown = ScoreBreakdown::hand(&hand, *cut);
+                events.append(&mut scoring.award_points(dealer, breakdown));
+            }
+
+            events
+        };
+
+        if self.id == GameId::default() {
+            not_permitted()
+        } else {
+            match &self.state {
+                State::ScoringPone(scoring) => {
+                    let events = acknowledge_pone_score(scoring);
+                    Ok(events)
+                }
+                _ => not_permitted(),
+            }
+        }
+    }
+
+    fn acknowledge_dealer_score(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || {
+            Err(DomainError::NotPermitted(String::from(
+                "acknowledge dealer score",
+            )))
+        };
+
+        let acknowledge_dealer_score = |scoring: &ScoringDealer| {
+            let mut events = vec![GameEvent::DealerScoreAcknowledged { player }];
+
+            let proceed = scoring.pending().clone().acknowledge(player);
+            if proceed {
+                let dealer = scoring.dealer().player();
+                let crib = scoring.crib();
+                let cut = scoring.starter_cut();
+
+                let breakdown = ScoreBreakdown::crib(&crib, *cut);
+                events.append(&mut scoring.award_points(dealer, breakdown));
+            }
+
+            events
+        };
+
+        if self.id == GameId::default() {
+            not_permitted()
+        } else {
+            match &self.state {
+                State::ScoringDealer(scoring) => {
+                    let events = acknowledge_dealer_score(scoring);
+                    Ok(events)
+                }
+                _ => not_permitted(),
+            }
+        }
+    }
+
+    fn acknowledge_crib_score(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || {
+            Err(DomainError::NotPermitted(String::from(
+                "acknowledge crib score",
+            )))
+        };
+
+        let acknowledge_crib_score =
+            |_scoring: &ScoringCrib| vec![GameEvent::CribScoreAcknowledged { player }];
+
+        if self.id == GameId::default() {
+            not_permitted()
+        } else {
+            match &self.state {
+                State::ScoringCrib(scoring) => {
+                    let events = acknowledge_crib_score(scoring);
+                    Ok(events)
+                }
+                _ => not_permitted(),
+            }
+        }
+    }
+
     pub fn handle_command(&self, command: GameCommand) -> Result<Vec<GameEvent>, DomainError> {
         debug!("COMMAND --- Game:handle_command: {:?}", command);
         match command {
@@ -326,10 +458,10 @@ impl Game {
             }
             GameCommand::PlayCard { player, card } => self.play_card(player, card),
             GameCommand::Pass { player } => self.pass(player),
-            _ => unimplemented!("handle {command:?}"),
-            // GameCommand::AcknowledgePoneScore { player } => {}
-            // GameCommand::AcknowledgeDealerScore { player } => {}
-            // GameCommand::AcknowledgeCribScore { player } => {}
+            GameCommand::AcknowledgePlaysEnded { player } => self.acknowledge_plays_ended(player),
+            GameCommand::AcknowledgePoneScore { player } => self.acknowledge_pone_score(player),
+            GameCommand::AcknowledgeDealerScore { player } => self.acknowledge_dealer_score(player),
+            GameCommand::AcknowledgeCribScore { player } => self.acknowledge_crib_score(player),
         }
     }
 }
@@ -416,6 +548,7 @@ impl Game {
             let play_state = PlayState::new(discarding.pone().player())
                 .with_pending_plays(PLAYER0, discarding.hand(PLAYER0).as_ref())
                 .with_pending_plays(PLAYER1, discarding.hand(PLAYER1).as_ref());
+            let pending = Pending::default();
             let playing = Playing::new(
                 discarding.scoreboard().clone(),
                 *discarding.roles(),
@@ -423,6 +556,7 @@ impl Game {
                 play_state,
                 discarding.crib().clone(),
                 starter_cut,
+                pending,
             );
             self.state = State::Playing(playing);
         }
@@ -451,6 +585,100 @@ impl Game {
     fn passed(&mut self, player: Player) {
         if let State::Playing(playing) = &mut self.state {
             playing.pass(player);
+        }
+    }
+
+    fn plays_ended_acknowledged(&mut self, player: Player) {
+        if let State::Playing(playing) = &mut self.state {
+            let proceed = playing.pending_mut().acknowledge(player);
+            if proceed {
+                let pone = playing.pone().player();
+                let hands = playing.play_state_mut().finish_plays();
+                let starter_cut = *playing.starter_cut();
+                let breakdown = ScoreBreakdown::hand(&hands[pone], starter_cut);
+                let pending = Pending::default();
+
+                let scoring = ScoringPone::new(
+                    playing.scoreboard().clone(),
+                    *playing.roles(),
+                    hands,
+                    playing.crib().clone(),
+                    starter_cut,
+                    breakdown,
+                    pending,
+                );
+
+                self.state = State::ScoringPone(scoring);
+            }
+        }
+    }
+
+    fn pone_score_acknowledged(&mut self, player: Player) {
+        if let State::ScoringPone(scoring) = &mut self.state {
+            let proceed = scoring.pending_mut().acknowledge(player);
+            if proceed {
+                let dealer = scoring.dealer().player();
+                let hand = scoring.hand(dealer);
+                let starter_cut = *scoring.starter_cut();
+                let breakdown = ScoreBreakdown::hand(hand, starter_cut);
+                let pending = Pending::default();
+
+                let scoring = ScoringDealer::new(
+                    scoring.scoreboard().clone(),
+                    *scoring.roles(),
+                    scoring.hands().clone(),
+                    scoring.crib().clone(),
+                    starter_cut,
+                    breakdown,
+                    pending,
+                );
+
+                self.state = State::ScoringDealer(scoring);
+            }
+        }
+    }
+
+    fn dealer_score_acknowledged(&mut self, player: Player) {
+        if let State::ScoringDealer(scoring) = &mut self.state {
+            let proceed = scoring.pending_mut().acknowledge(player);
+            if proceed {
+                let crib = scoring.crib();
+                let starter_cut = *scoring.starter_cut();
+                let breakdown = ScoreBreakdown::crib(crib, starter_cut);
+                let pending = Pending::default();
+
+                let scoring = ScoringCrib::new(
+                    scoring.scoreboard().clone(),
+                    *scoring.roles(),
+                    scoring.hands().clone(),
+                    scoring.crib().clone(),
+                    starter_cut,
+                    breakdown,
+                    pending,
+                );
+
+                self.state = State::ScoringCrib(scoring);
+            }
+        }
+    }
+
+    fn crib_score_acknowledged(&mut self, player: Player) {
+        if let State::ScoringCrib(scoring) = &mut self.state {
+            let proceed = scoring.pending_mut().acknowledge(player);
+            if proceed {
+                let scoreboard = scoring.scoreboard().clone();
+                let mut roles = scoring.roles().clone();
+                roles.swap();
+                let mut deck = Deck::shuffled_pack();
+                let hands = deck.deal(PLAYER_COUNT);
+                let hands = [hands[PLAYER0].clone(), hands[PLAYER1].clone()];
+                let crib = Crib::default();
+                let pending = Pending::default();
+
+                let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
+
+                self.state = State::Discarding(discarding);
+            }
         }
     }
 
@@ -526,12 +754,14 @@ impl Game {
             GameEvent::PointsScored { player, reasons } => self.points_scored(player, reasons),
             GameEvent::CardPlayed { player, card } => self.card_played(player, card),
             GameEvent::Passed { player } => self.passed(player),
+            GameEvent::PlaysEndedAcknowledged { player } => self.plays_ended_acknowledged(player),
+            GameEvent::PoneScoreAcknowledged { player } => self.pone_score_acknowledged(player),
+            GameEvent::DealerScoreAcknowledged { player } => self.dealer_score_acknowledged(player),
+            GameEvent::CribScoreAcknowledged { player } => self.crib_score_acknowledged(player),
             GameEvent::WinnerDeclared { player } => self.winner_declared(player),
 
             #[cfg(test)]
             GameEvent::GamePreloaded { game, .. } => *self = game,
-
-            _ => unimplemented!("apply: {event:?}"),
         }
     }
 
@@ -2525,576 +2755,503 @@ mod test {
         }
     }
 
-    //     /// ## Counting the Hands
-    //     ///
-    //     /// When play ends, the three hands are counted in order: non-dealer's hand (first), dealer's
-    //     /// hand (second), and then the crib (third). This order is important because, toward the end of
-    //     /// a game, the non-dealer may "count out" and win before the dealer has a chance to count, even
-    //     /// though the dealer's total would have exceeded that of the opponent. The starter is
-    //     /// considered to be a part of each hand, so that all hands in counting comprise five cards. The
-    //     /// basic scoring formations are as follows:
-    //     ///
-    //     /// Combinations counts
-    //     ///   - Fifteen. Each combination of cards that totals 15 2
-    //     ///   - Pair. Each pair of cards of the same rank 2
-    //     ///   - Run. Each combination of three or more 1 cards in sequence (for each card in the
-    //     ///     sequence)
-    //     ///   - Flush.
-    //     ///     - Four cards of the same suit in hand 4 (excluding the crib, and the starter)
-    //     ///     - Four cards in hand or crib of the same 5 suit as the starter. (There is no count for
-    //     ///       four-flush in the crib that is not of same suit as the starter)
-    //     ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
-    //     #[coverage(off)]
-    //     mod counting_the_hands {
-    //         use std::str::FromStr;
-
-    //         use super::*;
-    //         use crate::domain::constants::CARDS_DEALT_PER_HAND;
-    //         use crate::domain::{
-    //             AcknowledgeCribScore, AcknowledgeDealerScore, AcknowledgePoneScore, Card, Crib, Game,
-    //             Hand, PLAYER0, PLAYER1, PlayCard, Points, ScoreBreakdown, State,
-    //         };
-    //         use crate::test::{GameBuilder, GameTestFramework};
-    //         use crate::{card, crib, hand};
-
-    //         #[test]
-    //         fn score_pone_hand_when_plays_finished() {
-    //             let playing0 = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_hands("", "TH")
-    //                 .with_cut("4H")
-    //                 .with_previous_plays(&[
-    //                     (0, "7H"),
-    //                     (0, "8C"),
-    //                     (0, "AC"),
-    //                     (0, "2C"),
-    //                     (1, "QH"),
-    //                     (1, "KS"),
-    //                     (1, "5H"),
-    //                 ])
-    //                 .into_playing(1);
-
-    //             let scoreboard0 = playing0.scoreboard().clone();
-    //             let dealer0 = playing0.dealer().player();
-    //             let pone0 = playing0.pone().player();
-
-    //             let game = Game::from(State::Playing(playing0));
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .when(PlayCard::new(game_id, PLAYER1, card!("TH")))
-    //                 .assert_entity(|game| {
-    //                     let State::ScoringPone(scoring1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let scoreboard1 = scoring1.scoreboard();
-    //                     let dealer1 = scoring1.dealer().player();
-    //                     let pone1 = scoring1.pone().player();
-    //                     let breakdown1 = scoring1.breakdown();
-
-    //                     println!("{scoreboard0}");
-    //                     println!("{scoreboard1}");
-    //                     println!("{breakdown1}");
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(scoreboard1.pegging(dealer1), scoreboard0.pegging(dealer0));
-    //                     assert_eq!(
-    //                         *scoreboard1.pegging(pone1),
-    //                         scoreboard0.pegging(pone0).clone() + Points::from(1)
-    //                     );
-    //                     assert_eq!(breakdown1.points(), Points::from(6));
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn apply_pone_score_when_scores_acknowledged() {
-    //             let scoring0 = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_cut("4H")
-    //                 .with_hands("7H8CAC2C", "JCKS5HTH")
-    //                 .into_scoring_pone();
-
-    //             let scoreboard0 = scoring0.scoreboard();
-    //             let dealer0 = scoring0.dealer();
-    //             let pone0 = scoring0.pone();
-    //             let breakdown0 = scoring0.breakdown();
-
-    //             let state = State::ScoringPone(scoring0.clone());
-    //             let game = Game::from(state);
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .execute(AcknowledgePoneScore::new(game_id, PLAYER0))
-    //                 .when(AcknowledgePoneScore::new(game_id, PLAYER1))
-    //                 .assert_event(|event| {
-    //                     assert!(matches!(
-    //                         event.kind(),
-    //                         EventKind::StateUpdated { id: _, state: _ }
-    //                     ));
-    //                 })
-    //                 .assert_entity(|game| {
-    //                     let State::ScoringDealer(scoring1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let scoreboard1 = scoring1.scoreboard();
-    //                     let dealer1 = scoring1.dealer();
-    //                     let pone1 = scoring1.pone();
-    //                     let breakdown1 = scoring1.breakdown();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(pone1.player()).points(),
-    //                         scoreboard0.pegging(pone0.player()).points() + breakdown0.points()
-    //                     );
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(dealer1.player()),
-    //                         scoreboard0.pegging(dealer0.player())
-    //                     );
-    //                     assert_eq!(breakdown1.points(), Points::from(4));
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn apply_winning_pone_score_when_scores_acknowledged() {
-    //             let scoring0 = GameBuilder::default()
-    //                 .with_points(0, 115)
-    //                 .with_cut("4H")
-    //                 .with_hands("7H8CAC2C", "JCKS5HTH")
-    //                 .into_scoring_pone();
-
-    //             let scoreboard0 = scoring0.scoreboard();
-    //             let dealer0 = scoring0.dealer();
-    //             let pone0 = scoring0.pone();
-    //             let breakdown0 = scoring0.breakdown();
-
-    //             let state = State::ScoringPone(scoring0.clone());
-    //             let game = Game::from(state);
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .execute(AcknowledgePoneScore::new(game_id, PLAYER0))
-    //                 .when(AcknowledgePoneScore::new(game_id, PLAYER1))
-    //                 .assert_event(|event| {
-    //                     assert!(matches!(
-    //                         event.kind(),
-    //                         EventKind::StateUpdated { id: _, state: _ }
-    //                     ))
-    //                 })
-    //                 .assert_entity(|game| {
-    //                     let State::Finished(finished1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let scoreboard1 = finished1.scoreboard();
-
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(pone0.player()).points(),
-    //                         scoreboard0.pegging(pone0.player()).points() + breakdown0.points()
-    //                     );
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(dealer0.player()),
-    //                         scoreboard0.pegging(dealer0.player())
-    //                     );
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn apply_dealer_score_when_scores_acknowledged() {
-    //             let scoring0 = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_cut("4H")
-    //                 .with_hands("7H8CAC2C", "JCKS5HTH")
-    //                 .with_crib("AHADASTD")
-    //                 .into_scoring_dealer();
-
-    //             let scoreboard0 = scoring0.scoreboard();
-    //             let dealer0 = scoring0.dealer();
-    //             let pone0 = scoring0.pone();
-    //             let breakdown0 = scoring0.breakdown();
-
-    //             let state = State::ScoringDealer(scoring0.clone());
-    //             let game = Game::from(state);
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .execute(AcknowledgeDealerScore::new(game_id, PLAYER0))
-    //                 .when(AcknowledgeDealerScore::new(game_id, PLAYER1))
-    //                 .assert_event(|event| {
-    //                     assert!(matches!(
-    //                         event.kind(),
-    //                         EventKind::StateUpdated { id: _, state: _ }
-    //                     ));
-    //                 })
-    //                 .assert_entity(|game| {
-    //                     let State::ScoringCrib(scoring1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let scoreboard1 = scoring1.scoreboard();
-    //                     let dealer1 = scoring1.dealer();
-    //                     let pone1 = scoring1.pone();
-    //                     let breakdown1 = scoring1.breakdown();
-
-    //                     assert_eq!(dealer1, dealer0);
-    //                     assert_eq!(pone1, pone0);
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(pone1.player()),
-    //                         scoreboard0.pegging(pone0.player())
-    //                     );
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(dealer1.player()).points(),
-    //                         scoreboard0.pegging(dealer0.player()).points() + breakdown0.points()
-    //                     );
-    //                     assert_eq!(breakdown1.points(), Points::from(12));
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn apply_winning_dealer_score_when_scores_acknowledged() {
-    //             let scoring0 = GameBuilder::default()
-    //                 .with_points(117, 0)
-    //                 .with_cut("4H")
-    //                 .with_hands("7H8CAC2C", "JCKS5HTH")
-    //                 .with_crib("AHADASTD")
-    //                 .into_scoring_dealer();
-
-    //             let scoreboard0 = scoring0.scoreboard();
-    //             let dealer0 = scoring0.dealer();
-    //             let pone0 = scoring0.pone();
-    //             let breakdown0 = scoring0.breakdown();
-
-    //             let state = State::ScoringDealer(scoring0.clone());
-    //             let game = Game::from(state);
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .execute(AcknowledgeDealerScore::new(game_id, PLAYER0))
-    //                 .when(AcknowledgeDealerScore::new(game_id, PLAYER1))
-    //                 .assert_event(|event| {
-    //                     assert!(matches!(
-    //                         event.kind(),
-    //                         EventKind::StateUpdated { id: _, state: _ }
-    //                     ))
-    //                 })
-    //                 .assert_entity(|game| {
-    //                     let State::Finished(finished1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let scoreboard1 = finished1.scoreboard();
-
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(pone0.player()),
-    //                         scoreboard0.pegging(pone0.player())
-    //                     );
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(dealer0.player()).points(),
-    //                         scoreboard0.pegging(dealer0.player()).points() + breakdown0.points()
-    //                     );
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn apply_crib_score_when_scores_acknowledged() {
-    //             let scoring0 = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_cut("4H")
-    //                 .with_hands("7H8CAC2C", "JCKS5HTH")
-    //                 .with_crib("AHADASTD")
-    //                 .into_scoring_crib();
-
-    //             let scoreboard0 = scoring0.scoreboard();
-    //             let dealer0 = scoring0.dealer();
-    //             let pone0 = scoring0.pone();
-    //             let breakdown0 = scoring0.breakdown();
-
-    //             let state = State::ScoringCrib(scoring0.clone());
-    //             let game = Game::from(state);
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .execute(AcknowledgeCribScore::new(game_id, PLAYER0))
-    //                 .when(AcknowledgeCribScore::new(game_id, PLAYER1))
-    //                 .assert_event(|event| {
-    //                     assert!(matches!(
-    //                         event.kind(),
-    //                         EventKind::StateUpdated { id: _, state: _ }
-    //                     ));
-    //                 })
-    //                 .assert_entity(|game| {
-    //                     let State::Discarding(discarding1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let scoreboard1 = discarding1.scoreboard();
-
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(pone0.player()),
-    //                         scoreboard0.pegging(pone0.player())
-    //                     );
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(dealer0.player()).points(),
-    //                         scoreboard0.pegging(dealer0.player()).points() + breakdown0.points()
-    //                     );
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn apply_winning_crib_score_when_scores_acknowledged() {
-    //             let scoring0 = GameBuilder::default()
-    //                 .with_points(109, 0)
-    //                 .with_cut("4H")
-    //                 .with_hands("7H8CAC2C", "JCKS5HTH")
-    //                 .with_crib("AHADASTD")
-    //                 .into_scoring_crib();
-
-    //             let scoreboard0 = scoring0.scoreboard();
-    //             let dealer0 = scoring0.dealer();
-    //             let pone0 = scoring0.pone();
-    //             let breakdown0 = scoring0.breakdown();
-
-    //             let state = State::ScoringCrib(scoring0.clone());
-    //             let game = Game::from(state);
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .execute(AcknowledgeCribScore::new(game_id, PLAYER0))
-    //                 .when(AcknowledgeCribScore::new(game_id, PLAYER1))
-    //                 .assert_event(|event| {
-    //                     assert!(matches!(
-    //                         event.kind(),
-    //                         EventKind::StateUpdated { id: _, state: _ }
-    //                     ));
-    //                 })
-    //                 .assert_entity(|game| {
-    //                     let State::Finished(finished1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let scoreboard1 = finished1.scoreboard();
-
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(pone0.player()),
-    //                         scoreboard0.pegging(pone0.player())
-    //                     );
-    //                     assert_eq!(
-    //                         scoreboard1.pegging(dealer0.player()).points(),
-    //                         scoreboard0.pegging(dealer0.player()).points() + breakdown0.points()
-    //                     );
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn redeal_after_crib_scored() {
-    //             let scoring0 = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_cut("4H")
-    //                 .with_hands("7H8CAC2C", "JCKS5HTH")
-    //                 .with_crib("AHADASTD")
-    //                 .into_scoring_crib();
-
-    //             let dealer0 = scoring0.dealer();
-    //             let pone0 = scoring0.pone();
-
-    //             let state = State::ScoringCrib(scoring0.clone());
-    //             let game = Game::from(state);
-    //             let game_id = game.id;
-
-    //             GameTestFramework::new(game_id, game)
-    //                 .execute(AcknowledgeCribScore::new(game_id, PLAYER0))
-    //                 .when(AcknowledgeCribScore::new(game_id, PLAYER1))
-    //                 .assert_entity(|game| {
-    //                     let State::Discarding(discarding1) = &game.state else {
-    //                         panic!("unexpected state: {}", game.state);
-    //                     };
-
-    //                     let dealer1 = discarding1.dealer();
-    //                     let pone1 = discarding1.pone();
-
-    //                     assert_eq!(dealer1.player(), pone0.player());
-    //                     assert_eq!(pone1.player(), dealer0.player());
-    //                     assert_eq!(discarding1.hand(PLAYER0).len(), CARDS_DEALT_PER_HAND);
-    //                     assert_eq!(discarding1.hand(PLAYER1).len(), CARDS_DEALT_PER_HAND);
-    //                 });
-    //         }
-
-    //         #[test]
-    //         fn hand_should_score_fifteens() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("7H8CAC2C"), card!("4H")).points(),
-    //                 Points::from(4)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("THJCKS5H"), card!("4H")).points(),
-    //                 Points::from(6)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn hand_should_score_pairs() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("2H4C5C2C"), card!("AH")).points(),
-    //                 Points::from(2)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("TCASADTH"), card!("AH")).points(),
-    //                 Points::from(8)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn hand_should_score_royal_pairs() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("2H2D5C2C"), card!("AH")).points(),
-    //                 Points::from(6)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("TCASADTH"), card!("AH")).points(),
-    //                 Points::from(8)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn hand_should_score_double_royal_pairs() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("2H2C2D2S"), card!("AH")).points(),
-    //                 Points::from(12)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("TCASADTH"), card!("AH")).points(),
-    //                 Points::from(8)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn hand_should_score_runs() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("JDQCKC2C"), card!("AH")).points(),
-    //                 Points::from(3)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("3C3S2D5H"), card!("AH")).points(),
-    //                 Points::from(8)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn hand_should_score_flushes() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("2H4H6H8H"), card!("TH")).points(),
-    //                 Points::from(5)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("2D4D6D8D"), card!("TH")).points(),
-    //                 Points::from(4)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn hand_should_score_nobs() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("2D4H6HJH"), card!("TH")).points(),
-    //                 Points::from(1)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("2H4D6DJD"), card!("TH")).points(),
-    //                 Points::from(0)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn crib_should_score_fifteens() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("7H8CAC2C"), card!("4H")).points(),
-    //                 Points::from(4)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("THJCKS5H"), card!("4H")).points(),
-    //                 Points::from(6)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn crib_should_score_pairs() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("2H4C5C2C"), card!("AH")).points(),
-    //                 Points::from(2)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("TCASADTH"), card!("AH")).points(),
-    //                 Points::from(8)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn crib_should_score_royal_pairs() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("2H2D5C2C"), card!("AH")).points(),
-    //                 Points::from(6)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("TCASADTH"), card!("AH")).points(),
-    //                 Points::from(8)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn crib_should_score_double_royal_pairs() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("2H2C2D2S"), card!("AH")).points(),
-    //                 Points::from(12)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("TCASADTH"), card!("AH")).points(),
-    //                 Points::from(8)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn crib_should_score_runs() {
-    //             println!(
-    //                 "sss: {}",
-    //                 ScoreBreakdown::crib(&crib!("3C3S2D5H"), card!("AH"))
-    //             );
-
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("JDQCKC2C"), card!("AH")).points(),
-    //                 Points::from(3)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("3C3S2D5H"), card!("AH")).points(),
-    //                 Points::from(8)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn crib_should_score_flushes() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("2H4H6H8H"), card!("TH")).points(),
-    //                 Points::from(5)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("2D4D6D8D"), card!("TH")).points(),
-    //                 Points::from(0)
-    //             );
-    //         }
-
-    //         #[test]
-    //         fn crib_should_score_nobs() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("2D4H6HJH"), card!("TH")).points(),
-    //                 Points::from(1)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::crib(&crib!("2H4D6DJD"), card!("TH")).points(),
-    //                 Points::from(0)
-    //             );
-    //         }
-    //     }
+    /// ## Counting the Hands
+    ///
+    /// When play ends, the three hands are counted in order: non-dealer's hand (first), dealer's
+    /// hand (second), and then the crib (third). This order is important because, toward the end of
+    /// a game, the non-dealer may "count out" and win before the dealer has a chance to count, even
+    /// though the dealer's total would have exceeded that of the opponent. The starter is
+    /// considered to be a part of each hand, so that all hands in counting comprise five cards. The
+    /// basic scoring formations are as follows:
+    ///
+    /// Combinations counts
+    ///   - Fifteen. Each combination of cards that totals 15 2
+    ///   - Pair. Each pair of cards of the same rank 2
+    ///   - Run. Each combination of three or more 1 cards in sequence (for each card in the
+    ///     sequence)
+    ///   - Flush.
+    ///     - Four cards of the same suit in hand 4 (excluding the crib, and the starter)
+    ///     - Four cards in hand or crib of the same 5 suit as the starter. (There is no count for
+    ///       four-flush in the crib that is not of same suit as the starter)
+    ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
+    mod counting_the_hands {
+        use std::str::FromStr;
+
+        use crate::{
+            card, crib,
+            domain::{
+                Card, Crib, Game, GameCommand, GameEvent, GameServices, Hand, HasHands, HasRoles,
+                PLAYER0, PLAYER1, Points, ScoreBreakdown, State, constants::CARDS_DEALT_PER_HAND,
+                game::test::GameTestFramework, test::GameBuilder,
+            },
+            function_name, hand, scenario,
+        };
+
+        #[test]
+        fn score_pone_hand_when_plays_finished() {
+            let result = GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_hands("", "TH"),
+                    with_cut("4H"),
+                    with_previous_plays(&[
+                        (0, "7H"), (0, "8C"), (0, "AC"), (0, "2C"),
+                        (1, "QH"), (1, "KS"), (1, "5H"), (1, "TH"),
+                    ]),
+                    with_ack(0)
+                ))
+                .when(GameCommand::AcknowledgePlaysEnded { player: PLAYER1 })
+                .inspect_result();
+
+            let Ok(events) = result else {
+                panic!("unexpected result");
+            };
+
+            assert_eq!(events.len(), 2);
+
+            let Some(GameEvent::PlaysEndedAcknowledged { player }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::PlaysEndedAcknowledged { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER1);
+
+            let Some(GameEvent::PointsScored { player, reasons }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::PointsScored { .. }))
+            else {
+                panic!("event ")
+            };
+            assert_eq!(player, &PLAYER1);
+            assert_eq!(reasons.points(), Points::from(6));
+        }
+
+        #[test]
+        fn score_winning_pone_hand_when_plays_finished() {
+            let result = GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_playing(1);
+                    with_points(0, 115),
+                    with_hands("", "TH"),
+                    with_cut("4H"),
+                    with_previous_plays(&[
+                        (0, "7H"), (0, "8C"), (0, "AC"), (0, "2C"),
+                        (1, "QH"), (1, "KS"), (1, "5H"), (1, "TH"),
+                    ]),
+                    with_ack(0)
+                ))
+                .when(GameCommand::AcknowledgePlaysEnded { player: PLAYER1 })
+                .inspect_result();
+
+            let Ok(events) = result else {
+                panic!("unexpected result");
+            };
+
+            assert_eq!(events.len(), 3);
+
+            let Some(GameEvent::PlaysEndedAcknowledged { player }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::PlaysEndedAcknowledged { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER1);
+
+            let Some(GameEvent::PointsScored { player, reasons }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::PointsScored { .. }))
+            else {
+                panic!("event ")
+            };
+            assert_eq!(player, &PLAYER1);
+            assert_eq!(reasons.points(), Points::from(6));
+
+            let Some(GameEvent::WinnerDeclared { player }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::WinnerDeclared { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER1);
+        }
+
+        #[test]
+        fn score_dealer_hand_when_pone_score_acknowledged() {
+            let result = GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_scoring_pone;
+                    with_points(0, 0),
+                    with_cut("4H"),
+                    with_hands("7H8CAC2C", "JCKS5HTH"),
+                    with_crib("AHADASTD"),
+                    with_ack(0),
+                ))
+                .when(GameCommand::AcknowledgePoneScore { player: PLAYER1 })
+                .inspect_result();
+
+            let Ok(events) = result else {
+                panic!("unexpected result");
+            };
+
+            assert_eq!(events.len(), 2);
+
+            let Some(GameEvent::PoneScoreAcknowledged { player }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::PoneScoreAcknowledged { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER1);
+
+            let Some(GameEvent::PointsScored { player, reasons }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::PointsScored { .. }))
+            else {
+                panic!("event ")
+            };
+            assert_eq!(player, &PLAYER0);
+            assert_eq!(reasons.points(), Points::from(4));
+        }
+
+        #[test]
+        fn score_winning_dealer_hand_when_pone_score_acknowledged() {
+            let result = GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_scoring_pone;
+                    with_points(117, 0),
+                    with_cut("4H"),
+                    with_hands("7H8CAC2C", "JCKS5HTH"),
+                    with_crib("AHADASTD"),
+                    with_ack(0),
+                ))
+                .when(GameCommand::AcknowledgePoneScore { player: PLAYER1 })
+                .inspect_result();
+
+            let Ok(events) = result else {
+                panic!("unexpected result");
+            };
+
+            assert_eq!(events.len(), 3);
+
+            let Some(GameEvent::PoneScoreAcknowledged { player }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::PoneScoreAcknowledged { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER1);
+
+            let Some(GameEvent::PointsScored { player, reasons }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::PointsScored { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER0);
+            assert_eq!(reasons.points(), Points::from(4));
+
+            let Some(GameEvent::WinnerDeclared { player }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::WinnerDeclared { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER0);
+        }
+
+        #[test]
+        fn score_crib_when_dealer_score_acknowledged() {
+            let result = GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_scoring_dealer;
+                    with_points(0, 0),
+                    with_cut("4H"),
+                    with_hands("7H8CAC2C", "JCKS5HTH"),
+                    with_crib("AHADASTD"),
+                    with_ack(0),
+                ))
+                .when(GameCommand::AcknowledgeDealerScore { player: PLAYER1 })
+                .inspect_result();
+
+            let Ok(events) = result else {
+                panic!("unexpected result");
+            };
+
+            assert_eq!(events.len(), 2);
+
+            let Some(GameEvent::DealerScoreAcknowledged { player }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::DealerScoreAcknowledged { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER1);
+
+            let Some(GameEvent::PointsScored { player, reasons }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::PointsScored { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER0);
+            assert_eq!(reasons.points(), Points::from(12));
+        }
+
+        #[test]
+        fn score_winning_crib_when_dealer_score_acknowledged() {
+            let result = GameTestFramework::with(GameServices)
+                .given(scenario!(
+                    into_scoring_dealer;
+                    with_points(109, 0),
+                    with_cut("4H"),
+                    with_hands("7H8CAC2C", "JCKS5HTH"),
+                    with_crib("AHADASTD"),
+                    with_ack(0),
+                ))
+                .when(GameCommand::AcknowledgeDealerScore { player: PLAYER1 })
+                .inspect_result();
+
+            let Ok(events) = result else {
+                panic!("unexpected result");
+            };
+
+            assert_eq!(events.len(), 3);
+
+            let Some(GameEvent::DealerScoreAcknowledged { player }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::DealerScoreAcknowledged { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER1);
+
+            let Some(GameEvent::PointsScored { player, reasons }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::PointsScored { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER0);
+            assert_eq!(reasons.points(), Points::from(12));
+
+            let Some(GameEvent::WinnerDeclared { player }) = events
+                .iter()
+                .find(|e| matches!(e, GameEvent::WinnerDeclared { .. }))
+            else {
+                panic!("expected event not found");
+            };
+            assert_eq!(player, &PLAYER0);
+        }
+
+        #[test]
+        fn redeal_when_crib_score_acknowledged() {
+            let preconditions = scenario!(
+                into_scoring_crib;
+                with_points(0, 0),
+                with_cut("4H"),
+                with_hands("7H8CAC2C", "JCKS5HTH"),
+                with_crib("AHADASTD"),
+                with_ack(0)
+            );
+
+            let game0 = Game::from(&preconditions);
+
+            let result = GameTestFramework::with(GameServices)
+                .given(preconditions)
+                .when(GameCommand::AcknowledgeCribScore { player: PLAYER1 })
+                .inspect_result();
+
+            let Ok(events) = result else {
+                panic!("unexpected result {result:?}")
+            };
+
+            let mut game1 = game0.clone();
+            game1.apply_events(&events);
+
+            if let State::ScoringCrib(scoring0) = game0.state
+                && let State::Discarding(discarding1) = game1.state
+            {
+                assert_eq!(discarding1.dealer().player(), scoring0.pone().player());
+                assert_eq!(discarding1.pone().player(), scoring0.dealer().player());
+                assert_eq!(discarding1.hand(PLAYER0).len(), CARDS_DEALT_PER_HAND);
+                assert_eq!(discarding1.hand(PLAYER1).len(), CARDS_DEALT_PER_HAND);
+            } else {
+                panic!("unexpected state");
+            };
+        }
+
+        #[test]
+        fn hand_should_score_fifteens() {
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("7H8CAC2C"), card!("4H")).points(),
+                Points::from(4)
+            );
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("THJCKS5H"), card!("4H")).points(),
+                Points::from(6)
+            );
+        }
+
+        #[test]
+        fn hand_should_score_pairs() {
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("2H4C5C2C"), card!("AH")).points(),
+                Points::from(2)
+            );
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("TCASADTH"), card!("AH")).points(),
+                Points::from(8)
+            );
+        }
+
+        #[test]
+        fn hand_should_score_royal_pairs() {
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("2H2D5C2C"), card!("AH")).points(),
+                Points::from(6)
+            );
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("TCASADTH"), card!("AH")).points(),
+                Points::from(8)
+            );
+        }
+
+        #[test]
+        fn hand_should_score_double_royal_pairs() {
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("2H2C2D2S"), card!("AH")).points(),
+                Points::from(12)
+            );
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("TCASADTH"), card!("AH")).points(),
+                Points::from(8)
+            );
+        }
+
+        #[test]
+        fn hand_should_score_runs() {
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("JDQCKC2C"), card!("AH")).points(),
+                Points::from(3)
+            );
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("3C3S2D5H"), card!("AH")).points(),
+                Points::from(8)
+            );
+        }
+
+        #[test]
+        fn hand_should_score_flushes() {
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("2H4H6H8H"), card!("TH")).points(),
+                Points::from(5)
+            );
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("2D4D6D8D"), card!("TH")).points(),
+                Points::from(4)
+            );
+        }
+
+        #[test]
+        fn hand_should_score_nobs() {
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("2D4H6HJH"), card!("TH")).points(),
+                Points::from(1)
+            );
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("2H4D6DJD"), card!("TH")).points(),
+                Points::from(0)
+            );
+        }
+
+        #[test]
+        fn crib_should_score_fifteens() {
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("7H8CAC2C"), card!("4H")).points(),
+                Points::from(4)
+            );
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("THJCKS5H"), card!("4H")).points(),
+                Points::from(6)
+            );
+        }
+
+        #[test]
+        fn crib_should_score_pairs() {
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("2H4C5C2C"), card!("AH")).points(),
+                Points::from(2)
+            );
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("TCASADTH"), card!("AH")).points(),
+                Points::from(8)
+            );
+        }
+
+        #[test]
+        fn crib_should_score_royal_pairs() {
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("2H2D5C2C"), card!("AH")).points(),
+                Points::from(6)
+            );
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("TCASADTH"), card!("AH")).points(),
+                Points::from(8)
+            );
+        }
+
+        #[test]
+        fn crib_should_score_double_royal_pairs() {
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("2H2C2D2S"), card!("AH")).points(),
+                Points::from(12)
+            );
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("TCASADTH"), card!("AH")).points(),
+                Points::from(8)
+            );
+        }
+
+        #[test]
+        fn crib_should_score_runs() {
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("JDQCKC2C"), card!("AH")).points(),
+                Points::from(3)
+            );
+
+            println!("{}", ScoreBreakdown::crib(&crib!("3C3S2D5H"), card!("AH")));
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("3C3S2D5H"), card!("AH")).points(),
+                Points::from(8)
+            );
+        }
+
+        #[test]
+        fn crib_should_score_flushes() {
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("2H4H6H8H"), card!("TH")).points(),
+                Points::from(5)
+            );
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("2D4D6D8D"), card!("TH")).points(),
+                Points::from(0)
+            );
+        }
+
+        #[test]
+        fn crib_should_score_nobs() {
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("2D4H6HJH"), card!("TH")).points(),
+                Points::from(1)
+            );
+            assert_eq!(
+                ScoreBreakdown::crib(&crib!("2H4D6DJD"), card!("TH")).points(),
+                Points::from(0)
+            );
+        }
+    }
 
     //     /// ### Combinations
 

@@ -191,6 +191,7 @@ impl GameBuilder {
             self.domain_play_state(next_to_play),
             self.domain_crib(),
             self.domain_cut(),
+            self.domain_pending(),
         );
         Self::new_game(State::Playing(playing))
     }
@@ -225,7 +226,7 @@ impl GameBuilder {
 
     pub fn into_scoring_crib(self) -> Game {
         let scores = ScoreBreakdown::crib(&self.crib, self.domain_cut());
-        let scoring = ScoringDealer::new(
+        let scoring = ScoringCrib::new(
             self.domain_scoreboard(),
             self.domain_roles(),
             self.domain_hands(),
@@ -234,7 +235,7 @@ impl GameBuilder {
             scores,
             self.domain_pending(),
         );
-        Self::new_game(State::ScoringDealer(scoring))
+        Self::new_game(State::ScoringCrib(scoring))
     }
 
     pub fn into_finished(self) -> Game {

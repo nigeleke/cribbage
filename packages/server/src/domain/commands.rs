@@ -13,6 +13,7 @@ pub enum GameCommand {
     DiscardCardsToCrib { player: Player, cards: Vec<Card> },
     PlayCard { player: Player, card: Card },
     Pass { player: Player },
+    AcknowledgePlaysEnded { player: Player },
     AcknowledgePoneScore { player: Player },
     AcknowledgeDealerScore { player: Player },
     AcknowledgeCribScore { player: Player },

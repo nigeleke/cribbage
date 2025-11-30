@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     display::format_vec,
     domain::{
-        Card, Crib, Hands, HasCrib, HasHands, HasPlayState, HasRoles, HasScoreboard, HasStarterCut,
-        PlayState, Player, Roles, ScoreBreakdown, Scoreboard, StarterCut,
+        Card, Crib, Hands, HasCrib, HasHands, HasPending, HasPlayState, HasRoles, HasScoreboard,
+        HasStarterCut, Pending, PlayState, Player, Roles, ScoreBreakdown, Scoreboard, StarterCut,
     },
 };
 
@@ -16,12 +16,13 @@ pub struct Playing {
     play_state: PlayState,
     crib: Crib,
     starter_cut: StarterCut,
+    pending: Pending,
 }
 
 impl Playing {
     #[rustfmt::skip]
-    pub const fn new(scoreboard: Scoreboard, roles: Roles, hands: Hands, play_state: PlayState, crib: Crib, cut: StarterCut) -> Self {
-        Self { scoreboard, roles, hands, play_state, crib, starter_cut: cut }
+    pub const fn new(scoreboard: Scoreboard, roles: Roles, hands: Hands, play_state: PlayState, crib: Crib, starter_cut: StarterCut, pending: Pending) -> Self {
+        Self { scoreboard, roles, hands, play_state, crib, starter_cut, pending }
     }
 
     pub fn play_card(&mut self, player: Player, card: Card) {
@@ -101,10 +102,20 @@ impl HasPlayState for Playing {
     }
 }
 
+impl HasPending for Playing {
+    fn pending(&self) -> &Pending {
+        &self.pending
+    }
+
+    fn pending_mut(&mut self) -> &mut Pending {
+        &mut self.pending
+    }
+}
+
 impl std::fmt::Display for Playing {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         #[rustfmt::skip]
-        let Self { scoreboard, roles, hands, play_state, starter_cut, crib } = self;
+        let Self { scoreboard, roles, hands, play_state, starter_cut, crib, pending } = self;
         let hands = format_vec(hands);
 
         write!(
@@ -115,7 +126,8 @@ impl std::fmt::Display for Playing {
     hands: {hands},
     play_state: {play_state},
     cut: {starter_cut},
-    crib: {crib}
+    crib: {crib},
+    pending: {pending}
 )"#
         )
     }

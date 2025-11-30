@@ -2295,186 +2295,235 @@ mod test {
         }
     }
 
-    //     /// ## Pegging
-    //     ///
-    //     /// The object in play is to score points by pegging. In addition to a Go, a player may score
-    //     /// for the following combinations:
-    //     ///
-    //     ///   - Fifteen: For adding a card that makes the total 15 Peg 2
-    //     ///   - Pair: For adding a card of the same rank as the card just played Peg 2 (Note that face
-    //     ///     cards pair only by actual rank: jack with jack, but not jack with queen.)
-    //     ///   - Triplet: For adding the third card of the same rank. Peg 6
-    //     ///   - Four: (also called "Double Pair" or "Double Pair Royal") For adding the fourth card of
-    //     ///     the same rank Peg 12
-    //     ///   - Run (Sequence): For adding a card that forms, with those just played:
-    //     ///     - For a sequence of three Peg 3
-    //     ///     - For a sequence of four. Peg 4
-    //     ///     - For a sequence of five. Peg 5
-    //     ///     - (Peg one point more for each extra card of a sequence. Note that runs are independent
-    //     ///       of suits, but go strictly by rank; to illustrate: 9, 10, J, or J, 9, 10 is a run but
-    //     ///       9, 10, Q is not)
-    //     ///
-    //     /// It is important to keep track of the order in which cards are played to determine whether
-    //     /// what looks like a sequence or a run has been interrupted by a "foreign card." Example:
-    //     /// Cards are played in this order: 8, 7, 7, 6. The dealer pegs 2 for 15, and the opponent
-    //     /// pegs 2 for pair, but the dealer cannot peg for run because of the extra seven (foreign
-    //     /// card) that has been played. Example: Cards are played in this order: 9, 6, 8, 7. The
-    //     /// dealer pegs 2 for fifteen when he plays the six and pegs 4 for run when he plays the seven
-    //     /// (the 6, 7, 8, 9 sequence). The cards were not played in sequential order, but they form a
-    //     /// true run with no foreign card.
-    //     #[coverage(off)]
-    //     mod pegging {
-    //         use crate::domain::{Points, ScoreBreakdown};
-    //         use crate::test::GameBuilder;
+    /// ## Pegging
+    ///
+    /// The object in play is to score points by pegging. In addition to a Go, a player may score
+    /// for the following combinations:
+    ///
+    ///   - Fifteen: For adding a card that makes the total 15 Peg 2
+    ///   - Pair: For adding a card of the same rank as the card just played Peg 2 (Note that face
+    ///     cards pair only by actual rank: jack with jack, but not jack with queen.)
+    ///   - Triplet: For adding the third card of the same rank. Peg 6
+    ///   - Four: (also called "Double Pair" or "Double Pair Royal") For adding the fourth card of
+    ///     the same rank Peg 12
+    ///   - Run (Sequence): For adding a card that forms, with those just played:
+    ///     - For a sequence of three Peg 3
+    ///     - For a sequence of four. Peg 4
+    ///     - For a sequence of five. Peg 5
+    ///     - (Peg one point more for each extra card of a sequence. Note that runs are independent
+    ///       of suits, but go strictly by rank; to illustrate: 9, 10, J, or J, 9, 10 is a run but
+    ///       9, 10, Q is not)
+    ///
+    /// It is important to keep track of the order in which cards are played to determine whether
+    /// what looks like a sequence or a run has been interrupted by a "foreign card." Example:
+    /// Cards are played in this order: 8, 7, 7, 6. The dealer pegs 2 for 15, and the opponent
+    /// pegs 2 for pair, but the dealer cannot peg for run because of the extra seven (foreign
+    /// card) that has been played. Example: Cards are played in this order: 9, 6, 8, 7. The
+    /// dealer pegs 2 for fifteen when he plays the six and pegs 4 for run when he plays the seven
+    /// (the 6, 7, 8, 9 sequence). The cards were not played in sequential order, but they form a
+    /// true run with no foreign card.
+    mod pegging {
+        use crate::{
+            domain::{
+                Game, GameEvent, HasPlayState, Points, ScoreBreakdown, State, test::GameBuilder,
+            },
+            function_name, scenario,
+        };
 
-    //         #[test]
-    //         fn should_score_fifteens() {
-    //             let playing = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_hands("AC", "")
-    //                 .with_current_plays(&[(0, "JD"), (0, "5H")])
-    //                 .with_cut("AH")
-    //                 .into_playing(1);
-    //             let play_state = playing.play_state();
-    //             assert_eq!(
-    //                 ScoreBreakdown::play_card(play_state).points(),
-    //                 Points::from(2)
-    //             )
-    //         }
+        #[test]
+        fn should_score_fifteens() {
+            let State::Playing(playing) = Game::from(&scenario!(
+                into_playing(1);
+                with_points(0, 0),
+                with_hands("AC", ""),
+                with_current_plays(&[(0, "JD"), (0, "5H")]),
+                with_cut("AH")
+            ))
+            .state
+            else {
+                panic!("unexpected state");
+            };
 
-    //         #[test]
-    //         fn should_score_pairs() {
-    //             let playing = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_hands("AC", "")
-    //                 .with_current_plays(&[(0, "JD"), (0, "AH"), (0, "AS")])
-    //                 .with_cut("KH")
-    //                 .into_playing(1);
-    //             let play_state = playing.play_state();
-    //             assert_eq!(
-    //                 ScoreBreakdown::play_card(play_state).points(),
-    //                 Points::from(2)
-    //             )
-    //         }
+            assert_eq!(
+                ScoreBreakdown::play_card(playing.play_state()).points(),
+                Points::from(2)
+            )
+        }
 
-    //         #[test]
-    //         fn should_score_royal_pairs() {
-    //             let playing = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_hands("AC", "")
-    //                 .with_current_plays(&[(0, "AD"), (0, "AH"), (0, "AS")])
-    //                 .with_cut("KH")
-    //                 .into_playing(1);
-    //             let play_state = playing.play_state();
-    //             assert_eq!(
-    //                 ScoreBreakdown::play_card(play_state).points(),
-    //                 Points::from(6)
-    //             )
-    //         }
+        #[test]
+        fn should_score_pairs() {
+            let State::Playing(playing) = Game::from(&scenario!(
+                into_playing(1);
+                with_points(0, 0),
+                with_hands("AC", ""),
+                with_current_plays(&[(0, "JD"), (0, "AH"), (0, "AS")]),
+                with_cut("KH")
+            ))
+            .state
+            else {
+                panic!("unexpected state");
+            };
 
-    //         #[test]
-    //         fn should_score_double_royal_pairs() {
-    //             let playing = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_hands("2H", "")
-    //                 .with_current_plays(&[(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")])
-    //                 .with_cut("KH")
-    //                 .into_playing(1);
-    //             let play_state = playing.play_state();
-    //             assert_eq!(
-    //                 ScoreBreakdown::play_card(play_state).points(),
-    //                 Points::from(12)
-    //             )
-    //         }
+            assert_eq!(
+                ScoreBreakdown::play_card(playing.play_state()).points(),
+                Points::from(2)
+            )
+        }
 
-    //         #[test]
-    //         fn should_score_runs() {
-    //             let current_plays = &[
-    //                 (0, "2C"),
-    //                 (0, "3C"),
-    //                 (0, "4C"),
-    //                 (0, "5C"),
-    //                 (0, "6C"),
-    //                 (0, "7C"),
-    //             ];
-    //             for len in 1..=current_plays.len() {
-    //                 let current_plays = *current_plays;
-    //                 let current_plays = current_plays.into_iter().take(len);
-    //                 let current_plays = Vec::from_iter(current_plays);
-    //                 let playing = GameBuilder::default()
-    //                     .with_points(0, 0)
-    //                     .with_hands("AS", "AD")
-    //                     .with_current_plays(&current_plays)
-    //                     .with_cut("KH")
-    //                     .into_playing(1);
-    //                 let play_state = playing.play_state();
-    //                 assert_eq!(
-    //                     ScoreBreakdown::play_card(play_state).points(),
-    //                     Points::from(if len < 3 { 0 } else { len })
-    //                 )
-    //             }
-    //         }
+        #[test]
+        fn should_score_royal_pairs() {
+            let State::Playing(playing) = Game::from(&scenario!(
+                into_playing(1);
+                with_points(0, 0),
+                with_hands("AC", ""),
+                with_current_plays(&[(0, "AD"), (0, "AH"), (0, "AS")]),
+                with_cut("KH")
+            ))
+            .state
+            else {
+                panic!("unexpected state");
+            };
 
-    //         #[test]
-    //         fn should_score_runs_unordered() {
-    //             let playing = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_hands("KS", "KD")
-    //                 .with_current_plays(&[(0, "3S"), (0, "2C"), (0, "AS")])
-    //                 .with_cut("KH")
-    //                 .into_playing(1);
-    //             let play_state = playing.play_state();
-    //             assert_eq!(
-    //                 ScoreBreakdown::play_card(play_state).points(),
-    //                 Points::from(3)
-    //             )
-    //         }
+            assert_eq!(
+                ScoreBreakdown::play_card(playing.play_state()).points(),
+                Points::from(6)
+            )
+        }
 
-    //         #[test]
-    //         fn should_score_rules_example_flush() {
-    //             let playing = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_hands("", "2H")
-    //                 .with_cut("3H")
-    //                 .with_current_plays(&[(1, "TH"), (0, "8H"), (1, "QH"), (0, "AH")])
-    //                 .into_playing(0);
-    //             let play_state1 = playing.play_state();
-    //             assert_eq!(
-    //                 ScoreBreakdown::play_card(play_state1).points(),
-    //                 Points::from(0)
-    //             );
-    //         }
+        #[test]
+        fn should_score_double_royal_pairs() {
+            let State::Playing(playing) = Game::from(&scenario!(
+                into_playing(1);
+                with_points(0, 0),
+                with_hands("2H", ""),
+                with_current_plays(&[(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")]),
+                with_cut("KH")
+            ))
+            .state
+            else {
+                panic!("unexpected state")
+            };
 
-    //         #[test]
-    //         fn should_score_when_target_not_reached() {
-    //             let game = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_hands("", "")
-    //                 .with_current_plays(&[(0, "AC"), (0, "2D"), (0, "5H"), (0, "4S")])
-    //                 .with_cut("KH")
-    //                 .into_playing(1);
-    //             let play_state = game.play_state();
-    //             assert_eq!(
-    //                 ScoreBreakdown::play_card(play_state).points(),
-    //                 Points::from(1)
-    //             );
-    //         }
+            assert_eq!(
+                ScoreBreakdown::play_card(playing.play_state()).points(),
+                Points::from(12)
+            )
+        }
 
-    //         #[test]
-    //         fn should_score_when_target_reached() {
-    //             let game = GameBuilder::default()
-    //                 .with_points(0, 0)
-    //                 .with_hands("", "")
-    //                 .with_current_plays(&[(0, "KC"), (0, "KD"), (0, "KH"), (0, "AS")])
-    //                 .with_cut("KS")
-    //                 .into_playing(1);
-    //             let play_state = game.play_state();
-    //             assert_eq!(
-    //                 ScoreBreakdown::play_card(play_state).points(),
-    //                 Points::from(2)
-    //             )
-    //         }
-    //     }
+        #[test]
+        fn should_score_runs() {
+            let current_plays = &[
+                (0, "2C"),
+                (0, "3C"),
+                (0, "4C"),
+                (0, "5C"),
+                (0, "6C"),
+                (0, "7C"),
+            ];
+
+            for len in 1..=current_plays.len() {
+                let current_plays = *current_plays;
+                let current_plays = current_plays.into_iter().take(len);
+                let current_plays = Vec::from_iter(current_plays);
+                let State::Playing(playing) = Game::from(&scenario!(
+                    into_playing(1);
+                    with_points(0, 0),
+                    with_hands("AS", "AD"),
+                    with_current_plays(&current_plays),
+                    with_cut("KH")
+                ))
+                .state
+                else {
+                    panic!("unexpected state")
+                };
+
+                assert_eq!(
+                    ScoreBreakdown::play_card(playing.play_state()).points(),
+                    Points::from(if len < 3 { 0 } else { len })
+                )
+            }
+        }
+
+        #[test]
+        fn should_score_runs_unordered() {
+            let State::Playing(playing) = Game::from(&scenario!(
+                into_playing(1);
+                with_points(0, 0),
+                with_hands("KS", "KD"),
+                with_current_plays(&[(0, "3S"), (0, "2C"), (0, "AS")]),
+                with_cut("KH")
+            ))
+            .state
+            else {
+                panic!("unexpected state");
+            };
+
+            assert_eq!(
+                ScoreBreakdown::play_card(playing.play_state()).points(),
+                Points::from(3)
+            )
+        }
+
+        #[test]
+        fn should_score_rules_example_flush() {
+            let State::Playing(playing) = Game::from(&scenario!(
+                into_playing(0);
+                with_points(0, 0),
+                with_hands("", "2H"),
+                with_cut("3H"),
+                with_current_plays(&[(1, "TH"), (0, "8H"), (1, "QH"), (0, "AH")])
+            ))
+            .state
+            else {
+                panic!("unexpected state");
+            };
+
+            assert_eq!(
+                ScoreBreakdown::play_card(playing.play_state()).points(),
+                Points::from(0)
+            );
+        }
+
+        #[test]
+        fn should_score_when_target_not_reached() {
+            let State::Playing(playing) = Game::from(&scenario!(
+                into_playing(1);
+                with_points(0, 0),
+                with_hands("", ""),
+                with_current_plays(&[(0, "AC"), (0, "2D"), (0, "5H"), (0, "4S")]),
+                with_cut("KH")
+            ))
+            .state
+            else {
+                panic!("unexpected state");
+            };
+
+            assert_eq!(
+                ScoreBreakdown::play_card(playing.play_state()).points(),
+                Points::from(1)
+            );
+        }
+
+        #[test]
+        fn should_score_when_target_reached() {
+            let State::Playing(playing) = Game::from(&scenario!(
+                into_playing(1);
+                with_points(0, 0),
+                with_hands("", ""),
+                with_current_plays(&[(0, "KC"), (0, "KD"), (0, "KH"), (0, "AS")]),
+                with_cut("KS")
+            ))
+            .state
+            else {
+                panic!("unexpected state");
+            };
+
+            assert_eq!(
+                ScoreBreakdown::play_card(playing.play_state()).points(),
+                Points::from(2)
+            )
+        }
+    }
 
     //     /// ## Counting the Hands
     //     ///

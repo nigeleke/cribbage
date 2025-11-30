@@ -3253,67 +3253,70 @@ mod test {
         }
     }
 
-    //     /// ### Combinations
+    /// ### Combinations
 
-    //     /// In the above table, the word combination is used in the strict technical sense. Each and
-    //     /// every combination of two cards that make a pair, of two or more cards that make 15, or of
-    //     /// three or more cards that make a run, count separately.
+    /// In the above table, the word combination is used in the strict technical sense. Each and
+    /// every combination of two cards that make a pair, of two or more cards that make 15, or of
+    /// three or more cards that make a run, count separately.
 
-    //     /// Example: A hand (including the starter) comprised of 8, 7, 7, 6, 2 scores 8 points for four
-    //     /// combinations that total 15: the 8 with one 7, and the 8 with the other 7; the 6, 2 with each
-    //     /// of the two 7s. The same hand also scores 2 for a pair, and 6 for two runs of three (8, 7, 6
-    //     /// using each of the two 7s). The total score is 16. An experienced player computes the hand
-    //     /// thus: "Fifteen 2, fifteen 4, fifteen 6, fifteen 8, and 8 for double run is 16."
+    /// Example: A hand (including the starter) comprised of 8, 7, 7, 6, 2 scores 8 points for four
+    /// combinations that total 15: the 8 with one 7, and the 8 with the other 7; the 6, 2 with each
+    /// of the two 7s. The same hand also scores 2 for a pair, and 6 for two runs of three (8, 7, 6
+    /// using each of the two 7s). The total score is 16. An experienced player computes the hand
+    /// thus: "Fifteen 2, fifteen 4, fifteen 6, fifteen 8, and 8 for double run is 16."
 
-    //     /// Note that the ace is always low and cannot form a sequence with a king. Further, a flush
-    //     /// cannot happen during the play of the cards; it occurs only when the hands and the crib are
-    //     /// counted.
+    /// Note that the ace is always low and cannot form a sequence with a king. Further, a flush
+    /// cannot happen during the play of the cards; it occurs only when the hands and the crib are
+    /// counted.
 
-    //     /// Certain basic formulations should be learned to facilitate counting. For pairs and runs
-    //     /// alone:
+    /// Certain basic formulations should be learned to facilitate counting. For pairs and runs
+    /// alone:
 
-    //     /// A. A triplet counts 6. A. Four of a kind counts 12. A. A run of three, with one card
-    //     /// duplicated (double run) counts 8. A. A run of four, with one card duplicated, counts 10. A.
-    //     /// A run of three, with one card triplicated (triple run), counts 15. A. A run of three, with
-    //     /// two different cards duplicated, counts 16.
-    //     mod combinations {
-    //         use std::str::FromStr;
+    /// A. A triplet counts 6. A. Four of a kind counts 12. A. A run of three, with one card
+    /// duplicated (double run) counts 8. A. A run of four, with one card duplicated, counts 10. A.
+    /// A run of three, with one card triplicated (triple run), counts 15. A. A run of three, with
+    /// two different cards duplicated, counts 16.
+    mod combinations {
+        use std::str::FromStr;
 
-    //         use crate::domain::{Card, Hand, Points, ScoreBreakdown};
-    //         use crate::{card, hand};
+        use crate::{
+            card,
+            domain::{Card, Hand, Points, ScoreBreakdown},
+            hand,
+        };
 
-    //         #[test]
-    //         fn should_score_rules_example_eights_sevens_sixes() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("8H7C7D6S"), card!("2H")).points(),
-    //                 Points::from(16)
-    //             );
-    //         }
+        #[test]
+        fn should_score_rules_example_eights_sevens_sixes() {
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("8H7C7D6S"), card!("2H")).points(),
+                Points::from(16)
+            );
+        }
 
-    //         #[test]
-    //         fn should_score_rules_example_runs() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("JHQCKDAS"), card!("2D")).points(),
-    //                 Points::from(3)
-    //             );
-    //         }
+        #[test]
+        fn should_score_rules_example_runs() {
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("JHQCKDAS"), card!("2D")).points(),
+                Points::from(3)
+            );
+        }
 
-    //         #[test]
-    //         fn should_score_rules_example_flush() {
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("THQHKHAH"), card!("2H")).points(),
-    //                 Points::from(5)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("THQHKHAH"), card!("2S")).points(),
-    //                 Points::from(4)
-    //             );
-    //             assert_eq!(
-    //                 ScoreBreakdown::hand(&hand!("THQHKHAS"), card!("2H")).points(),
-    //                 Points::from(0)
-    //             );
-    //         }
-    //     }
+        #[test]
+        fn should_score_rules_example_flush() {
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("THQHKHAH"), card!("2H")).points(),
+                Points::from(5)
+            );
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("THQHKHAH"), card!("2S")).points(),
+                Points::from(4)
+            );
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("THQHKHAS"), card!("2H")).points(),
+                Points::from(0)
+            );
+        }
+    }
 
     //     //     // /// ### A PERFECT 29!
     //     //     // ///

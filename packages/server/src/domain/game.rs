@@ -3318,30 +3318,32 @@ mod test {
         }
     }
 
-    //     //     // /// ### A PERFECT 29!
-    //     //     // ///
-    //     //     // /// The highest possible score for combinations in a single Cribbage deal is 29, and it may
-    //     //     // /// occur only once in a Cribbage fan's lifetime -in fact, experts say that a 29 is probably as
-    //     //     // /// rare as a hole-in-one in golf. To make this amazing score, a player must have a five as the
-    //     //     // /// starter (upcard) and the other three fives plus the jack of the same suit as the starter -
-    //     //     // /// His Nobs: 1 point - in his hand. The double pair royal (four 5s) peg another 12 points; the
-    //     //     // /// various fives used to hit 15 can be done four ways for 8 points; and the jack plus a 5 to
-    //     //     // /// hit 15 can also be done four ways for 8 points. Total = 29 points.
-    //     //     // // mod a_perfect_29 {
-    //     //     // //     use super::*;
-    //     //     // //     use crate::{card, hand};
-    //     //     // //     use std::str::FromStr;
+    /// ### A PERFECT 29!
+    ///
+    /// The highest possible score for combinations in a single Cribbage deal is 29, and it may
+    /// occur only once in a Cribbage fan's lifetime -in fact, experts say that a 29 is probably as
+    /// rare as a hole-in-one in golf. To make this amazing score, a player must have a five as the
+    /// starter (upcard) and the other three fives plus the jack of the same suit as the starter -
+    /// His Nobs: 1 point - in his hand. The double pair royal (four 5s) peg another 12 points; the
+    /// various fives used to hit 15 can be done four ways for 8 points; and the jack plus a 5 to
+    /// hit 15 can also be done four ways for 8 points. Total = 29 points.
+    mod a_perfect_29 {
+        use std::str::FromStr;
 
-    //     //     // //     #[test]
-    //     //     // //     fn should_score_rules_example_perfect_29() {
-    //     //     // //         assert_eq!(
-    //     //     // //             HandScorer::new(&hand!("5H5C5DJS"), card!("5S"))
-    //     //     // //                 .score()
-    //     //     // //                 .points(),
-    //     //     // //             Points::from(29)
-    //     //     // //         );
-    //     //     // //     }
-    //     //     // // }
+        use crate::{
+            card,
+            domain::{Card, Hand, Points, ScoreBreakdown},
+            hand,
+        };
+
+        #[test]
+        fn should_score_rules_example_perfect_29() {
+            assert_eq!(
+                ScoreBreakdown::hand(&hand!("5H5C5DJS"), card!("5S")).points(),
+                Points::from(29)
+            );
+        }
+    }
 
     //     //     // /// ## Miscellaneous
     //     //     // ///

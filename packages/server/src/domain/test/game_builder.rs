@@ -7,7 +7,6 @@ pub struct GameBuilder {
     dealer: usize,
     cuts: Vec<Card>,
     peggings: Vec<usize>,
-    // reasons: ScoreBreakdown,
     hands: Vec<Hand>,
     current_plays: Vec<Play>,
     previous_plays: Vec<Play>,
@@ -32,11 +31,6 @@ impl GameBuilder {
         self.peggings.push(points1);
         self
     }
-
-    // pub fn with_score_reasons(mut self, reasons: &[ScoreReason]) -> Self {
-    //     self.reasons.add(reasons);
-    //     self
-    // }
 
     pub fn with_hands(mut self, hand0: &str, hand1: &str) -> Self {
         let mut add_hand = |hand: &str| {
@@ -113,6 +107,10 @@ impl GameBuilder {
         game
     }
 
+    fn domain_cuts(&self) -> CutsForDeal {
+        [Some(self.cuts[0]), Some(self.cuts[1])]
+    }
+
     fn domain_scoreboard(&self) -> Scoreboard {
         let peggings = [
             Pegging::new(*self.peggings.get(0).unwrap_or(&0)),
@@ -166,6 +164,15 @@ impl GameBuilder {
     #[inline]
     fn domain_pending(&self) -> Pending {
         self.pending.clone()
+    }
+
+    pub fn into_starting(self) -> Game {
+        let starting = Starting::new(
+            self.domain_cuts(),
+            self.domain_deck(),
+            self.domain_pending(),
+        );
+        Self::new_game(State::Starting(starting))
     }
 
     pub fn into_discarding(mut self) -> Game {

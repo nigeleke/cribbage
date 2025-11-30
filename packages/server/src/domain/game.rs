@@ -3345,247 +3345,268 @@ mod test {
         }
     }
 
-    //     //     // /// ## Miscellaneous
-    //     //     // ///
-    //     //     // /// The following list includes many of the hands that may give the beginner some difficulty in
-    //     //     // /// counting. Note that no hand can make a count of 19, 25, 26, or 27. (In the chart below J
-    //     //     // /// stands for His Nobs, the jack of the same suit as the starter.
-    //     //     // ///
-    //     //     // /// ### Muggins (optional) - not implemented.
-    //     //     // ///
-    //     //     // /// Each player must count his hand (and crib) aloud and announce the total. If he overlooks any
-    //     //     // /// score, the opponent may say "Muggins" and then score the overlooked points for himself. For
-    //     //     // /// experienced players, the Muggins rule is always in effect and adds even more suspense to the
-    //     //     // /// game.
-    //     //     // // mod miscellaneous {}
+    /// ## Miscellaneous
+    ///
+    /// The following list includes many of the hands that may give the beginner some difficulty in
+    /// counting. Note that no hand can make a count of 19, 25, 26, or 27. (In the chart below J
+    /// stands for His Nobs, the jack of the same suit as the starter.
+    ///
+    /// ### Muggins (optional) - not implemented.
+    ///
+    /// Each player must count his hand (and crib) aloud and announce the total. If he overlooks any
+    /// score, the opponent may say "Muggins" and then score the overlooked points for himself. For
+    /// experienced players, the Muggins rule is always in effect and adds even more suspense to the
+    /// game.
+    mod miscellaneous {}
 
-    //     //     // /// ## Game
-    //     //     // ///
-    //     //     // /// Game may be fixed at either 121 points or 61 points. The play ends the moment either player
-    //     //     // /// reaches the agreed total, whether by pegging or counting one's hand. If the non-dealer "goes
-    //     //     // /// out" by the count of his hand, the game immediately ends and the dealer may not score either
-    //     //     // /// his hand or the crib.
-    //     //     // ///
-    //     //     // /// If a player wins the game before the loser has passed the halfway mark (did not reach 31 in
-    //     //     // /// a game of 61, or 61 in a game of 121), the loser is "lurched," and the winner scores two
-    //     //     // /// games instead of one. A popular variation of games played to 121, is a "skunk" (double game)
-    //     //     // /// for the winner if the losing player fails to pass the three-quarter mark - 91 points or more -
-    //     //     // /// and it is a "double skunk" (quadruple game) if the loser fails to pass the halfway mark (61
-    //     //     // /// or more points).
-    //     //     // // mod game {}
+    /// ## Game
+    ///
+    /// Game may be fixed at either 121 points or 61 points. The play ends the moment either player
+    /// reaches the agreed total, whether by pegging or counting one's hand. If the non-dealer "goes
+    /// out" by the count of his hand, the game immediately ends and the dealer may not score either
+    /// his hand or the crib.
+    ///
+    /// If a player wins the game before the loser has passed the halfway mark (did not reach 31 in
+    /// a game of 61, or 61 in a game of 121), the loser is "lurched," and the winner scores two
+    /// games instead of one. A popular variation of games played to 121, is a "skunk" (double game)
+    /// for the winner if the losing player fails to pass the three-quarter mark - 91 points or more -
+    /// and it is a "double skunk" (quadruple game) if the loser fails to pass the halfway mark (61
+    /// or more points).
+    mod game {}
 
-    //     //     // /// ## The Cribbage Board
-    //     //     // ///
-    //     //     // /// The Cribbage board (see illustration) has four rows of 30 holes each, divided into two pairs
-    //     //     // /// of rows by a central panel. There are usually four (or two) additional holes near one end,
-    //     //     // /// called "game holes." With the board come four pegs, usually in two contrasting colors. Note:
-    //     //     // /// There are also continuous track Cribbage boards available which, as the name implies, have
-    //     //     // /// one continuous line of 121 holes for each player.
-    //     //     // ///
-    //     //     // /// The board is placed to one side between the two players, and each player takes two pegs of
-    //     //     // /// the same color. (The pegs are placed in the game holes until the game begins.) Each time a
-    //     //     // /// player scores, he advances a peg along a row on his side of the board, counting one hole per
-    //     //     // /// point. Two pegs are used, and the rearmost peg jumps over the first peg to show the first
-    //     //     // /// increment in score. After another increase in score, the peg behind jumps over the peg in
-    //     //     // /// front to the appropriate hole to show the player's new score, and so on (see diagram next
-    //     //     // /// page). The custom is to "go down" (away from the game holes) on the outer rows and "come up"
-    //     //     // /// on the inner rows. A game of 61 is "once around" and a game of 121 is "twice around." As
-    //     //     // /// noted previously, continuous line Cribbage boards are available.
-    //     //     // ///
-    //     //     // /// If a Cribbage board is not available, each player may use a piece of paper or cardboard,
-    //     //     // /// marked thus:
-    //     //     // ///
-    //     //     // ///   - Units 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-    //     //     // ///   - Tens 10, 20, 30, 40, 50, 60
-    //     //     // ///
-    //     //     // /// Two small markers, such as small coins or buttons, can substitute for pegs for counting in
-    //     //     // /// each row.
-    //     //     // // mod the_cribbage_board {}
+    /// ## The Cribbage Board
+    ///
+    /// The Cribbage board (see illustration) has four rows of 30 holes each, divided into two pairs
+    /// of rows by a central panel. There are usually four (or two) additional holes near one end,
+    /// called "game holes." With the board come four pegs, usually in two contrasting colors. Note:
+    /// There are also continuous track Cribbage boards available which, as the name implies, have
+    /// one continuous line of 121 holes for each player.
+    ///
+    /// The board is placed to one side between the two players, and each player takes two pegs of
+    /// the same color. (The pegs are placed in the game holes until the game begins.) Each time a
+    /// player scores, he advances a peg along a row on his side of the board, counting one hole per
+    /// point. Two pegs are used, and the rearmost peg jumps over the first peg to show the first
+    /// increment in score. After another increase in score, the peg behind jumps over the peg in
+    /// front to the appropriate hole to show the player's new score, and so on (see diagram next
+    /// page). The custom is to "go down" (away from the game holes) on the outer rows and "come up"
+    /// on the inner rows. A game of 61 is "once around" and a game of 121 is "twice around." As
+    /// noted previously, continuous line Cribbage boards are available.
+    ///
+    /// If a Cribbage board is not available, each player may use a piece of paper or cardboard,
+    /// marked thus:
+    ///
+    ///   - Units 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+    ///   - Tens 10, 20, 30, 40, 50, 60
+    ///
+    /// Two small markers, such as small coins or buttons, can substitute for pegs for counting in
+    /// each row.
+    mod the_cribbage_board {}
 
-    //     //     // /// ## Strategy
-    //     //     // ///
-    //     //     // /// ### The Crib.
-    //     //     // ///
-    //     //     // /// If the dealer is discarding for the crib, he should “salt” it with the best possible cards,
-    //     //     // /// but at the same time retain good cards in his hand that can be used for high scoring.
-    //     //     // /// Conversely, for the non-dealer, it is best to lay out cards that will be the least
-    //     //     // /// advantageous for the dealer. Laying out a five would be the worst choice, for the dealer
-    //     //     // /// could use it to make 15 with any one of the ten-cards (10, J, Q, K). Laying out a pair is
-    //     //     // /// usually a poor choice too, and the same goes for sequential cards, such as putting both a
-    //     //     // /// six and seven in the crib. The ace and king tend to be good cards to put in the crib because
-    //     //     // /// it is harder to use them in a run.
-    //     //     // ///
-    //     //     // /// ### The Play
-    //     //     // ///
-    //     //     // /// As expected, the five makes for the worst lead in that there are so many ten-cards that the
-    //     //     // /// opponent can use to make a 15. Leading from a pair is a good idea, for even if the opponent
-    //     //     // /// makes a pair, the leader can play the other matching card from his hand and collect for a
-    //     //     // /// pair royal. Leading an ace or deuce is not a good idea, for these cards should be saved
-    //     //     // /// until later to help make a 15, a Go, or a 31. The safest lead is a four because this card
-    //     //     // /// cannot be used to make a 15 at the opponent’s very next turn. Finally, when the opponent
-    //     //     // /// leads a card that can either be paired or make 15, the latter choice is preferred.
-    //     //     // ///
-    //     //     // /// During the play, it is advisable not to try to make a count of 21, for the opponent can then
-    //     //     // /// play one of the many 10-cards and make 31 to gain two points.
-    //     //     // // mod the_strategy {}
+    /// ## Strategy
+    ///
+    /// ### The Crib.
+    ///
+    /// If the dealer is discarding for the crib, he should “salt” it with the best possible cards,
+    /// but at the same time retain good cards in his hand that can be used for high scoring.
+    /// Conversely, for the non-dealer, it is best to lay out cards that will be the least
+    /// advantageous for the dealer. Laying out a five would be the worst choice, for the dealer
+    /// could use it to make 15 with any one of the ten-cards (10, J, Q, K). Laying out a pair is
+    /// usually a poor choice too, and the same goes for sequential cards, such as putting both a
+    /// six and seven in the crib. The ace and king tend to be good cards to put in the crib because
+    /// it is harder to use them in a run.
+    ///
+    /// ### The Play
+    ///
+    /// As expected, the five makes for the worst lead in that there are so many ten-cards that the
+    /// opponent can use to make a 15. Leading from a pair is a good idea, for even if the opponent
+    /// makes a pair, the leader can play the other matching card from his hand and collect for a
+    /// pair royal. Leading an ace or deuce is not a good idea, for these cards should be saved
+    /// until later to help make a 15, a Go, or a 31. The safest lead is a four because this card
+    /// cannot be used to make a 15 at the opponent’s very next turn. Finally, when the opponent
+    /// leads a card that can either be paired or make 15, the latter choice is preferred.
+    ///
+    /// During the play, it is advisable not to try to make a count of 21, for the opponent can then
+    /// play one of the many 10-cards and make 31 to gain two points.
+    mod the_strategy {}
 
-    //     //     // /// ## Internal
-    //     //     // // mod internal {
-    //     //     // //     use super::*;
-    //     //     // //     use crate::{hand, ScoreComposition};
-    //     //     // //     use std::str::FromStr;
+    /// ## Internal
+    mod internal {
 
-    //     //     // //     fn common_filters() -> insta::Settings {
-    //     //     // //         let mut settings = insta::Settings::new();
-    //     //     // //         settings.add_filter(r"[0-9a-f]{8}", "<playerid>");
-    //     //     // //         settings.add_filter(r"(A|[2-9]|T|J|Q|K)(H|C|D|S)", "<card>");
-    //     //     // //         settings.add_filter(r"<card>(, <card>)*", "[<cards>]");
-    //     //     // //         settings.add_filter(r"\s*\d+ ->\s*\d+", "<score>");
-    //     //     // //         settings
-    //     //     // //     }
+        use crate::domain::test::GameBuilder;
 
-    //     //     // //     #[test]
-    //     //     // //     fn should_output_user_readable_starting_game_in_logs() {
-    //     //     // //         let game = GameBuilder::default().with_cuts("ASAC").into_starting();
-    //     //     // //         common_filters().bind(|| {
-    //     //     // //             insta::assert_snapshot!(game.to_string(), @r"
-    //     //     // //                 Starting(
-    //     //     // //                     cuts: [<cards>],
-    //     //     // //                     deck: Deck([<cards>])
-    //     //     // //                 )
-    //     //     // //                 ")
-    //     //     // //         });
-    //     //     // //     }
+        fn common_filters() -> insta::Settings {
+            let mut settings = insta::Settings::new();
+            settings.add_filter(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{9}", "<timestamp>");
+            settings.add_filter(
+                r"UserId\([0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}\)",
+                "<userid>",
+            );
+            settings.add_filter(r"Player\([0-1]\)", "<player>");
+            settings.add_filter(r"(A|[2-9]|T|J|Q|K)(H|C|D|S)", "<card>");
+            settings.add_filter(r"<card>(, <card>)*", "[<cards>]");
+            settings.add_filter(r"\s*\d+ ->\s*\d+", "<score>");
+            settings
+        }
 
-    //     //     // //     #[test]
-    //     //     // //     fn should_output_user_readable_discarding_game_in_logs() {
-    //     //     // //         let game = GameBuilder::default()
-    //     //     // //             .with_points(0, 0)
-    //     //     // //             .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-    //     //     // //             .into_discarding();
-    //     //     // //         common_filters().bind(|| {
-    //     //     // //             insta::assert_snapshot!(game.to_string(), @r"
-    //     //     // //                 Discarding(
-    //     //     // //                     scoreboard: Scores(<score>,<score>),
-    //     //     // //                     roles: Dealer(Player(1)), Pone(Player(2)),
-    //     //     // //                     hands: Hand([<cards>]), Hand([<cards>])
-    //     //     // //                     crib: Crib(),
-    //     //     // //                     deck: Deck([<cards>])
-    //     //     // //                 )
-    //     //     // //                 ")
-    //     //     // //         });
-    //     //     // //     }
+        #[test]
+        fn should_output_user_readable_starting_game_in_logs() {
+            let game = GameBuilder::default().with_cuts("ASAC").into_starting();
+            common_filters().bind(|| {
+                insta::assert_snapshot!(game.to_string(), @r"
+                test-game__<timestamp> U[<cards>]
+                <userid> <userid>
+                Starting(
+                    cuts: [<cards>]
+                    deck: Deck([<cards>])
+                    pending: Pending(<player>, <player>)
+                )
+                ")
+            });
+        }
 
-    //     //     // //     #[test]
-    //     //     // //     fn should_output_user_readable_playing_game_in_logs() {
-    //     //     // //         let mut composition = ScoreComposition::default();
-    //     //     // //         composition.with_fifteen(hand!("KS5S").as_ref(), Points::from(2));
+        #[test]
+        fn should_output_user_readable_discarding_game_in_logs() {
+            let game = GameBuilder::default()
+                .with_points(0, 0)
+                .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
+                .into_discarding();
+            common_filters().bind(|| {
+                insta::assert_snapshot!(game.to_string(), @r"
+                test-game__<timestamp> U[<cards>]
+                <userid> <userid>
+                Discarding(
+                    scoreboard: Peggings(<score>,<score>)
+                    roles: Dealer(<player>), Pone(<player>)
+                    hands: Hand([<cards>]), Hand([<cards>])
+                    crib: Crib()
+                    deck: Deck([<cards>])
+                    pending: Pending(<player>, <player>)
+                )
+                ")
+            });
+        }
 
-    //     //     // //         let game = GameBuilder::default()
-    //     //     // //             .with_points(0, 0)
-    //     //     // //             .with_score_composition(composition)
-    //     //     // //             .with_hands("9S", "4S")
-    //     //     // //             .with_cut("AS")
-    //     //     // //             .with_current_plays(&[(0, "AH")])
-    //     //     // //             .into_playing(1);
-    //     //     // //         common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @r"
-    //     //     // //                                      Playing(
-    //     //     // //                                          scoreboard: Scores(<score>,<score>) Latest(Player(1): [Fifteen: [[<cards>]] => 2]),
-    //     //     // //                                          roles: Dealer(Player(1)), Pone(Player(2)),
-    //     //     // //                                          hands: Hand([<cards>]), Hand([<cards>]),
-    //     //     // //                                          play_state: Next(Player(2)), Legal(), Passes(0), Current((Player(1) -> [<cards>])), Previous(),
-    //     //     // //                                          cut: [<cards>],
-    //     //     // //                                          crib: Crib()
-    //     //     // //                                      )
-    //     //     // //                                      "));
-    //     //     // //     }
+        #[test]
+        fn should_output_user_readable_playing_game_in_logs() {
+            let game = GameBuilder::default()
+                .with_points(0, 0)
+                .with_hands("9S", "4S")
+                .with_cut("AS")
+                .with_current_plays(&[(0, "AH")])
+                .into_playing(1);
+            common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @r"
+                                     test-game__<timestamp> U[<cards>]
+                                     <userid> <userid>
+                                     Playing(
+                                         scoreboard: Peggings(<score>,<score>),
+                                         roles: Dealer(<player>), Pone(<player>),
+                                         hands: Hand([<cards>]), Hand([<cards>]),
+                                         play_state: Next(<player>), Legal(), Passes(0), Current((<player> -> [<cards>])), Previous(),
+                                         cut: [<cards>],
+                                         crib: Crib(),
+                                         pending: Pending(<player>, <player>)
+                                     )
+                                     "));
+        }
 
-    //     //     // //     #[test]
-    //     //     // //     fn should_output_user_readable_pone_scoring_game_in_logs() {
-    //     //     // //         let game = GameBuilder::default()
-    //     //     // //             .with_points(0, 0)
-    //     //     // //             .with_hands("AS2S3S4S", "AC2C3C4C")
-    //     //     // //             .with_cut("JH")
-    //     //     // //             .with_crib("TSJSQSKS")
-    //     //     // //             .into_scoring_pone();
-    //     //     // //         common_filters().bind(|| {
-    //     //     // //             insta::assert_snapshot!(game.to_string(), @r"
-    //     //     // //                                      ScoringPone(
-    //     //     // //                                          scoreboard: Scores(<score>,<score>),
-    //     //     // //                                          roles: Dealer(Player(1)), Pone(Player(2)),
-    //     //     // //                                          hands: Hand([<cards>]), Hand([<cards>]),
-    //     //     // //                                          cut: [<cards>],
-    //     //     // //                                          crib: Crib([<cards>])
-    //     //     // //                                      )
-    //     //     // //                                      ")
-    //     //     // //         });
-    //     //     // //     }
+        #[test]
+        fn should_output_user_readable_pone_scoring_game_in_logs() {
+            let game = GameBuilder::default()
+                .with_points(0, 0)
+                .with_hands("AS2S3S4S", "AC2C3C4C")
+                .with_cut("JH")
+                .with_crib("TSJSQSKS")
+                .into_scoring_pone();
+            common_filters().bind(|| {
+                insta::assert_snapshot!(game.to_string(), @r"
+                test-game__<timestamp> U[<cards>]
+                <userid> <userid>
+                ScoringPone(
+                    scoreboard: Peggings(<score>,<score>),
+                    roles: Dealer(<player>), Pone(<player>),
+                    hands: Hand([<cards>]), Hand([<cards>]),
+                    cut: [<cards>],
+                    crib: Crib([<cards>]),
+                    breakdown: Fifteen: ([<cards>]) -> 2, Fifteen: ([<cards>]) -> 2, Run: ([<cards>]) -> 4, Flush: ([<cards>]) -> 4,
+                    pending: Pending(<player>, <player>)
+                )
+                ")
+            });
+        }
 
-    //     //     // //     #[test]
-    //     //     // //     fn should_output_user_readable_dealer_scoring_game_in_logs() {
-    //     //     // //         let game = GameBuilder::default()
-    //     //     // //             .with_points(0, 0)
-    //     //     // //             .with_hands("AS2S3S4S", "AC2C3C4C")
-    //     //     // //             .with_cut("JH")
-    //     //     // //             .with_crib("TSJSQSKS")
-    //     //     // //             .into_scoring_dealer();
-    //     //     // //         common_filters().bind(|| {
-    //     //     // //             insta::assert_snapshot!(game.to_string(), @r"
-    //     //     // //                                      ScoringDealer(
-    //     //     // //                                          scoreboard: Scores(<score>,<score>),
-    //     //     // //                                          roles: Dealer(Player(1)), Pone(Player(2)),
-    //     //     // //                                          hands: Hand([<cards>]), Hand([<cards>]),
-    //     //     // //                                          cut: [<cards>],
-    //     //     // //                                          crib: Crib([<cards>])
-    //     //     // //                                      )
-    //     //     // //                                      ")
-    //     //     // //         });
-    //     //     // //     }
+        #[test]
+        fn should_output_user_readable_dealer_scoring_game_in_logs() {
+            let game = GameBuilder::default()
+                .with_points(0, 0)
+                .with_hands("AS2S3S4S", "AC2C3C4C")
+                .with_cut("JH")
+                .with_crib("TSJSQSKS")
+                .into_scoring_dealer();
+            common_filters().bind(|| {
+                insta::assert_snapshot!(game.to_string(), @r"
+                test-game__<timestamp> U[<cards>]
+                <userid> <userid>
+                ScoringDealer(
+                    scoreboard: Peggings(<score>,<score>),
+                    roles: Dealer(<player>), Pone(<player>),
+                    hands: Hand([<cards>]), Hand([<cards>]),
+                    cut: [<cards>],
+                    crib: Crib([<cards>]),
+                    breakdown: Fifteen: ([<cards>]) -> 2, Fifteen: ([<cards>]) -> 2, Run: ([<cards>]) -> 4, Flush: ([<cards>]) -> 4,
+                    pending: Pending(<player>, <player>)
+                )
+                ")
+            });
+        }
 
-    //     //     // //     #[test]
-    //     //     // //     fn should_output_user_readable_crib_scoring_game_in_logs() {
-    //     //     // //         let game = GameBuilder::default()
-    //     //     // //             .with_points(0, 0)
-    //     //     // //             .with_hands("AS2S3S4S", "AC2C3C4C")
-    //     //     // //             .with_cut("JH")
-    //     //     // //             .with_crib("TSJSQSKS")
-    //     //     // //             .into_scoring_crib();
-    //     //     // //         common_filters().bind(|| {
-    //     //     // //             insta::assert_snapshot!(game.to_string(), @r"
-    //     //     // //                                      ScoringCrib(
-    //     //     // //                                          scoreboard: Scores(<score>,<score>),
-    //     //     // //                                          roles: Dealer(Player(1)), Pone(Player(2)),
-    //     //     // //                                          hands: Hand([<cards>]), Hand([<cards>]),
-    //     //     // //                                          cut: [<cards>],
-    //     //     // //                                          crib: Crib([<cards>])
-    //     //     // //                                      )
-    //     //     // //                                      ")
-    //     //     // //         });
-    //     //     // //     }
+        #[test]
+        fn should_output_user_readable_crib_scoring_game_in_logs() {
+            let game = GameBuilder::default()
+                .with_points(0, 0)
+                .with_hands("AS2S3S4S", "AC2C3C4C")
+                .with_cut("JH")
+                .with_crib("TSJSQSKS")
+                .into_scoring_crib();
+            common_filters().bind(|| {
+                insta::assert_snapshot!(game.to_string(), @r"
+                test-game__<timestamp> U[<cards>]
+                <userid> <userid>
+                ScoringCrib(
+                    scoreboard: Peggings(<score>,<score>),
+                    roles: Dealer(<player>), Pone(<player>),
+                    hands: Hand([<cards>]), Hand([<cards>]),
+                    cut: [<cards>],
+                    crib: Crib([<cards>]),
+                    breakdown: Pair: ([<cards>]) -> 2, Run: ([<cards>]) -> 4, Run: ([<cards>]) -> 4,
+                    pending: Pending(<player>, <player>)
+                )
+                ")
+            });
+        }
 
-    //     //     // //     #[test]
-    //     //     // //     fn should_output_user_readable_finished_game_in_logs() {
-    //     //     // //         let game = GameBuilder::default()
-    //     //     // //             .with_points(0, 121)
-    //     //     // //             .with_winner(1)
-    //     //     // //             .with_hands("AS2S3S4S", "AC2C3C4C")
-    //     //     // //             .with_cut("JH")
-    //     //     // //             .with_crib("TSJSQSKS")
-    //     //     // //             .into_finished();
-    //     //     // //         common_filters().bind(|| {
-    //     //     // //             insta::assert_snapshot!(game.to_string(), @r"
-    //     //     // //                                      Finished(
-    //     //     // //                                          winner: Player(2),
-    //     //     // //                                          scoreboard: Scores(<score>,<score>),
-    //     //     // //                                          roles: Dealer(Player(1)), Pone(Player(2)),
-    //     //     // //                                          hands: Hand([<cards>]), Hand([<cards>]),
-    //     //     // //                                          crib: Crib([<cards>]),
-    //     //     // //                                          cut: [<cards>]
-    //     //     // //                                      )
-    //     //     // //                                      ")
-    //     //     // //         });
-    //     //     // //     }
-    //     //     // // }
-    //     //     // TODO:
-    //     //     // mod delete_me {}
+        #[test]
+        fn should_output_user_readable_finished_game_in_logs() {
+            let game = GameBuilder::default()
+                .with_points(0, 121)
+                .with_winner(1)
+                .with_hands("AS2S3S4S", "AC2C3C4C")
+                .with_cut("JH")
+                .with_crib("TSJSQSKS")
+                .into_finished();
+            common_filters().bind(|| {
+                insta::assert_snapshot!(game.to_string(), @r"
+                test-game__<timestamp> U[<cards>]
+                <userid> <userid>
+                Finished(
+                    winner: <player>,
+                    scoreboard: Peggings(<score>,<score>),
+                    roles: Dealer(<player>), Pone(<player>),
+                    hands: Hand([<cards>]), Hand([<cards>]),
+                    crib: Crib([<cards>]),
+                    cut: [<cards>]
+                )
+                ")
+            });
+        }
+    }
 }

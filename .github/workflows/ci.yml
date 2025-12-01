@@ -16,12 +16,6 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v6
 
-            - name: Run Docker
-              shell: bash
-              run: |
-                  docker images ls
-                  docker containers ls
-
             - name: Setup docker compose
               uses: docker/setup-compose-action@v1
 

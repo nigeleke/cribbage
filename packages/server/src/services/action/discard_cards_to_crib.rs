@@ -19,7 +19,7 @@ pub async fn discard_cards_to_crib(
 
         let aggregate_id = game_id.value().to_string();
 
-        let command = GameCommand::DiscardCardsToCrib { player, cards };
+        let command = GameCommand::Discard { player, cards };
 
         server_state
             .cqrs

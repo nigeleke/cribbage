@@ -16,7 +16,7 @@ pub enum GameEvent {
     LobbyGameJoined {
         guest: UserId,
     },
-    ComputerGameStarted {
+    ComputerGameCreated {
         game_id: GameId,
         host: UserId,
         guest: UserId,
@@ -37,7 +37,7 @@ pub enum GameEvent {
         player: Player,
         hand: Hand,
     },
-    CardsDiscardedToCrib {
+    CardsDiscarded {
         player: Player,
         cards: Vec<Card>,
     },

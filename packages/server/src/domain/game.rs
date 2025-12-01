@@ -114,7 +114,7 @@ impl Game {
         } else {
             let guest = UserId::new();
             let name = generate_game_name();
-            let events = vec![GameEvent::ComputerGameStarted {
+            let events = vec![GameEvent::ComputerGameCreated {
                 game_id,
                 host,
                 guest,
@@ -197,11 +197,7 @@ impl Game {
         }
     }
 
-    fn discard_cards_to_crib(
-        &self,
-        player: Player,
-        cards: Vec<Card>,
-    ) -> Result<Vec<GameEvent>, DomainError> {
+    fn discard(&self, player: Player, cards: Vec<Card>) -> Result<Vec<GameEvent>, DomainError> {
         let not_permitted = || Err(DomainError::NotPermitted("discard cards to crib".into()));
 
         let discard_cards_to_crib = |discarding: &Discarding| {
@@ -213,7 +209,7 @@ impl Game {
             {
                 Err(DomainError::InvalidDiscards(format_vec(&cards)))
             } else {
-                let mut events = vec![GameEvent::CardsDiscardedToCrib {
+                let mut events = vec![GameEvent::CardsDiscarded {
                     player,
                     cards: cards.clone(),
                 }];
@@ -433,9 +429,7 @@ impl Game {
             GameCommand::PlayComputer { user_id, game_id } => self.play_computer(user_id, game_id),
             GameCommand::CutForDeal { player } => self.cut_for_deal(player),
             GameCommand::StartGame { player } => self.start_game(player),
-            GameCommand::DiscardCardsToCrib { player, cards } => {
-                self.discard_cards_to_crib(player, cards)
-            }
+            GameCommand::Discard { player, cards } => self.discard(player, cards),
             GameCommand::PlayCard { player, card } => self.play_card(player, card),
             GameCommand::Pass { player } => self.pass(player),
             GameCommand::ScorePone { player } => self.score_pone(player),
@@ -458,7 +452,7 @@ impl Game {
         self.guest = Some(guest);
     }
 
-    fn computer_game_started(
+    fn computer_game_created(
         &mut self,
         game_id: GameId,
         host: UserId,
@@ -515,7 +509,7 @@ impl Game {
         }
     }
 
-    fn cards_discarded_to_crib(&mut self, player: Player, cards: &[Card]) {
+    fn cards_discarded(&mut self, player: Player, cards: &[Card]) {
         if let State::Discarding(discarding) = &mut self.state {
             discarding.hand_mut(player).remove_all(cards);
             discarding.crib_mut().add_all(cards);
@@ -718,20 +712,18 @@ impl Game {
                 name,
             } => self.lobby_game_created(game_id, host, name),
             GameEvent::LobbyGameJoined { guest } => self.lobby_game_joined(guest),
-            GameEvent::ComputerGameStarted {
+            GameEvent::ComputerGameCreated {
                 game_id,
                 host,
                 guest,
                 name,
-            } => self.computer_game_started(game_id, host, guest, name),
+            } => self.computer_game_created(game_id, host, guest, name),
             GameEvent::CutForDealMade { player, cut } => self.cut_for_deal_made(player, cut),
             GameEvent::GameStarted { player } => self.game_started(player),
             GameEvent::CutForDealDecided { dealer } => self.cut_for_deal_decided(dealer),
             GameEvent::HandDealt { player, hand } => self.hand_dealt(player, hand),
             GameEvent::CutForDealTied => self.cut_for_deal_tied(),
-            GameEvent::CardsDiscardedToCrib { player, cards } => {
-                self.cards_discarded_to_crib(player, &cards)
-            }
+            GameEvent::CardsDiscarded { player, cards } => self.cards_discarded(player, &cards),
             GameEvent::StarterSelected { cut } => self.starter_selected(cut),
             GameEvent::PointsScored { player, reasons } => self.points_scored(player, reasons),
             GameEvent::CardPlayed { player, card } => self.card_played(player, card),
@@ -890,14 +882,14 @@ mod test {
                 .inspect_result();
             match result {
                 Ok(events) => {
-                    let Some(GameEvent::ComputerGameStarted {
+                    let Some(GameEvent::ComputerGameCreated {
                         game_id: event_game_id,
                         host: event_host,
                         guest: event_guest,
                         name: event_name,
                     }) = events
                         .iter()
-                        .find(|e| matches!(e, GameEvent::ComputerGameStarted { .. }))
+                        .find(|e| matches!(e, GameEvent::ComputerGameCreated { .. }))
                     else {
                         panic!("expected event not found");
                     };
@@ -940,7 +932,7 @@ mod test {
             let guest = UserId::new();
             let name = function_name!();
 
-            let preconditions = vec![GameEvent::ComputerGameStarted {
+            let preconditions = vec![GameEvent::ComputerGameCreated {
                 game_id,
                 host,
                 guest,
@@ -1021,7 +1013,7 @@ mod test {
             let guest = UserId::new();
             let name = function_name!();
 
-            let preconditions = vec![GameEvent::ComputerGameStarted {
+            let preconditions = vec![GameEvent::ComputerGameCreated {
                 game_id,
                 host,
                 guest,
@@ -1058,7 +1050,7 @@ mod test {
 
             let cut0 = card!("AS");
             let preconditions = vec![
-                GameEvent::ComputerGameStarted {
+                GameEvent::ComputerGameCreated {
                     game_id,
                     host,
                     guest,
@@ -1102,7 +1094,7 @@ mod test {
             let cut0 = card!("AS");
             let cut1 = card!("QH");
             let preconditions = vec![
-                GameEvent::ComputerGameStarted {
+                GameEvent::ComputerGameCreated {
                     game_id,
                     host,
                     guest,
@@ -1157,7 +1149,7 @@ mod test {
             let cut0 = card!("AS");
             let cut1 = card!("AH");
             let preconditions = vec![
-                GameEvent::ComputerGameStarted {
+                GameEvent::ComputerGameCreated {
                     game_id,
                     host,
                     guest,
@@ -1220,7 +1212,7 @@ mod test {
             let cut0 = card!("AS");
             let cut1 = card!("QH");
             let preconditions = vec![
-                GameEvent::ComputerGameStarted {
+                GameEvent::ComputerGameCreated {
                     game_id,
                     host,
                     guest,
@@ -1301,11 +1293,11 @@ mod test {
                     with_cut("QD"),
                     with_crib("")
                 ))
-                .when(GameCommand::DiscardCardsToCrib {
+                .when(GameCommand::Discard {
                     player: PLAYER0,
                     cards: cards!("AH2H"),
                 })
-                .then_expect_events(vec![GameEvent::CardsDiscardedToCrib {
+                .then_expect_events(vec![GameEvent::CardsDiscarded {
                     player: PLAYER0,
                     cards: cards!("AH2H"),
                 }]);
@@ -1323,7 +1315,7 @@ mod test {
                         with_cut("QD"),
                         with_crib("")
                     ))
-                    .when(GameCommand::DiscardCardsToCrib {
+                    .when(GameCommand::Discard {
                         player: PLAYER0,
                         cards,
                     })
@@ -1342,7 +1334,7 @@ mod test {
                     with_cut("QD"),
                     with_crib("")
                 ))
-                .when(GameCommand::DiscardCardsToCrib {
+                .when(GameCommand::Discard {
                     player: PLAYER0,
                     cards,
                 })
@@ -1359,7 +1351,7 @@ mod test {
                     with_cut("QD"),
                     with_crib("AH2H")
                 ))
-                .when(GameCommand::DiscardCardsToCrib {
+                .when(GameCommand::Discard {
                     player: PLAYER0,
                     cards: cards!("5H6H"),
                 })
@@ -1394,7 +1386,7 @@ mod test {
                     with_cut("QD"),
                     with_crib("AH2H")
                 ))
-                .when(GameCommand::DiscardCardsToCrib {
+                .when(GameCommand::Discard {
                     player: PLAYER1,
                     cards: cards!("AC2C"),
                 })
@@ -1402,7 +1394,7 @@ mod test {
 
             match result {
                 Ok(events) => {
-                    assert!(events.contains(&GameEvent::CardsDiscardedToCrib {
+                    assert!(events.contains(&GameEvent::CardsDiscarded {
                         player: PLAYER1,
                         cards: cards!("AC2C"),
                     }));
@@ -1429,7 +1421,7 @@ mod test {
                     with_cut("JC"),
                     with_crib("AH2H")
                 ))
-                .when(GameCommand::DiscardCardsToCrib {
+                .when(GameCommand::Discard {
                     player: PLAYER1,
                     cards: cards!("AC2C"),
                 })
@@ -1465,7 +1457,7 @@ mod test {
                     with_crib("AH2H"),
                     with_points(119, 0)
                 ))
-                .when(GameCommand::DiscardCardsToCrib {
+                .when(GameCommand::Discard {
                     player: PLAYER1,
                     cards: cards!("AC2C"),
                 })

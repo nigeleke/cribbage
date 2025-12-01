@@ -97,7 +97,7 @@ impl GameBuilder {
 
         let name = format!("test-game__{}", chrono::Utc::now());
 
-        game.apply_event(GameEvent::ComputerGameStarted {
+        game.apply_event(GameEvent::ComputerGameCreated {
             game_id,
             host,
             guest,

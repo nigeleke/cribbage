@@ -16,13 +16,19 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v6
 
+            - name: Run Docker
+              shell: bash
+              run: |
+                  docker images ls
+                  docker containers ls
+
             - name: Setup docker compose
               uses: docker/setup-compose-action@v1
 
             - name: Setup containers
               shell: bash
               run: |
-                  docker-compose -f docker/docker-compose up -d
+                  docker compose -f docker/docker-compose up -d
                   cd packages/server
                   sqlx migrate run
 

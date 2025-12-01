@@ -2,7 +2,9 @@ use api::dto::{GameIdDTO, PhaseDTO, UserGameDTO, UserIdDTO};
 use dioxus::prelude::*;
 
 use crate::{
-    components::{CuttingForDeal, Discarding, InLobby, Playing, ScoringPone},
+    components::{
+        CuttingForDeal, Discarding, InLobby, Playing, ScoringCrib, ScoringDealer, ScoringPone,
+    },
     toast::Toast,
 };
 
@@ -57,8 +59,8 @@ fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
         PhaseDTO::Discarding => rsx! { Discarding {} },
         PhaseDTO::Playing => rsx! { Playing {} },
         PhaseDTO::ScoringPone => rsx! { ScoringPone {} },
-        PhaseDTO::ScoringDealer => rsx! {},
-        PhaseDTO::ScoringCrib => rsx! {},
+        PhaseDTO::ScoringDealer => rsx! { ScoringDealer {} },
+        PhaseDTO::ScoringCrib => rsx! { ScoringCrib {} },
         PhaseDTO::Finished => rsx! {},
     }
 }

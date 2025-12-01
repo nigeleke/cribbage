@@ -1,18 +1,18 @@
 use dioxus::prelude::*;
 
 use crate::components::{
-    CribAndCut, InProgress, OpponentHand, ScoreDealerAction, Scoreboard, UserHand,
+    CribAndCut, InProgress, OpponentHand, ScoreCribAction, Scoreboard, UserHand,
 };
 
 #[component]
-pub fn ScoringPone() -> Element {
+pub fn ScoringDealer() -> Element {
     rsx! {
         InProgress {
-            north: rsx! { UserHand { ScoreDealerAction {} } },
+            north: rsx! { UserHand { ScoreCribAction {} } },
             south: rsx! { OpponentHand {} },
             east: rsx! { Scoreboard {} },
             west: rsx! { CribAndCut {} },
-            centre: rsx! { "Pone Breakdown" },
+            centre: rsx! { "Dealer Breakdown" },
         }
     }
 }

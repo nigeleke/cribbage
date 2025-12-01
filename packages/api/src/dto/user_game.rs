@@ -219,6 +219,11 @@ mod server_only {
                     .collect();
             let name = game.name();
 
+            dioxus::prelude::debug!(
+                "^^^^^^^^^^^ FOR USER {user_id} DERIVING FROM {}",
+                game.state()
+            );
+
             match &game.state() {
                 State::Starting(state) if game.guest().is_none() => {
                     Self::new(name, PhaseDTO::InLobby).with_pending(PendingDTO::Opponent)

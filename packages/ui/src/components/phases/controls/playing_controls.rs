@@ -1,4 +1,4 @@
-use api::dto::{PlaysDTO, UserGameDTO};
+use api::dto::{PlayActionDTO, PlaysDTO, UserGameDTO};
 use dioxus::prelude::*;
 
 use crate::components::{PassAction, PlayAction, ScorePoneAction};
@@ -19,13 +19,19 @@ pub fn PlayingControls() -> Element {
 fn InnerPlayingControls(plays: ReadSignal<PlaysDTO>) -> Element {
     provide_context(plays);
 
+    let next_action = plays.read().next_action;
+
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/playing_hand.css")},
         div {
             class: "playing-hand",
-            PlayAction {}
-            PassAction {}
-            ScorePoneAction {}
+            if let PlayActionDTO::Play(_) = next_action {
+                PlayAction {}
+            } else if let PlayActionDTO::Pass(_) = next_action {
+                PassAction {}
+            } else {
+                ScorePoneAction {}
+            }
         }
     }
 }

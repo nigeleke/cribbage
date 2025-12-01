@@ -1,9 +1,10 @@
-use super::{CardDTO, CardIdDTO, PlayerDTO};
 use serde::{Deserialize, Serialize};
+
+use super::{CardDTO, CardIdDTO, PlayerDTO};
 
 pub type PlayDTO = (PlayerDTO, CardDTO);
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PlayActionDTO {
     Play(PlayerDTO),
     Pass(PlayerDTO),

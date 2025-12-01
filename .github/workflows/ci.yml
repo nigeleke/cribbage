@@ -28,10 +28,11 @@ jobs:
         uses: nigeleke/github/.github/workflows/dioxus-qa.yml@main
         with:
             platform: web
-            DATABASE_URL: postgres://postgres:password@localhost:5432/cribbage
+            env: '{ "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/postgres" }'
 
     bundle:
         needs: [qa]
         uses: nigeleke/github/.github/workflows/dioxus-bundle.yml@main
         with:
             platform: web
+            env: '{ "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/postgres" }'

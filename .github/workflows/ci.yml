@@ -22,9 +22,7 @@ jobs:
             - name: Setup containers
               shell: bash
               run: |
-                  pwd
-                  ls -al
-                  docker compose -f docker/docker-compose up -d
+                  docker compose -f docker/docker-compose.yml up -d
                   cd packages/server
                   sqlx migrate run
 

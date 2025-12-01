@@ -16,7 +16,7 @@ This project has had many flavours over time. It is being used as a learning pla
 
 The project then moved to [Rust](https://www.rust-lang.org/) / [Leptos](https://www.leptos.dev/), and now [Rust](https://www.rust-lang.org/) / [Dioxus](https://dioxuslabs.com/).
 
-The project is under active development as of Nov 2025.
+The project is under active development as of Dec 2025.
 
 ## Testing
 

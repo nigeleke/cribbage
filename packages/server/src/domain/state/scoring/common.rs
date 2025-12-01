@@ -8,8 +8,6 @@ use crate::{
     },
 };
 
-pub type WaitingForScoresViewed = Pending;
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Scoring<T> {
     scoreboard: Scoreboard,
@@ -18,7 +16,7 @@ pub struct Scoring<T> {
     crib: Crib,
     starter_cut: StarterCut,
     breakdown: ScoreBreakdown,
-    pending: WaitingForScoresViewed,
+    pending: Pending,
     _marker: std::marker::PhantomData<T>,
 }
 
@@ -30,7 +28,7 @@ impl<T> Scoring<T> {
         crib: Crib,
         starter_cut: StarterCut,
         breakdown: ScoreBreakdown,
-        pending: WaitingForScoresViewed,
+        pending: Pending,
     ) -> Self {
         Self {
             scoreboard,

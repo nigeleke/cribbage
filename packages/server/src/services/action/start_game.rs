@@ -6,7 +6,7 @@ use crate::{
     services::view::get_game,
 };
 
-pub async fn acknowledge_cut_for_deal(
+pub async fn start_game(
     server_state: ServerState,
     user_id: UserId,
     game_id: GameId,
@@ -16,11 +16,11 @@ pub async fn acknowledge_cut_for_deal(
     if let Some(game) = game {
         let player = game
             .validate_user(user_id)
-            .ok_or(ServerError::Forbidden("acknowledge_cut_for_deal".into()))?;
+            .ok_or(ServerError::Forbidden("start game".into()))?;
 
         let aggregate_id = game_id.value().to_string();
 
-        let command = GameCommand::AcknowledgeCutForDeal { player };
+        let command = GameCommand::StartGame { player };
 
         server_state
             .cqrs

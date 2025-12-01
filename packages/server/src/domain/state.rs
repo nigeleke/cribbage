@@ -5,11 +5,13 @@ mod scoring;
 mod starting;
 
 pub mod exports {
-    pub use super::discarding::{Discarding, WaitingForDiscards};
-    pub use super::finished::Finished;
-    pub use super::playing::Playing;
-    pub use super::scoring::{ScoringCrib, ScoringDealer, ScoringPone};
-    pub use super::starting::{Starting, WaitingForCuts};
+    pub use super::{
+        discarding::Discarding,
+        finished::Finished,
+        playing::Playing,
+        scoring::{ScoringCrib, ScoringDealer, ScoringPone},
+        starting::Starting,
+    };
 }
 
 pub use exports::*;

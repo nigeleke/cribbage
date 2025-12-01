@@ -33,13 +33,11 @@ pub fn CuttingForDealControls() -> Element {
     let on_cut_for_deal = move |_| cut_for_deal_action.call();
 
     let mut acknowledge_action = use_action(move || async move {
-        let result = api::action::acknowledge_cut_for_deal(*user_id.read(), game_id).await;
+        let result = api::action::start_game(*user_id.read(), game_id).await;
 
         match result {
             Ok(_) => (),
-            Err(ref error) => {
-                Toast::command_error("Acknowledge cut for deal", error.to_string());
-            }
+            Err(ref error) => Toast::command_error("Start game", error.to_string()),
         }
 
         result

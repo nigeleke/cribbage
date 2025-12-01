@@ -26,7 +26,7 @@ pub enum GameEvent {
         player: Player,
         cut: Card,
     },
-    CutForDealAcknowledged {
+    GameStarted {
         player: Player,
     },
     CutForDealTied,
@@ -55,16 +55,16 @@ pub enum GameEvent {
     Passed {
         player: Player,
     },
-    PlaysEndedAcknowledged {
+    PoneScored {
         player: Player,
     },
-    PoneScoreAcknowledged {
+    DealerScored {
         player: Player,
     },
-    DealerScoreAcknowledged {
+    CribScored {
         player: Player,
     },
-    CribScoreAcknowledged {
+    NextRoundStarted {
         player: Player,
     },
     WinnerDeclared {

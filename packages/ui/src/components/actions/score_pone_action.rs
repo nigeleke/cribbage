@@ -16,10 +16,10 @@ pub fn ScorePoneAction() -> Element {
     let next_action = plays().next_action;
 
     let mut score_action = use_action(move || async move {
-        let result = api::action::acknowledge_plays_ended(*user_id.read(), game_id).await;
+        let result = api::action::score_pone(*user_id.read(), game_id).await;
         match result {
             Ok(_) => {}
-            Err(ref error) => Toast::command_error("Acknowledge plays ended", error.to_string()),
+            Err(ref error) => Toast::command_error("Score pone", error.to_string()),
         };
         result
     });

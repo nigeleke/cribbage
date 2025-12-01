@@ -6,7 +6,7 @@ use crate::{
     services::view::get_game,
 };
 
-pub async fn acknowledge_plays_ended(
+pub async fn score_pone(
     server_state: ServerState,
     user_id: UserId,
     game_id: GameId,
@@ -16,11 +16,11 @@ pub async fn acknowledge_plays_ended(
     if let Some(game) = game {
         let player = game
             .validate_user(user_id)
-            .ok_or(ServerError::Forbidden("acknowledge_plays_ended".into()))?;
+            .ok_or(ServerError::Forbidden("score pone".into()))?;
 
         let aggregate_id = game_id.value().to_string();
 
-        let command = GameCommand::AcknowledgePlaysEnded { player };
+        let command = GameCommand::ScorePone { player };
 
         server_state
             .cqrs

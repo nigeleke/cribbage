@@ -5,17 +5,15 @@ use crate::{
     domain::{CutsForDeal, Deck, HasCutsForDeal, HasDeck, HasPending, Pending, Roles},
 };
 
-pub type WaitingForCuts = Pending;
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Starting {
     cuts_for_deal: CutsForDeal,
     deck: Deck,
-    pending: WaitingForCuts,
+    pending: Pending,
 }
 
 impl Starting {
-    pub fn new(cuts_for_deal: CutsForDeal, deck: Deck, pending: WaitingForCuts) -> Self {
+    pub fn new(cuts_for_deal: CutsForDeal, deck: Deck, pending: Pending) -> Self {
         Self {
             cuts_for_deal,
             deck,
@@ -62,7 +60,7 @@ impl Default for Starting {
     fn default() -> Self {
         let cuts = [None, None];
         let deck = Deck::shuffled_pack();
-        let pending = WaitingForCuts::default();
+        let pending = Pending::default();
         Starting {
             cuts_for_deal: cuts,
             deck,

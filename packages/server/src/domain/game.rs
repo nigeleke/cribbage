@@ -9,7 +9,7 @@ use crate::{
         GameEvent, GameId, Hand, Hands, HasCrib, HasCutsForDeal, HasDeck, HasHands, HasPending,
         HasPlayState, HasRoles, HasScoreboard, HasStarterCut, PLAYER0, PLAYER1, Pending, PlayState,
         Player, Playing, Roles, ScoreBreakdown, Scoreboard, ScoringCrib, ScoringDealer,
-        ScoringPone, StarterCut, Starting, State, UserId, WaitingForDiscards,
+        ScoringPone, StarterCut, Starting, State, UserId,
         constants::{CARDS_DISCARDED_TO_CRIB, CARDS_KEPT_PER_HAND, PLAYER_COUNT},
     },
     extensions::HasScoreboardExt,
@@ -151,15 +151,11 @@ impl Game {
         }
     }
 
-    fn acknowledge_cut_for_deal(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
-        let not_permitted = || {
-            Err(DomainError::NotPermitted(String::from(
-                "acknowledge cut for deal",
-            )))
-        };
+    fn start_game(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted(String::from("start game")));
 
-        let acknowledge_cut_for_deal = |starting: &Starting| {
-            let mut events = vec![GameEvent::CutForDealAcknowledged { player }];
+        let start_game = |starting: &Starting| {
+            let mut events = vec![GameEvent::GameStarted { player }];
 
             let proceed = starting.pending().clone().acknowledge(player);
             if proceed {
@@ -193,7 +189,7 @@ impl Game {
         } else {
             match &self.state {
                 State::Starting(starting) => {
-                    let events = acknowledge_cut_for_deal(starting);
+                    let events = start_game(starting);
                     Ok(events)
                 }
                 _ => not_permitted(),
@@ -313,15 +309,11 @@ impl Game {
         }
     }
 
-    fn acknowledge_plays_ended(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
-        let not_permitted = || {
-            Err(DomainError::NotPermitted(String::from(
-                "acknowledge plays ended",
-            )))
-        };
+    fn score_pone(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted(String::from("score pone")));
 
-        let acknowledge_plays_ended = |playing: &Playing| {
-            let mut events = vec![GameEvent::PlaysEndedAcknowledged { player }];
+        let score_pone = |playing: &Playing| {
+            let mut events = vec![GameEvent::PoneScored { player }];
 
             let proceed = playing.pending().clone().acknowledge(player);
             if proceed {
@@ -342,7 +334,7 @@ impl Game {
         } else {
             match &self.state {
                 State::Playing(playing) => {
-                    let events = acknowledge_plays_ended(playing);
+                    let events = score_pone(playing);
                     Ok(events)
                 }
                 _ => not_permitted(),
@@ -350,15 +342,11 @@ impl Game {
         }
     }
 
-    fn acknowledge_pone_score(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
-        let not_permitted = || {
-            Err(DomainError::NotPermitted(String::from(
-                "acknowledge pone score",
-            )))
-        };
+    fn score_dealer(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted(String::from("score dealer")));
 
-        let acknowledge_pone_score = |scoring: &ScoringPone| {
-            let mut events = vec![GameEvent::PoneScoreAcknowledged { player }];
+        let score_dealer = |scoring: &ScoringPone| {
+            let mut events = vec![GameEvent::DealerScored { player }];
 
             let proceed = scoring.pending().clone().acknowledge(player);
             if proceed {
@@ -378,7 +366,7 @@ impl Game {
         } else {
             match &self.state {
                 State::ScoringPone(scoring) => {
-                    let events = acknowledge_pone_score(scoring);
+                    let events = score_dealer(scoring);
                     Ok(events)
                 }
                 _ => not_permitted(),
@@ -386,15 +374,11 @@ impl Game {
         }
     }
 
-    fn acknowledge_dealer_score(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
-        let not_permitted = || {
-            Err(DomainError::NotPermitted(String::from(
-                "acknowledge dealer score",
-            )))
-        };
+    fn score_crib(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted(String::from("score crib")));
 
-        let acknowledge_dealer_score = |scoring: &ScoringDealer| {
-            let mut events = vec![GameEvent::DealerScoreAcknowledged { player }];
+        let score_crib = |scoring: &ScoringDealer| {
+            let mut events = vec![GameEvent::CribScored { player }];
 
             let proceed = scoring.pending().clone().acknowledge(player);
             if proceed {
@@ -414,7 +398,7 @@ impl Game {
         } else {
             match &self.state {
                 State::ScoringDealer(scoring) => {
-                    let events = acknowledge_dealer_score(scoring);
+                    let events = score_crib(scoring);
                     Ok(events)
                 }
                 _ => not_permitted(),
@@ -422,22 +406,18 @@ impl Game {
         }
     }
 
-    fn acknowledge_crib_score(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
-        let not_permitted = || {
-            Err(DomainError::NotPermitted(String::from(
-                "acknowledge crib score",
-            )))
-        };
+    fn start_next_round(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted(String::from("start next round")));
 
-        let acknowledge_crib_score =
-            |_scoring: &ScoringCrib| vec![GameEvent::CribScoreAcknowledged { player }];
+        let start_next_round =
+            |_scoring: &ScoringCrib| vec![GameEvent::NextRoundStarted { player }];
 
         if self.id == GameId::default() {
             not_permitted()
         } else {
             match &self.state {
                 State::ScoringCrib(scoring) => {
-                    let events = acknowledge_crib_score(scoring);
+                    let events = start_next_round(scoring);
                     Ok(events)
                 }
                 _ => not_permitted(),
@@ -452,16 +432,16 @@ impl Game {
             GameCommand::JoinGame { user_id } => self.join_game(user_id),
             GameCommand::PlayComputer { user_id, game_id } => self.play_computer(user_id, game_id),
             GameCommand::CutForDeal { player } => self.cut_for_deal(player),
-            GameCommand::AcknowledgeCutForDeal { player } => self.acknowledge_cut_for_deal(player),
+            GameCommand::StartGame { player } => self.start_game(player),
             GameCommand::DiscardCardsToCrib { player, cards } => {
                 self.discard_cards_to_crib(player, cards)
             }
             GameCommand::PlayCard { player, card } => self.play_card(player, card),
             GameCommand::Pass { player } => self.pass(player),
-            GameCommand::AcknowledgePlaysEnded { player } => self.acknowledge_plays_ended(player),
-            GameCommand::AcknowledgePoneScore { player } => self.acknowledge_pone_score(player),
-            GameCommand::AcknowledgeDealerScore { player } => self.acknowledge_dealer_score(player),
-            GameCommand::AcknowledgeCribScore { player } => self.acknowledge_crib_score(player),
+            GameCommand::ScorePone { player } => self.score_pone(player),
+            GameCommand::ScoreDealer { player } => self.score_dealer(player),
+            GameCommand::ScoreCrib { player } => self.score_crib(player),
+            GameCommand::StartNextRound { player } => self.start_next_round(player),
         }
     }
 }
@@ -499,7 +479,7 @@ impl Game {
         }
     }
 
-    fn cut_for_deal_acknowledged(&mut self, player: Player) {
+    fn game_started(&mut self, player: Player) {
         if let State::Starting(starting) = &mut self.state {
             starting.pending_mut().acknowledge(player);
         }
@@ -512,7 +492,7 @@ impl Game {
             let deck = Deck::shuffled_pack();
             let hands = Hands::default();
             let crib = Crib::default();
-            let pending = WaitingForDiscards::default();
+            let pending = Pending::default();
             let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
             self.state = State::Discarding(discarding);
         }
@@ -590,7 +570,7 @@ impl Game {
         debug!("passed: {}", self.state);
     }
 
-    fn plays_ended_acknowledged(&mut self, player: Player) {
+    fn pone_scored(&mut self, player: Player) {
         if let State::Playing(playing) = &mut self.state {
             let proceed = playing.pending_mut().acknowledge(player);
             if proceed {
@@ -615,7 +595,7 @@ impl Game {
         }
     }
 
-    fn pone_score_acknowledged(&mut self, player: Player) {
+    fn dealer_scored(&mut self, player: Player) {
         if let State::ScoringPone(scoring) = &mut self.state {
             let proceed = scoring.pending_mut().acknowledge(player);
             if proceed {
@@ -640,7 +620,7 @@ impl Game {
         }
     }
 
-    fn dealer_score_acknowledged(&mut self, player: Player) {
+    fn crib_scored(&mut self, player: Player) {
         if let State::ScoringDealer(scoring) = &mut self.state {
             let proceed = scoring.pending_mut().acknowledge(player);
             if proceed {
@@ -664,7 +644,7 @@ impl Game {
         }
     }
 
-    fn crib_score_acknowledged(&mut self, player: Player) {
+    fn next_round_started(&mut self, player: Player) {
         if let State::ScoringCrib(scoring) = &mut self.state {
             let proceed = scoring.pending_mut().acknowledge(player);
             if proceed {
@@ -745,7 +725,7 @@ impl Game {
                 name,
             } => self.computer_game_started(game_id, host, guest, name),
             GameEvent::CutForDealMade { player, cut } => self.cut_for_deal_made(player, cut),
-            GameEvent::CutForDealAcknowledged { player } => self.cut_for_deal_acknowledged(player),
+            GameEvent::GameStarted { player } => self.game_started(player),
             GameEvent::CutForDealDecided { dealer } => self.cut_for_deal_decided(dealer),
             GameEvent::HandDealt { player, hand } => self.hand_dealt(player, hand),
             GameEvent::CutForDealTied => self.cut_for_deal_tied(),
@@ -756,10 +736,10 @@ impl Game {
             GameEvent::PointsScored { player, reasons } => self.points_scored(player, reasons),
             GameEvent::CardPlayed { player, card } => self.card_played(player, card),
             GameEvent::Passed { player } => self.passed(player),
-            GameEvent::PlaysEndedAcknowledged { player } => self.plays_ended_acknowledged(player),
-            GameEvent::PoneScoreAcknowledged { player } => self.pone_score_acknowledged(player),
-            GameEvent::DealerScoreAcknowledged { player } => self.dealer_score_acknowledged(player),
-            GameEvent::CribScoreAcknowledged { player } => self.crib_score_acknowledged(player),
+            GameEvent::PoneScored { player } => self.pone_scored(player),
+            GameEvent::DealerScored { player } => self.dealer_scored(player),
+            GameEvent::CribScored { player } => self.crib_scored(player),
+            GameEvent::NextRoundStarted { player } => self.next_round_started(player),
             GameEvent::WinnerDeclared { player } => self.winner_declared(player),
 
             #[cfg(test)]
@@ -1136,12 +1116,12 @@ mod test {
                     player: PLAYER1,
                     cut: cut1,
                 },
-                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
+                GameEvent::GameStarted { player: PLAYER0 },
             ];
 
             let result = GameTestFramework::with(GameServices)
                 .given(preconditions.clone())
-                .when(GameCommand::AcknowledgeCutForDeal { player: PLAYER1 })
+                .when(GameCommand::StartGame { player: PLAYER1 })
                 .inspect_result();
 
             match result {
@@ -1149,7 +1129,7 @@ mod test {
                     assert_eq!(
                         events[..2],
                         vec![
-                            GameEvent::CutForDealAcknowledged { player: PLAYER1 },
+                            GameEvent::GameStarted { player: PLAYER1 },
                             GameEvent::CutForDealDecided {
                                 dealer: Dealer::from(PLAYER0)
                             }
@@ -1191,12 +1171,12 @@ mod test {
                     player: PLAYER1,
                     cut: cut1,
                 },
-                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
+                GameEvent::GameStarted { player: PLAYER0 },
             ];
 
             let result = GameTestFramework::with(GameServices)
                 .given(preconditions.clone())
-                .when(GameCommand::AcknowledgeCutForDeal { player: PLAYER1 })
+                .when(GameCommand::StartGame { player: PLAYER1 })
                 .inspect_result();
 
             match result {
@@ -1204,7 +1184,7 @@ mod test {
                     assert_eq!(
                         events,
                         vec![
-                            GameEvent::CutForDealAcknowledged { player: PLAYER1 },
+                            GameEvent::GameStarted { player: PLAYER1 },
                             GameEvent::CutForDealTied
                         ]
                     )
@@ -1254,12 +1234,12 @@ mod test {
                     player: PLAYER1,
                     cut: cut1,
                 },
-                GameEvent::CutForDealAcknowledged { player: PLAYER0 },
+                GameEvent::GameStarted { player: PLAYER0 },
             ];
 
             let result = GameTestFramework::with(GameServices)
                 .given(preconditions.clone())
-                .when(GameCommand::AcknowledgeCutForDeal { player: PLAYER1 })
+                .when(GameCommand::StartGame { player: PLAYER1 })
                 .inspect_result();
 
             match result {
@@ -1267,7 +1247,7 @@ mod test {
                     assert_eq!(
                         events[..2],
                         vec![
-                            GameEvent::CutForDealAcknowledged { player: PLAYER1 },
+                            GameEvent::GameStarted { player: PLAYER1 },
                             GameEvent::CutForDealDecided {
                                 dealer: Dealer::from(PLAYER0)
                             }
@@ -2803,7 +2783,7 @@ mod test {
                     ]),
                     with_ack(0)
                 ))
-                .when(GameCommand::AcknowledgePlaysEnded { player: PLAYER1 })
+                .when(GameCommand::ScorePone { player: PLAYER1 })
                 .inspect_result();
 
             let Ok(events) = result else {
@@ -2812,9 +2792,9 @@ mod test {
 
             assert_eq!(events.len(), 2);
 
-            let Some(GameEvent::PlaysEndedAcknowledged { player }) = events
+            let Some(GameEvent::PoneScored { player }) = events
                 .iter()
-                .find(|e| matches!(e, GameEvent::PlaysEndedAcknowledged { .. }))
+                .find(|e| matches!(e, GameEvent::PoneScored { .. }))
             else {
                 panic!("expected event not found");
             };
@@ -2844,7 +2824,7 @@ mod test {
                     ]),
                     with_ack(0)
                 ))
-                .when(GameCommand::AcknowledgePlaysEnded { player: PLAYER1 })
+                .when(GameCommand::ScorePone { player: PLAYER1 })
                 .inspect_result();
 
             let Ok(events) = result else {
@@ -2853,9 +2833,9 @@ mod test {
 
             assert_eq!(events.len(), 3);
 
-            let Some(GameEvent::PlaysEndedAcknowledged { player }) = events
+            let Some(GameEvent::PoneScored { player }) = events
                 .iter()
-                .find(|e| matches!(e, GameEvent::PlaysEndedAcknowledged { .. }))
+                .find(|e| matches!(e, GameEvent::PoneScored { .. }))
             else {
                 panic!("expected event not found");
             };
@@ -2890,7 +2870,7 @@ mod test {
                     with_crib("AHADASTD"),
                     with_ack(0),
                 ))
-                .when(GameCommand::AcknowledgePoneScore { player: PLAYER1 })
+                .when(GameCommand::ScoreDealer { player: PLAYER1 })
                 .inspect_result();
 
             let Ok(events) = result else {
@@ -2899,9 +2879,9 @@ mod test {
 
             assert_eq!(events.len(), 2);
 
-            let Some(GameEvent::PoneScoreAcknowledged { player }) = events
+            let Some(GameEvent::DealerScored { player }) = events
                 .iter()
-                .find(|e| matches!(e, GameEvent::PoneScoreAcknowledged { .. }))
+                .find(|e| matches!(e, GameEvent::DealerScored { .. }))
             else {
                 panic!("expected event not found");
             };
@@ -2928,7 +2908,7 @@ mod test {
                     with_crib("AHADASTD"),
                     with_ack(0),
                 ))
-                .when(GameCommand::AcknowledgePoneScore { player: PLAYER1 })
+                .when(GameCommand::ScoreDealer { player: PLAYER1 })
                 .inspect_result();
 
             let Ok(events) = result else {
@@ -2937,9 +2917,9 @@ mod test {
 
             assert_eq!(events.len(), 3);
 
-            let Some(GameEvent::PoneScoreAcknowledged { player }) = events
+            let Some(GameEvent::DealerScored { player }) = events
                 .iter()
-                .find(|e| matches!(e, GameEvent::PoneScoreAcknowledged { .. }))
+                .find(|e| matches!(e, GameEvent::DealerScored { .. }))
             else {
                 panic!("expected event not found");
             };
@@ -2974,7 +2954,7 @@ mod test {
                     with_crib("AHADASTD"),
                     with_ack(0),
                 ))
-                .when(GameCommand::AcknowledgeDealerScore { player: PLAYER1 })
+                .when(GameCommand::ScoreCrib { player: PLAYER1 })
                 .inspect_result();
 
             let Ok(events) = result else {
@@ -2983,9 +2963,9 @@ mod test {
 
             assert_eq!(events.len(), 2);
 
-            let Some(GameEvent::DealerScoreAcknowledged { player }) = events
+            let Some(GameEvent::CribScored { player }) = events
                 .iter()
-                .find(|e| matches!(e, GameEvent::DealerScoreAcknowledged { .. }))
+                .find(|e| matches!(e, GameEvent::CribScored { .. }))
             else {
                 panic!("expected event not found");
             };
@@ -3012,7 +2992,7 @@ mod test {
                     with_crib("AHADASTD"),
                     with_ack(0),
                 ))
-                .when(GameCommand::AcknowledgeDealerScore { player: PLAYER1 })
+                .when(GameCommand::ScoreCrib { player: PLAYER1 })
                 .inspect_result();
 
             let Ok(events) = result else {
@@ -3021,9 +3001,9 @@ mod test {
 
             assert_eq!(events.len(), 3);
 
-            let Some(GameEvent::DealerScoreAcknowledged { player }) = events
+            let Some(GameEvent::CribScored { player }) = events
                 .iter()
-                .find(|e| matches!(e, GameEvent::DealerScoreAcknowledged { .. }))
+                .find(|e| matches!(e, GameEvent::CribScored { .. }))
             else {
                 panic!("expected event not found");
             };
@@ -3062,7 +3042,7 @@ mod test {
 
             let result = GameTestFramework::with(GameServices)
                 .given(preconditions)
-                .when(GameCommand::AcknowledgeCribScore { player: PLAYER1 })
+                .when(GameCommand::StartNextRound { player: PLAYER1 })
                 .inspect_result();
 
             let Ok(events) = result else {

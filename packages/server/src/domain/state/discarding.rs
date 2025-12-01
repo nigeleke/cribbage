@@ -8,8 +8,6 @@ use crate::{
     },
 };
 
-pub type WaitingForDiscards = Pending;
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Discarding {
     scoreboard: Scoreboard,
@@ -17,7 +15,7 @@ pub struct Discarding {
     hands: Hands,
     crib: Crib,
     deck: Deck,
-    pending: WaitingForDiscards,
+    pending: Pending,
 }
 
 impl Discarding {
@@ -27,7 +25,7 @@ impl Discarding {
         hands: Hands,
         crib: Crib,
         deck: Deck,
-        pending: WaitingForDiscards,
+        pending: Pending,
     ) -> Self {
         Self {
             scoreboard,

@@ -8,6 +8,10 @@ pub struct Pegging {
     sheet: ScoreSheet,
 }
 
+pub trait HasPegging {
+    fn pegging(&self) -> &Pegging;
+}
+
 impl Pegging {
     pub fn new(player: Player, sheet: ScoreSheet) -> Self {
         Self { player, sheet }

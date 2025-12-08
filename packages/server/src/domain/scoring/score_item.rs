@@ -21,6 +21,14 @@ impl ScoreItem {
         }
     }
 
+    pub fn kind(&self) -> ScoreKind {
+        self.kind
+    }
+
+    pub fn cards(&self) -> &Vec<Card> {
+        &self.cards
+    }
+
     pub fn points(&self) -> Points {
         self.points
     }

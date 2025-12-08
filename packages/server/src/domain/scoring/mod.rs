@@ -4,7 +4,7 @@ mod score_item;
 mod score_kind;
 mod score_sheet;
 
-pub use pegging::Pegging;
+pub use pegging::{HasPegging, Pegging};
 pub use phase::Phase as ScorePhase;
 pub use score_item::ScoreItem;
 pub use score_kind::ScoreKind;

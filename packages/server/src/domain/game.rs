@@ -547,9 +547,7 @@ impl Game {
 
     fn card_played(&mut self, _player: Player, card: Card, pegging: Pegging) {
         if let State::Playing(playing) = &mut self.state {
-            eprintln!("Card to be played: {card} {playing}");
             playing.play_card(card);
-            eprintln!("Card played: {card} {playing} scoring: {pegging}");
             playing.scoreboard_mut().peg(&pegging);
             self.state = playing.clone().wrap().or_finished();
         }
@@ -569,12 +567,13 @@ impl Game {
             if proceed {
                 playing.scoreboard_mut().peg(&pegging);
 
+                let hands = playing.play_state_mut().finish_plays();
                 let pending = Pending::default();
 
                 let scoring = ScoringPone::new(
                     playing.scoreboard().clone(),
                     *playing.roles(),
-                    playing.hands().clone(),
+                    hands,
                     playing.crib().clone(),
                     *playing.starter_cut(),
                     pegging,

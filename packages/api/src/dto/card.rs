@@ -11,8 +11,9 @@ pub enum CardDTO {
 
 #[cfg(feature = "server")]
 mod server_only {
-    use super::*;
     use server::domain::Card;
+
+    use super::*;
 
     impl CardDTO {
         pub fn face_up(card: &Card) -> Self {

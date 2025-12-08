@@ -1,0 +1,26 @@
+.scoring-detail {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 10px;
+}
+
+.scoring-detail > :nth-child(3n) {
+    justify-self: start;
+}
+
+.scoring-detail > :nth-child(3n-2) {
+    justify-self: end;
+    text-align: end;
+}
+
+.scoring-detail__breakdowns {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.scoring-detail__breakdown {
+    display: flex;
+    flex-direction: row;
+}

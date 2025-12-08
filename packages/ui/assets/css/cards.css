@@ -1,0 +1,4 @@
+.cards {
+    display: flex;
+    gap: 5px;
+}

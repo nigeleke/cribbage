@@ -19,6 +19,28 @@ pub fn CribAndCut() -> Element {
     let starter_cut = use_memo(move || game().starter_cut);
 
     rsx! {
+        InnerCribAndCut { user_crib, starter_cut, opponent_crib }
+    }
+}
+
+#[component]
+pub fn Cut() -> Element {
+    let game = use_context::<ReadSignal<UserGameDTO>>();
+
+    let starter_cut = use_memo(move || game().starter_cut);
+
+    rsx! {
+        InnerCribAndCut { user_crib: None, starter_cut, opponent_crib: None }
+    }
+}
+
+#[component]
+fn InnerCribAndCut(
+    user_crib: ReadSignal<Option<Vec<CardDTO>>>,
+    starter_cut: ReadSignal<Option<CardDTO>>,
+    opponent_crib: ReadSignal<Option<Vec<CardDTO>>>,
+) -> Element {
+    rsx! {
         document::Stylesheet { href: asset!("/assets/css/crib_and_cut.css")},
         div {
             class: "crib-and-cut",

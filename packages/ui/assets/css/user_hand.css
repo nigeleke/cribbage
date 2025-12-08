@@ -8,6 +8,9 @@
 .user-hand__cards {
     display: flex;
     gap: 5px;
+    min-block-size: 150px;
 }
 
-/*.user-hand__controls {}*/
+.user-hand__controls {
+    margin-block-start: 2em;
+}

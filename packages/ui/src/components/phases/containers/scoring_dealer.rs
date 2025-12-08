@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::components::{
-    CribAndCut, InProgress, OpponentHand, ScoreCribAction, Scoreboard, UserHand,
+    CribAndCut, InProgress, OpponentHand, ScoreCribAction, Scoreboard, ScoringDetail, UserHand,
 };
 
 #[component]
@@ -12,7 +12,7 @@ pub fn ScoringDealer() -> Element {
             south: rsx! { OpponentHand {} },
             east: rsx! { Scoreboard {} },
             west: rsx! { CribAndCut {} },
-            centre: rsx! { "Dealer sheet" },
+            centre: rsx! { ScoringDetail {} },
         }
     }
 }

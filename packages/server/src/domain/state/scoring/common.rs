@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     display::format_vec,
     domain::{
-        Crib, Hands, HasCrib, HasHands, HasPending, HasRoles, HasScoreboard, HasStarterCut,
-        Pegging, Pending, Roles, Scoreboard, StarterCut,
+        Crib, Hands, HasCrib, HasHands, HasPegging, HasPending, HasRoles, HasScoreboard,
+        HasStarterCut, Pegging, Pending, Roles, Scoreboard, StarterCut,
     },
 };
 
@@ -40,10 +40,6 @@ impl<T> Scoring<T> {
             pending,
             _marker: std::marker::PhantomData,
         }
-    }
-
-    pub fn pegging(&self) -> &Pegging {
-        &self.pegging
     }
 }
 
@@ -90,6 +86,12 @@ impl<T> HasCrib for Scoring<T> {
 impl<T> HasStarterCut for Scoring<T> {
     fn starter_cut(&self) -> &StarterCut {
         &self.starter_cut
+    }
+}
+
+impl<T> HasPegging for Scoring<T> {
+    fn pegging(&self) -> &Pegging {
+        &self.pegging
     }
 }
 

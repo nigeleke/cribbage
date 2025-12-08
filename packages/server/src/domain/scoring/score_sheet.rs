@@ -38,6 +38,10 @@ impl ScoreSheet {
         self.0.iter().map(ScoreItem::points).sum()
     }
 
+    pub fn items(&self) -> &Vec<ScoreItem> {
+        &self.0
+    }
+
     pub fn his_heels(cut: Card) -> Self {
         Self::default().add_event_if(
             cut.is_jack(),
@@ -48,7 +52,6 @@ impl ScoreSheet {
     }
 
     pub fn play_card(play_state: &PlayState) -> Self {
-        eprintln!("Scoring play card for {play_state}");
         Self::default()
             .play_card_fifteens(play_state)
             .play_card_pairs(play_state)

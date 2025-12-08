@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::components::{
-    CribAndCut, InProgress, OpponentHand, ScoreDealerAction, Scoreboard, UserHand,
+    CribAndCut, InProgress, OpponentHand, ScoreDealerAction, Scoreboard, ScoringDetail, UserHand,
 };
 
 #[component]
@@ -12,7 +12,7 @@ pub fn ScoringPone() -> Element {
             south: rsx! { OpponentHand {} },
             east: rsx! { Scoreboard {} },
             west: rsx! { CribAndCut {} },
-            centre: rsx! { "Pone sheet" },
+            centre: rsx! { ScoringDetail {} },
         }
     }
 }

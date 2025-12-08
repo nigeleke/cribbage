@@ -1,20 +1,29 @@
 mod available_games;
 mod card;
+mod cards;
 mod confirmation;
 mod crib_and_cut;
+mod mini_card;
+mod opponent_crib;
 mod opponent_hand;
 mod plays;
 mod scoreboard;
+mod scoring_detail;
+mod user_crib;
 mod user_hand;
 mod waiting_for_opponent;
 
 pub use available_games::AvailableGamesList;
 pub use card::Card;
+pub use cards::Cards;
 pub use confirmation::Confirmation;
-pub use crib_and_cut::CribAndCut;
+pub use crib_and_cut::{CribAndCut, Cut};
+pub use mini_card::MiniCard;
+pub use opponent_crib::OpponentCrib;
 pub use opponent_hand::OpponentHand;
 pub use plays::Plays;
 pub use scoreboard::Scoreboard;
+pub use scoring_detail::ScoringDetail;
+pub use user_crib::UserCrib;
 pub use user_hand::UserHand;
 pub use waiting_for_opponent::WaitingForOpponent;
-

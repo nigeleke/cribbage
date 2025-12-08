@@ -1,6 +1,7 @@
-use crate::components::Card;
 use api::dto::{CardDTO, CardIdDTO, UserGameDTO};
 use dioxus::prelude::*;
+
+use crate::components::Card;
 
 /// The `UserHand` component shows a set of cards (in the order provided).
 /// If the 'on_click' event handle is provided then the cards will be selectable.
@@ -54,7 +55,7 @@ pub fn UserHand(children: Element) -> Element {
     };
 
     rsx! {
-        document::Stylesheet { href: asset!("/assets/css/user_hand.css")},
+        document::Stylesheet { href: asset!("/assets/css/user_hand.css") },
         div {
             class: "user-hand",
             div {

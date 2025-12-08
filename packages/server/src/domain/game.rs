@@ -3079,7 +3079,10 @@ mod test {
 
         fn common_filters() -> insta::Settings {
             let mut settings = insta::Settings::new();
-            settings.add_filter(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{9}", "<timestamp>");
+            settings.add_filter(
+                r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{1,9}",
+                "<timestamp>",
+            );
             settings.add_filter(
                 r"UserId\([0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}\)",
                 "<userid>",

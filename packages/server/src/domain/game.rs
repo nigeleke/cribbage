@@ -1295,6 +1295,14 @@ mod test {
                     });
 
                     find_then!(events, GameEvent::StarterSelected { .. } => {});
+                },
+                then_state: |state: &State| {
+                    assert_state_then!(state, State::Playing(playing) => {
+                        let starter_cut = *playing.starter_cut();
+                        assert!(!playing.hand(PLAYER0).contains(starter_cut));
+                        assert!(!playing.hand(PLAYER1).contains(starter_cut));
+                        assert!(!playing.crib().contains(starter_cut));
+                    });
                 }
             }
         }

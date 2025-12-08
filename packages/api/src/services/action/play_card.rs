@@ -2,12 +2,14 @@
 use dioxus::fullstack::extract::State;
 use dioxus::prelude::*;
 
+#[cfg(feature = "server")]
+use crate::ServerStateExtractor;
 use crate::{
     dto::{CardIdDTO, GameIdDTO, UserIdDTO},
     error::ApiError,
 };
 
-#[post("/api/{user_id}/game/{game_id}/play/{card}", State(server_state): State<server::ServerState>)]
+#[post("/api/{user_id}/game/{game_id}/play/{card}", State(server_state): State<ServerStateExtractor>)]
 pub async fn play_card(
     user_id: UserIdDTO,
     game_id: GameIdDTO,
@@ -24,6 +26,6 @@ pub async fn play_card(
     let game_id = GameId::from(game_id.value());
     let card = Card::from_str(&card).map_err(ServerFnError::new)?;
 
-    play_card(server_state, user_id, game_id, card).await?;
+    play_card(server_state.0, user_id, game_id, card).await?;
     Ok(())
 }

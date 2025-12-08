@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use cqrs_es::Query;
-use dioxus::fullstack::{FullstackContext, extract::FromRef};
 use postgres_es::{PostgresCqrs, PostgresViewRepository, default_postgress_pool, postgres_cqrs};
 use sqlx::{PgPool, migrate, postgres::*};
 use tokio::sync::broadcast;
+use tracing::{error, warn};
 
 use crate::{
     bug,
@@ -28,14 +28,6 @@ impl ServerState {
     }
 }
 
-impl FromRef<FullstackContext> for ServerState {
-    fn from_ref(state: &FullstackContext) -> Self {
-        state
-            .extension::<ServerState>()
-            .expect("server state must be defined")
-    }
-}
-
 pub async fn initialize_server_state() -> Result<ServerState, ServerError> {
     let database_url = std::env::var("DATABASE_URL").expect("Database url is not specified");
 
@@ -50,7 +42,7 @@ pub async fn initialize_server_state() -> Result<ServerState, ServerError> {
     let game_view_repo = Arc::new(PostgresViewRepository::new("game_query", (*pool).clone()));
 
     let mut game_query = GameQuery::new(game_view_repo.clone());
-    game_query.use_error_handler(Box::new(|e| dioxus::prelude::error!("{e}")));
+    game_query.use_error_handler(Box::new(|e| error!("{e}")));
 
     let queries: Vec<Box<dyn Query<Game>>> = vec![Box::new(game_query)];
     let services = GameServices {};
@@ -94,12 +86,12 @@ async fn create_database_changes_sender(
                             let _ = task_sender.send(payload);
                         }
                         Err(error) => {
-                            dioxus::prelude::warn!("server_state: {error}");
+                            warn!("server_state: {error}");
                         }
                     }
                 }
                 Err(error) => {
-                    dioxus::prelude::error!("server_state:database_listener: failed: {error}");
+                    error!("server_state:database_listener: failed: {error}");
                     break;
                 }
             }

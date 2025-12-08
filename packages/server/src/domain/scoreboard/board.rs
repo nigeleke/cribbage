@@ -2,49 +2,54 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     display::format_vec,
-    domain::{PLAYER0, PLAYER1, Pegging, Peggings, Player, Points, ScoreBreakdown, constants::*},
+    domain::{
+        PLAYER0, PLAYER1, Pegging, Player, Points, Position, Positions, ScoreSheet, constants::*,
+    },
 };
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Scoreboard {
-    peggings: Peggings,
-    history: Vec<ScoreBreakdown>,
+    positions: Positions,
+    history: Vec<ScoreSheet>,
 }
 
 pub trait HasScoreboard {
     fn scoreboard(&self) -> &Scoreboard;
     fn scoreboard_mut(&mut self) -> &mut Scoreboard;
 
-    fn pegging(&self, player: Player) -> &Pegging {
-        &self.scoreboard().peggings[player]
+    fn positions(&self, player: Player) -> &Position {
+        &self.scoreboard().positions[player]
     }
 }
 
 impl Scoreboard {
-    pub fn new(peggings: Peggings) -> Self {
+    pub fn new(positions: Positions) -> Self {
         Self {
-            peggings,
+            positions,
             history: Vec::default(),
         }
     }
 
-    pub fn pegging(&self, player: Player) -> &Pegging {
-        &self.peggings[player]
+    pub fn position(&self, player: Player) -> &Position {
+        &self.positions[player]
     }
 
-    pub fn peg(&mut self, player: Player, breakdown: &ScoreBreakdown) -> Option<Player> {
-        let points = breakdown.points();
+    pub fn peg(&mut self, pegging: &Pegging) -> Option<Player> {
+        let player = pegging.player();
+        let sheet = pegging.score_sheet();
+
+        let points = sheet.points();
         if points > Points::from(0) {
-            self.peggings[player] += points;
+            self.positions[player] += points;
         }
 
-        (self.peggings[player].points() >= Points::from(WINNING_SCORE)).then_some(player)
+        (self.positions[player].points() >= Points::from(WINNING_SCORE)).then_some(*player)
     }
 
     pub fn winner(&self) -> Option<Player> {
-        if self.pegging(PLAYER0).points() >= Points::from(WINNING_SCORE) {
+        if self.position(PLAYER0).points() >= Points::from(WINNING_SCORE) {
             Some(PLAYER0)
-        } else if self.pegging(PLAYER1).points() >= Points::from(WINNING_SCORE) {
+        } else if self.position(PLAYER1).points() >= Points::from(WINNING_SCORE) {
             Some(PLAYER1)
         } else {
             None
@@ -54,8 +59,8 @@ impl Scoreboard {
 
 impl std::fmt::Display for Scoreboard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let Self { peggings, .. } = self;
-        let peggings = format_vec(peggings);
-        write!(f, "Peggings({peggings})")
+        let Self { positions, .. } = self;
+        let positions = format_vec(positions);
+        write!(f, "Scoreboard({positions})")
     }
 }

@@ -4,7 +4,7 @@ use crate::{
     display::format_vec,
     domain::{
         Card, Crib, Hands, HasCrib, HasHands, HasPending, HasPlayState, HasRoles, HasScoreboard,
-        HasStarterCut, Pending, PlayState, Player, Roles, ScoreBreakdown, Scoreboard, StarterCut,
+        HasStarterCut, Pending, PlayState, Roles, Scoreboard, StarterCut,
     },
 };
 
@@ -25,24 +25,19 @@ impl Playing {
         Self { scoreboard, roles, hands, play_state, crib, starter_cut, pending }
     }
 
-    pub fn play_card(&mut self, player: Player, card: Card) {
+    pub fn play_card(&mut self, card: Card) {
+        let player = self.play_state.next_to_play();
+
         let hand = &mut self.hands[player];
         hand.remove(card);
-        self.play_state.play(card);
-        let scoreboard = &mut self.scoreboard;
-        scoreboard.peg(player, &ScoreBreakdown::play_card(&self.play_state));
-        if self.play_state.target_reached() {
-            self.play_state.start_new_play();
-        }
+
+        let play_state = &mut self.play_state;
+        play_state.play(card);
     }
 
-    pub fn pass(&mut self, player: Player) {
-        self.play_state.pass();
-        if self.play_state.all_players_passed() {
-            let scoreboard = &mut self.scoreboard;
-            scoreboard.peg(player, &ScoreBreakdown::pass(&self.play_state));
-            self.play_state.start_new_play();
-        }
+    pub fn pass(&mut self) {
+        let play_state = &mut self.play_state;
+        play_state.pass();
     }
 }
 

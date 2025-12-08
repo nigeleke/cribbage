@@ -4,7 +4,7 @@ use strum::AsRefStr;
 
 #[cfg(test)]
 use crate::domain::Game;
-use crate::domain::{Card, Dealer, GameId, Hand, Player, ScoreBreakdown, StarterCut, UserId};
+use crate::domain::{Card, Dealer, GameId, Hand, Pegging, Player, StarterCut, UserId};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, AsRefStr)]
 pub enum GameEvent {
@@ -43,31 +43,30 @@ pub enum GameEvent {
     },
     StarterSelected {
         cut: StarterCut,
-    },
-    PointsScored {
-        player: Player,
-        reasons: ScoreBreakdown,
+        pegging: Pegging,
     },
     CardPlayed {
         player: Player,
         card: Card,
+        pegging: Pegging,
     },
     Passed {
         player: Player,
+        pegging: Pegging,
     },
     PoneScored {
         player: Player,
+        pegging: Pegging,
     },
     DealerScored {
         player: Player,
+        pegging: Pegging,
     },
     CribScored {
         player: Player,
+        pegging: Pegging,
     },
     NextRoundStarted {
-        player: Player,
-    },
-    WinnerDeclared {
         player: Player,
     },
 

@@ -147,7 +147,7 @@ mod server_only {
     }
 
     fn score<T: HasScoreboard>(s: &T, p: Player) -> ScoreDTO {
-        ScoreDTO::from(s.pegging(p))
+        ScoreDTO::from(s.positions(p))
     }
 
     fn crib_down<T: HasCrib>(s: &T) -> Vec<CardDTO> {
@@ -162,7 +162,7 @@ mod server_only {
         let play_state = s.play_state();
 
         let (legal_plays, next_action) = {
-            if play_state.all_cards_are_played() {
+            if play_state.is_finished() {
                 (vec![], PlayActionDTO::ScorePone)
             } else {
                 let next_to_play = play_state.next_to_play();
@@ -218,11 +218,6 @@ mod server_only {
                     .into_iter()
                     .collect();
             let name = game.name();
-
-            dioxus::prelude::debug!(
-                "^^^^^^^^^^^ FOR USER {user_id} DERIVING FROM {}",
-                game.state()
-            );
 
             match &game.state() {
                 State::Starting(state) if game.guest().is_none() => {

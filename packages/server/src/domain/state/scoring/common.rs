@@ -4,7 +4,7 @@ use crate::{
     display::format_vec,
     domain::{
         Crib, Hands, HasCrib, HasHands, HasPending, HasRoles, HasScoreboard, HasStarterCut,
-        Pending, Roles, ScoreBreakdown, Scoreboard, StarterCut,
+        Pegging, Pending, Roles, Scoreboard, StarterCut,
     },
 };
 
@@ -15,7 +15,7 @@ pub struct Scoring<T> {
     hands: Hands,
     crib: Crib,
     starter_cut: StarterCut,
-    breakdown: ScoreBreakdown,
+    pegging: Pegging,
     pending: Pending,
     _marker: std::marker::PhantomData<T>,
 }
@@ -27,7 +27,7 @@ impl<T> Scoring<T> {
         hands: Hands,
         crib: Crib,
         starter_cut: StarterCut,
-        breakdown: ScoreBreakdown,
+        pegging: Pegging,
         pending: Pending,
     ) -> Self {
         Self {
@@ -36,14 +36,14 @@ impl<T> Scoring<T> {
             hands,
             crib,
             starter_cut,
-            breakdown,
+            pegging,
             pending,
             _marker: std::marker::PhantomData,
         }
     }
 
-    pub fn breakdown(&self) -> &ScoreBreakdown {
-        &self.breakdown
+    pub fn pegging(&self) -> &Pegging {
+        &self.pegging
     }
 }
 
@@ -113,7 +113,7 @@ impl<T> std::fmt::Display for Scoring<T> {
             .unwrap_or(name);
 
         #[rustfmt::skip]
-        let Self { scoreboard, roles, hands, crib, starter_cut: cut, breakdown, pending, _marker } = self;
+        let Self { scoreboard, roles, hands, crib, starter_cut: cut, pegging, pending, _marker } = self;
         let hands = format_vec(hands);
 
         write!(
@@ -124,7 +124,7 @@ impl<T> std::fmt::Display for Scoring<T> {
     hands: {hands},
     cut: {cut},
     crib: {crib},
-    breakdown: {breakdown},
+    pegging: {pegging},
     pending: {pending}
 )"#
         )

@@ -16,7 +16,7 @@ pub async fn start_next_round(
     if let Some(game) = game {
         let player = game
             .validate_user(user_id)
-            .ok_or(ServerError::Forbidden("score crib".into()))?;
+            .ok_or(ServerError::Forbidden("start next round".into()))?;
 
         let aggregate_id = game_id.value().to_string();
 

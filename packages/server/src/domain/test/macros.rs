@@ -47,3 +47,15 @@ macro_rules! hand {
         Hand::from_str($str).expect("valid hand")
     };
 }
+
+/// Create a vec![`Play`] using the provided plays [(usize, &str), ...].
+#[macro_export]
+macro_rules! plays {
+    ($plays:expr) => {
+        Vec::from_iter(
+            $plays
+                .into_iter()
+                .map(|(p, c)| (Play::new(Player::from(*p), card!(c)))),
+        )
+    };
+}

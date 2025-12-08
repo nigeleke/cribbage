@@ -10,7 +10,7 @@ pub enum GameCommand {
     PlayComputer { user_id: UserId, game_id: GameId },
     CutForDeal { player: Player },
     StartGame { player: Player },
-    Discard { player: Player, cards: Vec<Card> },
+    DiscardCards { player: Player, cards: Vec<Card> },
     PlayCard { player: Player, card: Card },
     Pass { player: Player },
     ScorePone { player: Player },

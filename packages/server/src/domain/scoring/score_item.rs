@@ -1,16 +1,18 @@
 use serde::{Deserialize, Serialize};
 
-use crate::display::format_vec;
-use crate::domain::{Card, Points, ScoreKind};
+use crate::{
+    display::format_vec,
+    domain::{Card, Points, ScoreKind},
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Event {
+pub struct ScoreItem {
     kind: ScoreKind,
     cards: Vec<Card>,
     points: Points,
 }
 
-impl Event {
+impl ScoreItem {
     pub fn new(kind: ScoreKind, cards: Vec<Card>, points: Points) -> Self {
         Self {
             kind,
@@ -24,7 +26,7 @@ impl Event {
     }
 }
 
-impl std::fmt::Display for Event {
+impl std::fmt::Display for ScoreItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

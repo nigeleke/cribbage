@@ -6,11 +6,11 @@ use crate::{card, cards, crib, domain::*, hand};
 pub struct GameBuilder {
     dealer: usize,
     cuts: Vec<Card>,
-    peggings: Vec<usize>,
+    positions: Vec<usize>,
     hands: Vec<Hand>,
     current_plays: Vec<Play>,
     previous_plays: Vec<Play>,
-    pass_count: usize,
+    go_status: GoStatus,
     crib: Crib,
     cut: Option<Card>,
     deck: Deck,
@@ -27,8 +27,8 @@ impl GameBuilder {
     }
 
     pub fn with_points(mut self, points0: usize, points1: usize) -> Self {
-        self.peggings.push(points0);
-        self.peggings.push(points1);
+        self.positions.push(points0);
+        self.positions.push(points1);
         self
     }
 
@@ -74,7 +74,7 @@ impl GameBuilder {
     }
 
     pub fn with_pass(mut self) -> Self {
-        self.pass_count += 1;
+        self.go_status = GoStatus::Called;
         self
     }
 
@@ -112,11 +112,11 @@ impl GameBuilder {
     }
 
     fn domain_scoreboard(&self) -> Scoreboard {
-        let peggings = [
-            Pegging::new(*self.peggings.get(0).unwrap_or(&0)),
-            Pegging::new(*self.peggings.get(1).unwrap_or(&0)),
+        let positions = [
+            Position::new(*self.positions.get(0).unwrap_or(&0)),
+            Position::new(*self.positions.get(1).unwrap_or(&0)),
         ];
-        Scoreboard::new(peggings)
+        Scoreboard::new(positions)
     }
 
     #[inline]
@@ -144,7 +144,7 @@ impl GameBuilder {
             .with_pending_plays(PLAYER0, self.hands[0].as_ref())
             .with_pending_plays(PLAYER1, self.hands[1].as_ref());
 
-        *play_state.pass_count_mut() = self.pass_count;
+        *play_state.go_status_mut() = self.go_status;
         *play_state.current_plays_mut() = self.current_plays.clone();
         *play_state.previous_plays_mut() = self.previous_plays.clone();
 
@@ -166,16 +166,16 @@ impl GameBuilder {
         self.pending.clone()
     }
 
-    pub fn into_starting(self) -> Game {
+    pub fn as_starting(self) -> Game {
         let starting = Starting::new(
             self.domain_cuts(),
             self.domain_deck(),
             self.domain_pending(),
         );
-        Self::new_game(State::Starting(starting))
+        Self::new_game(starting.wrap())
     }
 
-    pub fn into_discarding(mut self) -> Game {
+    pub fn as_discarding(mut self) -> Game {
         self.cut.into_iter().for_each(|c| self.deck.add(c));
 
         let discarding = Discarding::new(
@@ -187,10 +187,10 @@ impl GameBuilder {
             self.domain_pending(),
         );
 
-        Self::new_game(State::Discarding(discarding))
+        Self::new_game(discarding.wrap())
     }
 
-    pub fn into_playing(self, next_to_play: usize) -> Game {
+    pub fn as_playing(self, next_to_play: usize) -> Game {
         let playing = Playing::new(
             self.domain_scoreboard(),
             self.domain_roles(),
@@ -200,52 +200,64 @@ impl GameBuilder {
             self.domain_cut(),
             self.domain_pending(),
         );
-        Self::new_game(State::Playing(playing))
+        Self::new_game(playing.wrap())
     }
 
-    pub fn into_scoring_pone(self) -> Game {
-        let scores = ScoreBreakdown::hand(&self.hands[1 - self.dealer], self.domain_cut());
+    pub fn as_scoring_pone(self) -> Game {
+        let pone = 1 - self.dealer;
+        let pegging = Pegging::new(
+            Player::from(pone),
+            ScoreSheet::hand(&self.hands[pone], self.domain_cut()),
+        );
         let scoring = ScoringPone::new(
             self.domain_scoreboard(),
             self.domain_roles(),
             self.domain_hands(),
             self.domain_crib(),
             self.domain_cut(),
-            scores,
+            pegging,
             self.domain_pending(),
         );
-        Self::new_game(State::ScoringPone(scoring))
+        Self::new_game(scoring.wrap())
     }
 
-    pub fn into_scoring_dealer(self) -> Game {
-        let scores = ScoreBreakdown::hand(&self.hands[self.dealer], self.domain_cut());
+    pub fn as_scoring_dealer(self) -> Game {
+        let dealer = self.dealer;
+        let pegging = Pegging::new(
+            Player::from(dealer),
+            ScoreSheet::hand(&self.hands[dealer], self.domain_cut()),
+        );
         let scoring = ScoringDealer::new(
             self.domain_scoreboard(),
             self.domain_roles(),
             self.domain_hands(),
             self.domain_crib(),
             self.domain_cut(),
-            scores,
+            pegging,
             self.domain_pending(),
         );
-        Self::new_game(State::ScoringDealer(scoring))
+        Self::new_game(scoring.wrap())
     }
 
-    pub fn into_scoring_crib(self) -> Game {
-        let scores = ScoreBreakdown::crib(&self.crib, self.domain_cut());
+    pub fn as_scoring_crib(self) -> Game {
+        let dealer = self.dealer;
+        let pegging = Pegging::new(
+            Player::from(dealer),
+            ScoreSheet::crib(&self.crib, self.domain_cut()),
+        );
         let scoring = ScoringCrib::new(
             self.domain_scoreboard(),
             self.domain_roles(),
             self.domain_hands(),
             self.domain_crib(),
             self.domain_cut(),
-            scores,
+            pegging,
             self.domain_pending(),
         );
-        Self::new_game(State::ScoringCrib(scoring))
+        Self::new_game(scoring.wrap())
     }
 
-    pub fn into_finished(self) -> Game {
+    pub fn as_finished(self) -> Game {
         let finished = Finished::new(
             self.domain_winner(),
             self.domain_scoreboard(),
@@ -254,7 +266,7 @@ impl GameBuilder {
             self.domain_crib(),
             self.domain_cut(),
         );
-        Self::new_game(State::Finished(finished))
+        Self::new_game(finished.wrap())
     }
 }
 
@@ -264,11 +276,11 @@ impl Default for GameBuilder {
             deck: Deck::shuffled_pack(),
             dealer: 0,
             cuts: Vec::default(),
-            peggings: Vec::new(),
+            positions: Vec::new(),
             hands: Vec::default(),
             current_plays: Vec::default(),
             previous_plays: Vec::default(),
-            pass_count: 0,
+            go_status: GoStatus::default(),
             crib: Crib::default(),
             cut: None,
             winner: 0,
@@ -297,4 +309,192 @@ macro_rules! scenario {
         *game.name_mut() = function_name!();
         vec![GameEvent::GamePreloaded { game }]
     }};
+}
+
+#[macro_export]
+macro_rules! find_then {
+    ($slice:expr, $pat:pat => $assert:block) => {
+        #[allow(unused)]
+        if let Some(event) = $slice.iter().find(|e| matches!(e, $pat)) {
+            if let $pat = event {
+                $assert
+            } else {
+                unreachable!()
+            }
+        } else {
+            panic!("expected {} not found", stringify!($pat));
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! assert_state_then {
+    ($state:expr, $pat:pat $(if $guard:expr)? => $assert:block) => {{
+        match $state {
+            $pat $(if $guard)? => $assert,
+            other => panic!("unexpected state: {:?}", other),
+        }
+    }};
+}
+
+pub fn __private_game_test_impl(
+    function_name: String,
+    given: &[GameEvent],
+    when: GameCommand,
+    then_events: Option<impl Fn(&[GameEvent])>,
+    then_state: Option<impl Fn(&State)>,
+    then_error: Option<DomainError>,
+) {
+    let is_happy_path_tests = then_events.is_some() || then_state.is_some();
+    let is_error_path_tests = then_error.is_some();
+
+    assert!(
+        (is_happy_path_tests && !is_error_path_tests)
+            || (is_error_path_tests && !is_happy_path_tests)
+    );
+
+    let mut game = Game::from(given);
+
+    let result = cqrs_es::test::TestFramework::<Game>::with(GameServices)
+        .given(Vec::from(given))
+        .when(when)
+        .inspect_result();
+
+    match result {
+        Ok(events) if is_happy_path_tests => {
+            then_events.iter().for_each(|f| f(events.as_slice()));
+            game.apply_events(&events);
+            let state = game.state();
+            then_state.iter().for_each(|f| f(state));
+        }
+        Ok(events) => panic!("unexpected result in {function_name}: {events:?}"),
+        Err(error) if is_error_path_tests => {
+            then_error
+                .into_iter()
+                .for_each(|e| assert_eq!(error, e, "in function {function_name}"));
+        }
+        Err(error) => panic!("unexpected result in {function_name}: {error:?}"),
+    };
+}
+
+#[macro_export]
+macro_rules! game_test {
+    {
+        given: $given:expr,
+        when: $when:expr,
+        then_events: $events_fn:expr,
+        then_state: $state_fn:expr
+    } => {{
+        $crate::domain::test::__private_game_test_impl(
+            function_name!(),
+            $given,
+            $when,
+            Some($events_fn),
+            Some($state_fn),
+            None::<DomainError>
+        );
+    }};
+
+    {
+        given: $given:expr,
+        when: $when:expr,
+        then_events: $events_fn:expr
+    } => {{
+        $crate::domain::test::__private_game_test_impl(
+            function_name!(),
+            $given,
+            $when,
+            Some($events_fn),
+            None::<fn(&State)>,
+            None::<DomainError>
+        );
+    }};
+
+    {
+        given: $given:expr,
+        when: $when:expr,
+        then_state: $state_fn:expr
+    } => {{
+        $crate::domain::test::__private_game_test_impl(
+            function_name!(),
+            $given,
+            $when,
+            None::<fn(&[GameEvent])>,
+            Some($state_fn),
+            None::<DomainError>
+        );
+    }};
+
+    {
+        given: $given:expr,
+        when: $when:expr,
+        then_error: $error:expr
+    } => {{
+        $crate::domain::test::__private_game_test_impl(
+            function_name!(),
+            $given,
+            $when,
+            None::<fn(&[GameEvent])>,
+            None::<fn(&State)>,
+            Some($error)
+        );
+    }};
+
+    {
+        when: $when:expr,
+        then_events: $events_fn:expr,
+        then_state: $state_fn:expr
+    } => {{
+        $crate::domain::test::__private_game_test_impl(
+            function_name!(),
+            &[],
+            $when,
+            Some($events_fn),
+            Some($state_fn),
+            None::<DomainError>
+        );
+    }};
+
+    {
+        when: $when:expr,
+        then_events: $events_fn:expr
+    } => {{
+        $crate::domain::test::__private_game_test_impl(
+            function_name!(),
+            &[],
+            $when,
+            Some($events_fn),
+            None::<fn(&State)>,
+            None::<DomainError>
+        );
+    }};
+
+    {
+        when: $when:expr,
+        then_state: $state_fn:expr
+    } => {{
+        $crate::domain::test::__private_game_test_impl(
+            function_name!(),
+            &[],
+            $when,
+            None::<fn(&[GameEvent])>,
+            Some($state_fn),
+            None::<DomainError>
+        );
+    }};
+
+    {
+        when: $when:expr,
+        then_error: $error:expr
+    } => {{
+        $crate::domain::test::__private_game_test_impl(
+            function_name!(),
+            &[],
+            $when,
+            None::<fn(&[GameEvent])>,
+            None::<fn(&State)>,
+            Some($error)
+        );
+    }};
+
 }

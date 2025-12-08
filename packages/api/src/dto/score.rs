@@ -8,14 +8,15 @@ pub struct ScoreDTO {
 
 #[cfg(feature = "server")]
 mod server_only {
-    use super::*;
-    use server::domain::Pegging;
+    use server::domain::Position;
 
-    impl From<&Pegging> for ScoreDTO {
-        fn from(value: &Pegging) -> Self {
+    use super::*;
+
+    impl From<&Position> for ScoreDTO {
+        fn from(value: &Position) -> Self {
             Self {
-                back_peg: value.back_peg().value(),
-                front_peg: value.front_peg().value(),
+                back_peg: value.back().value(),
+                front_peg: value.front().value(),
             }
         }
     }

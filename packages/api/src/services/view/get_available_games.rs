@@ -4,6 +4,8 @@ use dioxus::fullstack::extract::State;
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "server")]
+use crate::ServerStateExtractor;
 use crate::dto::{AvailableGameDTO, UserIdDTO};
 
 pub type Since = Option<DateTime<Utc>>;
@@ -29,7 +31,7 @@ impl AvailableGamesResponse {
     }
 }
 
-#[get("/api/{user_id}/available_games?filter&since", State(server_state): State<server::ServerState>)]
+#[get("/api/{user_id}/available_games?filter&since", State(server_state): State<ServerStateExtractor>)]
 pub async fn get_available_games(
     user_id: UserIdDTO,
     filter: Option<String>,
@@ -46,7 +48,7 @@ pub async fn get_available_games(
     let filter = filter.unwrap_or_default();
 
     let (games, has_more, since) =
-        get_available_games(server_state, user_id, filter, since).await?;
+        get_available_games(server_state.0, user_id, filter, since).await?;
 
     let games = games
         .into_iter()

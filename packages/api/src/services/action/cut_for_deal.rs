@@ -2,12 +2,14 @@
 use dioxus::fullstack::extract::State;
 use dioxus::prelude::*;
 
+#[cfg(feature = "server")]
+use crate::ServerStateExtractor;
 use crate::{
     dto::{GameIdDTO, UserIdDTO},
     error::ApiError,
 };
 
-#[post("/api/{user_id}/game/{game_id}/cut_for_deal", State(server_state): State<server::ServerState>)]
+#[post("/api/{user_id}/game/{game_id}/cut_for_deal", State(server_state): State<ServerStateExtractor>)]
 pub async fn cut_for_deal(user_id: UserIdDTO, game_id: GameIdDTO) -> Result<(), ApiError> {
     use server::{
         action::cut_for_deal,
@@ -17,6 +19,6 @@ pub async fn cut_for_deal(user_id: UserIdDTO, game_id: GameIdDTO) -> Result<(), 
     let user_id = UserId::from(user_id.value());
     let game_id = GameId::from(game_id.value());
 
-    cut_for_deal(server_state, user_id, game_id).await?;
+    cut_for_deal(server_state.0, user_id, game_id).await?;
     Ok(())
 }

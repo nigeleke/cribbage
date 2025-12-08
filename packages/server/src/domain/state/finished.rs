@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::display::format_vec;
-use crate::domain::{
-    Crib, Hands, HasCrib, HasHands, HasRoles, HasScoreboard, HasStarterCut, Player, Roles,
-    Scoreboard, StarterCut,
+use crate::{
+    display::format_vec,
+    domain::{
+        Crib, Hands, HasCrib, HasHands, HasRoles, HasScoreboard, HasStarterCut,
+        Player, Roles, Scoreboard, StarterCut,
+    },
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

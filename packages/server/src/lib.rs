@@ -5,7 +5,6 @@ mod database;
 mod display;
 pub mod domain;
 pub mod error;
-mod extensions;
 mod macros;
 mod name_builder;
 mod projections;

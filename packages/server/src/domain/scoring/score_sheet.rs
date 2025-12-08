@@ -5,17 +5,17 @@ use super::constants::*;
 use crate::{
     display::format_vec,
     domain::{
-        Card, Crib, Hand, Play, PlayState, Points, ScoreEvent, ScoreKind, StarterCut, Value,
-        constants::*,
+        Card, Crib, GoStatus, Hand, Play, PlayState, Points, ScoreItem, ScoreKind, StarterCut,
+        Value, constants::*,
     },
 };
 
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Breakdown(Vec<ScoreEvent>);
+pub struct ScoreSheet(Vec<ScoreItem>);
 
-impl Breakdown {
+impl ScoreSheet {
     pub fn add_event(mut self, kind: ScoreKind, cards: &[Card], points: Points) -> Self {
-        let event = ScoreEvent::new(kind, Vec::from(cards), points);
+        let event = ScoreItem::new(kind, Vec::from(cards), points);
         self.0.push(event);
         self
     }
@@ -28,14 +28,14 @@ impl Breakdown {
         points: Points,
     ) -> Self {
         if condition {
-            let event = ScoreEvent::new(kind, Vec::from(cards), points);
+            let event = ScoreItem::new(kind, Vec::from(cards), points);
             self.0.push(event);
         }
         self
     }
 
     pub fn points(&self) -> Points {
-        self.0.iter().map(ScoreEvent::points).sum()
+        self.0.iter().map(ScoreItem::points).sum()
     }
 
     pub fn his_heels(cut: Card) -> Self {
@@ -48,11 +48,13 @@ impl Breakdown {
     }
 
     pub fn play_card(play_state: &PlayState) -> Self {
+        eprintln!("Scoring play card for {play_state}");
         Self::default()
             .play_card_fifteens(play_state)
             .play_card_pairs(play_state)
             .play_card_runs(play_state)
-            .play_card_last(play_state)
+            .play_card_31(play_state)
+            .play_last_card(play_state)
     }
 
     fn play_card_fifteens(self, play_state: &PlayState) -> Self {
@@ -125,35 +127,42 @@ impl Breakdown {
         }
     }
 
-    fn play_card_last(self, play_state: &PlayState) -> Self {
-        let cards: Vec<_> = play_state
-            .current_plays()
-            .iter()
-            .map(|p| p.card())
-            .collect();
-
+    fn play_card_31(self, play_state: &PlayState) -> Self {
         let is_31 = play_state.running_total() == PLAY_TARGET.into();
-        let is_finished = play_state.is_current_play_finished();
 
-        if !is_finished {
-            self
-        } else if is_31 {
+        if is_31 {
+            let cards = play_state
+                .current_plays()
+                .iter()
+                .map(|p| p.card())
+                .collect::<Vec<_>>();
             self.add_event(ScoreKind::ThirtyOne, &cards, SCORE_THIRTY_ONE.into())
         } else {
-            self.add_event(ScoreKind::Go, &[], SCORE_UNDER_THIRTY_ONE.into())
+            self
         }
     }
 
-    pub fn pass(play_state: &PlayState) -> Self {
-        Self::default().pass_last_card(play_state)
+    fn play_last_card(self, play_state: &PlayState) -> Self {
+        let is_finished = play_state.is_finished();
+        let is_31 = play_state.running_total() == PLAY_TARGET.into();
+
+        if is_finished && !is_31 {
+            self.add_event(ScoreKind::LastCard, &[], SCORE_GO.into())
+        } else {
+            self
+        }
     }
 
-    fn pass_last_card(self, play_state: &PlayState) -> Self {
+    pub fn go(play_state: &PlayState) -> Self {
+        Self::default().go_last_card(play_state)
+    }
+
+    fn go_last_card(self, play_state: &PlayState) -> Self {
         self.add_event_if(
-            play_state.is_current_play_finished() && play_state.all_players_passed(),
-            ScoreKind::Go,
+            play_state.go_status() != &GoStatus::NotCalled,
+            ScoreKind::LastCard,
             &[],
-            Points::from(SCORE_UNDER_THIRTY_ONE),
+            Points::from(SCORE_GO),
         )
     }
 
@@ -266,7 +275,7 @@ impl Breakdown {
     }
 }
 
-impl std::fmt::Display for Breakdown {
+impl std::fmt::Display for ScoreSheet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let events = format_vec(self.0.as_slice());
         events.fmt(f)
@@ -286,8 +295,8 @@ mod test {
 
     #[test]
     fn impossible_pairs_will_return_0() {
-        let hand1 = hand!("AHACADASAH");
-        let hand2 = hand!("");
+        let hand1 = hand!("AHADAH2C");
+        let hand2 = hand!("ACAS2H2D");
 
         let mut play_state = PlayState::new(PLAYER0)
             .with_pending_plays(PLAYER0, &hand1.as_ref())
@@ -299,7 +308,7 @@ mod test {
         play_state.play(card!("AH"));
 
         assert_eq!(
-            Breakdown::play_card(&play_state).points(),
+            ScoreSheet::play_card(&play_state).points(),
             Points::default()
         );
     }

@@ -2,14 +2,14 @@ use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, AsRefStr)]
-pub enum Kind {
+pub enum ScoreKind {
     Fifteen,
     Pair,
     Triplet,
     Quadruplet,
     Run,
     Flush,
-    Go,
+    LastCard,
     ThirtyOne,
     HisHeels,
     Nobs,

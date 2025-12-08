@@ -9,7 +9,7 @@ macro_rules! function_name {
         String::from(
             name.rsplit("::")
                 .find(|&part| part != "f" && part != "{{closure}}")
-                .expect("Short function name"),
+                .expect("short function name"),
         )
     }};
 }

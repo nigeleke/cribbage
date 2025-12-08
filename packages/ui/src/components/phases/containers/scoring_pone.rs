@@ -12,7 +12,7 @@ pub fn ScoringPone() -> Element {
             south: rsx! { OpponentHand {} },
             east: rsx! { Scoreboard {} },
             west: rsx! { CribAndCut {} },
-            centre: rsx! { "Pone Breakdown" },
+            centre: rsx! { "Pone sheet" },
         }
     }
 }

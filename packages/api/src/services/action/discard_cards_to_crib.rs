@@ -2,12 +2,14 @@
 use dioxus::fullstack::extract::State;
 use dioxus::prelude::*;
 
+#[cfg(feature = "server")]
+use crate::ServerStateExtractor;
 use crate::{
     dto::{CardIdDTO, GameIdDTO, UserIdDTO},
     error::ApiError,
 };
 
-#[post("/api/{user_id}/game/{game_id}/discard_cards_to_crib", State(server_state): State<server::ServerState>)]
+#[post("/api/{user_id}/game/{game_id}/discard_cards_to_crib", State(server_state): State<ServerStateExtractor>)]
 pub async fn discard_cards_to_crib(
     user_id: UserIdDTO,
     game_id: GameIdDTO,
@@ -28,6 +30,6 @@ pub async fn discard_cards_to_crib(
         .collect::<Result<_, _>>()
         .map_err(|error| ApiError::BadRequest(error.to_string()))?;
 
-    discard_cards_to_crib(server_state, user_id, game_id, cards).await?;
+    discard_cards_to_crib(server_state.0, user_id, game_id, cards).await?;
     Ok(())
 }

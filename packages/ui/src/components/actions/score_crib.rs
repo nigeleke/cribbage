@@ -26,7 +26,7 @@ pub fn ScoreCribAction() -> Element {
         Confirmation {
             Button {
                 onclick: on_score,
-                "Score Dealer"
+                "Score Crib"
             }
         }
     }

@@ -20,7 +20,7 @@ pub async fn score_crib(
 
         let aggregate_id = game_id.value().to_string();
 
-        let command = GameCommand::ScoreDealer { player };
+        let command = GameCommand::ScoreCrib { player };
 
         server_state
             .cqrs

@@ -5,9 +5,11 @@ use dioxus::{
     prelude::*,
 };
 
+#[cfg(feature = "server")]
+use crate::ServerStateExtractor;
 use crate::dto::{AvailableGameEventDTO, UserIdDTO};
 
-#[get("/api/{user_id}/available_games/events", State(server_state): State<server::ServerState>)]
+#[get("/api/{user_id}/available_games/events", State(server_state): State<ServerStateExtractor>)]
 pub async fn available_games_events(
     user_id: UserIdDTO,
 ) -> Result<Streaming<AvailableGameEventDTO, JsonEncoding>> {
@@ -32,7 +34,7 @@ pub async fn available_games_events(
         }
     };
 
-    let stream = available_game_events(server_state, user_id).await?;
+    let stream = available_game_events(server_state.0, user_id).await?;
     let stream = stream.map(game_event_to_dto);
 
     Ok(Streaming::new(stream))

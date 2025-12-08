@@ -12,7 +12,7 @@ pub fn ScoringCrib() -> Element {
             south: rsx! { OpponentHand {} },
             east: rsx! { Scoreboard {} },
             west: rsx! { CribAndCut {} },
-            centre: rsx! { "Crib Breakdown" },
+            centre: rsx! { "Crib sheet" },
         }
     }
 }

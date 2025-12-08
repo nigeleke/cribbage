@@ -1,5 +1,6 @@
 use futures::{Stream, TryStreamExt};
 use tokio_stream::{StreamExt, wrappers::BroadcastStream};
+use tracing::warn;
 
 use crate::{
     bug, convertors,
@@ -60,7 +61,7 @@ pub async fn game_stream(
     let stream = stream.filter_map(|result| match result {
         Ok(game) => Some(game),
         Err(error) => {
-            dioxus::prelude::warn!("server:services:game_stream: error: {error}");
+            warn!("server:services:game_stream: error: {error}");
             None
         }
     });

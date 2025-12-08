@@ -1,9 +1,9 @@
 mod board;
-mod pegging;
-mod peggings;
 mod points;
+mod position;
+mod positions;
 
 pub use board::*;
-pub use pegging::*;
-pub use peggings::*;
 pub use points::*;
+pub use position::*;
+pub use positions::*;

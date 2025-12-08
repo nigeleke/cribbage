@@ -12,7 +12,7 @@ pub fn ScoringDealer() -> Element {
             south: rsx! { OpponentHand {} },
             east: rsx! { Scoreboard {} },
             west: rsx! { CribAndCut {} },
-            centre: rsx! { "Dealer Breakdown" },
+            centre: rsx! { "Dealer sheet" },
         }
     }
 }

@@ -1,4 +1,3 @@
-use dioxus::logger::tracing::field::debug;
 use serde::{Deserialize, Serialize};
 
 use super::{Dealer, Pone};
@@ -38,7 +37,6 @@ impl Roles {
 
         (defined_cuts.len() == PLAYER_COUNT)
             .then(|| {
-                debug("Roles:from_cuts: {defined_cuts:?}");
                 let dealer = match defined_cuts[PLAYER0]
                     .face()
                     .rank()

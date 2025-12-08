@@ -12,7 +12,7 @@ pub enum GameCommand {
     StartGame { player: Player },
     DiscardCards { player: Player, cards: Vec<Card> },
     PlayCard { player: Player, card: Card },
-    Pass { player: Player },
+    Go { player: Player },
     ScorePone { player: Player },
     ScoreDealer { player: Player },
     ScoreCrib { player: Player },

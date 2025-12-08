@@ -50,7 +50,7 @@ pub enum GameEvent {
         card: Card,
         pegging: Pegging,
     },
-    Passed {
+    GoCalled {
         player: Player,
         pegging: Pegging,
     },

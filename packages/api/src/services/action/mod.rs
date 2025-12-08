@@ -1,8 +1,8 @@
 mod cut_for_deal;
 mod discard_cards_to_crib;
+mod go;
 mod host_game;
 mod join_game;
-mod pass;
 mod play_card;
 mod play_computer;
 mod score_crib;
@@ -13,9 +13,9 @@ mod start_next_round;
 
 pub use cut_for_deal::cut_for_deal;
 pub use discard_cards_to_crib::discard_cards_to_crib;
+pub use go::go;
 pub use host_game::host_game;
 pub use join_game::join_game;
-pub use pass::pass;
 pub use play_card::play_card;
 pub use play_computer::play_computer;
 pub use score_crib::score_crib;

@@ -7,7 +7,7 @@ pub type PlayDTO = (PlayerDTO, CardDTO);
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PlayActionDTO {
     Play(PlayerDTO),
-    Pass(PlayerDTO),
+    Go(PlayerDTO),
     ScorePone,
 }
 

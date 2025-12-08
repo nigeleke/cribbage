@@ -277,24 +277,24 @@ impl Game {
         }
     }
 
-    fn pass(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
-        let not_permitted = || Err(DomainError::NotPermitted("pass".into()));
+    fn go(&self, player: Player) -> Result<Vec<GameEvent>, DomainError> {
+        let not_permitted = || Err(DomainError::NotPermitted("go".into()));
 
-        let pass = |playing: &Playing| {
+        let go = |playing: &Playing| {
             let play_state = playing.play_state();
             if play_state.next_to_play() != player {
                 Err(DomainError::NotPlayersTurn(player))
             } else if !play_state.legal_plays(player).is_empty() {
-                Err(DomainError::InvalidPass)
+                Err(DomainError::InvalidGo)
             } else {
-                // There will always be a valid play before a pass can occur. The `or` condition
+                // There will always be a valid play before a go can occur. The `or` condition
                 // in `map_or` will never occur.
                 let recipient = play_state
                     .current_plays()
                     .last()
                     .map_or(player, Play::player);
                 let pegging = Pegging::new(recipient, ScoreSheet::go(&play_state));
-                Ok(vec![GameEvent::Passed { player, pegging }])
+                Ok(vec![GameEvent::GoCalled { player, pegging }])
             }
         };
 
@@ -303,7 +303,7 @@ impl Game {
         } else {
             match &self.state {
                 State::Playing(playing) => {
-                    let events = pass(playing)?;
+                    let events = go(playing)?;
                     Ok(events)
                 }
                 _ => not_permitted(),
@@ -435,7 +435,7 @@ impl Game {
             GameCommand::StartGame { player } => self.start_game(player),
             GameCommand::DiscardCards { player, cards } => self.discard_cards(player, cards),
             GameCommand::PlayCard { player, card } => self.play_card(player, card),
-            GameCommand::Pass { player } => self.pass(player),
+            GameCommand::Go { player } => self.go(player),
             GameCommand::ScorePone { player } => self.score_pone(player),
             GameCommand::ScoreDealer { player } => self.score_dealer(player),
             GameCommand::ScoreCrib { player } => self.score_crib(player),
@@ -555,9 +555,9 @@ impl Game {
         }
     }
 
-    fn passed(&mut self, _player: Player, pegging: Pegging) {
+    fn go_called(&mut self, _player: Player, pegging: Pegging) {
         if let State::Playing(playing) = &mut self.state {
-            playing.pass();
+            playing.go();
             playing.scoreboard_mut().peg(&pegging);
             self.state = playing.clone().wrap().or_finished();
         }
@@ -676,7 +676,7 @@ impl Game {
                 card,
                 pegging,
             } => self.card_played(player, card, pegging),
-            GameEvent::Passed { player, pegging } => self.passed(player, pegging),
+            GameEvent::GoCalled { player, pegging } => self.go_called(player, pegging),
             GameEvent::PoneScored { player, pegging } => self.pone_scored(player, pegging),
             GameEvent::DealerScored { player, pegging } => self.dealer_scored(player, pegging),
             GameEvent::CribScored { player, pegging } => self.crib_scored(player, pegging),
@@ -1352,7 +1352,7 @@ mod test {
     ///
     /// After the starter is turned, the non-dealer lays one of his cards face up on the table. The
     /// dealer similarly exposes a card, then non-dealer again, and so on - the hands are exposed
-    /// card by card, alternately except for a "Go," (Pass) as noted below. Each player keeps his
+    /// card by card, alternately except for a "Go", as noted below. Each player keeps his
     /// cards separate from those of his opponent.
     ///
     /// As each person plays, he announces a running total of pips reached by the addition of the
@@ -1395,11 +1395,11 @@ mod test {
         }
 
         #[test]
-        fn accept_valid_play_after_opponent_passed() {
+        fn accept_valid_play_after_opponent_go_called() {
             game_test! {
                 given: &scenario!(
                     as_playing(1);
-                    with_pass(),
+                    with_go(),
                     with_cut("AC"),
                     with_hands("9S", "4SAS"),
                     with_current_plays(&[(1, "TC"), (0, "TD"), (0, "5C")])
@@ -2025,7 +2025,7 @@ mod test {
         };
 
         #[test]
-        fn accept_pass_when_pone_has_no_valid_card() {
+        fn accept_go_when_pone_has_no_valid_card() {
             game_test! {
                 given: &scenario!(
                     as_playing(1);
@@ -2034,9 +2034,9 @@ mod test {
                     with_hands("AH", "KH"),
                     with_current_plays(&[(0, "TH"), (0, "JH"), (0, "QH")])
                 ),
-                when: GameCommand::Pass { player: PLAYER1 },
+                when: GameCommand::Go { player: PLAYER1 },
                 then_events: |events: &[GameEvent]| {
-                    assert_eq!(events, &[GameEvent::Passed {
+                    assert_eq!(events, &[GameEvent::GoCalled {
                         player: PLAYER1,
                         pegging: Pegging::new(PLAYER0, ScoreSheet::default()),
                     }])
@@ -2045,19 +2045,19 @@ mod test {
         }
 
         #[test]
-        fn accept_pass_when_dealer_has_no_valid_card() {
+        fn accept_go_when_dealer_has_no_valid_card() {
             game_test! {
                 given: &scenario!(
                     as_playing(0);
-                    with_pass(),
+                    with_go(),
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("KH", "KS"),
                     with_current_plays(&[(0, "TH"), (1, "QH"), (0, "JH")])
                 ),
-                when: GameCommand::Pass { player: PLAYER0 },
+                when: GameCommand::Go { player: PLAYER0 },
                 then_events: |events: &[GameEvent]| {
-                    assert_eq!(events, &[GameEvent::Passed {
+                    assert_eq!(events, &[GameEvent::GoCalled {
                         player: PLAYER0,
                         pegging: Pegging::new(
                             PLAYER0,
@@ -2069,7 +2069,7 @@ mod test {
         }
 
         #[test]
-        fn cannot_pass_when_valid_card_held() {
+        fn cannot_call_go_when_valid_card_held() {
             game_test! {
                 given: &scenario!(
                     as_playing(1);
@@ -2078,13 +2078,13 @@ mod test {
                     with_hands("AH", "AS"),
                     with_current_plays(&[(0, "TH"), (0, "JH"), (0, "8H")])
                 ),
-                when: GameCommand::Pass { player: PLAYER1 },
-                then_error: DomainError::InvalidPass
+                when: GameCommand::Go { player: PLAYER1 },
+                then_error: DomainError::InvalidGo
             }
         }
 
         #[test]
-        fn cannot_pass_when_not_turn() {
+        fn cannot_call_go_when_not_turn() {
             game_test! {
                 given: &scenario!(
                     as_playing(1);
@@ -2093,25 +2093,25 @@ mod test {
                     with_hands("AH", "AS"),
                     with_current_plays(&[(0, "TH"), (0, "JH"), (0, "8H")])
                 ),
-                when: GameCommand::Pass { player: PLAYER0 },
+                when: GameCommand::Go { player: PLAYER0 },
                 then_error: DomainError::NotPlayersTurn(PLAYER0)
             }
         }
 
         #[test]
-        fn score_pass_when_both_players_passed_playing() {
+        fn score_go_when_both_players_called_go_playing() {
             game_test! {
                 given: &scenario!(
                     as_playing(0);
-                    with_pass(),
+                    with_go(),
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("KH", "KS"),
                     with_current_plays(&[(0, "TH"), (1, "QH"), (0, "JH")])
                 ),
-                when: GameCommand::Pass { player: PLAYER0 },
+                when: GameCommand::Go { player: PLAYER0 },
                 then_events: |events: &[GameEvent]| {
-                    assert_eq!(events, &[GameEvent::Passed {
+                    assert_eq!(events, &[GameEvent::GoCalled {
                         player: PLAYER0,
                         pegging: Pegging::new(
                             PLAYER0,
@@ -2123,19 +2123,19 @@ mod test {
         }
 
         #[test]
-        fn score_pass_when_both_players_passed_finished() {
+        fn score_go_when_both_players_called_go_finished() {
             game_test! {
                 given: &scenario!(
                     as_playing(0);
-                    with_pass(),
+                    with_go(),
                     with_points(120, 0),
                     with_cut("AS"),
                     with_hands("KH", "KS"),
                     with_current_plays(&[(0, "TH"), (1, "QH"), (0, "JH")])
                 ),
-                when: GameCommand::Pass { player: PLAYER0 },
+                when: GameCommand::Go { player: PLAYER0 },
                 then_events: |events: &[GameEvent]| {
-                    assert_eq!(events, &[GameEvent::Passed {
+                    assert_eq!(events, &[GameEvent::GoCalled {
                         player: PLAYER0,
                         pegging: Pegging::new(
                             PLAYER0,
@@ -2152,7 +2152,7 @@ mod test {
         }
 
         #[test]
-        fn swap_player_after_pone_pass() {
+        fn swap_player_after_pone_called_go() {
             game_test! {
                 given: &scenario!(
                     as_playing(1);
@@ -2161,7 +2161,7 @@ mod test {
                     with_hands("8H8D", "5SJH"),
                     with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
                 ),
-                when: GameCommand::Pass { player: PLAYER1 },
+                when: GameCommand::Go { player: PLAYER1 },
                 then_state: |state: &State| {
                     assert_state_then!(state, State::Playing(playing) => {
                         assert_eq!(playing.play_state().next_to_play(), PLAYER0)
@@ -2171,7 +2171,7 @@ mod test {
         }
 
         #[test]
-        fn swap_player_after_dealer_pass() {
+        fn swap_player_after_dealer_called_go() {
             game_test! {
                 given: &scenario!(
                     as_playing(0);
@@ -2180,7 +2180,7 @@ mod test {
                     with_hands("7H8H8D", "4S5S"),
                     with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
                 ),
-                when: GameCommand::Pass { player: PLAYER0 },
+                when: GameCommand::Go { player: PLAYER0 },
                 then_state: |state: &State| {
                     assert_state_then!(state, State::Playing(playing) => {
                         assert_eq!(playing.play_state().next_to_play(), PLAYER1)
@@ -2190,17 +2190,17 @@ mod test {
         }
 
         #[test]
-        fn reset_play_after_pone_then_dealer_pass() {
+        fn reset_play_after_pone_then_dealer_called_go() {
             game_test! {
                 given: &scenario!(
                     as_playing(0);
-                    with_pass(),
+                    with_go(),
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("8H8D", "5SJH"),
                     with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
                 ),
-                when: GameCommand::Pass { player: PLAYER0 },
+                when: GameCommand::Go { player: PLAYER0 },
                 then_state: |state: &State| {
                     assert_state_then!(state, State::Playing(playing) => {
                         assert_eq!(playing.dealer(), &Dealer::from(PLAYER0));
@@ -2217,17 +2217,17 @@ mod test {
         }
 
         #[test]
-        fn reset_play_after_after_dealer_then_pone_pass() {
+        fn reset_play_after_after_dealer_then_pone_called_go() {
             game_test! {
                 given: &scenario!(
                     as_playing(1);
-                    with_pass(),
+                    with_go(),
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("7H8H8D", "4S5S"),
                     with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
                 ),
-                when: GameCommand::Pass { player: PLAYER1 },
+                when: GameCommand::Go { player: PLAYER1 },
                 then_state: |state: &State| {
                     assert_state_then!(state, State::Playing(playing) => {
                         assert_eq!(playing.dealer(), &Dealer::from(PLAYER0));
@@ -2457,7 +2457,7 @@ mod test {
             let State::Playing(playing) = Game::from(
                 scenario!(
                     as_playing(1);
-                    with_pass(),
+                    with_go(),
                     with_points(0, 0),
                     with_hands("", ""),
                     with_current_plays(&[(0, "AC"), (0, "2D"), (0, "5H"), (0, "4S")]),

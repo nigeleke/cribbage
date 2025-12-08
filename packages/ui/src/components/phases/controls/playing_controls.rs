@@ -1,7 +1,7 @@
 use api::dto::{PlayActionDTO, PlaysDTO, UserGameDTO};
 use dioxus::prelude::*;
 
-use crate::components::{PassAction, PlayAction, ScorePoneAction};
+use crate::components::{GoAction, PlayAction, ScorePoneAction};
 
 /// The `PlayingHand` component shows a set of cards (in the order provided).
 #[component]
@@ -27,8 +27,8 @@ fn InnerPlayingControls(plays: ReadSignal<PlaysDTO>) -> Element {
             class: "playing-hand",
             if let PlayActionDTO::Play(_) = next_action {
                 PlayAction {}
-            } else if let PlayActionDTO::Pass(_) = next_action {
-                PassAction {}
+            } else if let PlayActionDTO::Go(_) = next_action {
+                GoAction {}
             } else {
                 ScorePoneAction {}
             }

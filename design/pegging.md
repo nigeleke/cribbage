@@ -19,24 +19,24 @@
 | Some         | Some           | Play   | NotCalled     | Opponent           | No                      |
 | Some         | Some           | Play   | Called        | Player             | No                      |
 | Some         | Some           | Play   | PlayContinued | Player             | No                      |
-| Some         | Some           | Pass   | NotCalled     | Opponent           | No                      |
-| Some         | Some           | Pass   | Called        | Last Play Opponent | Yes (second pass)       |
-| Some         | Some           | Pass   | PlayContinued | Last Play Opponent | Yes (second pass)       |
+| Some         | Some           | Go     | NotCalled     | Opponent           | No                      |
+| Some         | Some           | Go     | Called        | Last Play Opponent | Yes (second go)         |
+| Some         | Some           | Go     | PlayContinued | Last Play Opponent | Yes (second go)         |
 | Some         | None           | Play   | NotCalled     | Player             | No (player continues)   |
 | Some         | None           | Play   | Called        | Player             | No                      |
 | Some         | None           | Play   | PlayContinued | Player             | No                      |
-| Some         | None           | Pass   | NotCalled     | Player             | Yes (opponent no plays) |
-| Some         | None           | Pass   | Called        | Player             | Yes (second pass)       |
-| Some         | None           | Pass   | PlayContinued | Player             | Yes (second pass)       |
+| Some         | None           | Go     | NotCalled     | Player             | Yes (opponent no plays) |
+| Some         | None           | Go     | Called        | Player             | Yes (second go)         |
+| Some         | None           | Go     | PlayContinued | Player             | Yes (second go)         |
 | None         | Some           | Play   | NotCalled     | Opponent           | No                      |
 | None         | Some           | Play   | Called        | Opponent           | No                      |
 | None         | Some           | Play   | PlayContinued | Opponent           | No                      |
-| None         | Some           | Pass   | NotCalled     | Opponent           | No                      |
-| None         | Some           | Pass   | Called        | Opponent           | Yes (second pass)       |
-| None         | Some           | Pass   | PlayContinued | Opponent           | Yes (second pass)       |
+| None         | Some           | Go     | NotCalled     | Opponent           | No                      |
+| None         | Some           | Go     | Called        | Opponent           | Yes (second go)         |
+| None         | Some           | Go     | PlayContinued | Opponent           | Yes (second go)         |
 | None         | None           | Play   | NotCalled     | n/a                | Yes (must reset)        |
 | None         | None           | Play   | Called        | n/a                | Yes (must reset)        |
 | None         | None           | Play   | PlayContinued | n/a                | Yes (must reset)        |
-| None         | None           | Pass   | NotCalled     | n/a                | Yes (must reset)        |
-| None         | None           | Pass   | Called        | n/a                | Yes (must reset)        |
-| None         | None           | Pass   | PlayContinued | n/a                | Yes (must reset)        |
+| None         | None           | Go     | NotCalled     | n/a                | Yes (must reset)        |
+| None         | None           | Go     | Called        | n/a                | Yes (must reset)        |
+| None         | None           | Go     | PlayContinued | n/a                | Yes (must reset)        |

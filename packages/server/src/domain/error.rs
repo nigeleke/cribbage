@@ -22,6 +22,6 @@ pub enum DomainError {
     #[error("invalid play: {0}")]
     InvalidPlay(Card),
 
-    #[error("invalid pass: some cards are playable")]
-    InvalidPass,
+    #[error("invalid go: some cards are playable")]
+    InvalidGo,
 }

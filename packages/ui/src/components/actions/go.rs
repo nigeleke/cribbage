@@ -7,31 +7,31 @@ use crate::{
 };
 
 #[component]
-pub fn PassAction() -> Element {
+pub fn GoAction() -> Element {
     let plays = use_context::<ReadSignal<PlaysDTO>>();
 
     let user_id = use_context::<Signal<UserIdDTO>>();
     let game_id = use_context::<GameIdDTO>();
 
-    let mut pass_action = use_action(move || async move {
-        let result = api::action::pass(*user_id.read(), game_id).await;
+    let mut go_action = use_action(move || async move {
+        let result = api::action::go(*user_id.read(), game_id).await;
         match result {
             Ok(_) => (),
             Err(ref error) => {
-                Toast::command_error("Pass", error.to_string());
+                Toast::command_error("Go", error.to_string());
             }
         }
         result
     });
 
-    let on_pass = move |_| pass_action.call();
+    let on_go = move |_| go_action.call();
 
     rsx! {
-        if let PlayActionDTO::Pass(player) = plays().next_action {
+        if let PlayActionDTO::Go(player) = plays().next_action {
             if player == PlayerDTO::User {
                 Button {
-                    onclick: on_pass,
-                    "Pass"
+                    onclick: on_go,
+                    "Go"
                 }
             } else {
                 WaitingForOpponent {}

@@ -73,7 +73,7 @@ impl GameBuilder {
         self
     }
 
-    pub fn with_pass(mut self) -> Self {
+    pub fn with_go(mut self) -> Self {
         self.go_status = GoStatus::Called;
         self
     }

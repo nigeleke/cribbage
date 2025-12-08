@@ -35,9 +35,9 @@ impl Playing {
         play_state.play(card);
     }
 
-    pub fn pass(&mut self) {
+    pub fn go(&mut self) {
         let play_state = &mut self.play_state;
-        play_state.pass();
+        play_state.go();
     }
 }
 

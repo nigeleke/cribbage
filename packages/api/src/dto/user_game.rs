@@ -180,7 +180,7 @@ mod server_only {
                 if can_play {
                     (legal_play_cids, PlayActionDTO::Play(*next_to_play_dto))
                 } else {
-                    (vec![], PlayActionDTO::Pass(*next_to_play_dto))
+                    (vec![], PlayActionDTO::Go(*next_to_play_dto))
                 }
             }
         };

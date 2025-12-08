@@ -6,7 +6,7 @@ use crate::{
     services::view::get_game,
 };
 
-pub async fn pass(
+pub async fn go(
     server_state: ServerState,
     user_id: UserId,
     game_id: GameId,
@@ -14,11 +14,11 @@ pub async fn pass(
     if let Some(game) = get_game(server_state.clone(), game_id).await? {
         let player = game
             .validate_user(user_id)
-            .ok_or(ServerError::Forbidden("pass".into()))?;
+            .ok_or(ServerError::Forbidden("go".into()))?;
 
         let aggregate_id = game_id.value().to_string();
 
-        let command = GameCommand::Pass { player };
+        let command = GameCommand::Go { player };
 
         server_state
             .cqrs

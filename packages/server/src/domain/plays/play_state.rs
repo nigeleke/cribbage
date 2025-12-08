@@ -110,7 +110,7 @@ impl PlayState {
         sheet
     }
 
-    pub fn pass(&mut self) -> ScoreSheet {
+    pub fn go(&mut self) -> ScoreSheet {
         let player = self.next_to_play;
         let opponent = player.opponent();
 
@@ -137,7 +137,7 @@ impl PlayState {
     }
 
     fn start_new_play(&mut self) {
-        // There will always be a valid play before a pass can occur. The `or` condition
+        // There will always be a valid play before a go can occur. The `or` condition
         // in `map_or` will never occur.
         let last_player = self
             .current_plays

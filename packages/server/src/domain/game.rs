@@ -499,7 +499,10 @@ impl Game {
     fn hand_dealt(&mut self, player: Player, hand: Hand) {
         if let State::Discarding(discarding) = &mut self.state {
             let hands = discarding.hands_mut();
-            hands[player] = hand;
+            hands[player] = hand.clone();
+
+            let deck = discarding.deck_mut();
+            deck.remove_all(hand.as_ref());
         }
     }
 
@@ -933,9 +936,10 @@ mod test {
 
         use super::*;
         use crate::{
-            card,
+            assert_state_then, card,
             domain::{
-                Dealer, DomainError, GameCommand, GameEvent, GameId, PLAYER0, PLAYER1, UserId,
+                Dealer, DomainError, GameCommand, GameEvent, GameId, PLAYER0, PLAYER1,
+                STANDARD_DECK_SIZE, UserId, constants::CARDS_DEALT_PER_HAND,
             },
             find_then, function_name, game_test,
         };
@@ -1039,6 +1043,11 @@ mod test {
                         .filter_map(|e| matches!(e, GameEvent::HandDealt { .. }).then_some(e))
                         .collect::<Vec<_>>();
                     assert_eq!(deals.len(), PLAYER_COUNT);
+                },
+                then_state: |state: &State| {
+                    assert_state_then!(state, State::Discarding(discarding) => {
+                        assert_eq!(discarding.deck().len(), STANDARD_DECK_SIZE - (CARDS_DEALT_PER_HAND * PLAYER_COUNT));
+                    });
                 }
             }
         }
@@ -1170,8 +1179,11 @@ mod test {
 
         use super::*;
         use crate::{
-            cards,
-            domain::{DomainError, GameEvent, PLAYER0, test::GameBuilder},
+            assert_state_then, cards,
+            domain::{
+                DomainError, GameEvent, PLAYER0, STANDARD_DECK_SIZE,
+                constants::CARDS_DEALT_PER_HAND, test::GameBuilder,
+            },
             function_name, game_test, scenario,
         };
 
@@ -1192,6 +1204,12 @@ mod test {
                         player: PLAYER0,
                         cards: cards!("AH2H"),
                     }])
+                },
+                then_state: |state: &State| {
+                    assert_state_then!(state, State::Discarding(discarding) => {
+                        assert!(discarding.deck().contains_none(&cards!("AH2H")));
+                        assert_eq!(discarding.deck().len(), STANDARD_DECK_SIZE - (CARDS_DEALT_PER_HAND * PLAYER_COUNT));
+                    });
                 }
             }
         }
@@ -2863,8 +2881,6 @@ mod test {
                 ScoreSheet::crib(&crib!("JDQCKC2C"), card!("AH")).points(),
                 Points::from(3)
             );
-
-            println!("{}", ScoreSheet::crib(&crib!("3C3S2D5H"), card!("AH")));
             assert_eq!(
                 ScoreSheet::crib(&crib!("3C3S2D5H"), card!("AH")).points(),
                 Points::from(8)

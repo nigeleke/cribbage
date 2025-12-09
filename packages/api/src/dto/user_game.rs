@@ -91,14 +91,19 @@ impl UserGameDTO {
         self.pegging = score_sheet;
         self
     }
+
+    fn with_winner(mut self, winner: PlayerDTO) -> Self {
+        self.winner = Some(winner);
+        self
+    }
 }
 
 #[cfg(feature = "server")]
 mod server_only {
     use server::domain::{
-        Game, HasCrib, HasCutsForDeal, HasHands, HasPegging, HasPending, HasPlayState, HasRoles,
-        HasScoreboard, HasStarterCut, PLAYER0, PLAYER1, Play, Player, Roles, ScoreKind, State,
-        UserId,
+        Finished, Game, HasCrib, HasCutsForDeal, HasHands, HasPegging, HasPending, HasPlayState,
+        HasRoles, HasScoreboard, HasStarterCut, PLAYER0, PLAYER1, Play, Player, Roles, ScoreKind,
+        State, UserId,
     };
 
     use super::*;
@@ -253,6 +258,12 @@ mod server_only {
             })
     }
 
+    fn winner(finished: &Finished, player_dto_map: &HashMap<Player, PlayerDTO>) -> PlayerDTO {
+        *player_dto_map
+            .get(&finished.winner())
+            .expect("valid player")
+    }
+
     impl From<(UserId, &Game)> for UserGameDTO {
         fn from((user_id, game): (UserId, &Game)) -> Self {
             let (me, them) = players(game, user_id);
@@ -325,7 +336,8 @@ mod server_only {
                     .with_scores(score(state, me), score(state, them))
                     .with_dealer(dealer(state, &player_dto_map))
                     .with_hands(hand_up(state, me), hand_up(state, them))
-                    .with_crib_and_starter_cut(crib_up(state), starter_cut(state)),
+                    .with_crib_and_starter_cut(crib_up(state), starter_cut(state))
+                    .with_winner(winner(state, &player_dto_map)),
             }
         }
     }

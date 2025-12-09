@@ -3,7 +3,8 @@ use dioxus::prelude::*;
 
 use crate::{
     components::{
-        CuttingForDeal, Discarding, InLobby, Playing, ScoringCrib, ScoringDealer, ScoringPone,
+        CuttingForDeal, Discarding, Finished, InLobby, Playing, ScoringCrib, ScoringDealer,
+        ScoringPone,
     },
     toast::Toast,
 };
@@ -61,6 +62,6 @@ fn ActiveGame(game: ReadSignal<UserGameDTO>) -> Element {
         PhaseDTO::ScoringPone => rsx! { ScoringPone {} },
         PhaseDTO::ScoringDealer => rsx! { ScoringDealer {} },
         PhaseDTO::ScoringCrib => rsx! { ScoringCrib {} },
-        PhaseDTO::Finished => rsx! {},
+        PhaseDTO::Finished => rsx! { Finished {} },
     }
 }

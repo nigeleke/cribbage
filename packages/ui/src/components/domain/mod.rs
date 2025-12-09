@@ -12,6 +12,7 @@ mod scoring_detail;
 mod user_crib;
 mod user_hand;
 mod waiting_for_opponent;
+mod winner_detail;
 
 pub use available_games::AvailableGamesList;
 pub use card::Card;
@@ -27,3 +28,4 @@ pub use scoring_detail::ScoringDetail;
 pub use user_crib::UserCrib;
 pub use user_hand::UserHand;
 pub use waiting_for_opponent::WaitingForOpponent;
+pub use winner_detail::WinnerDetail;

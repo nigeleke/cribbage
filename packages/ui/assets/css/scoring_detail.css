@@ -24,3 +24,7 @@
     display: flex;
     flex-direction: row;
 }
+
+.scoring-detail__nineteen {
+    max-block-size: 200px;
+}

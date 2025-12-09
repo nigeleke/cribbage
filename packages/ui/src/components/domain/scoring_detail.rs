@@ -47,7 +47,10 @@ fn Breakdown(pegging: ReadSignal<PeggingDTO>) -> Element {
 fn Nineteen() -> Element {
     rsx! {
         div { }
-        div { "19" }
+        img {
+            class: "scoring-detail__nineteen",
+            src: asset!("/assets/19.png")
+        }
         div { }
     }
 }

@@ -1,4 +1,45 @@
 .winner-detail {
     display: flex;
     justify-content: center;
+    overflow: visible;
+}
+
+.winner-detail__medal {
+    max-block-size: 200px;
+}
+
+.winner-detail__winner {
+    animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.winner-detail__loser {
+    animation: medalDrop 1.4s ease-out forwards;
+}
+
+@keyframes medalDrop {
+    0% {
+        transform: translateY(-200px) scale(1.4) rotate(-15deg);
+        opacity: 0;
+    }
+    40% {
+        opacity: 1;
+    }
+    70% {
+        transform: translateY(0) scale(1) rotate(0deg);
+    }
+    80% {
+        transform: translateY(-20px); /* little bounce up after bonk */
+    }
+    100% {
+        transform: translateY(0);
+    }
 }

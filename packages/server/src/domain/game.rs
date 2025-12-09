@@ -643,7 +643,7 @@ impl Game {
                 roles.swap();
                 let hands = Hands::default();
                 let crib = Crib::default();
-                let deck = Deck::default();
+                let deck = Deck::shuffled_pack();
                 let pending = Pending::default();
 
                 self.state = Discarding::new(scoreboard, roles, hands, crib, deck, pending).wrap();
@@ -2551,7 +2551,8 @@ mod test {
             assert_state_then, card, crib,
             domain::{
                 Card, Crib, Dealer, DomainError, GameCommand, GameEvent, Hand, HasHands, HasRoles,
-                PLAYER0, PLAYER1, Points, Pone, ScoreSheet, State, constants::CARDS_DEALT_PER_HAND,
+                PLAYER0, PLAYER1, Points, Pone, ScoreSheet, State,
+                constants::{CARDS_DEALT_PER_HAND, PLAYER_COUNT},
                 test::GameBuilder,
             },
             find_then, function_name, game_test, hand, scenario,
@@ -2732,6 +2733,16 @@ mod test {
                     with_ack(0)
                 ),
                 when: GameCommand::StartNextRound { player: PLAYER1 },
+                then_events: |events: &[GameEvent]| {
+                    find_then!(events, GameEvent::NextRoundStarted { player } => {
+                        assert_eq!(player, &PLAYER1);
+                    });
+                    let deals = events
+                        .iter()
+                        .filter_map(|e| matches!(e, GameEvent::HandDealt { .. }).then_some(e))
+                        .collect::<Vec<_>>();
+                    assert_eq!(deals.len(), PLAYER_COUNT);
+                },
                 then_state: |state: &State| {
                     assert_state_then!(state, State::Discarding(discarding) => {
                         assert_eq!(discarding.dealer(), &Dealer::from(PLAYER1));

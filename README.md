@@ -2,7 +2,7 @@
 
 [![BSD 3 Clause License](https://img.shields.io/github/license/nigeleke/cribbage?style=plastic)](https://github.com/nigeleke/cribbage/blob/master/LICENSE)
 [![Language](https://img.shields.io/badge/language-Rust-blue.svg?style=plastic)](https://www.rust-lang.org/)
-[![Build](https://img.shields.io/github/actions/workflow/status/nigeleke/cribbage/acceptance.yml?style=plastic)](https://github.com/nigeleke/cribbage/actions/workflows/acceptance.yml)
+[![Build](https://img.shields.io/github/actions/workflow/status/nigeleke/cribbage/ci.yml?style=plastic)](https://github.com/nigeleke/cribbage/)
 [![Coverage](https://img.shields.io/codecov/c/github/nigeleke/cribbage?style=plastic)](https://codecov.io/gh/nigeleke/cribbage)
 ![Version](https://img.shields.io/github/v/tag/nigeleke/cribbage?style=plastic)
 

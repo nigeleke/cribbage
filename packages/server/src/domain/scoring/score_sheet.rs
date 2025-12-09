@@ -269,12 +269,15 @@ impl ScoreSheet {
     }
 
     fn nobs(self, cards: &[Card], cut: StarterCut) -> Self {
-        self.add_event_if(
-            cards.iter().any(|c| c.is_jack() && c.suit() == cut.suit()),
-            ScoreKind::Nobs,
-            cards,
-            SCORE_NOBS.into(),
-        )
+        let mut matched = cards
+            .iter()
+            .filter(|c| c.is_jack() && c.suit() == cut.suit());
+
+        if let Some(card) = matched.next() {
+            self.add_event(ScoreKind::Nobs, &[*card], SCORE_NOBS.into())
+        } else {
+            self
+        }
     }
 }
 

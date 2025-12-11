@@ -1,11 +1,31 @@
 use crate::{
-    bug,
     domain::{GameCommand, GameId, UserId},
-    error::ServerError,
+    error::{ServerError, bug},
     server_state::ServerState,
-    services::view::get_game,
+    services::queries::get_game,
 };
 
+/// Acknowledges the current dealer score and goes on to score the crib for the specified user
+/// if both players have acknowledged.
+///
+/// # Parameters
+///
+/// - `server_state`: The shared server state containing the game and database.
+/// - `user_id`: The ID of the user scoring the crib.
+/// - `game_id`: The ID of the game containing the crib.
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the crib was successfully scored.
+/// Returns a `ServerError` if the action is forbidden, the game is not found,
+/// the crib cannot be scored yet, or another internal error occurs.
+///
+/// # Example
+///
+/// ```no_run
+/// score_crib(server_state.clone(), user_id, game_id).await?;
+/// println!("Crib scored successfully.");
+/// ```
 pub async fn score_crib(
     server_state: ServerState,
     user_id: UserId,

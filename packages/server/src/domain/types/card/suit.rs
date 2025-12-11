@@ -3,18 +3,22 @@ use strum::{AsRefStr, EnumIter};
 
 use crate::domain::CardsError;
 
+/// The four suits in a standard French playing card deck.
+///
+/// # Examples
+///
+/// ```
+/// # use my_crate::Suit;
+/// assert_eq!(Suit::Hearts.name(), "Hearts");
+/// assert_eq!(format!("{0}", Suit::Diamonds), "Diamonds");
+/// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, EnumIter, AsRefStr)]
+#[rustfmt::skip]
 pub enum Suit {
-    Hearts,
-    Clubs,
-    Diamonds,
-    Spades,
-}
-
-impl Suit {
-    pub fn name(&self) -> String {
-        self.as_ref().to_string()
-    }
+    #[doc(hidden)] Hearts,
+    #[doc(hidden)] Clubs,
+    #[doc(hidden)] Diamonds,
+    #[doc(hidden)] Spades,
 }
 
 impl TryFrom<char> for Suit {
@@ -49,17 +53,16 @@ pub mod test {
     use super::*;
 
     #[test]
-    fn suit_has_display_string_and_name() {
+    fn suit_has_display_string() {
         let suits = [
-            (Suit::Hearts, "H", "Hearts"),
-            (Suit::Clubs, "C", "Clubs"),
-            (Suit::Diamonds, "D", "Diamonds"),
-            (Suit::Spades, "S", "Spades"),
+            (Suit::Hearts, "H"),
+            (Suit::Clubs, "C"),
+            (Suit::Diamonds, "D"),
+            (Suit::Spades, "S"),
         ];
 
-        for (suit, display_string, name) in suits {
+        for (suit, display_string) in suits {
             assert_eq!(suit.to_string(), display_string);
-            assert_eq!(suit.name(), name);
         }
     }
 }

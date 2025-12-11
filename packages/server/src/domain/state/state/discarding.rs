@@ -8,6 +8,13 @@ use crate::{
     },
 };
 
+/// Represents the game state during the *discarding* phase, where
+/// players select cards to contribute to the crib.
+///
+/// This phase occurs after roles have been assigned and hands dealt,
+/// but before the play phase begins. Each player removes cards from
+/// their hand, and those cards are accumulated into the crib for the
+/// upcoming scoring sequence.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Discarding {
     scoreboard: Scoreboard,
@@ -19,6 +26,10 @@ pub struct Discarding {
 }
 
 impl Discarding {
+    /// Constructs a new `Discarding` state.
+    ///
+    /// The caller must ensure that the provided inputs are coherent and reflect
+    /// a valid pre-discarding state.
     pub fn new(
         scoreboard: Scoreboard,
         roles: Roles,
@@ -37,10 +48,17 @@ impl Discarding {
         }
     }
 
+    /// Moves the specified cards from `player`’s hand into the crib.
+    ///
+    /// This method performs the following operations atomically:
+    /// 1. Removes all `discards` from the player's hand.
+    /// 2. Adds all `discards` to the crib.
+    /// 3. Marks the player as having completed their discard action
+    ///    via the pending-state mechanism.
     pub fn discard_cards_to_crib(&mut self, player: Player, discards: &[Card]) {
         self.hands[player].remove_all(discards);
         self.crib.add_all(discards);
-        self.pending.acknowledge(player);
+        let _ = self.pending.acknowledge(player);
     }
 }
 

@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::{card, cards, crib, domain::*, hand};
+use crate::domain::{wrap::Wrap, *};
 
 #[derive(Debug)]
 pub struct GameBuilder {
@@ -20,9 +20,9 @@ pub struct GameBuilder {
 
 impl GameBuilder {
     pub fn with_cuts(mut self, cuts: &str) -> Self {
-        let cuts = cards!(cuts);
+        let cuts = hand!(cuts);
         self.deck.remove_all(cuts.as_ref());
-        cuts.iter().for_each(|c| self.cuts.push(*c));
+        cuts.as_ref().iter().for_each(|c| self.cuts.push(*c));
         self
     }
 
@@ -84,11 +84,11 @@ impl GameBuilder {
     }
 
     pub fn with_ack(mut self, player: usize) -> Self {
-        self.pending.acknowledge(Player::from(player));
+        let _ = self.pending.acknowledge(Player::from(player));
         self
     }
 
-    fn new_game(state: State) -> Game {
+    fn new_game(phase: Phase) -> Game {
         let host = UserId::new();
         let guest = UserId::new();
 
@@ -103,7 +103,7 @@ impl GameBuilder {
             guest,
             name,
         });
-        *game.state_mut() = state;
+        *game.phase_mut() = phase;
         game
     }
 
@@ -287,214 +287,4 @@ impl Default for GameBuilder {
             pending: Pending::default(),
         }
     }
-}
-
-#[cfg(test)]
-#[macro_export]
-macro_rules! scenario {
-    ( $final_method:ident ( $($final_arg:expr),* $(,)? ) ; $($method:ident( $($arg:expr),* $(,)? )),* $(,)? ) => {{
-        let builder = GameBuilder::default()
-            $( . $method ( $($arg),* ) )* ;
-
-        let mut game = builder. $final_method ( $($final_arg),* );
-        *game.name_mut() = function_name!();
-        vec![GameEvent::GamePreloaded { game }]
-    }};
-
-    ( $final_method:ident ; $($method:ident( $($arg:expr),* $(,)? )),* $(,)? ) => {{
-        let builder = GameBuilder::default()
-            $( . $method ( $($arg),* ) )* ;
-
-        let mut game = builder. $final_method ();
-        *game.name_mut() = function_name!();
-        vec![GameEvent::GamePreloaded { game }]
-    }};
-}
-
-#[macro_export]
-macro_rules! find_then {
-    ($slice:expr, $pat:pat => $assert:block) => {
-        #[allow(unused)]
-        if let Some(event) = $slice.iter().find(|e| matches!(e, $pat)) {
-            if let $pat = event {
-                $assert
-            } else {
-                unreachable!()
-            }
-        } else {
-            panic!("expected {} not found", stringify!($pat));
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! assert_state_then {
-    ($state:expr, $pat:pat $(if $guard:expr)? => $assert:block) => {{
-        match $state {
-            $pat $(if $guard)? => $assert,
-            other => panic!("unexpected state: {:?}", other),
-        }
-    }};
-}
-
-pub fn __private_game_test_impl(
-    function_name: String,
-    given: &[GameEvent],
-    when: GameCommand,
-    then_events: Option<impl Fn(&[GameEvent])>,
-    then_state: Option<impl Fn(&State)>,
-    then_error: Option<DomainError>,
-) {
-    let is_happy_path_tests = then_events.is_some() || then_state.is_some();
-    let is_error_path_tests = then_error.is_some();
-
-    assert!(
-        (is_happy_path_tests && !is_error_path_tests)
-            || (is_error_path_tests && !is_happy_path_tests)
-    );
-
-    let mut game = Game::from(given);
-
-    let result = cqrs_es::test::TestFramework::<Game>::with(GameServices)
-        .given(Vec::from(given))
-        .when(when)
-        .inspect_result();
-
-    match result {
-        Ok(events) if is_happy_path_tests => {
-            then_events.iter().for_each(|f| f(events.as_slice()));
-            game.apply_events(&events);
-            let state = game.state();
-            then_state.iter().for_each(|f| f(state));
-        }
-        Ok(events) => panic!("unexpected result in {function_name}: {events:?}"),
-        Err(error) if is_error_path_tests => {
-            then_error
-                .into_iter()
-                .for_each(|e| assert_eq!(error, e, "in function {function_name}"));
-        }
-        Err(error) => panic!("unexpected result in {function_name}: {error:?}"),
-    };
-}
-
-#[macro_export]
-macro_rules! game_test {
-    {
-        given: $given:expr,
-        when: $when:expr,
-        then_events: $events_fn:expr,
-        then_state: $state_fn:expr
-    } => {{
-        $crate::domain::test::__private_game_test_impl(
-            function_name!(),
-            $given,
-            $when,
-            Some($events_fn),
-            Some($state_fn),
-            None::<DomainError>
-        );
-    }};
-
-    {
-        given: $given:expr,
-        when: $when:expr,
-        then_events: $events_fn:expr
-    } => {{
-        $crate::domain::test::__private_game_test_impl(
-            function_name!(),
-            $given,
-            $when,
-            Some($events_fn),
-            None::<fn(&State)>,
-            None::<DomainError>
-        );
-    }};
-
-    {
-        given: $given:expr,
-        when: $when:expr,
-        then_state: $state_fn:expr
-    } => {{
-        $crate::domain::test::__private_game_test_impl(
-            function_name!(),
-            $given,
-            $when,
-            None::<fn(&[GameEvent])>,
-            Some($state_fn),
-            None::<DomainError>
-        );
-    }};
-
-    {
-        given: $given:expr,
-        when: $when:expr,
-        then_error: $error:expr
-    } => {{
-        $crate::domain::test::__private_game_test_impl(
-            function_name!(),
-            $given,
-            $when,
-            None::<fn(&[GameEvent])>,
-            None::<fn(&State)>,
-            Some($error)
-        );
-    }};
-
-    {
-        when: $when:expr,
-        then_events: $events_fn:expr,
-        then_state: $state_fn:expr
-    } => {{
-        $crate::domain::test::__private_game_test_impl(
-            function_name!(),
-            &[],
-            $when,
-            Some($events_fn),
-            Some($state_fn),
-            None::<DomainError>
-        );
-    }};
-
-    {
-        when: $when:expr,
-        then_events: $events_fn:expr
-    } => {{
-        $crate::domain::test::__private_game_test_impl(
-            function_name!(),
-            &[],
-            $when,
-            Some($events_fn),
-            None::<fn(&State)>,
-            None::<DomainError>
-        );
-    }};
-
-    {
-        when: $when:expr,
-        then_state: $state_fn:expr
-    } => {{
-        $crate::domain::test::__private_game_test_impl(
-            function_name!(),
-            &[],
-            $when,
-            None::<fn(&[GameEvent])>,
-            Some($state_fn),
-            None::<DomainError>
-        );
-    }};
-
-    {
-        when: $when:expr,
-        then_error: $error:expr
-    } => {{
-        $crate::domain::test::__private_game_test_impl(
-            function_name!(),
-            &[],
-            $when,
-            None::<fn(&[GameEvent])>,
-            None::<fn(&State)>,
-            Some($error)
-        );
-    }};
-
 }

@@ -10,7 +10,7 @@ mod starter_cut;
 pub use crib::{Crib, HasCrib};
 pub use cuts_for_deal::{CutsForDeal, HasCutsForDeal};
 #[cfg(test)]
-pub use deck::STANDARD_DECK_SIZE;
+pub(crate) use deck::STANDARD_DECK_SIZE;
 pub use deck::{Deck, HasDeck};
 pub use error::CardsError;
 pub use hand::Hand;

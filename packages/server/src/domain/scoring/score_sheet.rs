@@ -10,16 +10,36 @@ use crate::{
     },
 };
 
+/// A collection of scoring items accumulated for a hand, crib, or play phase.
+///
+/// `ScoreSheet` records individual scoring items (`ScoreItem`) and provides
+/// utility methods to calculate totals and construct common scoring scenarios
+/// such as pegging points, hand scoring, and crib scoring.
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScoreSheet(Vec<ScoreItem>);
 
 impl ScoreSheet {
+    /// Adds a scoring event to this sheet and returns the updated sheet.
+    ///
+    /// # Parameters
+    /// - `kind`: The type of score (e.g., pair, run, fifteen).
+    /// - `cards`: The cards contributing to this scoring event.
+    /// - `points`: The number of points awarded.
+    #[must_use]
     pub fn add_event(mut self, kind: ScoreKind, cards: &[Card], points: Points) -> Self {
         let event = ScoreItem::new(kind, Vec::from(cards), points);
         self.0.push(event);
         self
     }
 
+    /// Conditionally adds a scoring event if `condition` is true.
+    ///
+    /// # Parameters
+    /// - `condition`: Whether to record the scoring event.
+    /// - `kind`: The type of score.
+    /// - `cards`: The cards contributing to this scoring event.
+    /// - `points`: The number of points awarded.
+    #[must_use]
     pub fn add_event_if(
         mut self,
         condition: bool,
@@ -34,14 +54,24 @@ impl ScoreSheet {
         self
     }
 
+    /// Returns the total points accumulated in this sheet.
+    #[must_use]
     pub fn points(&self) -> Points {
         self.0.iter().map(ScoreItem::points).sum()
     }
 
+    /// Returns an immutable reference to the underlying list of scoring items.
+    #[must_use]
     pub fn items(&self) -> &Vec<ScoreItem> {
         &self.0
     }
 
+    /// `ScoreSheet` constructor returning a `ScoreSheet` for the starter-card
+    ///  “his heels” bonus, if applicable.
+    ///
+    /// # Parameters
+    /// - `cut`: The starter card.
+    #[must_use]
     pub fn his_heels(cut: Card) -> Self {
         Self::default().add_event_if(
             cut.is_jack(),
@@ -51,6 +81,12 @@ impl ScoreSheet {
         )
     }
 
+    /// `ScoreSheet` constructor returning a `ScoreSheet` for the most recent
+    /// `Play` of a card in the current play state.
+    ///
+    /// # Parameters
+    /// - `play_state`: The current play state to evaluate.
+    #[must_use]
     pub fn play_card(play_state: &PlayState) -> Self {
         Self::default()
             .play_card_fifteens(play_state)
@@ -156,6 +192,12 @@ impl ScoreSheet {
         }
     }
 
+    /// `ScoreSheet` constructor returning a `ScoreSheet` for the most recent
+    /// `Go` declaration.
+    ///
+    /// # Parameters
+    /// - `play_state`: The current play state to evaluate.
+    #[must_use]
     pub fn go(play_state: &PlayState) -> Self {
         Self::default().go_last_card(play_state)
     }
@@ -169,6 +211,12 @@ impl ScoreSheet {
         )
     }
 
+    /// `ScoreSheet` constructor returning a `ScoreSheet` for the given hand and starter cut.
+    ///
+    /// # Parameters
+    /// - `hand`: The player’s hand.
+    /// - `cut`: The starter card.
+    #[must_use]
     pub fn hand(hand: &Hand, cut: StarterCut) -> Self {
         let mut all = hand.clone();
         all.add(cut);
@@ -181,6 +229,12 @@ impl ScoreSheet {
             .nobs(hand.as_ref(), cut)
     }
 
+    /// `ScoreSheet` constructor returning a `ScoreSheet` for the crib and starter cut.
+    ///
+    /// # Parameters
+    /// - `crib`: The crib cards.
+    /// - `cut`: The starter card.
+    #[must_use]
     pub fn crib(crib: &Crib, cut: StarterCut) -> Self {
         let mut all = crib.clone();
         all.add(cut);
@@ -293,10 +347,9 @@ mod test {
     use std::str::FromStr;
 
     use super::*;
-    use crate::{
-        card,
-        domain::{Card, Hand, PLAYER0, PLAYER1},
-        hand,
+    use crate::domain::{
+        Card, Hand, PLAYER0, PLAYER1,
+        test::domain_macros::{card, hand},
     };
 
     #[test]
@@ -307,11 +360,11 @@ mod test {
         let mut play_state = PlayState::new(PLAYER0)
             .with_pending_plays(PLAYER0, &hand1.as_ref())
             .with_pending_plays(PLAYER1, &hand2.as_ref());
-        play_state.play(card!("AH"));
-        play_state.play(card!("AC"));
-        play_state.play(card!("AD"));
-        play_state.play(card!("AS"));
-        play_state.play(card!("AH"));
+        let _ = play_state.play(card!("AH"));
+        let _ = play_state.play(card!("AC"));
+        let _ = play_state.play(card!("AD"));
+        let _ = play_state.play(card!("AS"));
+        let _ = play_state.play(card!("AH"));
 
         assert_eq!(
             ScoreSheet::play_card(&play_state).points(),

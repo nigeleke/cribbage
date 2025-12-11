@@ -1,20 +1,25 @@
-use crate::domain::cards::pile::Pile;
-use crate::domain::constants::*;
-use crate::domain::{Card, Hand};
+use crate::domain::{Card, Hand, cards::pile::Pile, constants::*};
 
+/// Marker type for the main deck (the draw pile).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DeckType;
+
+/// The deck contains all cards at the start of the game and is drawn from
+/// during dealing and for the starter cut.
 pub type Deck = Pile<DeckType>;
 
+/// The main draw pile / stock.
 pub trait HasDeck {
+    /// Immutable access to the deck.
     fn deck(&self) -> &Deck;
+
+    /// Mutable access to the deck.
     fn deck_mut(&mut self) -> &mut Deck;
 }
 
 impl Deck {
     pub fn shuffled_pack() -> Self {
-        use rand::rng;
-        use rand::seq::SliceRandom;
+        use rand::{rng, seq::SliceRandom};
 
         let mut cards = Card::all();
         cards.shuffle(&mut rng());
@@ -34,7 +39,7 @@ impl Deck {
 }
 
 #[cfg(test)]
-pub const STANDARD_DECK_SIZE: usize = 52;
+pub(crate) const STANDARD_DECK_SIZE: usize = 52;
 
 #[cfg(test)]
 mod test {

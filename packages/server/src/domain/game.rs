@@ -5,68 +5,80 @@ use tracing::debug;
 use crate::{
     display::format_vec,
     domain::{
-        Card, Crib, CutsForDeal, Dealer, Deck, Discarding, DomainError, GameCommand, GameEvent,
-        GameId, Hand, Hands, HasCrib, HasCutsForDeal, HasDeck, HasHands, HasPending, HasPlayState,
-        HasRoles, HasScoreboard, HasStarterCut, PLAYER0, PLAYER1, Pegging, Pending, Play,
-        PlayState, Player, Playing, Roles, ScoreSheet, Scoreboard, ScoringCrib, ScoringDealer,
-        ScoringPone, StarterCut, Starting, State, UserId,
         constants::{CARDS_DISCARDED_TO_CRIB, CARDS_KEPT_PER_HAND, PLAYER_COUNT},
-        state::Wrap,
+        wrap::Wrap,
+        *,
     },
     name_builder::generate_game_name,
 };
 
+/// Represents a game with a host, optional guest (i.e. no one has joined and game is deemed to
+/// be in the lobby), name, and current state.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Game {
     id: GameId,
     host: UserId,
     guest: Option<UserId>,
     name: String,
-    state: State,
+    phase: Phase,
 }
 
 impl Game {
-    pub fn new(id: GameId, host: UserId, guest: Option<UserId>, name: &str, state: State) -> Self {
+    /// Creates a new `Game` with the specified ID, host, optional guest, name, and state.
+    #[must_use]
+    pub fn new(id: GameId, host: UserId, guest: Option<UserId>, name: &str, state: Phase) -> Self {
         let name = String::from(name);
         Self {
             id,
             host,
             guest,
             name,
-            state,
+            phase: state,
         }
     }
 
-    pub fn id(&self) -> &GameId {
-        &self.id
+    /// Returns the unique identifier of the game.
+    #[must_use]
+    pub fn id(&self) -> GameId {
+        self.id
     }
 
-    pub fn host(&self) -> &UserId {
-        &self.host
+    /// Returns the user ID of the host.
+    #[must_use]
+    pub fn host(&self) -> UserId {
+        self.host
     }
 
-    pub fn guest(&self) -> Option<&UserId> {
-        self.guest.as_ref()
+    /// Returns the user ID of the guest, if any.
+    #[must_use]
+    pub fn guest(&self) -> Option<UserId> {
+        self.guest
     }
 
-    pub fn name(&self) -> &String {
+    /// Returns the name of the game.
+    #[must_use]
+    pub fn name(&self) -> &str {
         &self.name
     }
 
     #[cfg(test)]
-    pub fn name_mut(&mut self) -> &mut String {
+    pub(crate) fn name_mut(&mut self) -> &mut String {
         &mut self.name
     }
 
-    pub fn state(&self) -> &State {
-        &self.state
+    /// Returns the current phase of the game.
+    #[must_use]
+    pub fn phase(&self) -> &Phase {
+        &self.phase
     }
 
     #[cfg(test)]
-    pub fn state_mut(&mut self) -> &mut State {
-        &mut self.state
+    pub(crate) fn phase_mut(&mut self) -> &mut Phase {
+        &mut self.phase
     }
 
+    /// Returns the player corresponding to the given user ID, if they are part of this game.
+    #[must_use]
     pub fn validate_user(&self, user_id: UserId) -> Option<Player> {
         match user_id {
             id if id == self.host => Some(PLAYER0),
@@ -141,8 +153,8 @@ impl Game {
         if self.id == GameId::default() {
             not_permitted()
         } else {
-            match &self.state {
-                State::Starting(starting) => {
+            match &self.phase {
+                Phase::Starting(starting) => {
                     let events = cut_for_deal(starting)?;
                     Ok(events)
                 }
@@ -187,8 +199,8 @@ impl Game {
         if self.id == GameId::default() {
             not_permitted()
         } else {
-            match &self.state {
-                State::Starting(starting) => {
+            match &self.phase {
+                Phase::Starting(starting) => {
                     let events = start_game(starting);
                     Ok(events)
                 }
@@ -233,8 +245,8 @@ impl Game {
         if self.id == GameId::default() {
             not_permitted()
         } else {
-            match &self.state {
-                State::Discarding(discarding) => {
+            match &self.phase {
+                Phase::Discarding(discarding) => {
                     let events = discard_cards_to_crib(discarding)?;
                     Ok(events)
                 }
@@ -267,8 +279,8 @@ impl Game {
         if self.id == GameId::default() {
             not_permitted()
         } else {
-            match &self.state {
-                State::Playing(playing) => {
+            match &self.phase {
+                Phase::Playing(playing) => {
                     let events = play_card(playing)?;
                     Ok(events)
                 }
@@ -301,8 +313,8 @@ impl Game {
         if self.id == GameId::default() {
             not_permitted()
         } else {
-            match &self.state {
-                State::Playing(playing) => {
+            match &self.phase {
+                Phase::Playing(playing) => {
                     let events = go(playing)?;
                     Ok(events)
                 }
@@ -327,8 +339,8 @@ impl Game {
         if self.id == GameId::default() {
             not_permitted()
         } else {
-            match &self.state {
-                State::Playing(playing) => {
+            match &self.phase {
+                Phase::Playing(playing) => {
                     let events = score_pone(playing);
                     Ok(events)
                 }
@@ -352,8 +364,8 @@ impl Game {
         if self.id == GameId::default() {
             not_permitted()
         } else {
-            match &self.state {
-                State::ScoringPone(scoring) => {
+            match &self.phase {
+                Phase::ScoringPone(scoring) => {
                     let events = score_dealer(scoring);
                     Ok(events)
                 }
@@ -377,8 +389,8 @@ impl Game {
         if self.id == GameId::default() {
             not_permitted()
         } else {
-            match &self.state {
-                State::ScoringDealer(scoring) => {
+            match &self.phase {
+                Phase::ScoringDealer(scoring) => {
                     let events = score_crib(scoring);
                     Ok(events)
                 }
@@ -415,8 +427,8 @@ impl Game {
         if self.id == GameId::default() {
             not_permitted()
         } else {
-            match &self.state {
-                State::ScoringCrib(scoring) => {
+            match &self.phase {
+                Phase::ScoringCrib(scoring) => {
                     let events = start_next_round(scoring);
                     Ok(events)
                 }
@@ -425,7 +437,10 @@ impl Game {
         }
     }
 
-    pub fn handle_command(&self, command: GameCommand) -> Result<Vec<GameEvent>, DomainError> {
+    pub(crate) fn handle_command(
+        &self,
+        command: GameCommand,
+    ) -> Result<Vec<GameEvent>, DomainError> {
         debug!("COMMAND --- Game:handle_command: {:?}", command);
         match command {
             GameCommand::HostGame { user_id, game_id } => self.host_game(user_id, game_id),
@@ -449,7 +464,7 @@ impl Game {
         self.id = game_id;
         self.host = host;
         self.name = name;
-        self.state = Starting::default().wrap();
+        self.phase = Starting::default().wrap();
     }
 
     fn lobby_game_joined(&mut self, guest: UserId) {
@@ -467,24 +482,24 @@ impl Game {
         self.host = host;
         self.guest = Some(guest);
         self.name = name;
-        self.state = Starting::default().wrap();
+        self.phase = Starting::default().wrap();
     }
 
     fn cut_for_deal_made(&mut self, player: Player, cut: Card) {
-        if let State::Starting(starting) = &mut self.state {
+        if let Phase::Starting(starting) = &mut self.phase {
             *starting.cut_for_deal_mut(player) = Some(cut);
             starting.deck_mut().remove(cut);
         }
     }
 
     fn game_started(&mut self, player: Player) {
-        if let State::Starting(starting) = &mut self.state {
-            starting.pending_mut().acknowledge(player);
+        if let Phase::Starting(starting) = &mut self.phase {
+            let _ = starting.pending_mut().acknowledge(player);
         }
     }
 
     fn cut_for_deal_decided(&mut self, dealer: Dealer) {
-        if let State::Starting(_) = &self.state {
+        if let Phase::Starting(_) = &self.phase {
             let scoreboard = Scoreboard::default();
             let roles = Roles::new(dealer);
             let deck = Deck::shuffled_pack();
@@ -492,12 +507,12 @@ impl Game {
             let crib = Crib::default();
             let pending = Pending::default();
             let discarding = Discarding::new(scoreboard, roles, hands, crib, deck, pending);
-            self.state = discarding.wrap();
+            self.phase = discarding.wrap();
         }
     }
 
     fn hand_dealt(&mut self, player: Player, hand: Hand) {
-        if let State::Discarding(discarding) = &mut self.state {
+        if let Phase::Discarding(discarding) = &mut self.phase {
             let hands = discarding.hands_mut();
             hands[player] = hand.clone();
 
@@ -507,26 +522,26 @@ impl Game {
     }
 
     fn cut_for_deal_tied(&mut self) {
-        if let State::Starting(_) = &self.state {
+        if let Phase::Starting(_) = &self.phase {
             let cuts = CutsForDeal::default();
             let deck = Deck::shuffled_pack();
             let pending = Pending::default();
             let starting = Starting::new(cuts, deck, pending);
-            self.state = starting.wrap();
+            self.phase = starting.wrap();
         }
     }
 
     fn cards_discarded(&mut self, player: Player, cards: &[Card]) {
-        if let State::Discarding(discarding) = &mut self.state {
+        if let Phase::Discarding(discarding) = &mut self.phase {
             discarding.hand_mut(player).remove_all(cards);
             discarding.crib_mut().add_all(cards);
-            discarding.pending_mut().acknowledge(player);
+            let _ = discarding.pending_mut().acknowledge(player);
         }
     }
 
     fn starter_selected(&mut self, starter_cut: StarterCut, pegging: Pegging) {
-        if let State::Discarding(discarding) = &mut self.state {
-            discarding.scoreboard_mut().peg(&pegging);
+        if let Phase::Discarding(discarding) = &mut self.phase {
+            let _ = discarding.scoreboard_mut().peg(&pegging);
 
             let play_state = PlayState::new(discarding.pone().player())
                 .with_pending_plays(PLAYER0, discarding.hand(PLAYER0).as_ref())
@@ -544,31 +559,31 @@ impl Game {
                 pending,
             );
 
-            self.state = playing.wrap().or_finished();
+            self.phase = playing.wrap().or_finished();
         }
     }
 
     fn card_played(&mut self, _player: Player, card: Card, pegging: Pegging) {
-        if let State::Playing(playing) = &mut self.state {
+        if let Phase::Playing(playing) = &mut self.phase {
             playing.play_card(card);
-            playing.scoreboard_mut().peg(&pegging);
-            self.state = playing.clone().wrap().or_finished();
+            let _ = playing.scoreboard_mut().peg(&pegging);
+            self.phase = playing.clone().wrap().or_finished();
         }
     }
 
     fn go_called(&mut self, _player: Player, pegging: Pegging) {
-        if let State::Playing(playing) = &mut self.state {
+        if let Phase::Playing(playing) = &mut self.phase {
             playing.go();
-            playing.scoreboard_mut().peg(&pegging);
-            self.state = playing.clone().wrap().or_finished();
+            let _ = playing.scoreboard_mut().peg(&pegging);
+            self.phase = playing.clone().wrap().or_finished();
         }
     }
 
     fn pone_scored(&mut self, player: Player, pegging: Pegging) {
-        if let State::Playing(playing) = &mut self.state {
+        if let Phase::Playing(playing) = &mut self.phase {
             let proceed = playing.pending_mut().acknowledge(player);
             if proceed {
-                playing.scoreboard_mut().peg(&pegging);
+                let _ = playing.scoreboard_mut().peg(&pegging);
 
                 let hands = playing.play_state_mut().finish_plays();
                 let pending = Pending::default();
@@ -583,16 +598,16 @@ impl Game {
                     pending,
                 );
 
-                self.state = scoring.wrap().or_finished();
+                self.phase = scoring.wrap().or_finished();
             }
         }
     }
 
     fn dealer_scored(&mut self, player: Player, pegging: Pegging) {
-        if let State::ScoringPone(scoring) = &mut self.state {
+        if let Phase::ScoringPone(scoring) = &mut self.phase {
             let proceed = scoring.pending_mut().acknowledge(player);
             if proceed {
-                scoring.scoreboard_mut().peg(&pegging);
+                let _ = scoring.scoreboard_mut().peg(&pegging);
 
                 let pending = Pending::default();
 
@@ -606,16 +621,16 @@ impl Game {
                     pending,
                 );
 
-                self.state = scoring.wrap().or_finished();
+                self.phase = scoring.wrap().or_finished();
             }
         }
     }
 
     fn crib_scored(&mut self, player: Player, pegging: Pegging) {
-        if let State::ScoringDealer(scoring) = &mut self.state {
+        if let Phase::ScoringDealer(scoring) = &mut self.phase {
             let proceed = scoring.pending_mut().acknowledge(player);
             if proceed {
-                scoring.scoreboard_mut().peg(&pegging);
+                let _ = scoring.scoreboard_mut().peg(&pegging);
 
                 let pending = Pending::default();
 
@@ -629,13 +644,13 @@ impl Game {
                     pending,
                 );
 
-                self.state = scoring.wrap().or_finished();
+                self.phase = scoring.wrap().or_finished();
             }
         }
     }
 
     fn next_round_started(&mut self, player: Player) {
-        if let State::ScoringCrib(scoring) = &mut self.state {
+        if let Phase::ScoringCrib(scoring) = &mut self.phase {
             let proceed = scoring.pending_mut().acknowledge(player);
             if proceed {
                 let scoreboard = scoring.scoreboard().clone();
@@ -646,12 +661,12 @@ impl Game {
                 let deck = Deck::shuffled_pack();
                 let pending = Pending::default();
 
-                self.state = Discarding::new(scoreboard, roles, hands, crib, deck, pending).wrap();
+                self.phase = Discarding::new(scoreboard, roles, hands, crib, deck, pending).wrap();
             }
         }
     }
 
-    pub fn apply_event(&mut self, event: GameEvent) {
+    pub(crate) fn apply_event(&mut self, event: GameEvent) {
         debug!("EVENT ----- Game:apply_event: {:?}", event);
         match event {
             GameEvent::LobbyGameCreated {
@@ -689,7 +704,8 @@ impl Game {
         }
     }
 
-    pub fn apply_events(&mut self, events: &[GameEvent]) {
+    #[cfg(test)]
+    pub(crate) fn apply_events(&mut self, events: &[GameEvent]) {
         let events = events.to_owned();
         for event in events {
             self.apply_event(event);
@@ -697,6 +713,7 @@ impl Game {
     }
 }
 
+/// No external services required.
 #[derive(Clone, Default)]
 pub struct GameServices;
 
@@ -737,7 +754,7 @@ impl std::fmt::Display for Game {
             self.host,
             self.guest
                 .map_or("-".into(), |g| std::convert::identity(g).to_string()),
-            self.state
+            self.phase
         )
     }
 }
@@ -752,8 +769,8 @@ impl From<&[GameEvent]> for Game {
 }
 
 #[cfg(test)]
-impl From<State> for Game {
-    fn from(state: State) -> Self {
+impl From<Phase> for Game {
+    fn from(state: Phase) -> Self {
         let id = GameId::new();
         let host = UserId::new();
         let guest = Some(UserId::new());
@@ -763,7 +780,7 @@ impl From<State> for Game {
             host,
             guest,
             name,
-            state,
+            phase: state,
         }
     }
 }
@@ -771,7 +788,17 @@ impl From<State> for Game {
 #[cfg(test)]
 #[coverage(off)]
 mod test {
+    use std::str::FromStr;
+
     use super::*;
+    use crate::{
+        domain::{
+            constants::*,
+            test::{GameBuilder, domain_macros::*, test_macros::*},
+            types::CardExt,
+        },
+        macros::function_name,
+    };
 
     /// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
     #[allow(clippy::expect_used)]
@@ -783,10 +810,6 @@ mod test {
     /// number.
     mod players {
         use super::*;
-        use crate::{
-            domain::{DomainError, GameCommand, GameEvent, GameId, UserId},
-            find_then, function_name, game_test,
-        };
 
         #[test]
         fn a_user_can_host_game() {
@@ -899,11 +922,6 @@ mod test {
     /// Rank of Cards: K (high), Q, J, 10, 9, 8, 7, 6, 5, 4, 3, 2, A.
     mod deck {
         use super::*;
-        use crate::{
-            assert_state_then,
-            domain::{DomainError, GameEvent, HasDeck, STANDARD_DECK_SIZE},
-            function_name, game_test,
-        };
 
         #[test]
         fn use_a_standard_pack_of_cards() {
@@ -911,8 +929,8 @@ mod test {
             let game_id = GameId::new();
             game_test! {
                 when: GameCommand::PlayComputer { user_id, game_id },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Starting(starting) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Starting(starting) => {
                         let deck = starting.deck();
                         assert_eq!(deck.len(), STANDARD_DECK_SIZE);
                     });
@@ -932,17 +950,7 @@ mod test {
     /// right to shuffle last, and he presents the cards to the non-dealer for the cut prior to the
     /// deal. (In some games, there is no cut at this time.)
     mod deal_cut {
-        use std::str::FromStr;
-
         use super::*;
-        use crate::{
-            assert_state_then, card,
-            domain::{
-                Dealer, DomainError, GameCommand, GameEvent, GameId, PLAYER0, PLAYER1,
-                STANDARD_DECK_SIZE, UserId, constants::CARDS_DEALT_PER_HAND,
-            },
-            find_then, function_name, game_test,
-        };
 
         #[test]
         fn user_must_cut_for_dealer_1() {
@@ -1044,8 +1052,8 @@ mod test {
                         .collect::<Vec<_>>();
                     assert_eq!(deals.len(), PLAYER_COUNT);
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Discarding(discarding) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Discarding(discarding) => {
                         assert_eq!(discarding.deck().len(), STANDARD_DECK_SIZE - (CARDS_DEALT_PER_HAND * PLAYER_COUNT));
                     });
                 }
@@ -1099,14 +1107,7 @@ mod test {
     /// The dealer distributes six cards face down to his opponent and himself, beginning with the
     /// opponent.
     mod deal {
-        use std::str::FromStr;
-
         use super::*;
-        use crate::{
-            card,
-            domain::constants::{CARDS_DEALT_PER_HAND, PLAYER_COUNT},
-            function_name, game_test,
-        };
 
         #[test]
         fn dealer_deals_six_cards_each() {
@@ -1175,17 +1176,7 @@ mod test {
     /// belongs to the dealer, but these cards are not exposed or used until after the hands have
     /// been played.
     mod the_crib {
-        use std::str::FromStr;
-
         use super::*;
-        use crate::{
-            assert_state_then, cards,
-            domain::{
-                DomainError, GameEvent, PLAYER0, STANDARD_DECK_SIZE,
-                constants::CARDS_DEALT_PER_HAND, test::GameBuilder,
-            },
-            function_name, game_test, scenario,
-        };
 
         #[test]
         fn player_can_discard_own_cards_to_the_crib() {
@@ -1205,8 +1196,8 @@ mod test {
                         cards: cards!("AH2H"),
                     }])
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Discarding(discarding) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Discarding(discarding) => {
                         assert!(discarding.deck().contains_none(&cards!("AH2H")));
                         assert_eq!(discarding.deck().len(), STANDARD_DECK_SIZE - (CARDS_DEALT_PER_HAND * PLAYER_COUNT));
                     });
@@ -1283,14 +1274,7 @@ mod test {
     /// once. The starter is not used in the play phase of Cribbage , but is used later for making
     /// various card combinations that score points.
     mod before_the_play {
-        use std::str::FromStr;
-
         use super::*;
-        use crate::{
-            assert_state_then, card, cards,
-            domain::{GameEvent, PLAYER0, PLAYER1, Points, test::GameBuilder},
-            find_then, function_name, game_test, scenario,
-        };
 
         #[test]
         fn start_the_play_after_discards() {
@@ -1314,8 +1298,8 @@ mod test {
 
                     find_then!(events, GameEvent::StarterSelected { .. } => {});
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Playing(playing) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Playing(playing) => {
                         let starter_cut = *playing.starter_cut();
                         assert!(!playing.hand(PLAYER0).contains(starter_cut));
                         assert!(!playing.hand(PLAYER1).contains(starter_cut));
@@ -1364,8 +1348,8 @@ mod test {
                     player: PLAYER1,
                     cards: cards!("AC2C"),
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Finished(finished) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Finished(finished) => {
                         assert_eq!(finished.winner(), PLAYER0)
                     });
                 }
@@ -1385,17 +1369,7 @@ mod test {
     /// saying "Four." The dealer plays a nine, saying "Thirteen".) The kings, queens and jacks
     /// count 10 each; every other card counts its pip value (the ace counts one).
     mod the_play {
-        use std::str::FromStr;
-
         use super::*;
-        use crate::{
-            assert_state_then, card, cards,
-            domain::{
-                Card, DomainError, GameCommand, GameEvent, PLAYER1, Pegging, Player, Points, Pone,
-                ScoreKind, test::GameBuilder,
-            },
-            function_name, game_test, plays, scenario,
-        };
 
         #[test]
         fn accept_valid_play() {
@@ -1750,8 +1724,8 @@ mod test {
                     player: PLAYER1,
                     card: card!("4S"),
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Playing(playing) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Playing(playing) => {
                         assert_eq!(playing.play_state().next_to_play(), PLAYER0);
                     });
                 }
@@ -1772,8 +1746,8 @@ mod test {
                     player: PLAYER0,
                     card: card!("9C"),
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Playing(playing) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Playing(playing) => {
                         assert_eq!(playing.play_state().next_to_play(), PLAYER1);
                     });
                 }
@@ -1794,14 +1768,14 @@ mod test {
                     player: PLAYER0,
                     card: card!("8H"),
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Playing(playing) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Playing(playing) => {
                         assert_eq!(playing.dealer(), &Dealer::from(PLAYER0));
                         assert_eq!(playing.pone(), &Pone::from(PLAYER1));
                         assert_eq!(playing.play_state().next_to_play(), PLAYER1);
                         assert_eq!(
                             playing.play_state().previous_plays(),
-                            plays!(&[(1, "JH"), (0, "9C"), (1, "4S"), (0, "8H")])
+                            &plays!(&[(1, "JH"), (0, "9C"), (1, "4S"), (0, "8H")])
                         );
                         assert!(playing.play_state().current_plays().is_empty());
                     });
@@ -2037,17 +2011,7 @@ mod test {
     /// count to exactly 31. The dealer is sure to peg at least one point in every hand, for he will
     /// have a Go on the last card if not earlier.
     mod the_go {
-        use std::str::FromStr;
-
-        use crate::{
-            assert_state_then, card,
-            domain::{
-                Card, Dealer, DomainError, GameCommand, GameEvent, HasPlayState, HasRoles, PLAYER0,
-                PLAYER1, Pegging, Play, Player, Points, Pone, ScoreKind, ScoreSheet, State,
-                test::GameBuilder,
-            },
-            function_name, game_test, plays, scenario,
-        };
+        use super::*;
 
         #[test]
         fn accept_go_when_pone_has_no_valid_card() {
@@ -2168,8 +2132,8 @@ mod test {
                         ),
                     }])
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Finished(finished) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Finished(finished) => {
                         assert_eq!(finished.winner(), PLAYER0);
                     })
                 }
@@ -2187,8 +2151,8 @@ mod test {
                     with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
                 ),
                 when: GameCommand::Go { player: PLAYER1 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Playing(playing) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Playing(playing) => {
                         assert_eq!(playing.play_state().next_to_play(), PLAYER0)
                     })
                 }
@@ -2206,8 +2170,8 @@ mod test {
                     with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
                 ),
                 when: GameCommand::Go { player: PLAYER0 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Playing(playing) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Playing(playing) => {
                         assert_eq!(playing.play_state().next_to_play(), PLAYER1)
                     })
                 }
@@ -2226,14 +2190,14 @@ mod test {
                     with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
                 ),
                 when: GameCommand::Go { player: PLAYER0 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Playing(playing) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Playing(playing) => {
                         assert_eq!(playing.dealer(), &Dealer::from(PLAYER0));
                         assert_eq!(playing.pone(), &Pone::from(PLAYER1));
                         assert_eq!(playing.play_state().next_to_play(), PLAYER1);
                         assert_eq!(
                             playing.play_state().previous_plays(),
-                            plays!(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
+                            &plays!(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
                         );
                         assert!(playing.play_state().current_plays().is_empty());
                     })
@@ -2253,14 +2217,14 @@ mod test {
                     with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
                 ),
                 when: GameCommand::Go { player: PLAYER1 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Playing(playing) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Playing(playing) => {
                         assert_eq!(playing.dealer(), &Dealer::from(PLAYER0));
                         assert_eq!(playing.pone(), &Pone::from(PLAYER1));
                         assert_eq!(playing.play_state().next_to_play(), PLAYER0);
                         assert_eq!(
                             playing.play_state().previous_plays(),
-                            plays!(&[(1, "JH"), (0, "9C"), (1, "TH")])
+                            &plays!(&[(1, "JH"), (0, "9C"), (1, "TH")])
                         );
                         assert!(playing.play_state().current_plays().is_empty());
                     })
@@ -2297,14 +2261,11 @@ mod test {
     /// (the 6, 7, 8, 9 sequence). The cards were not played in sequential order, but they form a
     /// true run with no foreign card.
     mod pegging {
-        use crate::{
-            domain::{Game, GameEvent, HasPlayState, Points, ScoreSheet, State, test::GameBuilder},
-            function_name, scenario,
-        };
+        use super::*;
 
         #[test]
         fn should_score_fifteens() {
-            let State::Playing(playing) = Game::from(
+            let Phase::Playing(playing) = Game::from(
                 scenario!(
                     as_playing(1);
                     with_points(0, 0),
@@ -2314,7 +2275,7 @@ mod test {
                 )
                 .as_slice(),
             )
-            .state
+            .phase
             else {
                 panic!("unexpected state");
             };
@@ -2327,7 +2288,7 @@ mod test {
 
         #[test]
         fn should_score_pairs() {
-            let State::Playing(playing) = Game::from(
+            let Phase::Playing(playing) = Game::from(
                 scenario!(
                     as_playing(1);
                     with_points(0, 0),
@@ -2337,7 +2298,7 @@ mod test {
                 )
                 .as_slice(),
             )
-            .state
+            .phase
             else {
                 panic!("unexpected state");
             };
@@ -2350,7 +2311,7 @@ mod test {
 
         #[test]
         fn should_score_royal_pairs() {
-            let State::Playing(playing) = Game::from(
+            let Phase::Playing(playing) = Game::from(
                 scenario!(
                     as_playing(1);
                     with_points(0, 0),
@@ -2360,7 +2321,7 @@ mod test {
                 )
                 .as_slice(),
             )
-            .state
+            .phase
             else {
                 panic!("unexpected state");
             };
@@ -2373,7 +2334,7 @@ mod test {
 
         #[test]
         fn should_score_double_royal_pairs() {
-            let State::Playing(playing) = Game::from(
+            let Phase::Playing(playing) = Game::from(
                 scenario!(
                     as_playing(1);
                     with_points(0, 0),
@@ -2383,7 +2344,7 @@ mod test {
                 )
                 .as_slice(),
             )
-            .state
+            .phase
             else {
                 panic!("unexpected state")
             };
@@ -2409,7 +2370,7 @@ mod test {
                 let current_plays = *current_plays;
                 let current_plays = current_plays.into_iter().take(len);
                 let current_plays = Vec::from_iter(current_plays);
-                let State::Playing(playing) = Game::from(
+                let Phase::Playing(playing) = Game::from(
                     scenario!(
                         as_playing(1);
                         with_points(0, 0),
@@ -2419,7 +2380,7 @@ mod test {
                     )
                     .as_slice(),
                 )
-                .state
+                .phase
                 else {
                     panic!("unexpected state")
                 };
@@ -2433,7 +2394,7 @@ mod test {
 
         #[test]
         fn should_score_runs_unordered() {
-            let State::Playing(playing) = Game::from(
+            let Phase::Playing(playing) = Game::from(
                 scenario!(
                     as_playing(1);
                     with_points(0, 0),
@@ -2443,7 +2404,7 @@ mod test {
                 )
                 .as_slice(),
             )
-            .state
+            .phase
             else {
                 panic!("unexpected state");
             };
@@ -2456,7 +2417,7 @@ mod test {
 
         #[test]
         fn should_score_rules_example_flush() {
-            let State::Playing(playing) = Game::from(
+            let Phase::Playing(playing) = Game::from(
                 scenario!(
                     as_playing(0);
                     with_points(0, 0),
@@ -2466,7 +2427,7 @@ mod test {
                 )
                 .as_slice(),
             )
-            .state
+            .phase
             else {
                 panic!("unexpected state");
             };
@@ -2479,7 +2440,7 @@ mod test {
 
         #[test]
         fn should_score_when_target_not_reached() {
-            let State::Playing(playing) = Game::from(
+            let Phase::Playing(playing) = Game::from(
                 scenario!(
                     as_playing(1);
                     with_go(),
@@ -2490,7 +2451,7 @@ mod test {
                 )
                 .as_slice(),
             )
-            .state
+            .phase
             else {
                 panic!("unexpected state");
             };
@@ -2503,7 +2464,7 @@ mod test {
 
         #[test]
         fn should_score_when_target_reached() {
-            let State::Playing(playing) = Game::from(
+            let Phase::Playing(playing) = Game::from(
                 scenario!(
                     as_playing(1);
                     with_points(0, 0),
@@ -2513,7 +2474,7 @@ mod test {
                 )
                 .as_slice(),
             )
-            .state
+            .phase
             else {
                 panic!("unexpected state");
             };
@@ -2545,18 +2506,7 @@ mod test {
     ///       four-flush in the crib that is not of same suit as the starter)
     ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
     mod counting_the_hands {
-        use std::str::FromStr;
-
-        use crate::{
-            assert_state_then, card, crib,
-            domain::{
-                Card, Crib, Dealer, DomainError, GameCommand, GameEvent, Hand, HasHands, HasRoles,
-                PLAYER0, PLAYER1, Points, Pone, ScoreSheet, State,
-                constants::{CARDS_DEALT_PER_HAND, PLAYER_COUNT},
-                test::GameBuilder,
-            },
-            find_then, function_name, game_test, hand, scenario,
-        };
+        use super::*;
 
         #[test]
         fn score_pone_hand_when_plays_finished() {
@@ -2607,8 +2557,8 @@ mod test {
                         assert_eq!(pegging.score_sheet().points(), Points::from(6));
                     });
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Finished(finished) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Finished(finished) => {
                         assert_eq!(finished.winner(), PLAYER1);
                     });
                 }
@@ -2660,8 +2610,8 @@ mod test {
                         assert_eq!(pegging.score_sheet().points(), Points::from(4));
                     });
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Finished(finished) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Finished(finished) => {
                         assert_eq!(finished.winner(), PLAYER0);
                     });
                 }
@@ -2713,8 +2663,8 @@ mod test {
                         assert_eq!(pegging.score_sheet().points(), Points::from(12));
                     });
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Finished(finished) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Finished(finished) => {
                         assert_eq!(finished.winner(), PLAYER0);
                     });
                 }
@@ -2743,8 +2693,8 @@ mod test {
                         .collect::<Vec<_>>();
                     assert_eq!(deals.len(), PLAYER_COUNT);
                 },
-                then_state: |state: &State| {
-                    assert_state_then!(state, State::Discarding(discarding) => {
+                then_state: |state: &Phase| {
+                    assert_state_then!(state, Phase::Discarding(discarding) => {
                         assert_eq!(discarding.dealer(), &Dealer::from(PLAYER1));
                         assert_eq!(discarding.pone(), &Pone::from(PLAYER0));
                         assert_eq!(discarding.hand(PLAYER0).len(), CARDS_DEALT_PER_HAND);
@@ -2947,13 +2897,7 @@ mod test {
     /// A run of three, with one card triplicated (triple run), counts 15. A. A run of three, with
     /// two different cards duplicated, counts 16.
     mod combinations {
-        use std::str::FromStr;
-
-        use crate::{
-            card,
-            domain::{Card, Hand, Points, ScoreSheet},
-            hand,
-        };
+        use super::*;
 
         #[test]
         fn should_score_rules_example_eights_sevens_sixes() {
@@ -2998,13 +2942,7 @@ mod test {
     /// various fives used to hit 15 can be done four ways for 8 points; and the jack plus a 5 to
     /// hit 15 can also be done four ways for 8 points. Total = 29 points.
     mod a_perfect_29 {
-        use std::str::FromStr;
-
-        use crate::{
-            card,
-            domain::{Card, Hand, Points, ScoreSheet},
-            hand,
-        };
+        use super::*;
 
         #[test]
         fn should_score_rules_example_perfect_29() {
@@ -3101,8 +3039,7 @@ mod test {
 
     /// ## Internal
     mod internal {
-
-        use crate::domain::test::GameBuilder;
+        use super::*;
 
         fn common_filters() -> insta::Settings {
             let mut settings = insta::Settings::new();

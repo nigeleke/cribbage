@@ -4,12 +4,25 @@ use serde::{Deserialize, Serialize};
 
 use crate::dto::CardIdDTO;
 
+/// Enumerates the types of pegging scores in a Cribbage game.
+///
+/// This is used to classify the different scoring categories when tallying points
+/// during the pegging phase.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PeggingKindDTO {
+    #[doc(hidden)]
     Fifteens,
+
+    #[doc(hidden)]
     Pairs,
+
+    #[doc(hidden)]
     Runs,
+
+    #[doc(hidden)]
     Flush,
+
+    #[doc(hidden)]
     Nob,
 }
 
@@ -26,10 +39,17 @@ impl std::fmt::Display for PeggingKindDTO {
     }
 }
 
+/// A summary of pegging points for a particular category.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PeggingSummaryDTO {
+    /// Total points scored in this category.
     pub points: usize,
+
+    /// The combinations of cards that contributed to the score.
     pub breakdown: Vec<Vec<CardIdDTO>>,
 }
 
+/// Pegging scores broken down by category.
+///
+/// Maps each `PeggingKindDTO` to a `PeggingSummaryDTO`.
 pub type PeggingDTO = HashMap<PeggingKindDTO, PeggingSummaryDTO>;

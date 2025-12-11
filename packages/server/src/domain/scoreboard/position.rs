@@ -2,6 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use super::Points;
 
+/// Represents a player's position in the game.
+///
+/// Tracks points in the "front" and "back" peg positions.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Position {
     back: Points,
@@ -10,21 +13,27 @@ pub struct Position {
 
 impl Position {
     #[cfg(test)]
-    pub fn new(points: usize) -> Self {
+    pub(crate) fn new(points: usize) -> Self {
         Self {
             back: Points::from(0),
             front: Points::from(points),
         }
     }
 
+    /// Returns the points in the back position.
+    #[must_use]
     pub const fn back(&self) -> Points {
         self.back
     }
 
+    /// Returns the points in the front position.
+    #[must_use]
     pub const fn front(&self) -> Points {
         self.front
     }
 
+    /// Returns the total points for the position (same as `front`).
+    #[must_use]
     pub fn points(&self) -> Points {
         self.front
     }

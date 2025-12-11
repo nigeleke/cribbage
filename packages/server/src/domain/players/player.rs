@@ -1,10 +1,24 @@
 use serde::{Deserialize, Serialize};
 
+/// Represents a player in the game.
+///
+/// This is a simple wrapper around a `usize` index to distinguish players
+/// in a type-safe manner. Only two players are supported in this implementation
+/// of the game.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+#[serde(transparent)]
 pub struct Player(usize);
 
+/// The first player (index 0).
 pub const PLAYER0: Player = Player(0);
+
+/// The second player (index 1).
 pub const PLAYER1: Player = Player(1);
+
+/// An array of all players in the game.
+///
+/// This array is useful for iterating over players.
 pub const PLAYERS: [Player; 2] = [PLAYER0, PLAYER1];
 
 impl Player {

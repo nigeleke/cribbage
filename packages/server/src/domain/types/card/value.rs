@@ -1,7 +1,26 @@
+/// Point value of a card.
+///
+/// Standard mapping:
+/// - Ace → 1
+/// - 2–10 → face value
+/// - Jack / Queen / King → 10
+///
+/// # Examples
+///
+/// ```
+/// # use my_crate::{Face, Value};
+/// assert_eq!(Face::Ace.value(),   Value(1));
+/// assert_eq!(Face::Ten.value(),   Value(10));
+/// assert_eq!(Face::King.value(),  Value(10));
+/// ```
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(transparent)]
 pub struct Value(usize);
 
 impl Value {
+    /// Returns the underlying numeric value.
+    #[inline(always)]
+    #[must_use]
     pub fn value(&self) -> usize {
         self.0
     }

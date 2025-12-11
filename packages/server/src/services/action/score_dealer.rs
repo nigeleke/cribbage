@@ -1,11 +1,31 @@
 use crate::{
-    bug,
     domain::{GameCommand, GameId, UserId},
-    error::ServerError,
+    error::{ServerError, bug},
     server_state::ServerState,
-    services::view::get_game,
+    services::queries::get_game,
 };
 
+/// Acknowledges the current pone score and goes on to score the dealer's hand for the
+/// specified user if both players have acknowledged.
+///
+/// # Parameters
+///
+/// - `server_state`: The shared server state containing the game and database.
+/// - `user_id`: The ID of the user performing the scoring.
+/// - `game_id`: The ID of the game containing the dealer's hand.
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the dealer's hand was successfully scored.
+/// Returns a `ServerError` if the action is forbidden, the game is not found,
+/// or another internal error occurs.
+///
+/// # Example
+///
+/// ```no_run
+/// score_dealer(server_state.clone(), user_id, game_id).await?;
+/// println!("Dealer's hand scored successfully.");
+/// ```
 pub async fn score_dealer(
     server_state: ServerState,
     user_id: UserId,

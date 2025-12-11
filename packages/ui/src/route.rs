@@ -4,18 +4,48 @@ use dioxus_sdk::storage::*;
 
 use crate::{components::toast::ToastProvider, pages::*};
 
+/// Application routing definitions.
+///
+/// This enum is used by `dioxus-router` to map URL paths to component
+/// screens. Each variant corresponds to a page in the application and
+/// defines any dynamic path parameters required to construct that page.
 #[derive(Clone, PartialEq, Routable)]
 #[rustfmt::skip]
 pub enum Route {
+    /// [`Layout`] component for all pages.
     #[layout(Layout)]
+
+    /// The root page of the application.
+    ///
+    /// This displays the primary landing UI and is wrapped in the global
     #[route("/")]
     HomePage {},
+
+    /// The game page.
+    ///
+    /// This route renders the UI for interacting with an existing game.
+    /// The `game_id` parameter is extracted from the path segment and
+    /// passed into the page component as a [`GameIdDTO`].
+    ///
+    /// Path: `/game/:game_id`
     #[route("/game/:game_id")]
-    GamePage { game_id: GameIdDTO },
-    #[route("/error/")]
-    ErrorPage { error: String },
+    GamePage {
+        /// The game_id to be viewed.
+        game_id: GameIdDTO
+    },
+
+    /// Fallback for unknown routes.
+    ///
+    /// Any unmatched or malformed path is captured here. All remaining
+    /// path segments are collected into `segments` for diagnostic or
+    /// display purposes.
+    ///
+    /// Path pattern: `/:..segments`
     #[route("/:..segments")]
-    NotFoundPage { segments: Vec<String> },
+    NotFoundPage {
+        /// Unused parts of the request path
+        segments: Vec<String>
+    },
 }
 
 #[component]

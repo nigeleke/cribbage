@@ -1,11 +1,33 @@
 use crate::{
-    bug,
     domain::{GameCommand, GameId, UserId},
-    error::ServerError,
+    error::{ServerError, bug},
     server_state::ServerState,
-    services::view::get_game,
+    services::queries::get_game,
 };
 
+/// Performs a "go" action for the user in a pegging phase of the game.
+///
+/// In Cribbage, a "go" indicates that the current player cannot play
+/// any card without exceeding the running total. This function updates
+/// the game state accordingly, advancing the turn or ending the pegging
+/// sequence as necessary.
+///
+/// # Parameters
+///
+/// - `server_state`: The shared server state containing the game and database.
+/// - `user_id`: The ID of the user performing the "go".
+/// - `game_id`: The ID of the game in which the action occurs.
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the action was successful. Returns a `ServerError` if
+/// the action is forbidden, the game is not found, or another internal error occurs.
+///
+/// # Example
+///
+/// ```no_run
+/// go(server_state.clone(), user_id, game_id).await?;
+/// ```
 pub async fn go(
     server_state: ServerState,
     user_id: UserId,

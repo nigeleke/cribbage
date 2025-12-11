@@ -8,6 +8,12 @@ use crate::{
     },
 };
 
+/// Represents the state of a game during the *playing* phase.
+///
+/// This structure aggregates all state required to execute card play,
+/// including score tracking, player roles, player hands, the current
+/// play-sequence state machine, and items specific to the round such as
+/// the crib, starter card, and any pending actions.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Playing {
     scoreboard: Scoreboard,
@@ -20,11 +26,42 @@ pub struct Playing {
 }
 
 impl Playing {
-    #[rustfmt::skip]
-    pub const fn new(scoreboard: Scoreboard, roles: Roles, hands: Hands, play_state: PlayState, crib: Crib, starter_cut: StarterCut, pending: Pending) -> Self {
-        Self { scoreboard, roles, hands, play_state, crib, starter_cut, pending }
+    /// Constructs a new `Playing` instance from all required subcomponents.
+    ///
+    /// All inputs must represent a consistent state at the beginning of the
+    /// playing phase. The function does not perform validation; callers are
+    /// responsible for ensuring that the inputs are coherent and legal for the
+    /// game being implemented.
+    pub const fn new(
+        scoreboard: Scoreboard,
+        roles: Roles,
+        hands: Hands,
+        play_state: PlayState,
+        crib: Crib,
+        starter_cut: StarterCut,
+        pending: Pending,
+    ) -> Self {
+        Self {
+            scoreboard,
+            roles,
+            hands,
+            play_state,
+            crib,
+            starter_cut,
+            pending,
+        }
     }
 
+    /// Plays a card from the next player in turn order.
+    ///
+    /// This method:
+    /// 1. Determines which player is next to act via `play_state.next_to_play()`.
+    /// 2. Removes the specified `card` from that player’s hand.
+    /// 3. Forwards the card to the `play_state` state machine to update
+    ///    peg totals, legality, and transition conditions.
+    ///
+    /// Callers should ensure that the card is legal to play under the rules
+    /// enforced by `PlayState`.
     pub fn play_card(&mut self, card: Card) {
         let player = self.play_state.next_to_play();
 
@@ -32,12 +69,19 @@ impl Playing {
         hand.remove(card);
 
         let play_state = &mut self.play_state;
-        play_state.play(card);
+        let _ = play_state.play(card);
     }
 
+    /// Signals “go” for the next player in turn order.
+    ///
+    /// A “go” occurs when a player cannot legally play any card without
+    /// exceeding the allowable running total. This method delegates to the
+    /// `play_state` state machine to record the event and update turn order.
+    ///
+    /// Caller should ensure the player has no valid cards to play.
     pub fn go(&mut self) {
         let play_state = &mut self.play_state;
-        play_state.go();
+        let _ = play_state.go();
     }
 }
 

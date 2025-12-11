@@ -3,13 +3,39 @@ use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 use tracing::warn;
 
 use crate::{
-    bug, convertors,
+    convertors,
     database::{Change, GameQueryRow, Notification},
     domain::{Game, GameId},
-    error::ServerError,
+    error::{ServerError, bug},
     server_state::ServerState,
 };
 
+/// Streams updates for a specific game.
+///
+/// This function returns a stream of `Game` objects representing changes
+/// to the specified game. Each item in the stream reflects the current
+/// state of the game after a change (creation, update, or deletion).
+///
+/// # Parameters
+///
+/// - `server_state`: The shared server state, including the database change broadcaster.
+/// - `game_id`: The ID of the game to track.
+///
+/// # Returns
+///
+/// A `Stream` of `Game`s wrapped in `Result`. Errors may occur due to
+/// internal server issues, in which case a `ServerError` is returned.
+///
+/// # Example
+///
+/// ```no_run
+/// use futures::StreamExt;
+///
+/// let mut stream = game_stream(server_state.clone(), game_id).await.unwrap();
+/// while let Some(game) = stream.next().await {
+///     println!("Game updated: {}", game.name());
+/// }
+/// ```
 pub async fn game_stream(
     server_state: ServerState,
     game_id: GameId,
@@ -46,8 +72,8 @@ pub async fn game_stream(
         };
 
         let game_change_to_game = move |change: Change<Game>| match change {
-            Change::Insert { t } if t.id() == &game_id => Some(t),
-            Change::Update { new_t, .. } if new_t.id() == &game_id => Some(new_t),
+            Change::Insert { t } if t.id() == game_id => Some(t),
+            Change::Update { new_t, .. } if new_t.id() == game_id => Some(new_t),
             _ => None,
         };
 

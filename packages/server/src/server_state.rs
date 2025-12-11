@@ -7,27 +7,44 @@ use tokio::sync::broadcast;
 use tracing::{error, warn};
 
 use crate::{
-    bug,
     database::Notification,
     domain::{Game, GameServices},
-    error::ServerError,
+    error::{ServerError, bug},
     projections::{GameQuery, GameView},
 };
 
+/// Shared application state for the server.
 #[derive(Clone)]
 pub struct ServerState {
+    /// SQLx connection pool to PostgreSQL
     pub pool: Arc<PgPool>,
+
+    /// CQRS/es instance the `Game` aggregate
     pub cqrs: Arc<PostgresCqrs<Game>>,
+
+    /// Repository that maintains the `GameView` read model
     pub game_view_repo: Arc<PostgresViewRepository<GameView, Game>>,
+
+    /// Broadcast channel – subscribers receive a `Notification` whenever
+    /// the database changes (e.g. new event persisted)
     pub database_changes_sender: broadcast::Sender<Notification>,
 }
 
 impl ServerState {
+    /// Returns a new subscriber to database change notifications.
     pub fn subscribe_database_changes(&self) -> broadcast::Receiver<Notification> {
         self.database_changes_sender.subscribe()
     }
 }
 
+/// Constructs the shared `ServerState`.
+///
+/// - Loads `DATABASE_URL` from environment
+/// - Creates and migrates the PostgreSQL pool
+/// - Sets up the CQRS framework with `GameQuery` read model
+/// - Starts the database change broadcaster
+///
+/// Panics if the database URL is missing or migrations fail.
 pub async fn initialize_server_state() -> Result<ServerState, ServerError> {
     let database_url = std::env::var("DATABASE_URL").expect("Database url is not specified");
 

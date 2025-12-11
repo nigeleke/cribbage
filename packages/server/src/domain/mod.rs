@@ -9,9 +9,10 @@ mod plays;
 mod scoreboard;
 mod scoring;
 mod state;
-#[cfg(test)]
-pub mod test;
 mod types;
+
+#[cfg(test)]
+pub(crate) mod test;
 
 pub use available_game::*;
 pub use cards::*;

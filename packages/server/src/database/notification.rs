@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use sqlx::types::JsonValue;
 
-use crate::{bug, error::ServerError};
+use crate::error::{ServerError, bug};
 
 type Result<T> = std::result::Result<T, ServerError>;
 

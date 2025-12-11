@@ -16,7 +16,7 @@ pub fn AvailableGamesList() -> Element {
     let mut games = use_signal(Vec::<AvailableGameDTO>::default);
     let mut filter = use_signal(String::default);
 
-    let mut last_since = use_signal(api::view::Since::default);
+    let mut last_since = use_signal(api::queries::Since::default);
 
     let filtered_games = use_memo(move || {
         let filter = filter.read().to_ascii_lowercase();
@@ -35,8 +35,8 @@ pub fn AvailableGamesList() -> Element {
 
     let mut has_more = use_signal(|| false);
 
-    let fetch_games = move |action: FetchAction, filter: String, since: api::view::Since| async move {
-        let result = api::view::get_available_games(*user_id.read(), Some(filter), since).await;
+    let fetch_games = move |action: FetchAction, filter: String, since: api::queries::Since| async move {
+        let result = api::queries::get_available_games(*user_id.read(), Some(filter), since).await;
 
         match result {
             Ok(response) => {
@@ -55,12 +55,17 @@ pub fn AvailableGamesList() -> Element {
 
     #[allow(clippy::let_underscore_future)]
     let _ = use_resource(move || async move {
-        fetch_games(FetchAction::Replace, "".into(), api::view::Since::default()).await
+        fetch_games(
+            FetchAction::Replace,
+            "".into(),
+            api::queries::Since::default(),
+        )
+        .await
     });
 
     let on_filter_changed = move |value: String| async move {
         filter.set(value.clone());
-        fetch_games(FetchAction::Replace, value, api::view::Since::default()).await;
+        fetch_games(FetchAction::Replace, value, api::queries::Since::default()).await;
     };
 
     let on_load_more = move |_| async move {

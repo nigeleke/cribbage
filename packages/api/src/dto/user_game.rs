@@ -7,18 +7,40 @@ use serde::{Deserialize, Serialize};
 use crate::dto::ScoreDTO;
 use crate::dto::{CardDTO, PeggingDTO, PendingDTO, PhaseDTO, PlayerDTO, PlayerStateDTO, PlaysDTO};
 
+/// A Data Transfer Object representing the full state of a game from the perspective of a user.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UserGameDTO {
+    /// The name of the game.
     pub name: String,
+
+    /// The current phase of the game.
     pub phase: PhaseDTO,
+
+    /// Indicates which player(s) are pending an action.
     pub pending: PendingDTO,
+
+    /// The player who is currently the dealer, if assigned.
     pub dealer: Option<PlayerDTO>,
+
+    /// The state of the user’s hand, cut (for deal), and score.
     pub user_state: PlayerStateDTO,
+
+    /// The state of the opponent’s hand, cut (for deal), and score.
     pub opponent_state: PlayerStateDTO,
+
+    /// The cards currently in the crib.
     pub crib: Vec<CardDTO>,
+
+    /// The starter cut card, if it has been revealed.
     pub starter_cut: Option<CardDTO>,
+
+    /// The current and previous plays for the round, if the round has started.
     pub plays: Option<PlaysDTO>,
+
+    /// A summary of pegging points for each kind of scoring of hands & crib.
     pub pegging: PeggingDTO,
+
+    /// The winner of the game, if the game has finished.
     pub winner: Option<PlayerDTO>,
 }
 
@@ -102,15 +124,15 @@ impl UserGameDTO {
 mod server_only {
     use server::domain::{
         Finished, Game, HasCrib, HasCutsForDeal, HasHands, HasPegging, HasPending, HasPlayState,
-        HasRoles, HasScoreboard, HasStarterCut, PLAYER0, PLAYER1, Play, Player, Roles, ScoreKind,
-        State, UserId,
+        HasRoles, HasScoreboard, HasStarterCut, PLAYER0, PLAYER1, Phase, Play, Player, Roles,
+        ScoreKind, UserId,
     };
 
     use super::*;
-    use crate::dto::{pegging::PeggingKindDTO, plays::PlayActionDTO};
+    use crate::dto::{CardIdDTO, PeggingKindDTO, PlayActionDTO};
 
     fn players(game: &Game, user_id: UserId) -> (Player, Player) {
-        let is_host = game.host() == &user_id;
+        let is_host = game.host() == user_id;
         if is_host {
             (PLAYER0, PLAYER1)
         } else {
@@ -160,7 +182,7 @@ mod server_only {
     }
 
     fn score<T: HasScoreboard>(s: &T, p: Player) -> ScoreDTO {
-        ScoreDTO::from(s.positions(p))
+        ScoreDTO::from(&s.scoreboard().position(p))
     }
 
     fn crib_down<T: HasCrib>(s: &T) -> Vec<CardDTO> {
@@ -186,12 +208,16 @@ mod server_only {
                 let legal_plays = play_state.legal_plays(next_to_play);
                 let legal_play_cids = legal_plays
                     .iter()
-                    .map(|card| card.cid().clone())
+                    .map(|card| CardIdDTO::from(card.cid()))
                     .collect::<Vec<_>>();
 
                 let can_play = !legal_plays.is_empty();
                 if can_play {
-                    (legal_play_cids, PlayActionDTO::Play(*next_to_play_dto))
+                    if next_to_play_dto == &PlayerDTO::User {
+                        (legal_play_cids, PlayActionDTO::Play(PlayerDTO::User))
+                    } else {
+                        (vec![], PlayActionDTO::Play(PlayerDTO::Opponent))
+                    }
                 } else {
                     (vec![], PlayActionDTO::Go(*next_to_play_dto))
                 }
@@ -210,8 +236,8 @@ mod server_only {
                 .collect::<Vec<_>>()
         };
 
-        let current = plays_to_dto(&play_state.current_plays());
-        let previous = plays_to_dto(&play_state.previous_plays());
+        let current = plays_to_dto(play_state.current_plays());
+        let previous = plays_to_dto(play_state.previous_plays());
         let running_total = play_state.running_total().value() as u8;
 
         PlaysDTO {
@@ -273,24 +299,24 @@ mod server_only {
                     .collect();
             let name = game.name();
 
-            match &game.state() {
-                State::Starting(state) if game.guest().is_none() => {
+            match &game.phase() {
+                Phase::Starting(state) if game.guest().is_none() => {
                     Self::new(name, PhaseDTO::InLobby).with_pending(PendingDTO::Opponent)
                 }
 
-                State::Starting(state) => Self::new(name, PhaseDTO::CuttingForDeal)
+                Phase::Starting(state) => Self::new(name, PhaseDTO::CuttingForDeal)
                     .with_pending(pending(state, me))
                     .with_cuts_for_deal(cut_for_deal(state, me), cut_for_deal(state, them))
                     .with_dealer(dealer_from_maybe_roles(state.roles(), &player_dto_map)),
 
-                State::Discarding(state) => UserGameDTO::new(name, PhaseDTO::Discarding)
+                Phase::Discarding(state) => UserGameDTO::new(name, PhaseDTO::Discarding)
                     .with_scores(score(state, me), score(state, them))
                     .with_dealer(dealer(state, &player_dto_map))
                     .with_pending(pending(state, me))
                     .with_hands(hand_up(state, me), hand_down(state, them))
                     .with_crib_and_starter_cut(crib_down(state), None),
 
-                State::Playing(state) => Self::new(name, PhaseDTO::Playing)
+                Phase::Playing(state) => Self::new(name, PhaseDTO::Playing)
                     .with_scores(score(state, me), score(state, them))
                     .with_dealer(dealer(state, &player_dto_map))
                     .with_pending(pending(state, me))
@@ -298,7 +324,7 @@ mod server_only {
                     .with_crib_and_starter_cut(crib_down(state), starter_cut(state))
                     .with_plays(plays(state, &player_dto_map)),
 
-                State::ScoringPone(state) => {
+                Phase::ScoringPone(state) => {
                     let they_are_pone = state.pone().player() == them;
                     UserGameDTO::new(name, PhaseDTO::ScoringPone)
                         .with_scores(score(state, me), score(state, them))
@@ -316,7 +342,7 @@ mod server_only {
                         .with_pegging(pegging(state))
                 }
 
-                State::ScoringDealer(state) => UserGameDTO::new(name, PhaseDTO::ScoringDealer)
+                Phase::ScoringDealer(state) => UserGameDTO::new(name, PhaseDTO::ScoringDealer)
                     .with_scores(score(state, me), score(state, them))
                     .with_dealer(dealer(state, &player_dto_map))
                     .with_pending(pending(state, me))
@@ -324,7 +350,7 @@ mod server_only {
                     .with_crib_and_starter_cut(crib_down(state), starter_cut(state))
                     .with_pegging(pegging(state)),
 
-                State::ScoringCrib(state) => UserGameDTO::new(name, PhaseDTO::ScoringCrib)
+                Phase::ScoringCrib(state) => UserGameDTO::new(name, PhaseDTO::ScoringCrib)
                     .with_scores(score(state, me), score(state, them))
                     .with_dealer(dealer(state, &player_dto_map))
                     .with_pending(pending(state, me))
@@ -332,7 +358,7 @@ mod server_only {
                     .with_crib_and_starter_cut(crib_up(state), starter_cut(state))
                     .with_pegging(pegging(state)),
 
-                State::Finished(state) => UserGameDTO::new(name, PhaseDTO::Finished)
+                Phase::Finished(state) => UserGameDTO::new(name, PhaseDTO::Finished)
                     .with_scores(score(state, me), score(state, them))
                     .with_dealer(dealer(state, &player_dto_map))
                     .with_hands(hand_up(state, me), hand_up(state, them))

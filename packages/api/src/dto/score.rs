@@ -1,8 +1,14 @@
 use serde::{Deserialize, Serialize};
 
+/// Represents a player's score for API clients.
+///
+/// The score is split into back and front pegs, following standard cribbage scoring.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScoreDTO {
+    /// Position of the back peg.
     pub back_peg: usize,
+
+    /// Position of the front peg.
     pub front_peg: usize,
 }
 

@@ -3,26 +3,41 @@ use serde::{Deserialize, Serialize};
 use super::{Dealer, Pone};
 use crate::domain::{CutsForDeal, PLAYER0, PLAYER1, constants::PLAYER_COUNT};
 
+/// Represents the roles assigned to players in a round.
+///
+/// This struct captures which player is the dealer and which is the pone
+/// (non-dealer) in the game.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Roles {
     dealer: Dealer,
     pone: Pone,
 }
 
+/// Trait for types that contain player roles.
 pub trait HasRoles {
+    /// Returns an immutable reference to the roles.
     fn roles(&self) -> &Roles;
+
+    /// Returns a mutable reference to the roles.
     fn roles_mut(&mut self) -> &mut Roles;
 
+    /// Returns an immutable reference to the dealer.
+    #[must_use]
     fn dealer(&self) -> &Dealer {
         &self.roles().dealer
     }
 
+    /// Returns an immutable reference to the pone (non-dealer).
+    #[must_use]
     fn pone(&self) -> &Pone {
         &self.roles().pone
     }
 }
 
 impl Roles {
+    /// Creates a new `Roles` assignment given the dealer.
+    ///
+    /// The pone is automatically inferred as the opponent of the dealer.
     pub fn new(dealer: Dealer) -> Self {
         Self {
             dealer,
@@ -30,6 +45,10 @@ impl Roles {
         }
     }
 
+    /// Constructs roles, if possible, from a set of cuts.
+    ///
+    /// Returns `None` if the roles cannot be determined (e.g., cuts are equal or incomplete).
+    #[must_use]
     pub fn from_cuts(cuts: &CutsForDeal) -> Option<Self> {
         use std::cmp::Ordering;
 
@@ -52,14 +71,19 @@ impl Roles {
             .flatten()
     }
 
+    /// Returns an immutable reference to the dealer.
+    #[must_use]
     pub fn dealer(&self) -> &Dealer {
         &self.dealer
     }
 
+    /// Returns an immutable reference to the pone.
+    #[must_use]
     pub fn pone(&self) -> &Pone {
         &self.pone
     }
 
+    /// Swaps the dealer and pone roles in place.
     pub fn swap(&mut self) {
         let was_dealer = self.dealer.player();
         let was_pone = self.pone.player();

@@ -2,6 +2,8 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
+#[cfg(test)]
+use crate::domain::CardsError;
 use crate::{display::format_vec, domain::Card};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -57,10 +59,6 @@ impl<T: Clone> Pile<T> {
     pub fn contains_none(&self, cards: &[Card]) -> bool {
         cards.iter().all(|c| !self.cards.contains(c))
     }
-
-    pub fn sort_by_rank(&mut self) {
-        self.cards.sort_by_key(Card::rank);
-    }
 }
 
 impl<T: Clone> Default for Pile<T> {
@@ -105,6 +103,17 @@ impl<'a, T: Clone> IntoIterator for &'a Pile<T> {
     }
 }
 
+#[cfg(test)]
+impl<T: Clone> std::str::FromStr for Pile<T> {
+    type Err = CardsError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use crate::domain::types::CardExt;
+        let cards = s.cards_from()?;
+        Ok(Pile::<T>::from(cards.as_ref()))
+    }
+}
+
 impl<T: Clone> Display for Pile<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let type_name = std::any::type_name::<T>();
@@ -124,20 +133,7 @@ mod test {
     use std::str::FromStr;
 
     use super::*;
-    use crate::{card, cards, pile};
-
-    impl<T: Clone> std::str::FromStr for Pile<T> {
-        type Err = String;
-
-        fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let cards = cards!(s);
-
-            Ok(Self {
-                cards,
-                _marker: Default::default(),
-            })
-        }
-    }
+    use crate::domain::{test::domain_macros::*, *};
 
     #[derive(Clone)]
     struct TestType {}
@@ -151,14 +147,14 @@ mod test {
 
     #[test]
     fn created_pile_as_content() {
-        let pile = pile!(TestType, "QH");
+        let pile = Pile::<TestType>::from(cards!("QH").as_ref());
         assert!(!pile.is_empty());
         assert_eq!(pile.len(), 1);
     }
 
     #[test]
     fn cards_can_be_displayed() {
-        let pile = pile!(TestType, "AH2C3D4S");
+        let pile = Pile::<TestType>::from(cards!("AH2C3D4S").as_ref());
         insta::assert_snapshot!(pile.to_string(), @"Test(AH, 2C, 3D, 4S)");
     }
 
@@ -166,28 +162,28 @@ mod test {
     fn generic_cards_can_be_displayed() {
         #[derive(Clone)]
         struct AnyType {}
-        let pile = pile!(AnyType, "AH2C3D4S");
+        let pile = Pile::<AnyType>::from(cards!("AH2C3D4S").as_ref());
         insta::assert_snapshot!(pile.to_string(), @"[AH, 2C, 3D, 4S]");
     }
 
     #[test]
     fn can_test_for_card_in_pile() {
-        let pile = pile!(TestType, "AH2C3D4S");
-        assert!(pile.contains(card!("AH")));
+        let pile = Pile::<TestType>::from(cards!("AH2C3D4S").as_ref());
+        assert!(pile.contains(crate::domain::test::domain_macros::card!("AH")));
         assert!(!pile.contains(card!("QH")));
     }
 
     #[test]
     fn can_test_for_all_cards_in_pile() {
-        let pile = pile!(TestType, "AH2C3D4S");
-        assert!(pile.contains_all(&cards!("AH2C3D")));
-        assert!(!pile.contains_all(&cards!("AH2CQH4S")));
+        let pile = Pile::<TestType>::from(cards!("AH2C3D4S").as_ref());
+        assert!(pile.contains_all(hand!("AH2C3D").as_ref()));
+        assert!(!pile.contains_all(hand!("AH2CQH4S").as_ref()));
     }
 
     #[test]
     fn can_test_for_no_cards_in_pile() {
-        let pile = pile!(TestType, "AH2C3D4S");
-        assert!(!pile.contains_none(&cards!("AH2C3D")));
-        assert!(pile.contains_none(&cards!("QHQCQHQS")));
+        let pile = Pile::<TestType>::from(cards!("AH2C3D4S").as_ref());
+        assert!(!pile.contains_none(hand!("AH2C3D").as_ref()));
+        assert!(pile.contains_none(hand!("QHQCQHQS").as_ref()));
     }
 }

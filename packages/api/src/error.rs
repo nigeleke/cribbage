@@ -5,27 +5,37 @@ use dioxus::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+/// Represents errors that can occur in the API layer.
 #[derive(Debug, Serialize, Deserialize, Error)]
 pub enum ApiError {
+    /// Indicates a client-side error, such as invalid input or malformed request.
     #[error("bad request: {0}")]
     BadRequest(String),
 
+    /// Indicates that the user is not authorized to perform the requested action
     #[error("forbidden: {0}")]
     Forbidden(String),
 
+    /// Indicates that the requested resource could not be found.
     #[error("not found")]
     NotFound,
 
+    /// Represents a domain-level error, originating from business logic validation.
     #[error("domain error: {0}")]
     Domain(String),
 
+    /// Represents an unexpected error in production builds.
     #[cfg(not(debug_assertions))]
-    #[error("unexpected")]
+    #[error("An unexpected error occurred")]
     Unexpected,
 
+    /// Represents an unexpected error in debug builds, including a descriptive message.
     #[cfg(debug_assertions)]
-    #[error("unexpected {message}")]
-    Unexpected { message: String },
+    #[error("An unexpected error occurred {message}")]
+    Unexpected {
+        /// Description of what happened and / or where.
+        message: String,
+    },
 }
 
 impl AsStatusCode for ApiError {

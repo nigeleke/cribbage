@@ -8,6 +8,10 @@ use crate::{
     },
 };
 
+/// Represents the current state of play during the pegging phase.
+///
+/// Tracks which player's turn it is, pending cards, the go status,
+/// current and previous plays.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayState {
     next_to_play: Player,
@@ -17,12 +21,17 @@ pub struct PlayState {
     previous_plays: Vec<Play>,
 }
 
+/// Trait for types that expose a `PlayState`.
 pub trait HasPlayState {
+    /// Returns an immutable reference to the play state.
     fn play_state(&self) -> &PlayState;
+
+    /// Returns a mutable reference to the play state.
     fn play_state_mut(&mut self) -> &mut PlayState;
 }
 
 impl PlayState {
+    /// Creates a new `PlayState` with the specified next player to play.
     pub fn new(next_to_play: Player) -> Self {
         Self {
             next_to_play,
@@ -33,23 +42,36 @@ impl PlayState {
         }
     }
 
+    /// Returns the player whose turn is next.
+    #[must_use]
     pub const fn next_to_play(&self) -> Player {
         self.next_to_play
     }
 
+    /// Sets pending plays for a player and returns the updated state.
+    ///
+    /// (Note: This is really part of the constructor information)
+    #[must_use]
     pub fn with_pending_plays(mut self, player: Player, cards: &[Card]) -> Self {
         self.pending_plays.as_mut_slice()[player] = Vec::from(cards);
         self
     }
 
-    pub fn has_cards(&self, player: Player) -> bool {
-        !self.pending_plays[player].is_empty()
-    }
-
+    /// Returns the current running total of points in the play sequence.
+    #[must_use]
     pub fn running_total(&self) -> Value {
         self.current_plays.iter().map(|p| p.card().value()).sum()
     }
 
+    /// Returns `true` if the specified player has any cards left to play regardless
+    /// whether they are currently legal plays or not.
+    #[must_use]
+    pub fn has_cards(&self, player: Player) -> bool {
+        !self.pending_plays[player].is_empty()
+    }
+
+    /// Returns the legal cards the specified player may play without exceeding the play limit.
+    #[must_use]
     pub fn legal_plays(&self, player: Player) -> Vec<Card> {
         let running_total = self.running_total();
         let is_in_limit = |c: &Card| running_total + c.value() <= Value::from(PLAY_TARGET);
@@ -60,14 +82,21 @@ impl PlayState {
             .collect::<Vec<_>>()
     }
 
-    pub fn current_plays(&self) -> Vec<Play> {
-        self.current_plays.clone()
+    /// Returns an immutable reference to the current plays.
+    #[must_use]
+    pub fn current_plays(&self) -> &Vec<Play> {
+        &self.current_plays
     }
 
-    pub fn previous_plays(&self) -> Vec<Play> {
-        self.previous_plays.clone()
+    /// Returns an immutable reference to the previous plays.
+    #[must_use]
+    pub fn previous_plays(&self) -> &Vec<Play> {
+        &self.previous_plays
     }
 
+    /// Plays a card for the current player, updating the state and returning the resulting
+    /// score sheet for the played card.
+    #[must_use]
     pub fn play(&mut self, card: Card) -> ScoreSheet {
         let player = self.next_to_play;
         let opponent = player.opponent();
@@ -110,6 +139,8 @@ impl PlayState {
         sheet
     }
 
+    /// Calls "go" for the current player, updating the state and returning the resulting score sheet.
+    #[must_use]
     pub fn go(&mut self) -> ScoreSheet {
         let player = self.next_to_play;
         let opponent = player.opponent();
@@ -157,10 +188,14 @@ impl PlayState {
         self.go_status = GoStatus::NotCalled;
     }
 
+    /// Returns `true` if all players have no cards left.
+    #[must_use]
     pub fn is_finished(&self) -> bool {
         self.pending_plays.iter().all(Vec::is_empty)
     }
 
+    /// Finishes the current plays and returns the regathered hands.
+    #[must_use]
     pub fn finish_plays(&mut self) -> Hands {
         let hands = self.regather_hands();
         self.current_plays = Vec::default();
@@ -169,9 +204,11 @@ impl PlayState {
     }
 
     fn regather_hands(&self) -> Hands {
-        let mut previous_plays = self.previous_plays();
-        let mut plays = self.current_plays();
-        plays.append(&mut previous_plays);
+        let plays = self
+            .previous_plays
+            .iter()
+            .chain(self.current_plays.iter())
+            .collect::<Vec<_>>();
 
         let hands = PLAYERS
             .into_iter()
@@ -187,22 +224,24 @@ impl PlayState {
         [hands[PLAYER0].clone(), hands[PLAYER1].clone()]
     }
 
+    /// Returns the current go status.
+    #[must_use]
     pub fn go_status(&self) -> &GoStatus {
         &self.go_status
     }
 
     #[cfg(test)]
-    pub fn go_status_mut(&mut self) -> &mut GoStatus {
+    pub(crate) fn go_status_mut(&mut self) -> &mut GoStatus {
         &mut self.go_status
     }
 
     #[cfg(test)]
-    pub fn current_plays_mut(&mut self) -> &mut Vec<Play> {
+    pub(crate) fn current_plays_mut(&mut self) -> &mut Vec<Play> {
         &mut self.current_plays
     }
 
     #[cfg(test)]
-    pub fn previous_plays_mut(&mut self) -> &mut Vec<Play> {
+    pub(crate) fn previous_plays_mut(&mut self) -> &mut Vec<Play> {
         &mut self.previous_plays
     }
 }

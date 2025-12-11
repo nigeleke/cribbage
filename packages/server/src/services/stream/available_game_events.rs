@@ -3,19 +3,63 @@ use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 use tracing::warn;
 
 use crate::{
-    bug,
     convertors::game_query_row_to_game,
     database::{Change, GameQueryRow, Notification},
     domain::{Game, GameId, UserId},
-    error::ServerError,
+    error::{ServerError, bug},
     server_state::ServerState,
 };
 
+/// Represents a change in the list of available games for a user.
 pub enum AvailableGameEvent {
-    Created { game_id: GameId, name: String },
-    Removed { game_id: GameId, name: String },
+    /// A new game was created and is available to join (hosted)
+    /// or play (computer).
+    Created {
+        /// The game idenitifier of the game that was created.
+        game_id: GameId,
+
+        /// The game's name.
+        name: String,
+    },
+
+    /// An existing game was removed from availability, i.e. someone else joined.
+    Removed {
+        /// The game idenitifier of the game that was removed.
+        game_id: GameId,
+
+        /// The game's name.
+        name: String,
+    },
 }
 
+/// Streams updates about games that are available to the given user.
+///
+/// The stream yields `AvailableGameEvent`s when a game is created or removed
+/// from the list of games available to the user.
+///
+/// # Parameters
+///
+/// - `server_state`: The shared server state, including the database change broadcaster.
+/// - `user_id`: The ID of the user for whom available games are tracked.
+///
+/// # Returns
+///
+/// A `Stream` of `AvailableGameEvent`s wrapped in `Result`.
+/// Errors may occur due to internal server issues.
+///
+/// # Example
+///
+/// ```no_run
+/// use futures::StreamExt;
+///
+/// let mut stream = available_game_events(server_state.clone(), user_id).await.unwrap();
+/// while let Some(event) = stream.next().await {
+///     match event {
+///         AvailableGameEvent::Created { game_id, name } => { /* handle creation */ },
+///         AvailableGameEvent::Removed { game_id, name } => { /* handle removal */ },
+///     }
+/// }
+/// ```
 pub async fn available_game_events(
     server_state: ServerState,
     user_id: UserId,
@@ -51,21 +95,21 @@ pub async fn available_game_events(
         };
 
         let game_change_to_event = move |change: Change<Game>| {
-            let user_can_join = |game: &Game| game.host() != &user_id && game.guest().is_none();
+            let user_can_join = |game: &Game| game.host() != user_id && game.guest().is_none();
             let player = |game: &Game| game.validate_user(user_id).is_some();
             let joined = |old_game: &Game, new_game: &Game| !player(old_game) && player(new_game);
 
             let created = |game: &Game| {
                 Some(AvailableGameEvent::Created {
-                    game_id: *game.id(),
-                    name: game.name().clone(),
+                    game_id: game.id(),
+                    name: String::from(game.name()),
                 })
             };
 
             let removed = |game: &Game| {
                 Some(AvailableGameEvent::Removed {
-                    game_id: *game.id(),
-                    name: game.name().clone(),
+                    game_id: game.id(),
+                    name: String::from(game.name()),
                 })
             };
 

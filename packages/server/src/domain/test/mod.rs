@@ -1,6 +1,10 @@
-mod cards;
-mod game_builder;
-mod macros;
+#[macro_use]
+pub(crate) mod domain_macros;
+#[macro_use]
+pub(crate) mod test_macros;
 
-pub use cards::Cards;
-pub use game_builder::{__private_game_test_impl, GameBuilder};
+mod game_builder;
+mod game_test;
+
+pub(crate) use game_builder::GameBuilder;
+pub(crate) use game_test::__private_game_test_impl;

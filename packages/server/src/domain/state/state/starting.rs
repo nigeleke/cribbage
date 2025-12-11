@@ -5,6 +5,11 @@ use crate::{
     domain::{CutsForDeal, Deck, HasCutsForDeal, HasDeck, HasPending, Pending, Roles},
 };
 
+/// Represents the state of the game during the *starting* phase,
+/// before the deal is assigned and initial hands are dealt.
+///
+/// `cuts_for_deal` entries will be `None` until a player has made a cut.
+/// `pending` reflects player's acknowledgements of the cuts.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Starting {
     cuts_for_deal: CutsForDeal,
@@ -13,6 +18,11 @@ pub struct Starting {
 }
 
 impl Starting {
+    /// Creates a new `Starting` state with the provided cut information,
+    /// deck, and pending actions.
+    ///
+    /// The caller is responsible for ensuring that the inputs are valid for
+    /// the beginning of the current starting state of the game.
     pub fn new(cuts_for_deal: CutsForDeal, deck: Deck, pending: Pending) -> Self {
         Self {
             cuts_for_deal,
@@ -21,6 +31,11 @@ impl Starting {
         }
     }
 
+    /// Computes and returns the player roles based on the completed cuts.
+    ///
+    /// If the cuts are incomplete or have the same face value then the
+    /// function returns `None`.
+    #[must_use]
     pub fn roles(&self) -> Option<Roles> {
         Roles::from_cuts(&self.cuts_for_deal)
     }

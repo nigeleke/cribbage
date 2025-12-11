@@ -1,17 +1,23 @@
 use serde::{Deserialize, Serialize};
+// use server::domain::GameId;
 use uuid::Uuid;
 
 use crate::dto::DTOError;
 
 /// Data transfer object for a game identifier, wrapping a ULID for unique, sortable identification.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[repr(transparent)]
+#[serde(transparent)]
 pub struct GameIdDTO(Uuid);
 
 impl GameIdDTO {
-    pub fn new() -> Self {
-        Self(Uuid::now_v7())
-    }
+    // /// Create a new id, based on domain logic.
+    // pub fn new() -> Self {
+    //     let game_id = GameId::new();
+    //     Self(game_id.value())
+    // }
 
+    /// Internal value of the id.
     pub fn value(self) -> Uuid {
         self.0
     }

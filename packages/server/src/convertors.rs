@@ -1,10 +1,9 @@
 use std::str::FromStr;
 
 use crate::{
-    bug,
     database::{AvailableGameRow, GameQueryRow},
     domain::{Availability, AvailableGame, Game, GameId},
-    error::ServerError,
+    error::{ServerError, bug},
 };
 
 pub fn available_game_row_to_available_game(

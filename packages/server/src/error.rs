@@ -1,17 +1,23 @@
 use anyhow::Error as AnyhowError;
 use thiserror::*;
 
+/// Represents possible errors that can occur in the server.
 #[derive(Debug, Error)]
 pub enum ServerError {
+    /// The user's request is not permitted.
     #[error("forbidden request: {0}")]
     Forbidden(String),
 
+    /// The resource, e.g. game, cannot be found.
     #[error("not found")]
     NotFound,
 
+    /// An error occurred within the domain usage.
     #[error(transparent)]
     Domain(#[from] crate::domain::DomainError),
 
+    /// An unexpected error occurred; this wraps infrastrucutre errors as
+    /// well as internal defects.
     #[error("internal server error: {0}")]
     Internal(
         #[from]
@@ -20,11 +26,10 @@ pub enum ServerError {
     ),
 }
 
-#[macro_export]
 macro_rules! bug_inner {
     ($msg:expr) => {{
         let location = std::panic::Location::caller();
-        let message = format!("BUG at {}:{}:{} — {}",
+        let message = format!("BUG at {}:{}:{} - {}",
             location.file(), location.line(), location.column(), $msg);
 
         #[cfg(feature = "backtrace")]
@@ -41,15 +46,15 @@ macro_rules! bug_inner {
     ($fmt:expr, $($arg:tt)*) => { bug_inner!(format_args!($fmt, $($arg)*)) };
 }
 
-#[macro_export]
 macro_rules! bug {
-    // Case 1: bug!(original_error) → just lift the error with location
     () => {
-        |error| $crate::bug_inner!(error)
+        |error| $crate::error::bug_inner!(error)
     };
 
-    // Case 2: bug!("custom message {}", vars...) → add context first
     ($($msg:tt)*) => {{
-        |e| $crate::bug_inner!(format_args!("{}: {}", format_args!($($msg)*), e))
+        |e| $crate::error::bug_inner!(format_args!("{}: {}", format_args!($($msg)*), e))
     }};
 }
+
+pub(crate) use bug;
+pub(crate) use bug_inner;

@@ -1,11 +1,34 @@
 use crate::{
-    bug,
     domain::{Card, GameCommand, GameId, UserId},
-    error::ServerError,
+    error::{ServerError, bug},
     server_state::ServerState,
-    services::view::get_game,
+    services::queries::get_game,
 };
 
+/// Discards a set of cards from a player's hand to the crib in a game.
+///
+/// This function updates the game state to move the specified cards
+/// from the user's hand into the crib. It validates that the action
+/// is allowed for the given user and game.
+///
+/// # Parameters
+///
+/// - `server_state`: The shared server state containing the game and database.
+/// - `user_id`: The ID of the user performing the discard.
+/// - `game_id`: The ID of the game in which the discard occurs.
+/// - `cards`: The cards to discard into the crib.
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the discard was successful. Returns a `ServerError` if
+/// the action is forbidden, the game is not found, or another internal error occurs.
+///
+/// # Example
+///
+/// ```no_run
+/// let cards_to_discard = vec![card1, card2];
+/// discard_cards_to_crib(server_state.clone(), user_id, game_id, cards_to_discard).await?;
+/// ```
 pub async fn discard_cards_to_crib(
     server_state: ServerState,
     user_id: UserId,

@@ -10,7 +10,7 @@ use crate::dto::{GameIdDTO, UserGameDTO, UserIdDTO};
 pub async fn get_game(user_id: UserIdDTO, game_id: GameIdDTO) -> Result<UserGameDTO> {
     use server::{
         domain::{GameId, UserId},
-        view::get_game,
+        queries::get_game,
     };
 
     let user_id = UserId::from(user_id.value());

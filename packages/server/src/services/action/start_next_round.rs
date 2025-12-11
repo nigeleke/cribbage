@@ -1,11 +1,31 @@
 use crate::{
-    bug,
     domain::{GameCommand, GameId, UserId},
-    error::ServerError,
+    error::{ServerError, bug},
     server_state::ServerState,
-    services::view::get_game,
+    services::queries::get_game,
 };
 
+/// Acknowledges the crib score and goes on start the next deal / discarding round
+/// if both players have acknowledged.
+///
+/// # Parameters
+///
+/// - `server_state`: The shared server state containing the game and database.
+/// - `user_id`: The ID of the user starting the next round.
+/// - `game_id`: The ID of the game to advance.
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the next round was successfully started.
+/// Returns a `ServerError` if the action is forbidden, the game is not found,
+/// or another internal error occurs.
+///
+/// # Example
+///
+/// ```no_run
+/// start_next_round(server_state.clone(), user_id, game_id).await?;
+/// println!("Next round started successfully.");
+/// ```
 pub async fn start_next_round(
     server_state: ServerState,
     user_id: UserId,

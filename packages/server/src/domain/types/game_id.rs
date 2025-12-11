@@ -1,7 +1,25 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+/// Unique identifier for a game instance.
+///
+/// Uses uuid::v7, so temporally sortable.
+///
+/// # Examples
+///
+/// ```
+/// # use my_crate::GameId;
+/// use uuid::Uuid;
+///
+/// let id = GameId::new();
+/// let id2 = GameId(Uuid::parse_str("936DA01F-9ABD-4D9D-80C7-02AF85C822A8").unwrap());
+///
+/// assert_ne!(id, id2);
+/// assert_eq!(id.to_string().len(), 36);
+/// ```
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[repr(transparent)]
+#[serde(transparent)]
 pub struct GameId(Uuid);
 
 impl GameId {
@@ -10,6 +28,7 @@ impl GameId {
         Self(Uuid::now_v7())
     }
 
+    /// Inner uuid value of the GameId.
     pub fn value(self) -> Uuid {
         self.0
     }

@@ -1,37 +1,47 @@
 use serde::{Deserialize, Serialize};
-use strum::{AsRefStr, EnumIter};
+use strum::EnumIter;
 
+use super::{rank::Rank, value::Value};
 use crate::domain::CardsError;
 
-use super::rank::Rank;
-use super::value::Value;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, EnumIter, AsRefStr)]
+/// The face of a playing card (Ace through King).
+///
+/// # Examples
+///
+/// ```
+/// # use my_crate::Face;
+/// assert_eq!(Face::Jack.to_string(), "Jack");
+/// assert_eq!(Face::Ace.rank(), Rank::from(1));
+/// assert_eq!(Face::Queen.value(), Value::from(10));
+/// ```
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, EnumIter)]
+#[rustfmt::skip]
 pub enum Face {
-    Ace,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-    Ten,
-    Jack,
-    Queen,
-    King,
+    #[doc(hidden)] Ace,
+    #[doc(hidden)] Two,
+    #[doc(hidden)] Three,
+    #[doc(hidden)] Four,
+    #[doc(hidden)] Five,
+    #[doc(hidden)] Six,
+    #[doc(hidden)] Seven,
+    #[doc(hidden)] Eight,
+    #[doc(hidden)] Nine,
+    #[doc(hidden)] Ten,
+    #[doc(hidden)] Jack,
+    #[doc(hidden)] Queen,
+    #[doc(hidden)] King,
 }
 
 impl Face {
-    pub fn name(&self) -> String {
-        self.as_ref().to_string()
+    /// Returns `true` if this face is a Jack.
+    #[must_use]
+    #[inline]
+    pub const fn is_jack(&self) -> bool {
+        matches!(self, Self::Jack)
     }
 
-    pub fn is_jack(&self) -> bool {
-        self == &Self::Jack
-    }
-
+    /// Returns the rank used for ordering (Ace low, King high).
+    #[must_use]
     pub fn rank(&self) -> Rank {
         let rank = match self {
             Self::Ace => 1,
@@ -52,6 +62,12 @@ impl Face {
         Rank::from(rank)
     }
 
+    /// Returns the point or face value.
+    ///
+    /// - Ace = 1 (low)
+    /// - 2–10 = face value
+    /// - Jack/Queen/King = 10
+    #[must_use]
     pub fn value(&self) -> Value {
         let value = match self {
             Self::Ace => 1,
@@ -122,26 +138,25 @@ pub mod test {
     #[test]
     fn face_has_rank_value_display_string_and_name() {
         let faces = [
-            (Face::Ace, 1, 1, "A", "Ace"),
-            (Face::Two, 2, 2, "2", "Two"),
-            (Face::Three, 3, 3, "3", "Three"),
-            (Face::Four, 4, 4, "4", "Four"),
-            (Face::Five, 5, 5, "5", "Five"),
-            (Face::Six, 6, 6, "6", "Six"),
-            (Face::Seven, 7, 7, "7", "Seven"),
-            (Face::Eight, 8, 8, "8", "Eight"),
-            (Face::Nine, 9, 9, "9", "Nine"),
-            (Face::Ten, 10, 10, "T", "Ten"),
-            (Face::Jack, 11, 10, "J", "Jack"),
-            (Face::Queen, 12, 10, "Q", "Queen"),
-            (Face::King, 13, 10, "K", "King"),
+            (Face::Ace, 1, 1, "A"),
+            (Face::Two, 2, 2, "2"),
+            (Face::Three, 3, 3, "3"),
+            (Face::Four, 4, 4, "4"),
+            (Face::Five, 5, 5, "5"),
+            (Face::Six, 6, 6, "6"),
+            (Face::Seven, 7, 7, "7"),
+            (Face::Eight, 8, 8, "8"),
+            (Face::Nine, 9, 9, "9"),
+            (Face::Ten, 10, 10, "T"),
+            (Face::Jack, 11, 10, "J"),
+            (Face::Queen, 12, 10, "Q"),
+            (Face::King, 13, 10, "K"),
         ];
 
-        for (face, rank, value, display_string, name) in faces {
+        for (face, rank, value, display_string) in faces {
             assert_eq!(face.rank(), Rank::from(rank));
             assert_eq!(face.value(), Value::from(value));
             assert_eq!(face.to_string(), display_string);
-            assert_eq!(face.name(), name);
         }
     }
 }

@@ -1,10 +1,33 @@
 use crate::{
-    bug,
     domain::{GameCommand, GameId, UserId},
-    error::ServerError,
+    error::{ServerError, bug},
     server_state::ServerState,
 };
 
+/// Joins an existing game as a guest.
+///
+/// This function allows a user to join a game that has been hosted by another user.
+/// The game must have an available slot for a guest. After joining, the game state
+/// is updated accordingly.
+///
+/// # Parameters
+///
+/// - `server_state`: The shared server state containing the game and database.
+/// - `user_id`: The ID of the user who wants to join the game.
+/// - `game_id`: The ID of the game to join.
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the user successfully joined the game.
+/// Returns a `ServerError` if the game is not found, the user is forbidden from joining,
+/// or another internal error occurs.
+///
+/// # Example
+///
+/// ```no_run
+/// join_game(server_state.clone(), user_id, game_id).await?;
+/// println!("User joined the game successfully.");
+/// ```
 pub async fn join_game(
     server_state: ServerState,
     user_id: UserId,

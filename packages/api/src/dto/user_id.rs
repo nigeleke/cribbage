@@ -3,17 +3,23 @@ use uuid::Uuid;
 
 /// Data transfer object for a user identifier, wrapping a UUID.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[repr(transparent)]
+#[serde(transparent)]
 pub struct UserIdDTO(Uuid);
 
 impl UserIdDTO {
+    /// Creates a new `UserIdDTO` using the domain's method of assigning ids.
+    #[must_use]
     pub fn new() -> Self {
         Self(Uuid::new_v4())
     }
 
+    /// The inner uuid value.
     pub fn value(self) -> Uuid {
         self.0
     }
 
+    /// A short name for the user.
     pub fn short_name(&self) -> String {
         String::from(&self.0.to_string()[..8])
     }

@@ -1,4 +1,3 @@
-#[macro_export]
 macro_rules! function_name {
     () => {{
         fn f() {}
@@ -13,3 +12,5 @@ macro_rules! function_name {
         )
     }};
 }
+
+pub(crate) use function_name;

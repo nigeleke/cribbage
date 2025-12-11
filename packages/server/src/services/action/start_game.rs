@@ -1,11 +1,30 @@
 use crate::{
-    bug,
     domain::{GameCommand, GameId, UserId},
-    error::ServerError,
+    error::{ServerError, bug},
     server_state::ServerState,
-    services::view::get_game,
+    services::queries::get_game,
 };
 
+/// Acknowledges the cuts for deal, then starts a hosted game for the specified user.
+///
+/// # Parameters
+///
+/// - `server_state`: The shared server state containing the game and database.
+/// - `user_id`: The ID of the user starting the game.
+/// - `game_id`: The ID of the game to start.
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the game was successfully started.
+/// Returns a `ServerError` if the action is forbidden, the game is not found,
+/// or another internal error occurs.
+///
+/// # Example
+///
+/// ```no_run
+/// start_game(server_state.clone(), user_id, game_id).await?;
+/// println!("Game started successfully.");
+/// ```
 pub async fn start_game(
     server_state: ServerState,
     user_id: UserId,

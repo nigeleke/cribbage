@@ -1,16 +1,10 @@
-# UI
+# ui
 
-This crate contains all shared components for the workspace. This is a great place to place any UI you would like to use in multiple platforms like a common `Button` or `Navbar` component.
+This package provides the Dioxus user interface components for the cribbage game. The ui crate contains shared components for rendering
+game elements. It depends on the api crate for backend interactions and is used by the web crate for the frontend.
 
-```
-ui/
-├─ src/
-│  ├─ lib.rs # The entrypoint for the ui crate
-│  ├─ hero.rs # The Hero component that will be used in every platform
-│  ├─ echo.rs # The shared echo component that communicates with the server
-│  ├─ navbar.rs # The Navbar component that will be used in the layout of every platform's router
-```
+## Modules
 
-## Dependencies
-
-Since this crate is shared between multiple platforms, it should not pull in any platform specific dependencies. For example, if you want to use the `web_sys` crate in the web build of your app, you should not add it to this crate. Instead, you should add platform specific dependencies to the [web](../web/Cargo.toml), [desktop](../desktop/Cargo.toml), or [mobile](../mobile/Cargo.toml) crates.
+  - `assets` -  Directory for static assets (e.g., images, icons for cards, pegboards).
+  - `src/components` - Reusable components including domain object views, action buttons and general purpose UI.
+  - `src/pages` - Main routing pages.

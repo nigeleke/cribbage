@@ -1,7 +1,5 @@
 mod card;
 mod game_id;
-#[cfg(test)]
-mod macros;
 mod pending;
 mod user_id;
 

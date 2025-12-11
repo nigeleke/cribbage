@@ -1,9 +1,16 @@
 use serde::{Deserialize, Serialize};
 
+/// Represents a point value in the game.
+///
+/// Wraps a `usize` and provides ordering and comparison operations.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[repr(transparent)]
+#[serde(transparent)]
 pub struct Points(usize);
 
 impl Points {
+    /// Returns the internal numeric value of the points.
+    #[must_use]
     pub fn value(&self) -> usize {
         self.0
     }

@@ -1,6 +1,23 @@
 use serde::{Deserialize, Serialize};
 
+/// A card rank used for ordering/comparison.
+///
+/// Values range from `1` (Ace) to `13` (King).
+///
+/// # Examples
+///
+/// ```
+/// # use my_crate::{Face, Rank};
+/// assert_eq!(Face::Ace.rank(),   Rank(1));
+/// assert_eq!(Face::King.rank(),  Rank(13));
+///
+/// let mut ranks = vec![Rank(Face::Ten.rank()), Face::Ace.rank(), Face::Queen.rank()];
+/// ranks.sort();
+/// assert_eq!(ranks, [Rank(1), Rank(10), Rank(12)]);
+/// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[repr(transparent)]
+#[serde(transparent)]
 pub struct Rank(usize);
 
 impl From<usize> for Rank {

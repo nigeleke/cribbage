@@ -3,11 +3,17 @@ use serde::{Deserialize, Serialize};
 use crate::{
     display::format_vec,
     domain::{
-        Crib, Hands, HasCrib, HasHands, HasRoles, HasScoreboard, HasStarterCut,
-        Player, Roles, Scoreboard, StarterCut,
+        Crib, Hands, HasCrib, HasHands, HasRoles, HasScoreboard, HasStarterCut, Player, Roles,
+        Scoreboard, StarterCut,
     },
 };
 
+/// Represents the terminal state of a completed game.
+///
+/// This structure captures all information required to understand the final
+/// outcome, including the winning player, the final scoreboard, the roles
+/// assigned during the round, the hands as they existed at the end of play,
+/// the crib, and the starter card revealed during the play phase.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Finished {
     winner: Player,
@@ -19,11 +25,31 @@ pub struct Finished {
 }
 
 impl Finished {
-    #[rustfmt::skip]
-    pub const fn new(winner: Player, scoreboard: Scoreboard, roles: Roles, hands: Hands, crib: Crib, starter_cut: StarterCut) -> Self {
-        Self { winner, scoreboard, roles, hands, crib, starter_cut }
+    /// Creates a new `Finished` state capturing the game’s final outcome.
+    ///
+    /// All parameters must reflect valid final-game state. This constructor
+    /// does not perform validation; callers are responsible for ensuring
+    /// coherence (e.g., that `winner` matches the final scoreboard).
+    pub const fn new(
+        winner: Player,
+        scoreboard: Scoreboard,
+        roles: Roles,
+        hands: Hands,
+        crib: Crib,
+        starter_cut: StarterCut,
+    ) -> Self {
+        Self {
+            winner,
+            scoreboard,
+            roles,
+            hands,
+            crib,
+            starter_cut,
+        }
     }
 
+    /// Returns the player who won the game.
+    #[must_use]
     pub const fn winner(&self) -> Player {
         self.winner
     }

@@ -1,16 +1,35 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::domain::constants::*;
-
+/// Identifier for a user/account.
+///
+/// # Examples
+///
+/// ```
+/// # use my_crate::UserId;
+/// let id = UserId::new();
+/// let id2 = UserId::nil();
+///
+/// assert_ne!(id, id2);
+/// assert_eq!(id.to_string().len(), 36);
+/// println!("User joined: {}", id);           // Display works automatically
+/// ```
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[repr(transparent)]
+#[serde(transparent)]
 pub struct UserId(Uuid);
 
 impl UserId {
+    /// Generates a new random version-4 UUID.
+    #[must_use]
+    #[inline]
     pub fn new() -> Self {
         Self::from(Uuid::new_v4())
     }
 
+    /// Returns the inner [`Uuid`].
+    #[inline]
+    #[must_use]
     pub fn value(self) -> Uuid {
         self.0
     }
@@ -27,8 +46,6 @@ impl std::fmt::Display for UserId {
         write!(f, "UserId({})", self.0)
     }
 }
-
-pub type Users = [UserId; PLAYER_COUNT];
 
 // #[cfg(test)]
 // mod test {

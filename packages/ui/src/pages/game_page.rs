@@ -25,7 +25,7 @@ pub fn GamePage(game_id: GameIdDTO) -> Element {
     });
 
     let get_game_result = use_resource(move || async move {
-        let current_game = api::view::get_game(*user_id.read(), game_id).await?;
+        let current_game = api::queries::get_game(*user_id.read(), game_id).await?;
         game_stream.call();
         game.set(Some(current_game));
         dioxus::Ok(())

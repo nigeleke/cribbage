@@ -305,7 +305,7 @@ impl Game {
                     .current_plays()
                     .last()
                     .map_or(player, Play::player);
-                let pegging = Pegging::new(recipient, ScoreSheet::go(&play_state));
+                let pegging = Pegging::new(recipient, ScoreSheet::go(play_state));
                 Ok(vec![GameEvent::GoCalled { player, pegging }])
             }
         };

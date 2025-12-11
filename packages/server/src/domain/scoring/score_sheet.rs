@@ -99,7 +99,7 @@ impl ScoreSheet {
     fn play_card_fifteens(self, play_state: &PlayState) -> Self {
         let cards = play_state
             .current_plays()
-            .into_iter()
+            .iter()
             .map(|p| p.card())
             .collect::<Vec<_>>();
 

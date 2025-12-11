@@ -253,7 +253,7 @@ mod server_only {
         let score_items = s.pegging().score_sheet().items();
 
         score_items
-            .into_iter()
+            .iter()
             .fold(PeggingDTO::default(), |mut acc, item| {
                 let kind = match item.kind() {
                     ScoreKind::Fifteen => Some(PeggingKindDTO::Fifteens),
@@ -270,11 +270,7 @@ mod server_only {
 
                 if let Some(kind) = kind {
                     let points = item.points().value();
-                    let cids = item
-                        .cards()
-                        .into_iter()
-                        .map(|c| c.cid())
-                        .collect::<Vec<_>>();
+                    let cids = item.cards().iter().map(|c| c.cid()).collect::<Vec<_>>();
                     let entry = acc.entry(kind).or_default();
                     entry.points += points;
                     entry.breakdown.push(cids);

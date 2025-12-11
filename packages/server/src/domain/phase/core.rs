@@ -3,7 +3,7 @@ use strum::AsRefStr;
 
 use crate::domain::{
     Discarding, Finished, Playing, ScoringCrib, ScoringDealer, ScoringPone, Starting,
-    state::wrap::{Wrap, WrapOrFinished},
+    phase::wrap::{Wrap, WrapOrFinished},
 };
 
 /// Current phase of the Cribbage game.

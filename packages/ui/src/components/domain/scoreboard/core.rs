@@ -9,8 +9,8 @@ use super::track::Track;
 pub fn Scoreboard() -> Element {
     let game = use_context::<ReadSignal<UserGameDTO>>();
 
-    let mut user_score = use_signal(move || game().user_state.score);
-    let mut opponent_score = use_signal(move || game().opponent_state.score);
+    let mut user_score = use_signal(move || game.read().user_state.score);
+    let mut opponent_score = use_signal(move || game.read().opponent_state.score);
 
     use_effect(move || {
         if let Some(winner) = game.read().winner {
@@ -30,6 +30,9 @@ pub fn Scoreboard() -> Element {
                     gloo_timers::future::TimeoutFuture::new(50).await;
                 }
             });
+        } else {
+            user_score.set(game.read().user_state.score);
+            opponent_score.set(game.read().opponent_state.score);
         }
     });
 

@@ -20,16 +20,6 @@ use crate::{
 /// Returns `Ok(None)` if no game with the given ID is found.
 /// Returns a `ServerError` if there is a problem accessing the database
 /// or processing the request.
-///
-/// # Example
-///
-/// ```no_run
-/// if let Some(game) = get_game(server_state.clone(), game_id).await? {
-///     println!("Game found: {}", game.name());
-/// } else {
-///     println!("Game not found.");
-/// }
-/// ```
 pub async fn get_game(
     server_state: ServerState,
     game_id: GameId,

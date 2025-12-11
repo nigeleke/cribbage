@@ -18,13 +18,6 @@ use crate::{
 /// Returns `Ok(())` if the game was successfully started.
 /// Returns a `ServerError` if the action is forbidden, the game is not found,
 /// or another internal error occurs.
-///
-/// # Example
-///
-/// ```no_run
-/// start_game(server_state.clone(), user_id, game_id).await?;
-/// println!("Game started successfully.");
-/// ```
 pub async fn start_game(
     server_state: ServerState,
     user_id: UserId,

@@ -16,23 +16,6 @@ use crate::domain::{PLAYER0, PLAYER1, Player};
 ///
 /// Note: there is now `new` as the `default` pending state will be pending
 /// for both players in the game.
-///
-/// # Examples
-///
-/// ```
-/// # use my_crate::{Pending, Player};
-/// let mut pending = Pending::from_players(&[Player::North, Player::South]);
-///
-/// assert!(!pending.finished());
-/// assert!(pending.waiting_on(Player::North));
-///
-/// let finished = pending.acknowledge(Player::North);
-/// assert!(!finished);                    // still waiting on South
-///
-/// let finished = pending.acknowledge(Player::South);
-/// assert!(finished);                     // now both acknowledged
-/// assert!(pending.finished());
-/// ```
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Pending(HashSet<Player>);

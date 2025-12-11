@@ -19,13 +19,6 @@ use crate::{
 ///
 /// Returns `Ok(GameId)` containing the ID of the newly created game.
 /// Returns a `ServerError` if the game cannot be created due to internal issues.
-///
-/// # Example
-///
-/// ```no_run
-/// let game_id = host_game(server_state.clone(), user_id).await?;
-/// println!("New game hosted with ID: {}", game_id);
-/// ```
 pub async fn host_game(server_state: ServerState, user_id: UserId) -> Result<GameId, ServerError> {
     let game_id = GameId::new();
     let aggregate_id = game_id.value().to_string();

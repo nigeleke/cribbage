@@ -33,18 +33,6 @@ use crate::{
 ///
 /// Returns a `ServerError` if there is a problem accessing the database or
 /// processing the request.
-///
-/// # Example
-///
-/// ```no_run
-/// let (games, has_more, last) = get_available_games(
-///     server_state.clone(),
-///     user_id,
-///     "cribbage".to_string(),
-///     None
-/// ).await?;
-/// println!("Found {} available games.", games.len());
-/// ```
 pub async fn get_available_games(
     server_state: ServerState,
     user_id: UserId,

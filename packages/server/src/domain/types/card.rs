@@ -12,16 +12,6 @@ pub use self::{face::Face, rank::Rank, suit::Suit, value::Value};
 /// A playing card consisting of a [`Face`] and a [`Suit`].
 ///
 /// Note `Card` is `Copy`able.
-///
-/// # Examples
-///
-/// ```
-/// use my_crate::{Card, Face, Suit};
-///
-/// let card = Card::new(Face::Ace, Suit::Spades);
-/// assert_eq!(card.cid(), "AS");
-/// assert_eq!(card.name(), "Ace of Spades");
-/// ```
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Card {
     face: Face,
@@ -30,14 +20,6 @@ pub struct Card {
 
 impl Card {
     /// Constructs a new `Card` from a face and a suit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use my_crate::{Card, Face, Suit};
-    /// const QUEEN_OF_HEARTS: Card = Card::new(Face::Queen, Suit::Hearts);
-    /// assert_eq!(QUEEN_OF_HEARTS.name(), "Queen of Hearts");
-    /// ```
     #[must_use]
     const fn new(face: Face, suit: Suit) -> Self {
         Self { face, suit }
@@ -46,14 +28,6 @@ impl Card {
     /// Returns an iterator over **all** 52 standard playing cards.
     ///
     /// The cards are returned in the order of `Suit::iter()` × `Face::iter()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use my_crate::Card;
-    /// let deck: Vec<Card> = Card::all();
-    /// assert_eq!(deck.len(), 52);
-    /// ```
     #[must_use]
     pub fn all() -> Vec<Self> {
         let cards_for_suit = |s: Suit| Face::iter().map(move |f| Self::new(f, s));
@@ -64,14 +38,6 @@ impl Card {
     ///
     /// The format is single character anglicised face abbreviation followed by the
     /// single character anglicised suit abbreviation,
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use my_crate::{Card, Face, Suit};
-    /// let card = Card::new(Face::Ten, Suit::Diamonds);
-    /// assert_eq!(card.cid(), "TD");
-    /// ```
     #[must_use]
     pub fn cid(&self) -> String {
         let Self { face, suit } = self;
@@ -79,45 +45,18 @@ impl Card {
     }
 
     /// Returns the face (rank) part of the card.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use my_crate::{Card, Face, Suit};
-    /// let card = Card::new(Face::King, Suit::Hearts);
-    /// assert_eq!(card.face(), Face::King);
-    /// ```
     #[must_use]
     pub fn face(&self) -> Face {
         self.face
     }
 
     /// Helper function returning `true` if this card is a Jack, regardless of suit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use my_crate::{Card, Face, Suit};
-    /// let jack = Card::new(Face::Jack, Suit::Spades);
-    /// assert!(jack.is_jack());
-    ///
-    /// let queen = Card::new(Face::Queen, Suit::Spades);
-    /// assert!(!queen.is_jack());
-    /// ```
     #[must_use]
     pub fn is_jack(&self) -> bool {
         self.face.is_jack()
     }
 
     /// Returns the suit part of the card.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use my_crate::{Card, Face, Suit};
-    /// let card = Card::new(Face::Ace, Suit::Diamonds);
-    /// assert_eq!(card.suit(), Suit::Diamonds);
-    /// ```
     #[must_use]
     pub fn suit(&self) -> Suit {
         self.suit

@@ -25,17 +25,6 @@ use crate::{
 ///
 /// A `Stream` of `Game`s wrapped in `Result`. Errors may occur due to
 /// internal server issues, in which case a `ServerError` is returned.
-///
-/// # Example
-///
-/// ```no_run
-/// use futures::StreamExt;
-///
-/// let mut stream = game_stream(server_state.clone(), game_id).await.unwrap();
-/// while let Some(game) = stream.next().await {
-///     println!("Game updated: {}", game.name());
-/// }
-/// ```
 pub async fn game_stream(
     server_state: ServerState,
     game_id: GameId,

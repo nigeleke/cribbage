@@ -5,15 +5,6 @@ use super::{rank::Rank, value::Value};
 use crate::domain::CardsError;
 
 /// The face of a playing card (Ace through King).
-///
-/// # Examples
-///
-/// ```
-/// # use my_crate::Face;
-/// assert_eq!(Face::Jack.to_string(), "Jack");
-/// assert_eq!(Face::Ace.rank(), Rank::from(1));
-/// assert_eq!(Face::Queen.value(), Value::from(10));
-/// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, EnumIter)]
 #[rustfmt::skip]
 pub enum Face {

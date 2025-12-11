@@ -46,20 +46,6 @@ pub enum AvailableGameEvent {
 ///
 /// A `Stream` of `AvailableGameEvent`s wrapped in `Result`.
 /// Errors may occur due to internal server issues.
-///
-/// # Example
-///
-/// ```no_run
-/// use futures::StreamExt;
-///
-/// let mut stream = available_game_events(server_state.clone(), user_id).await.unwrap();
-/// while let Some(event) = stream.next().await {
-///     match event {
-///         AvailableGameEvent::Created { game_id, name } => { /* handle creation */ },
-///         AvailableGameEvent::Removed { game_id, name } => { /* handle removal */ },
-///     }
-/// }
-/// ```
 pub async fn available_game_events(
     server_state: ServerState,
     user_id: UserId,

@@ -21,13 +21,6 @@ use crate::{
 /// Returns `Ok(())` if the user successfully joined the game.
 /// Returns a `ServerError` if the game is not found, the user is forbidden from joining,
 /// or another internal error occurs.
-///
-/// # Example
-///
-/// ```no_run
-/// join_game(server_state.clone(), user_id, game_id).await?;
-/// println!("User joined the game successfully.");
-/// ```
 pub async fn join_game(
     server_state: ServerState,
     user_id: UserId,

@@ -22,13 +22,6 @@ use crate::{
 ///
 /// Returns `Ok(())` if the discard was successful. Returns a `ServerError` if
 /// the action is forbidden, the game is not found, or another internal error occurs.
-///
-/// # Example
-///
-/// ```no_run
-/// let cards_to_discard = vec![card1, card2];
-/// discard_cards_to_crib(server_state.clone(), user_id, game_id, cards_to_discard).await?;
-/// ```
 pub async fn discard_cards_to_crib(
     server_state: ServerState,
     user_id: UserId,

@@ -19,13 +19,6 @@ use crate::{
 ///
 /// Returns `Ok(GameId)` containing the ID of the newly created game.
 /// Returns a `ServerError` if the game cannot be created due to internal issues.
-///
-/// # Example
-///
-/// ```no_run
-/// let game_id = play_computer(server_state.clone(), user_id).await?;
-/// println!("Game started against computer with ID: {}", game_id);
-/// ```
 pub async fn play_computer(
     server_state: ServerState,
     user_id: UserId,

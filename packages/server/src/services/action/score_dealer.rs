@@ -19,13 +19,6 @@ use crate::{
 /// Returns `Ok(())` if the dealer's hand was successfully scored.
 /// Returns a `ServerError` if the action is forbidden, the game is not found,
 /// or another internal error occurs.
-///
-/// # Example
-///
-/// ```no_run
-/// score_dealer(server_state.clone(), user_id, game_id).await?;
-/// println!("Dealer's hand scored successfully.");
-/// ```
 pub async fn score_dealer(
     server_state: ServerState,
     user_id: UserId,

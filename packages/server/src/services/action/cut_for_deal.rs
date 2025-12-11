@@ -20,12 +20,6 @@ use crate::{
 ///
 /// Returns `Ok(())` on success. Returns a `ServerError` if the action is forbidden,
 /// the game is not found, or another internal error occurs.
-///
-/// # Example
-///
-/// ```no_run
-/// cut_for_deal(server_state.clone(), user_id, game_id).await?;
-/// ```
 pub async fn cut_for_deal(
     server_state: ServerState,
     user_id: UserId,

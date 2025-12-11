@@ -56,16 +56,6 @@ impl AvailableGamesResponse {
 ///
 /// # Errors
 /// Returns a [`ServerError`] if there is an issue fetching games from the server.
-///
-/// # Example
-/// ```rust,no_run
-/// #use server_api::{get_available_games, ServerState, UserIdDTO};
-/// #use chrono::Utc;
-/// #
-/// let user_id = UserIdDTO::new();
-/// let response = get_available_games(user_id, Some("fun".to_string()), None).await.unwrap();
-/// println!("Available games: {:?}", response.games());
-/// ```
 #[get("/api/{user_id}/available_games?filter&since", State(server_state): State<ServerStateExtractor>)]
 pub async fn get_available_games(
     user_id: UserIdDTO,

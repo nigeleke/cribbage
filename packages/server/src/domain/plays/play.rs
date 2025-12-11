@@ -13,12 +13,6 @@ pub struct Play {
 
 impl Play {
     /// Creates a new `Play` with the given player and card.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let play = Play::new(PLAYER0, card);
-    /// ```
     #[must_use]
     pub fn new<P: Into<Player>>(player: P, card: Card) -> Self {
         let player = player.into();

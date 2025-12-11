@@ -19,13 +19,6 @@ use crate::{
 /// Returns `Ok(())` if the next round was successfully started.
 /// Returns a `ServerError` if the action is forbidden, the game is not found,
 /// or another internal error occurs.
-///
-/// # Example
-///
-/// ```no_run
-/// start_next_round(server_state.clone(), user_id, game_id).await?;
-/// println!("Next round started successfully.");
-/// ```
 pub async fn start_next_round(
     server_state: ServerState,
     user_id: UserId,

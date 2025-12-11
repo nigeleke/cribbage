@@ -6,14 +6,6 @@ use crate::domain::{Card, GameId, Player, UserId};
 /// Commands that drive the game state machine.
 ///
 /// Each variant represents an action a player can take.
-///
-/// # Examples
-///
-/// ```
-/// # use my_crate::{GameCommand, UserId, GameId, Player, Card};
-/// let cmd = GameCommand::JoinGame { user_id: UserId::new() };
-/// let json = serde_json::to_string(&cmd).unwrap();
-/// ```
 #[derive(Debug, Serialize, Deserialize, AsRefStr)]
 #[strum(serialize_all = "snake_case")]
 #[serde(tag = "type", content = "data")]

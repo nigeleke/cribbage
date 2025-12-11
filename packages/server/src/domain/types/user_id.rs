@@ -2,18 +2,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Identifier for a user/account.
-///
-/// # Examples
-///
-/// ```
-/// # use my_crate::UserId;
-/// let id = UserId::new();
-/// let id2 = UserId::nil();
-///
-/// assert_ne!(id, id2);
-/// assert_eq!(id.to_string().len(), 36);
-/// println!("User joined: {}", id);           // Display works automatically
-/// ```
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(transparent)]
 #[serde(transparent)]

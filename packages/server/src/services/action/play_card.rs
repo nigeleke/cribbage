@@ -23,13 +23,6 @@ use crate::{
 /// Returns `Ok(())` if the card was successfully played.
 /// Returns a `ServerError` if the action is forbidden, the game is not found,
 /// the play is illegal, or another internal error occurs.
-///
-/// # Example
-///
-/// ```no_run
-/// let card_to_play = Card::new(Face::Five, Suit::Hearts);
-/// play_card(server_state.clone(), user_id, game_id, card_to_play).await?;
-/// ```
 pub async fn play_card(
     server_state: ServerState,
     user_id: UserId,

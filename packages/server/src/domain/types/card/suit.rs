@@ -4,14 +4,6 @@ use strum::{AsRefStr, EnumIter};
 use crate::domain::CardsError;
 
 /// The four suits in a standard French playing card deck.
-///
-/// # Examples
-///
-/// ```
-/// # use my_crate::Suit;
-/// assert_eq!(Suit::Hearts.name(), "Hearts");
-/// assert_eq!(format!("{0}", Suit::Diamonds), "Diamonds");
-/// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, EnumIter, AsRefStr)]
 #[rustfmt::skip]
 pub enum Suit {

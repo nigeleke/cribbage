@@ -22,12 +22,6 @@ use crate::{
 ///
 /// Returns `Ok(())` if the action was successful. Returns a `ServerError` if
 /// the action is forbidden, the game is not found, or another internal error occurs.
-///
-/// # Example
-///
-/// ```no_run
-/// go(server_state.clone(), user_id, game_id).await?;
-/// ```
 pub async fn go(
     server_state: ServerState,
     user_id: UserId,

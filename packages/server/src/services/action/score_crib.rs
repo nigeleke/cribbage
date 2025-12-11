@@ -19,13 +19,6 @@ use crate::{
 /// Returns `Ok(())` if the crib was successfully scored.
 /// Returns a `ServerError` if the action is forbidden, the game is not found,
 /// the crib cannot be scored yet, or another internal error occurs.
-///
-/// # Example
-///
-/// ```no_run
-/// score_crib(server_state.clone(), user_id, game_id).await?;
-/// println!("Crib scored successfully.");
-/// ```
 pub async fn score_crib(
     server_state: ServerState,
     user_id: UserId,

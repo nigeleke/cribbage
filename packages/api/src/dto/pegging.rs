@@ -23,7 +23,16 @@ pub enum PeggingKindDTO {
     Flush,
 
     #[doc(hidden)]
-    Nob,
+    LastCard,
+
+    #[doc(hidden)]
+    ThirtyOne,
+
+    #[doc(hidden)]
+    HisHeels,
+
+    #[doc(hidden)]
+    Nobs,
 }
 
 impl std::fmt::Display for PeggingKindDTO {
@@ -33,7 +42,10 @@ impl std::fmt::Display for PeggingKindDTO {
             PeggingKindDTO::Pairs => "Pairs",
             PeggingKindDTO::Runs => "Runs",
             PeggingKindDTO::Flush => "Flush",
-            PeggingKindDTO::Nob => "Nob",
+            PeggingKindDTO::LastCard => "Last Card",
+            PeggingKindDTO::ThirtyOne => "Thirty One",
+            PeggingKindDTO::HisHeels => "His Heels",
+            PeggingKindDTO::Nobs => "Nobs",
         }
         .fmt(f)
     }

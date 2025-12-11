@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     display::format_vec,
     domain::{
-        Card, Crib, Hands, HasCrib, HasHands, HasPending, HasPlayState, HasRoles, HasScoreboard,
-        HasStarterCut, Pending, PlayState, Roles, Scoreboard, StarterCut,
+        Card, Crib, Hands, HasCrib, HasHands, HasPegging, HasPending, HasPlayState, HasRoles,
+        HasScoreboard, HasStarterCut, Pegging, Pending, PlayState, Roles, Scoreboard, StarterCut,
     },
 };
 
@@ -138,6 +138,12 @@ impl HasPlayState for Playing {
 
     fn play_state_mut(&mut self) -> &mut PlayState {
         &mut self.play_state
+    }
+}
+
+impl HasPegging for Playing {
+    fn pegging(&self) -> Option<&Pegging> {
+        self.scoreboard.latest_pegging()
     }
 }
 

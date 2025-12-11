@@ -90,8 +90,8 @@ impl<T> HasStarterCut for Scoring<T> {
 }
 
 impl<T> HasPegging for Scoring<T> {
-    fn pegging(&self) -> &Pegging {
-        &self.pegging
+    fn pegging(&self) -> Option<&Pegging> {
+        Some(&self.pegging)
     }
 }
 

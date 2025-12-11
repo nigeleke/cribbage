@@ -2,9 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     display::format_vec,
-    domain::{
-        PLAYER0, PLAYER1, Pegging, Player, Points, Position, Positions, ScoreSheet, constants::*,
-    },
+    domain::{PLAYER0, PLAYER1, Pegging, Player, Points, Position, Positions, constants::*},
 };
 
 /// Represents the scoreboard.
@@ -13,7 +11,7 @@ use crate::{
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Scoreboard {
     positions: Positions,
-    history: Vec<ScoreSheet>,
+    history: Vec<Pegging>,
 }
 
 /// Trait for types that expose a `Scoreboard`.
@@ -52,9 +50,19 @@ impl Scoreboard {
         let points = sheet.points();
         if points > Points::from(0) {
             self.positions[player] += points;
+            self.history.push(pegging.clone());
         }
 
         (self.positions[player].points() >= Points::from(WINNING_SCORE)).then_some(*player)
+    }
+
+    /// Returns a reference to the most recent pegging from the history
+    /// if any pegging rounds have been completed.
+    ///
+    /// Returns `None` if no pegging has occurred yet.
+    #[must_use]
+    pub fn latest_pegging(&self) -> Option<&Pegging> {
+        self.history.last()
     }
 
     /// Returns the winner if any player has reached the winning score.

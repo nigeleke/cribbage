@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use tracing::field::debug;
 
 use crate::{
     display::format_vec,

@@ -2,9 +2,9 @@ use api::dto::{PlayerDTO, ScoreDTO, UserGameDTO};
 use dioxus::prelude::*;
 
 use super::track::Track;
+use crate::Toast;
 
 /// Show the scoreboard.
-/// TODO: In a small screen just show the scores.
 #[component]
 pub fn Scoreboard() -> Element {
     let game = use_context::<ReadSignal<UserGameDTO>>();
@@ -33,6 +33,14 @@ pub fn Scoreboard() -> Element {
         } else {
             user_score.set(game.read().user_state.score);
             opponent_score.set(game.read().opponent_state.score);
+        }
+    });
+
+    let pegging = use_memo(move || game().pegging);
+
+    use_effect(move || {
+        for (kind, summary) in &*pegging.read() {
+            Toast::score(kind, summary.points);
         }
     });
 

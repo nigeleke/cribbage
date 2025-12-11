@@ -18,8 +18,11 @@ pub struct Pegging {
 
 /// Trait for types that contain pegging information.
 pub trait HasPegging {
-    /// Returns an immutable reference to the pegging information contained within `self`.
-    fn pegging(&self) -> &Pegging;
+    /// Returns an immutable reference to optional pegging information.
+    /// This is used to provide pegging scores for hands and crib.
+    /// The optional return allows for the most recent "play" pegging to be returned,
+    /// in the case where no scoring play has been made yet.
+    fn pegging(&self) -> Option<&Pegging>;
 }
 
 impl Pegging {

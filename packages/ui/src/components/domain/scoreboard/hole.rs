@@ -17,19 +17,21 @@ pub fn Hole(
     })
     .to_string();
 
-    let fill = match representation {
-        0 => colour,
-        n if score.read().front_peg % 60 == n => colour,
-        n if score.read().back_peg % 60 == n => colour,
-        n if n >= 121 => colour,
-        _ => "gray".into(),
-    };
+    let back_peg = score.read().back_peg;
+    let front_peg = score.read().front_peg;
+
+    let show = back_peg == representation
+        || back_peg == 60 + representation
+        || front_peg == representation
+        || front_peg == 60 + representation;
+
+    let fill = if show { colour } else { "gray".into() };
 
     let translate = format!("translate({},{})", x_offset, y_offset);
 
     rsx! {
         g { transform: "{translate}",
-        circle { cx: "2", cy: "2", r: "2", fill: "{fill}" }
+            circle { cx: "2", cy: "2", r: "2", fill: "{fill}" }
         }
     }
 }

@@ -1,7 +1,7 @@
-use super::block::Block;
-
 use api::dto::{PlayerDTO, ScoreDTO};
 use dioxus::prelude::*;
+
+use super::block::Block;
 
 /// Show a graphical scoring track in the scoreboard.
 #[component]
@@ -16,11 +16,11 @@ pub fn Track(
     rsx! {
         g { transform: "{translate}",
             {(0..6).map(|n| {
-                let up_base = n*5+1;
-                let up_range = up_base..(up_base+5);
-                let down_base = 5*n+31;
-                let down_range = down_base..(down_base+5);
-                rsx! { Block { x_offset: 0, y_offset: {n*42}, up_range, down_range, player, score } }
+                let up_start = 26 - n * 5;
+                let down_start = 31 + n * 5;
+                let up_range   = up_start..(up_start + 5);
+                let down_range = down_start..(down_start + 5);
+                rsx! { Block { x_offset: 0, y_offset: {n * 42}, up_range, down_range, player, score } }
             })}
         }
     }

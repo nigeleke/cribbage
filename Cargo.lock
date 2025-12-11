@@ -4505,6 +4505,7 @@ dependencies = [
  "dioxus",
  "dioxus-primitives",
  "dioxus-sdk",
+ "gloo-timers",
 ]
 
 [[package]]

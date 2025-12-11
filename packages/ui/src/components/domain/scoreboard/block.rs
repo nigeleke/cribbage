@@ -1,9 +1,9 @@
-use super::hole::Hole;
+use std::ops::Range;
 
 use api::dto::{PlayerDTO, ScoreDTO};
 use dioxus::prelude::*;
 
-use std::ops::Range;
+use super::hole::Hole;
 
 /// Show a common block of a track in the scoreboard.
 #[component]
@@ -16,7 +16,10 @@ pub fn Block(
     score: ReadSignal<ScoreDTO>,
 ) -> Element {
     let translate = format!("translate({},{})", x_offset, y_offset);
-    let zipped = up_range.zip(down_range.rev()).enumerate();
+    let zipped = up_range.rev().zip(down_range).enumerate();
+
+    let x_offset1 = if player == PlayerDTO::User { 0 } else { 8 };
+    let x_offset2 = if player == PlayerDTO::User { 8 } else { 0 };
 
     rsx! {
         g { transform: "{translate}",
@@ -25,8 +28,8 @@ pub fn Block(
                 rect { width: "16", height: "40", rx: "2", ry: "2", fill: "palegoldenrod" }
                 g { transform: "translate(2,2)",
                     {zipped.map(|(i, (up, down))| rsx!{
-                        Hole { x_offset: 0, y_offset: {8*i}, representation: {up}, player, score }
-                        Hole { x_offset: 8, y_offset: {8*i}, representation: {down}, player, score }
+                        Hole { x_offset: x_offset1, y_offset: {8*i}, representation: {up}, player, score }
+                        Hole { x_offset: x_offset2, y_offset: {8*i}, representation: {down}, player, score }
                     })}
                 }
             }

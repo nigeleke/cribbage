@@ -47,8 +47,7 @@ graph TD
 
 ## Main things still todo...
 
-  * UI tweaks & bugs (scoreboard)
-  * better coverage testing (!)
+  * better coverage testing (api & ui)
   * multi-platform
   * i18n
 

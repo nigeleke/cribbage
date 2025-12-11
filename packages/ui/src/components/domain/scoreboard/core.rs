@@ -1,15 +1,37 @@
-use super::track::Track;
-
-use api::dto::{PlayerDTO, UserGameDTO};
+use api::dto::{PlayerDTO, ScoreDTO, UserGameDTO};
 use dioxus::prelude::*;
+
+use super::track::Track;
 
 /// Show the scoreboard.
 /// TODO: In a small screen just show the scores.
 #[component]
 pub fn Scoreboard() -> Element {
     let game = use_context::<ReadSignal<UserGameDTO>>();
-    let user_score = use_memo(move || game().user_state.score);
-    let opponent_score = use_memo(move || game().opponent_state.score);
+
+    let mut user_score = use_signal(move || game().user_state.score);
+    let mut opponent_score = use_signal(move || game().opponent_state.score);
+
+    use_effect(move || {
+        if let Some(winner) = game.read().winner {
+            let mut s = ScoreDTO::default();
+
+            spawn(async move {
+                loop {
+                    if winner == PlayerDTO::User {
+                        user_score.set(s);
+                    } else {
+                        opponent_score.set(s);
+                    }
+
+                    s.back_peg = s.front_peg;
+                    s.front_peg = s.front_peg % 120 + 1;
+
+                    gloo_timers::future::TimeoutFuture::new(50).await;
+                }
+            });
+        }
+    });
 
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/scoreboard.css")},

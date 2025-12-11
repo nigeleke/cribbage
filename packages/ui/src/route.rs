@@ -12,7 +12,7 @@ use crate::{components::toast::ToastProvider, pages::*};
 #[derive(Clone, PartialEq, Routable)]
 #[rustfmt::skip]
 pub enum Route {
-    /// [`Layout`] component for all pages.
+    /// Layout component for all pages.
     #[layout(Layout)]
 
     /// The root page of the application.

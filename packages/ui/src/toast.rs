@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use api::dto::{AvailableGameEventDTO, PeggingKindDTO};
+use api::dto::AvailableGameEventDTO;
 use dioxus::prelude::*;
 use dioxus_primitives::toast::{ToastOptions, ToastType, consume_toast};
 
@@ -78,11 +78,10 @@ impl Toast {
     /// Displays a notification of scoring.
     ///
     /// The toast is informational and expires after 10 seconds.
-    pub fn score(kind: &PeggingKindDTO, points: usize) {
-        let description = format!("{kind} for {points} points");
+    pub fn score(title: &String, description: &String) {
         Self::toast(
-            "Score",
-            &description,
+            title,
+            description,
             ToastType::Info,
             Duration::from_secs(5),
             false,

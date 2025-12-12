@@ -11,12 +11,6 @@ use crate::dto::DTOError;
 pub struct GameIdDTO(Uuid);
 
 impl GameIdDTO {
-    // /// Create a new id, based on domain logic.
-    // pub fn new() -> Self {
-    //     let game_id = GameId::new();
-    //     Self(game_id.value())
-    // }
-
     /// Internal value of the id.
     pub fn value(self) -> Uuid {
         self.0
@@ -39,7 +33,7 @@ impl std::str::FromStr for GameIdDTO {
     type Err = DTOError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let uuid = Uuid::from_str(s)?; //.map_err(|e| ApiError::InvalidUlid(e.to_string()))?;
+        let uuid = Uuid::from_str(s)?;
         Ok(GameIdDTO(uuid))
     }
 }

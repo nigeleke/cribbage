@@ -33,9 +33,9 @@ macro_rules! find_then {
     };
 }
 
-macro_rules! assert_state_then {
-    ($state:expr, $pat:pat $(if $guard:expr)? => $assert:block) => {{
-        match $state {
+macro_rules! assert_phase_then {
+    ($phase:expr, $pat:pat $(if $guard:expr)? => $assert:block) => {{
+        match $phase {
             $pat $(if $guard)? => $assert,
             other => panic!("unexpected state: {:?}", other),
         }
@@ -47,14 +47,14 @@ macro_rules! game_test {
         given: $given:expr,
         when: $when:expr,
         then_events: $events_fn:expr,
-        then_state: $state_fn:expr
+        then_phase: $phase_fn:expr
     } => {{
         $crate::domain::test::__private_game_test_impl(
             $crate::macros::function_name!(),
             $given,
             $when,
             Some($events_fn),
-            Some($state_fn),
+            Some($phase_fn),
             None::<DomainError>
         );
     }};
@@ -77,14 +77,14 @@ macro_rules! game_test {
     {
         given: $given:expr,
         when: $when:expr,
-        then_state: $state_fn:expr
+        then_phase: $phase_fn:expr
     } => {{
         $crate::domain::test::__private_game_test_impl(
             $crate::macros::function_name!(),
             $given,
             $when,
             None::<fn(&[GameEvent])>,
-            Some($state_fn),
+            Some($phase_fn),
             None::<DomainError>
         );
     }};
@@ -107,14 +107,14 @@ macro_rules! game_test {
     {
         when: $when:expr,
         then_events: $events_fn:expr,
-        then_state: $state_fn:expr
+        then_phase: $phase_fn:expr
     } => {{
         $crate::domain::test::__private_game_test_impl(
             $crate::macros::function_name!(),
             &[],
             $when,
             Some($events_fn),
-            Some($state_fn),
+            Some($phase_fn),
             None::<DomainError>
         );
     }};
@@ -135,14 +135,14 @@ macro_rules! game_test {
 
     {
         when: $when:expr,
-        then_state: $state_fn:expr
+        then_phase: $phase_fn:expr
     } => {{
         $crate::domain::test::__private_game_test_impl(
             $crate::macros::function_name!(),
             &[],
             $when,
             None::<fn(&[GameEvent])>,
-            Some($state_fn),
+            Some($phase_fn),
             None::<DomainError>
         );
     }};
@@ -162,4 +162,7 @@ macro_rules! game_test {
     }};
 }
 
-pub(crate) use { scenario, find_then, assert_state_then, game_test };
+pub(crate) use assert_phase_then;
+pub(crate) use find_then;
+pub(crate) use game_test;
+pub(crate) use scenario;

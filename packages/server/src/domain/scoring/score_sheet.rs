@@ -186,7 +186,14 @@ impl ScoreSheet {
         let is_31 = play_state.running_total() == PLAY_TARGET.into();
 
         if is_finished && !is_31 {
-            self.add_event(ScoreKind::LastCard, &[], SCORE_GO.into())
+            // Adding last card to the ScoreSheet for go enables
+            // player's go to be distinguished (and hence correctly notified!)
+            let last_card = play_state.current_plays().last().map(|p| p.card());
+            self.add_event(
+                ScoreKind::LastCard,
+                &last_card.into_iter().collect::<Vec<_>>(),
+                SCORE_GO.into(),
+            )
         } else {
             self
         }
@@ -203,10 +210,14 @@ impl ScoreSheet {
     }
 
     fn go_last_card(self, play_state: &PlayState) -> Self {
+        // Adding last card to the ScoreSheet for go enables
+        // player's go to be distinguished (and hence correctly notified!)
+        let last_card = play_state.current_plays().last().map(|p| p.card());
+
         self.add_event_if(
             play_state.go_status() != &GoStatus::NotCalled,
             ScoreKind::LastCard,
-            &[],
+            &last_card.into_iter().collect::<Vec<_>>(),
             Points::from(SCORE_GO),
         )
     }

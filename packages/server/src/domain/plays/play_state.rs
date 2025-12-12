@@ -113,21 +113,12 @@ impl PlayState {
             self.start_new_play();
         } else {
             match self.go_status {
-                GoStatus::NotCalled => {
-                    if opponent_has_cards {
-                        self.next_to_play = opponent;
-                    } else {
-                        self.go_status = GoStatus::Called;
-                    }
+                GoStatus::NotCalled if opponent_has_cards => {
+                    self.next_to_play = opponent;
                 }
-                GoStatus::Called => {
+                GoStatus::NotCalled => {}
+                GoStatus::Called | GoStatus::PlayContinued => {
                     self.go_status = GoStatus::PlayContinued;
-                    // next_to_play remains player until they run out of cards
-                    if !player_has_cards {
-                        self.start_new_play();
-                    }
-                }
-                GoStatus::PlayContinued => {
                     // next_to_play remains player until they run out of cards
                     if !player_has_cards {
                         self.start_new_play();
@@ -145,21 +136,22 @@ impl PlayState {
         let player = self.next_to_play;
         let opponent = player.opponent();
 
-        let sheet = ScoreSheet::go(self);
-
         let opponent_has_cards = self.has_cards(opponent);
 
+        let mut sheet = ScoreSheet::default();
+
         match self.go_status {
+            GoStatus::NotCalled if opponent_has_cards => {
+                self.go_status = GoStatus::Called;
+                self.next_to_play = opponent;
+            }
             GoStatus::NotCalled => {
                 self.go_status = GoStatus::Called;
-
-                if opponent_has_cards {
-                    self.next_to_play = opponent;
-                } else {
-                    self.start_new_play();
-                }
+                sheet = ScoreSheet::go(self);
+                self.start_new_play();
             }
             GoStatus::Called | GoStatus::PlayContinued => {
+                sheet = ScoreSheet::go(self);
                 self.start_new_play();
             }
         }

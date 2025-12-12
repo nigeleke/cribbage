@@ -1,6 +1,5 @@
 use cqrs_es::{Aggregate, event_sink::EventSink};
 use serde::{Deserialize, Serialize};
-use tracing::debug;
 
 use crate::{
     display::format_vec,
@@ -305,7 +304,11 @@ impl Game {
                     .current_plays()
                     .last()
                     .map_or(player, Play::player);
-                let pegging = Pegging::new(recipient, ScoreSheet::go(play_state));
+
+                let mut play_state = play_state.clone();
+                let score_sheet = play_state.go();
+                let pegging = Pegging::new(recipient, score_sheet);
+
                 Ok(vec![GameEvent::GoCalled { player, pegging }])
             }
         };
@@ -441,7 +444,7 @@ impl Game {
         &self,
         command: GameCommand,
     ) -> Result<Vec<GameEvent>, DomainError> {
-        debug!("COMMAND --- Game:handle_command: {:?}", command);
+        tracing::debug!("COMMAND --- Game:handle_command: {:?}", command);
         match command {
             GameCommand::HostGame { user_id, game_id } => self.host_game(user_id, game_id),
             GameCommand::JoinGame { user_id } => self.join_game(user_id),
@@ -667,7 +670,7 @@ impl Game {
     }
 
     pub(crate) fn apply_event(&mut self, event: GameEvent) {
-        debug!("EVENT ----- Game:apply_event: {:?}", event);
+        tracing::debug!("EVENT ----- Game:apply_event: {:?}", event);
         match event {
             GameEvent::LobbyGameCreated {
                 game_id,
@@ -929,8 +932,8 @@ mod test {
             let game_id = GameId::new();
             game_test! {
                 when: GameCommand::PlayComputer { user_id, game_id },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Starting(starting) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Starting(starting) => {
                         let deck = starting.deck();
                         assert_eq!(deck.len(), STANDARD_DECK_SIZE);
                     });
@@ -1052,8 +1055,8 @@ mod test {
                         .collect::<Vec<_>>();
                     assert_eq!(deals.len(), PLAYER_COUNT);
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Discarding(discarding) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Discarding(discarding) => {
                         assert_eq!(discarding.deck().len(), STANDARD_DECK_SIZE - (CARDS_DEALT_PER_HAND * PLAYER_COUNT));
                     });
                 }
@@ -1196,8 +1199,8 @@ mod test {
                         cards: cards!("AH2H"),
                     }])
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Discarding(discarding) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Discarding(discarding) => {
                         assert!(discarding.deck().contains_none(&cards!("AH2H")));
                         assert_eq!(discarding.deck().len(), STANDARD_DECK_SIZE - (CARDS_DEALT_PER_HAND * PLAYER_COUNT));
                     });
@@ -1298,8 +1301,8 @@ mod test {
 
                     find_then!(events, GameEvent::StarterSelected { .. } => {});
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Playing(playing) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Playing(playing) => {
                         let starter_cut = *playing.starter_cut();
                         assert!(!playing.hand(PLAYER0).contains(starter_cut));
                         assert!(!playing.hand(PLAYER1).contains(starter_cut));
@@ -1348,8 +1351,8 @@ mod test {
                     player: PLAYER1,
                     cards: cards!("AC2C"),
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Finished(finished) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Finished(finished) => {
                         assert_eq!(finished.winner(), PLAYER0)
                     });
                 }
@@ -1676,7 +1679,7 @@ mod test {
                         card: card!("AH"),
                         pegging: Pegging::new(
                             PLAYER1,
-                            ScoreSheet::default().add_event(ScoreKind::LastCard, &[], Points::from(1)),
+                            ScoreSheet::default().add_event(ScoreKind::LastCard, &cards!("AH"), Points::from(1)),
                         ),
                     }]);
                 }
@@ -1704,7 +1707,7 @@ mod test {
                         card: card!("AH"),
                         pegging: Pegging::new(
                             PLAYER1,
-                            ScoreSheet::default().add_event(ScoreKind::LastCard, &[], Points::from(1)),
+                            ScoreSheet::default().add_event(ScoreKind::LastCard, &cards!("AH"), Points::from(1)),
                         ),
                     }]);
                 }
@@ -1724,8 +1727,8 @@ mod test {
                     player: PLAYER1,
                     card: card!("4S"),
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Playing(playing) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Playing(playing) => {
                         assert_eq!(playing.play_state().next_to_play(), PLAYER0);
                     });
                 }
@@ -1746,8 +1749,8 @@ mod test {
                     player: PLAYER0,
                     card: card!("9C"),
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Playing(playing) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Playing(playing) => {
                         assert_eq!(playing.play_state().next_to_play(), PLAYER1);
                     });
                 }
@@ -1768,8 +1771,8 @@ mod test {
                     player: PLAYER0,
                     card: card!("8H"),
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Playing(playing) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Playing(playing) => {
                         assert_eq!(playing.dealer(), &Dealer::from(PLAYER0));
                         assert_eq!(playing.pone(), &Pone::from(PLAYER1));
                         assert_eq!(playing.play_state().next_to_play(), PLAYER1);
@@ -2050,7 +2053,7 @@ mod test {
                         player: PLAYER0,
                         pegging: Pegging::new(
                             PLAYER0,
-                            ScoreSheet::default().add_event(ScoreKind::LastCard, &[], Points::from(1)),
+                            ScoreSheet::default().add_event(ScoreKind::LastCard, &cards!("JH"), Points::from(1)),
                         ),
                     }])
                 }
@@ -2104,7 +2107,7 @@ mod test {
                         player: PLAYER0,
                         pegging: Pegging::new(
                             PLAYER0,
-                            ScoreSheet::default().add_event(ScoreKind::LastCard, &[], Points::from(1)),
+                            ScoreSheet::default().add_event(ScoreKind::LastCard, &cards!("JH"), Points::from(1)),
                         ),
                     }])
                 }
@@ -2128,13 +2131,75 @@ mod test {
                         player: PLAYER0,
                         pegging: Pegging::new(
                             PLAYER0,
-                            ScoreSheet::default().add_event(ScoreKind::LastCard, &[], Points::from(1)),
+                            ScoreSheet::default().add_event(ScoreKind::LastCard, &cards!("JH"), Points::from(1)),
                         ),
                     }])
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Finished(finished) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Finished(finished) => {
                         assert_eq!(finished.winner(), PLAYER0);
+                    })
+                }
+            }
+        }
+
+        #[test]
+        fn score_go_when_played_last_card_and_opponent_calls_go_1() {
+            game_test! {
+                given: &scenario!(
+                    as_playing(0);
+                    with_points(0, 0),
+                    with_cut("QH"),
+                    with_hands("KH", ""),
+                    with_previous_plays(&[(1, "KC"), (0, "TC"), (1, "JS")]),
+                    with_current_plays(&[(0, "9C"), (1, "4C"), (0, "TS"), (1, "6D")])
+                ),
+                when: GameCommand::Go { player: PLAYER0 },
+                then_events: |events: &[GameEvent]| {
+                    assert_eq!(events, &[GameEvent::GoCalled {
+                        player: PLAYER0,
+                        pegging: Pegging::new(
+                            PLAYER1,
+                            ScoreSheet::default().add_event(ScoreKind::LastCard, &cards!("6D"), Points::from(1)),
+                        ),
+                    }])
+                },
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Playing(playing) => {
+                        assert_eq!(playing.play_state().next_to_play(), PLAYER0);
+                        assert_eq!(playing.scoreboard().latest_pegging(), Some(&Pegging::new(PLAYER1, ScoreSheet::default().add_event(ScoreKind::LastCard, &cards!("6D"), Points::from(1)))));
+                    })
+                }
+            }
+        }
+
+        #[tracing_test::traced_test]
+        #[test]
+        fn score_go_when_played_last_card_and_opponent_calls_go_2() {
+            game_test! {
+                given: &scenario!(
+                    as_playing(0);
+                    with_go(),
+                    with_points(0, 0),
+                    with_cut("TS"),
+                    with_hands("", "TH"),
+                    with_previous_plays(&[(1, "KS"), (0, "7S"), (1, "JD")]),
+                    with_current_plays(&[(0, "7D"), (1, "JS"), (0, "5H"), (0, "5S")])
+                ),
+                when: GameCommand::Go { player: PLAYER0 },
+                then_events: |events: &[GameEvent]| {
+                    assert_eq!(events, &[GameEvent::GoCalled {
+                        player: PLAYER0,
+                        pegging: Pegging::new(
+                            PLAYER0,
+                            ScoreSheet::default().add_event(ScoreKind::LastCard, &cards!("5S"), Points::from(1)),
+                        ),
+                    }])
+                },
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Playing(playing) => {
+                        assert_eq!(playing.play_state().next_to_play(), PLAYER1);
+                        assert_eq!(playing.scoreboard().latest_pegging(), Some(&Pegging::new(PLAYER0, ScoreSheet::default().add_event(ScoreKind::LastCard, &cards!("5S"), Points::from(1)))));
                     })
                 }
             }
@@ -2151,8 +2216,8 @@ mod test {
                     with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
                 ),
                 when: GameCommand::Go { player: PLAYER1 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Playing(playing) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Playing(playing) => {
                         assert_eq!(playing.play_state().next_to_play(), PLAYER0)
                     })
                 }
@@ -2170,8 +2235,8 @@ mod test {
                     with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
                 ),
                 when: GameCommand::Go { player: PLAYER0 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Playing(playing) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Playing(playing) => {
                         assert_eq!(playing.play_state().next_to_play(), PLAYER1)
                     })
                 }
@@ -2190,8 +2255,8 @@ mod test {
                     with_current_plays(&[(1, "4S"), (0, "9C"), (1, "TH"), (0, "7H")])
                 ),
                 when: GameCommand::Go { player: PLAYER0 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Playing(playing) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Playing(playing) => {
                         assert_eq!(playing.dealer(), &Dealer::from(PLAYER0));
                         assert_eq!(playing.pone(), &Pone::from(PLAYER1));
                         assert_eq!(playing.play_state().next_to_play(), PLAYER1);
@@ -2217,8 +2282,8 @@ mod test {
                     with_current_plays(&[(1, "JH"), (0, "9C"), (1, "TH")])
                 ),
                 when: GameCommand::Go { player: PLAYER1 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Playing(playing) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Playing(playing) => {
                         assert_eq!(playing.dealer(), &Dealer::from(PLAYER0));
                         assert_eq!(playing.pone(), &Pone::from(PLAYER1));
                         assert_eq!(playing.play_state().next_to_play(), PLAYER0);
@@ -2557,8 +2622,8 @@ mod test {
                         assert_eq!(pegging.score_sheet().points(), Points::from(6));
                     });
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Finished(finished) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Finished(finished) => {
                         assert_eq!(finished.winner(), PLAYER1);
                     });
                 }
@@ -2610,8 +2675,8 @@ mod test {
                         assert_eq!(pegging.score_sheet().points(), Points::from(4));
                     });
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Finished(finished) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Finished(finished) => {
                         assert_eq!(finished.winner(), PLAYER0);
                     });
                 }
@@ -2663,8 +2728,8 @@ mod test {
                         assert_eq!(pegging.score_sheet().points(), Points::from(12));
                     });
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Finished(finished) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Finished(finished) => {
                         assert_eq!(finished.winner(), PLAYER0);
                     });
                 }
@@ -2693,8 +2758,8 @@ mod test {
                         .collect::<Vec<_>>();
                     assert_eq!(deals.len(), PLAYER_COUNT);
                 },
-                then_state: |state: &Phase| {
-                    assert_state_then!(state, Phase::Discarding(discarding) => {
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Discarding(discarding) => {
                         assert_eq!(discarding.dealer(), &Dealer::from(PLAYER1));
                         assert_eq!(discarding.pone(), &Pone::from(PLAYER0));
                         assert_eq!(discarding.hand(PLAYER0).len(), CARDS_DEALT_PER_HAND);

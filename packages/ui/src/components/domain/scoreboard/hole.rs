@@ -11,9 +11,9 @@ pub fn Hole(
     score: ReadSignal<ScoreDTO>,
 ) -> Element {
     let colour = (if player == PlayerDTO::User {
-        "lime"
+        "dodgerblue"
     } else {
-        "red"
+        "firebrick"
     })
     .to_string();
 
@@ -26,12 +26,13 @@ pub fn Hole(
         || front_peg == 60 + representation;
 
     let fill = if show { colour } else { "gray".into() };
+    let r = if show { "3" } else { "2" };
 
     let translate = format!("translate({},{})", x_offset, y_offset);
 
     rsx! {
         g { transform: "{translate}",
-            circle { cx: "2", cy: "2", r: "2", fill: "{fill}" }
+            circle { cx: "2", cy: "2", r, fill }
         }
     }
 }

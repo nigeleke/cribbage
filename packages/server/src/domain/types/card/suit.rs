@@ -4,7 +4,7 @@ use strum::{AsRefStr, EnumIter};
 use crate::domain::CardsError;
 
 /// The four suits in a standard French playing card deck.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, EnumIter, AsRefStr)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, EnumIter, AsRefStr)]
 #[rustfmt::skip]
 pub enum Suit {
     #[doc(hidden)] Hearts,

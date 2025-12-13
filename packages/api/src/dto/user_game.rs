@@ -178,7 +178,8 @@ mod server_only {
     }
 
     fn hand_up<T: HasHands>(s: &T, p: Player) -> Vec<CardDTO> {
-        s.hand(p).as_ref().iter().map(CardDTO::face_up).collect()
+        let hand = s.hand(p).clone().sorted();
+        hand.into_iter().map(CardDTO::face_up).collect()
     }
 
     fn score<T: HasScoreboard>(s: &T, p: Player) -> ScoreDTO {
@@ -190,7 +191,8 @@ mod server_only {
     }
 
     fn crib_up<T: HasCrib>(s: &T) -> Vec<CardDTO> {
-        s.crib().as_ref().iter().map(CardDTO::face_up).collect()
+        let crib = s.crib().clone().sorted();
+        crib.into_iter().map(CardDTO::face_up).collect()
     }
 
     fn plays<T: HasPlayState>(s: &T, player_dto_map: &HashMap<Player, PlayerDTO>) -> PlaysDTO {

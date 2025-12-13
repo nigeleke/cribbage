@@ -59,6 +59,12 @@ impl<T: Clone> Pile<T> {
     pub fn contains_none(&self, cards: &[Card]) -> bool {
         cards.iter().all(|c| !self.cards.contains(c))
     }
+
+    pub fn sorted(mut self) -> Self {
+        self.cards.sort_by_key(|c| (c.rank(), c.suit()));
+        self.cards.reverse();
+        self
+    }
 }
 
 impl<T: Clone> Default for Pile<T> {

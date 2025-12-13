@@ -1,4 +1,4 @@
-use api::dto::{PeggingDTO, UserGameDTO};
+use api::dto::{PeggingBreakdownDTO, UserGameDTO};
 use dioxus::prelude::*;
 
 use crate::components::domain::MiniIdCard;
@@ -7,25 +7,25 @@ use crate::components::domain::MiniIdCard;
 pub fn ScoringDetail() -> Element {
     let game = use_context::<ReadSignal<UserGameDTO>>();
     let pegging = use_memo(move || game().pegging);
+    let breakdown = use_memo(move || pegging().breakdown);
 
     rsx! {
         document::Stylesheet { href: asset!("/assets/css/scoring_detail.css")},
         div {
             class: "scoring-detail",
-            if pegging().is_empty() {
+            if breakdown().is_empty() {
                 Nineteen {}
             } else {
-                Breakdown { pegging }
+                Breakdown { breakdown }
             }
         }
-
     }
 }
 
 #[component]
-fn Breakdown(pegging: ReadSignal<PeggingDTO>) -> Element {
+fn Breakdown(breakdown: ReadSignal<PeggingBreakdownDTO>) -> Element {
     rsx! {
-        for (kind, summary) in pegging() {
+        for (kind, summary) in breakdown() {
             div { "{kind}" }
             div {
                 class: "scoring-detail__breakdowns",

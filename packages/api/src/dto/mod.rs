@@ -18,7 +18,7 @@ pub use card::{CardDTO, CardIdDTO};
 pub use error::DTOError;
 pub use events::AvailableGameEventDTO;
 pub use game_id::GameIdDTO;
-pub use pegging::{PeggingDTO, PeggingKindDTO, PeggingSummaryDTO};
+pub use pegging::{PeggingBreakdownDTO, PeggingDTO, PeggingKindDTO, PeggingSummaryDTO};
 pub use pending::PendingDTO;
 pub use phase::PhaseDTO;
 pub use player::PlayerDTO;

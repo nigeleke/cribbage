@@ -38,6 +38,7 @@ pub struct UserGameDTO {
     pub plays: Option<PlaysDTO>,
 
     /// A summary of pegging points for each kind of scoring of hands & crib.
+    /// (A Playing phase doesn't have a breakdown until the first scoring play).
     pub pegging: PeggingDTO,
 
     /// The winner of the game, if the game has finished.
@@ -109,8 +110,8 @@ impl UserGameDTO {
         self
     }
 
-    fn with_pegging(mut self, score_sheet: PeggingDTO) -> Self {
-        self.pegging = score_sheet;
+    fn with_pegging(mut self, pegging: PeggingDTO) -> Self {
+        self.pegging = pegging;
         self
     }
 
@@ -251,36 +252,44 @@ mod server_only {
         }
     }
 
-    fn pegging<T: HasPegging>(s: &T) -> PeggingDTO {
+    fn pegging<T: HasPegging>(s: &T, player_dto_map: &HashMap<Player, PlayerDTO>) -> PeggingDTO {
         if let Some(pegging) = s.pegging() {
+            let recipient = *player_dto_map
+                .get(pegging.recipient())
+                .expect("valid player");
+
             let score_items = pegging.score_sheet().items();
 
-            score_items
+            let peggings = score_items
                 .iter()
-                .fold(PeggingDTO::default(), |mut acc, item| {
-                    let kind = match item.kind() {
-                        ScoreKind::Fifteen => PeggingKindDTO::Fifteens,
-                        ScoreKind::Pair | ScoreKind::Triplet | ScoreKind::Quadruplet => {
-                            PeggingKindDTO::Pairs
-                        }
-                        ScoreKind::Run => PeggingKindDTO::Runs,
-                        ScoreKind::Flush => PeggingKindDTO::Flush,
-                        ScoreKind::LastCard => PeggingKindDTO::LastCard,
-                        ScoreKind::ThirtyOne => PeggingKindDTO::ThirtyOne,
-                        ScoreKind::HisHeels => PeggingKindDTO::HisHeels,
-                        ScoreKind::Nobs => PeggingKindDTO::Nobs,
-                    };
+                .fold(PeggingDTO::new(recipient), |mut acc, item| {
+                    let kind = score_kind_to_dto(item.kind());
 
                     let points = item.points().value();
                     let cids = item.cards().iter().map(|c| c.cid()).collect::<Vec<_>>();
-                    let entry = acc.entry(kind).or_default();
+                    let entry = acc.breakdown.entry(kind).or_default();
                     entry.points += points;
                     entry.breakdown.push(cids);
 
                     acc
-                })
+                });
+
+            peggings
         } else {
             PeggingDTO::default()
+        }
+    }
+
+    fn score_kind_to_dto(kind: ScoreKind) -> PeggingKindDTO {
+        match kind {
+            ScoreKind::Fifteen => PeggingKindDTO::Fifteens,
+            ScoreKind::Pair | ScoreKind::Triplet | ScoreKind::Quadruplet => PeggingKindDTO::Pairs,
+            ScoreKind::Run => PeggingKindDTO::Runs,
+            ScoreKind::Flush => PeggingKindDTO::Flush,
+            ScoreKind::LastCard => PeggingKindDTO::LastCard,
+            ScoreKind::ThirtyOne => PeggingKindDTO::ThirtyOne,
+            ScoreKind::HisHeels => PeggingKindDTO::HisHeels,
+            ScoreKind::Nobs => PeggingKindDTO::Nobs,
         }
     }
 
@@ -323,7 +332,7 @@ mod server_only {
                     .with_hands(hand_up(state, me), hand_down(state, them))
                     .with_crib_and_starter_cut(crib_down(state), starter_cut(state))
                     .with_plays(plays(state, &player_dto_map))
-                    .with_pegging(pegging(state)),
+                    .with_pegging(pegging(state, &player_dto_map)),
 
                 Phase::ScoringPone(state) => {
                     let they_are_pone = state.pone().player() == them;
@@ -340,7 +349,7 @@ mod server_only {
                             },
                         )
                         .with_crib_and_starter_cut(crib_down(state), starter_cut(state))
-                        .with_pegging(pegging(state))
+                        .with_pegging(pegging(state, &player_dto_map))
                 }
 
                 Phase::ScoringDealer(state) => UserGameDTO::new(name, PhaseDTO::ScoringDealer)
@@ -349,7 +358,7 @@ mod server_only {
                     .with_pending(pending(state, me))
                     .with_hands(hand_up(state, me), hand_up(state, them))
                     .with_crib_and_starter_cut(crib_down(state), starter_cut(state))
-                    .with_pegging(pegging(state)),
+                    .with_pegging(pegging(state, &player_dto_map)),
 
                 Phase::ScoringCrib(state) => UserGameDTO::new(name, PhaseDTO::ScoringCrib)
                     .with_scores(score(state, me), score(state, them))
@@ -357,7 +366,7 @@ mod server_only {
                     .with_pending(pending(state, me))
                     .with_hands(hand_up(state, me), hand_up(state, them))
                     .with_crib_and_starter_cut(crib_up(state), starter_cut(state))
-                    .with_pegging(pegging(state)),
+                    .with_pegging(pegging(state, &player_dto_map)),
 
                 Phase::Finished(state) => UserGameDTO::new(name, PhaseDTO::Finished)
                     .with_scores(score(state, me), score(state, them))

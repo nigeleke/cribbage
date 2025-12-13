@@ -39,7 +39,7 @@ pub fn Scoreboard() -> Element {
     let pegging = use_memo(move || game().pegging);
 
     use_effect(move || {
-        let (descriptions, total) = pegging.read().iter().fold(
+        let (descriptions, total) = pegging.read().breakdown.iter().fold(
             (Vec::<String>::default(), 0),
             |(mut descriptions, mut total), (kind, summary)| {
                 let points = summary.points;
@@ -53,7 +53,13 @@ pub fn Scoreboard() -> Element {
         );
 
         if total > 0 {
-            let title = format!("Score {total}");
+            let title = format!(
+                "{}{total} points",
+                pegging
+                    .read()
+                    .recipient
+                    .map_or(String::default(), |p| format!("{p} scored "))
+            );
             let description = descriptions.join(", ");
 
             Toast::score(&title, &description);

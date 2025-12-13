@@ -12,7 +12,7 @@ use crate::domain::{Player, ScoreSheet};
 /// pegging-related points.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Pegging {
-    player: Player,
+    recipient: Player,
     sheet: ScoreSheet,
 }
 
@@ -32,13 +32,16 @@ impl Pegging {
     /// Callers are responsible for ensuring that the `sheet` is appropriate
     /// for pegging-scoring usage.
     pub fn new(player: Player, sheet: ScoreSheet) -> Self {
-        Self { player, sheet }
+        Self {
+            recipient: player,
+            sheet,
+        }
     }
 
     /// Returns an immutable reference to the player associated with this pegging record.
     #[must_use]
-    pub fn player(&self) -> &Player {
-        &self.player
+    pub fn recipient(&self) -> &Player {
+        &self.recipient
     }
 
     /// Returns an immutable reference to the score sheet that records pegging-related points.
@@ -50,6 +53,6 @@ impl Pegging {
 
 impl std::fmt::Display for Pegging {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} -> {}", self.player, self.sheet)
+        write!(f, "{} -> {}", self.recipient, self.sheet)
     }
 }

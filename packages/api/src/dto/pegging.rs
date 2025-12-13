@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::dto::CardIdDTO;
+use crate::dto::{CardIdDTO, PlayerDTO};
 
 /// Enumerates the types of pegging scores in a Cribbage game.
 ///
@@ -54,14 +54,34 @@ impl std::fmt::Display for PeggingKindDTO {
 /// A summary of pegging points for a particular category.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PeggingSummaryDTO {
-    /// Total points scored in this category.
+    /// Total points scored.
     pub points: usize,
 
     /// The combinations of cards that contributed to the score.
     pub breakdown: Vec<Vec<CardIdDTO>>,
 }
 
+/// Mapping from pegging kinds to the collections of cards that made up were pegged.
+pub type PeggingBreakdownDTO = HashMap<PeggingKindDTO, PeggingSummaryDTO>;
+
 /// Pegging scores broken down by category.
 ///
 /// Maps each `PeggingKindDTO` to a `PeggingSummaryDTO`.
-pub type PeggingDTO = HashMap<PeggingKindDTO, PeggingSummaryDTO>;
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PeggingDTO {
+    /// Recipient of points scored.
+    pub recipient: Option<PlayerDTO>,
+
+    /// Breakdown of the points by kind.
+    pub breakdown: PeggingBreakdownDTO,
+}
+
+impl PeggingDTO {
+    /// Create a new pegging for a receipient
+    pub fn new(recipient: PlayerDTO) -> Self {
+        Self {
+            recipient: Some(recipient),
+            breakdown: HashMap::default(),
+        }
+    }
+}

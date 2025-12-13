@@ -44,7 +44,7 @@ impl Scoreboard {
     /// as Some(winner) otherwise None is returned.
     #[must_use]
     pub fn peg(&mut self, pegging: &Pegging) -> Option<Player> {
-        let player = pegging.player();
+        let player = pegging.recipient();
         let sheet = pegging.score_sheet();
 
         let points = sheet.points();

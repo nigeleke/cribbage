@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Represents a player in the game from the client’s perspective.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub enum PlayerDTO {
     /// The current user of the API.
     User,

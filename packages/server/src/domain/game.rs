@@ -1328,7 +1328,7 @@ mod test {
                 },
                 then_events: |events: &[GameEvent]| {
                     find_then!(events, GameEvent::StarterSelected { cut, pegging } => {
-                        assert_eq!(pegging.player(), &PLAYER0);
+                        assert_eq!(pegging.recipient(), &PLAYER0);
                         assert_eq!(pegging.score_sheet().points(), Points::from(2));
                         assert_eq!(pegging.score_sheet(), &ScoreSheet::his_heels(card!("JC")));
                     });
@@ -2593,7 +2593,7 @@ mod test {
 
                     find_then!(events, GameEvent::PoneScored { player, pegging } => {
                         assert_eq!(player, &PLAYER1);
-                        assert_eq!(pegging.player(), &PLAYER1);
+                        assert_eq!(pegging.recipient(), &PLAYER1);
                         assert_eq!(pegging.score_sheet().points(), Points::from(6));
                     });
                 }
@@ -2618,7 +2618,7 @@ mod test {
                 then_events: |events: &[GameEvent]| {
                     find_then!(events, GameEvent::PoneScored { player, pegging } => {
                         assert_eq!(player, &PLAYER1);
-                        assert_eq!(pegging.player(), &PLAYER1);
+                        assert_eq!(pegging.recipient(), &PLAYER1);
                         assert_eq!(pegging.score_sheet().points(), Points::from(6));
                     });
                 },
@@ -2647,7 +2647,7 @@ mod test {
 
                     find_then!(events, GameEvent::DealerScored { player, pegging } => {
                         assert_eq!(player, &PLAYER1);
-                        assert_eq!(pegging.player(), &PLAYER0);
+                        assert_eq!(pegging.recipient(), &PLAYER0);
                         assert_eq!(pegging.score_sheet().points(), Points::from(4));
                     });
                 }
@@ -2671,7 +2671,7 @@ mod test {
 
                     find_then!(events, GameEvent::DealerScored { player, pegging } => {
                         assert_eq!(player, &PLAYER1);
-                        assert_eq!(pegging.player(), &PLAYER0);
+                        assert_eq!(pegging.recipient(), &PLAYER0);
                         assert_eq!(pegging.score_sheet().points(), Points::from(4));
                     });
                 },
@@ -2700,7 +2700,7 @@ mod test {
 
                     find_then!(events, GameEvent::CribScored { player, pegging } => {
                         assert_eq!(player, &PLAYER1);
-                        assert_eq!(pegging.player(), &PLAYER0);
+                        assert_eq!(pegging.recipient(), &PLAYER0);
                         assert_eq!(pegging.score_sheet().points(), Points::from(12));
                     });
                 }
@@ -2724,7 +2724,7 @@ mod test {
 
                     find_then!(events, GameEvent::CribScored { player, pegging } => {
                         assert_eq!(player, &PLAYER1);
-                        assert_eq!(pegging.player(), &PLAYER0);
+                        assert_eq!(pegging.recipient(), &PLAYER0);
                         assert_eq!(pegging.score_sheet().points(), Points::from(12));
                     });
                 },

@@ -1,7 +1,7 @@
 use api::dto::{PeggingDTO, UserGameDTO};
 use dioxus::prelude::*;
 
-use crate::components::domain::MiniCard;
+use crate::components::domain::MiniIdCard;
 
 #[component]
 pub fn ScoringDetail() -> Element {
@@ -32,8 +32,8 @@ fn Breakdown(pegging: ReadSignal<PeggingDTO>) -> Element {
                 for cards in summary.breakdown {
                     div {
                         class: "scoring-detail__breakdown",
-                        for card in cards {
-                            MiniCard { card }
+                        for cid in cards {
+                            MiniIdCard { cid }
                         }
                     }
                 }

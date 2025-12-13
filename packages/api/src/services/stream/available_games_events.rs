@@ -28,10 +28,6 @@ pub async fn available_games_events(
             let game_id = GameIdDTO::from(game_id.value());
             AvailableGameEventDTO::Created { game_id, name }
         }
-        AvailableGameEvent::Removed { game_id, name } => {
-            let game_id = GameIdDTO::from(game_id.value());
-            AvailableGameEventDTO::Removed { game_id, name }
-        }
     };
 
     let stream = available_game_events(server_state.0, user_id).await?;

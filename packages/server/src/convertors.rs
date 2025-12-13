@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
 use crate::{
-    database::{AvailableGameRow, GameQueryRow},
-    domain::{Availability, AvailableGame, Game, GameId},
+    database::AvailableGameRow,
+    domain::{Availability, AvailableGame, GameId},
     error::{ServerError, bug},
 };
 
@@ -15,17 +15,5 @@ pub fn available_game_row_to_available_game(
 
     let game = AvailableGame::new(id, name, availability);
 
-    Ok(game)
-}
-
-#[inline]
-pub fn game_query_row_to_game(row: GameQueryRow) -> Result<Game, ServerError> {
-    let instance_value = row
-        .payload
-        .get("instance")
-        .cloned()
-        .ok_or_else(|| ServerError::Internal(anyhow::anyhow!("missing field 'instance'")))?;
-
-    let game = serde_json::from_value::<Game>(instance_value).map_err(bug!())?;
     Ok(game)
 }

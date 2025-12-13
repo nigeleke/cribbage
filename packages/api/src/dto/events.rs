@@ -16,13 +16,4 @@ pub enum AvailableGameEventDTO {
         /// The display name of the game.
         name: String,
     },
-
-    /// A game has been removed from availability
-    Removed {
-        /// The unique identifier of the game.
-        game_id: GameIdDTO,
-
-        /// The display name of the game.
-        name: String,
-    },
 }

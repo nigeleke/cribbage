@@ -1,13 +1,15 @@
+use std::str::FromStr;
+
 use futures::{Stream, TryStreamExt};
 use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 use tracing::warn;
 
 use crate::{
-    convertors::game_query_row_to_game,
-    database::{Change, GameQueryRow, Notification},
-    domain::{Game, GameId, UserId},
+    database::{Operation, Timing},
+    domain::{GameId, UserId},
     error::{ServerError, bug},
     server_state::ServerState,
+    services::queries::get_game,
 };
 
 /// Represents a change in the list of available games for a user.
@@ -16,15 +18,6 @@ pub enum AvailableGameEvent {
     /// or play (computer).
     Created {
         /// The game idenitifier of the game that was created.
-        game_id: GameId,
-
-        /// The game's name.
-        name: String,
-    },
-
-    /// An existing game was removed from availability, i.e. someone else joined.
-    Removed {
-        /// The game idenitifier of the game that was removed.
         game_id: GameId,
 
         /// The game's name.
@@ -53,64 +46,49 @@ pub async fn available_game_events(
     let stream =
         BroadcastStream::new(server_state.database_changes_sender.subscribe()).map_err(bug!());
 
-    let stream = stream.try_filter_map(move |notification| async move {
-        let notification_to_game_row_change = move |notification: Notification| {
-            let change = (notification.table_name == "game_query")
-                .then_some(notification.as_change::<GameQueryRow>())
-                .transpose()?;
-            Ok::<_, ServerError>(change)
-        };
+    let stream = stream.try_filter_map(move |notification| {
+        let server_state = server_state.clone();
 
-        let row_change_to_game_change = move |change: Change<GameQueryRow>| {
-            let change = match change {
-                Change::Insert { t } => {
-                    let t = game_query_row_to_game(t)?;
-                    Change::Insert { t }
-                }
-                Change::Update { old_t, new_t } => {
-                    let old_t = game_query_row_to_game(old_t)?;
-                    let new_t = game_query_row_to_game(new_t)?;
-                    Change::Update { old_t, new_t }
-                }
-                Change::Delete { t } => {
-                    let t = game_query_row_to_game(t)?;
-                    Change::Delete { t }
-                }
-            };
-            Ok::<_, ServerError>(change)
-        };
+        async move {
+            let is_game_query = notification.table_name == "game_query";
+            let is_after = matches!(notification.timing, Timing::After);
 
-        let game_change_to_event = move |change: Change<Game>| {
-            let user_can_join = |game: &Game| game.host() != user_id && game.guest().is_none();
-            let player = |game: &Game| game.validate_user(user_id).is_some();
-            let joined = |old_game: &Game, new_game: &Game| !player(old_game) && player(new_game);
+            let may_emit = is_game_query && is_after;
 
-            let created = |game: &Game| {
-                Some(AvailableGameEvent::Created {
-                    game_id: game.id(),
-                    name: String::from(game.name()),
+            let event = may_emit
+                .then_some({
+                    let game_id = notification
+                        .primary_key
+                        .iter()
+                        .find(|pk| pk.column == "view_id")
+                        .and_then(|pk| pk.value.as_str())
+                        .map(|v| GameId::from_str(v))
+                        .transpose()
+                        .map_err(bug!())?;
+
+                    if let Some(game_id) = game_id
+                        && let Some(game) = get_game(server_state, game_id).await?
+                    {
+                        let user_can_join = game.host() != user_id && game.guest().is_none();
+                        let valid_player = game.validate_user(user_id).is_some();
+
+                        match notification.operation {
+                            Operation::Insert if user_can_join || valid_player => {
+                                Some(AvailableGameEvent::Created {
+                                    game_id: game.id(),
+                                    name: String::from(game.name()),
+                                })
+                            }
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    }
                 })
-            };
+                .flatten();
 
-            let removed = |game: &Game| {
-                Some(AvailableGameEvent::Removed {
-                    game_id: game.id(),
-                    name: String::from(game.name()),
-                })
-            };
-
-            match &change {
-                Change::Insert { t } if user_can_join(t) => created(t),
-                Change::Update { old_t, new_t } if !joined(old_t, new_t) => removed(new_t),
-                Change::Delete { t } if player(t) => removed(t),
-                _ => None,
-            }
-        };
-
-        let change = notification_to_game_row_change(notification)?;
-        let change = change.map(row_change_to_game_change).transpose()?;
-        let event = change.and_then(game_change_to_event);
-        Ok(event)
+            Ok(event)
+        }
     });
 
     let stream = stream.filter_map(|result| match result {

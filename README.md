@@ -51,28 +51,30 @@ graph TD
   * multi-platform
   * i18n
 
-## Testing
+## Setup
 
 ```bash
 DATABASE_URL=postgres://postgres:password@localhost:5432/cribbage
+docker-compose -f docker/compose.yml up -d
+cd packages/server
+cargo sqlx migrate run
 ```
 
+## Testing
+
 ```bash
-docker-compose -f docker/docker_compose.yml up -d
 cargo test --all-features
 ```
 
 ## Build
 
 ```bash
-docker-compose -f docker/docker_compose.yml up -d
 dx build --package=web
 ```
 
 ## Run
 
 ```bash
-docker-compose -f docker/docker_compose.yml up -d
 dx serve --package=web
 ```
 

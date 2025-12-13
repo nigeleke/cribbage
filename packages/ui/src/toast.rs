@@ -63,7 +63,6 @@ impl Toast {
     pub fn available_game(event: AvailableGameEventDTO) {
         let description = match event {
             AvailableGameEventDTO::Created { name, .. } => format!("Created {name}"),
-            AvailableGameEventDTO::Removed { name, .. } => format!("Removed {name}"),
         };
 
         Self::toast(

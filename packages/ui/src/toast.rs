@@ -77,7 +77,7 @@ impl Toast {
     /// Displays a notification of scoring.
     ///
     /// The toast is informational and expires after 10 seconds.
-    pub fn score(title: &String, description: &String) {
+    pub fn score(title: &str, description: &str) {
         Self::toast(
             title,
             description,

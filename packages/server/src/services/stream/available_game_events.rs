@@ -62,7 +62,7 @@ pub async fn available_game_events(
                         .iter()
                         .find(|pk| pk.column == "view_id")
                         .and_then(|pk| pk.value.as_str())
-                        .map(|v| GameId::from_str(v))
+                        .map(GameId::from_str)
                         .transpose()
                         .map_err(bug!())?;
 

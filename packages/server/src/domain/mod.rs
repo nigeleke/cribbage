@@ -36,5 +36,5 @@ pub(crate) mod constants {
 
     pub const PLAY_TARGET: usize = 31;
 
-    pub const WINNING_SCORE: usize = 31;
+    pub const WINNING_SCORE: usize = 121;
 }

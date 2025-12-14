@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "packages/constants",
     "packages/ui",
     "packages/web",
     # "packages/desktop",
@@ -18,6 +19,7 @@ license = "BSD-3"
 dioxus = "0.7.1"
 dioxus-sdk = "0.7.0"
 
-ui = { path = "packages/ui" }
 api = { path = "packages/api" }
+constants = { path = "packages/constants" }
 server = { path = "packages/server" }
+ui = { path = "packages/ui" }

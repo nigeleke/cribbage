@@ -1,10 +1,10 @@
+use constants::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     display::format_vec,
     domain::{
         Card, GoStatus, Hand, Hands, PLAYER0, PLAYER1, PLAYERS, Play, Player, ScoreSheet, Value,
-        constants::PLAY_TARGET,
     },
 };
 

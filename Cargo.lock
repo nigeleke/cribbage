@@ -612,6 +612,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "constants"
+version = "0.1.0"
+
+[[package]]
 name = "content_disposition"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3613,6 +3617,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "constants",
  "cqrs-es",
  "futures",
  "goofy-animals",
@@ -4548,6 +4553,7 @@ name = "ui"
 version = "0.1.0"
 dependencies = [
  "api",
+ "constants",
  "dioxus",
  "dioxus-primitives",
  "dioxus-sdk",

@@ -1,13 +1,10 @@
+use constants::*;
 use cqrs_es::{Aggregate, event_sink::EventSink};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     display::format_vec,
-    domain::{
-        constants::{CARDS_DISCARDED_TO_CRIB, CARDS_KEPT_PER_HAND, PLAYER_COUNT},
-        wrap::Wrap,
-        *,
-    },
+    domain::{wrap::Wrap, *},
     name_builder::generate_game_name,
 };
 
@@ -796,7 +793,6 @@ mod test {
     use super::*;
     use crate::{
         domain::{
-            constants::*,
             test::{GameBuilder, domain_macros::*, test_macros::*},
             types::CardExt,
         },

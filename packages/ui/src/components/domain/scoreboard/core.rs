@@ -1,4 +1,5 @@
 use api::dto::{PlayerDTO, ScoreDTO, UserGameDTO};
+use constants::*;
 use dioxus::prelude::*;
 
 use super::track::Track;
@@ -14,21 +15,27 @@ pub fn Scoreboard() -> Element {
 
     use_effect(move || {
         if let Some(winner) = game.read().winner {
+            let mut winner = if winner == PlayerDTO::User {
+                user_score
+            } else {
+                opponent_score
+            };
+
             let mut s = ScoreDTO::default();
 
             spawn(async move {
-                loop {
-                    if winner == PlayerDTO::User {
-                        user_score.set(s);
-                    } else {
-                        opponent_score.set(s);
-                    }
+                for _ in 1..=180 {
+                    winner.set(s);
 
                     s.back_peg = s.front_peg;
-                    s.front_peg = s.front_peg % 120 + 1;
+                    s.front_peg = s.front_peg % (WINNING_SCORE - 1) + 1;
 
                     gloo_timers::future::TimeoutFuture::new(50).await;
                 }
+
+                s.back_peg = WINNING_SCORE;
+                s.front_peg = WINNING_SCORE;
+                winner.set(s);
             });
         } else {
             user_score.set(game.read().user_state.score);

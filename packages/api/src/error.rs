@@ -53,18 +53,18 @@ impl AsStatusCode for ApiError {
     }
 }
 
+#[cfg(not(debug_assertions))]
+impl From<ServerFnError> for ApiError {
+    fn from(_value: ServerFnError) -> Self {
+        ApiError::Unexpected
+    }
+}
+
+#[cfg(debug_assertions)]
 impl From<ServerFnError> for ApiError {
     fn from(value: ServerFnError) -> Self {
-        #[cfg(not(debug_assertions))]
-        {
-            ApiError::Unexpected
-        }
-
-        #[cfg(debug_assertions)]
-        {
-            ApiError::Unexpected {
-                message: value.to_string(),
-            }
+        ApiError::Unexpected {
+            message: value.to_string(),
         }
     }
 }

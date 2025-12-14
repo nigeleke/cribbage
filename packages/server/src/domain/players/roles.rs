@@ -1,7 +1,8 @@
+use constants::*;
 use serde::{Deserialize, Serialize};
 
 use super::{Dealer, Pone};
-use crate::domain::{CutsForDeal, PLAYER0, PLAYER1, constants::PLAYER_COUNT};
+use crate::domain::{CutsForDeal, PLAYER0, PLAYER1};
 
 /// Represents the roles assigned to players in a round.
 ///

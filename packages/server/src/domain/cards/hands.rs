@@ -1,4 +1,6 @@
-use crate::domain::{Hand, Player, constants::*};
+use constants::*;
+
+use crate::domain::{Hand, Player};
 
 /// Fixed-size array holding all players' hands.
 ///

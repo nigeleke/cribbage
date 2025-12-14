@@ -1,3 +1,4 @@
+use constants::*;
 use itertools::*;
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +7,7 @@ use crate::{
     display::format_vec,
     domain::{
         Card, Crib, GoStatus, Hand, Play, PlayState, Points, ScoreItem, ScoreKind, StarterCut,
-        Value, constants::*,
+        Value,
     },
 };
 

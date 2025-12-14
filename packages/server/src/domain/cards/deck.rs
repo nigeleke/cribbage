@@ -1,4 +1,6 @@
-use crate::domain::{Card, Hand, cards::pile::Pile, constants::*};
+use constants::*;
+
+use crate::domain::{Card, Hand, cards::pile::Pile};
 
 /// Marker type for the main deck (the draw pile).
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -1,8 +1,9 @@
+use constants::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     display::format_vec,
-    domain::{PLAYER0, PLAYER1, Pegging, Player, Points, Position, Positions, constants::*},
+    domain::{PLAYER0, PLAYER1, Pegging, Player, Points, Position, Positions},
 };
 
 /// Represents the scoreboard.

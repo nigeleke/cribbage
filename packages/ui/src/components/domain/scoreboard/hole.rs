@@ -1,4 +1,5 @@
 use api::dto::{PlayerDTO, ScoreDTO};
+use constants::*;
 use dioxus::prelude::*;
 
 /// Show a single hole in the scoreboard.
@@ -23,7 +24,8 @@ pub fn Hole(
     let show = back_peg == representation
         || back_peg == 60 + representation
         || front_peg == representation
-        || front_peg == 60 + representation;
+        || front_peg == 60 + representation
+        || (back_peg == WINNING_SCORE && front_peg == WINNING_SCORE);
 
     let fill = if show { colour } else { "gray".into() };
     let r = if show { "3" } else { "2" };

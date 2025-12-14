@@ -12,8 +12,9 @@ pub fn MiniCard(card: CardDTO) -> Element {
 
 #[component]
 pub fn MiniIdCard(cid: CardIdDTO) -> Element {
-    let rank = cid.chars().nth(0).unwrap_or('?');
-    let suit = cid.chars().nth(1).unwrap_or('?');
+    let mut chars = cid.chars();
+    let rank = chars.next().unwrap_or('?');
+    let suit = chars.next().unwrap_or('?');
     let symbol = match suit {
         'H' => '\u{2665}',
         'C' => '\u{2663}',

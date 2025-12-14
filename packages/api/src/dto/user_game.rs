@@ -260,7 +260,7 @@ mod server_only {
 
             let score_items = pegging.score_sheet().items();
 
-            let peggings = score_items
+            score_items
                 .iter()
                 .fold(PeggingDTO::new(recipient), |mut acc, item| {
                     let kind = score_kind_to_dto(item.kind());
@@ -272,9 +272,7 @@ mod server_only {
                     entry.breakdown.push(cids);
 
                     acc
-                });
-
-            peggings
+                })
         } else {
             PeggingDTO::default()
         }

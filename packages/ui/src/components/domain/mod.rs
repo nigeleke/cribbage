@@ -14,7 +14,7 @@ mod user_crib;
 mod user_hand;
 mod waiting_for_opponent;
 mod winner_cards;
-mod winner_detail;
+mod winner_medal;
 
 pub use available_games::AvailableGamesList;
 pub use card::Card;
@@ -32,4 +32,4 @@ pub use user_crib::UserCrib;
 pub use user_hand::UserHand;
 pub use waiting_for_opponent::WaitingForOpponent;
 pub use winner_cards::WinnerCards;
-pub use winner_detail::WinnerDetail;
+pub use winner_medal::WinnerMedal;

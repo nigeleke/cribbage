@@ -1,7 +1,7 @@
 use api::dto::PlayerDTO;
 use dioxus::prelude::*;
 
-use crate::components::{Cut, InProgress, Scoreboard, WinnerCards, WinnerDetail};
+use crate::components::{Cut, InProgress, Scoreboard, WinnerCards, WinnerMedal};
 
 #[component]
 pub fn Finished() -> Element {
@@ -11,7 +11,7 @@ pub fn Finished() -> Element {
             south: rsx! { WinnerCards { player: PlayerDTO::Opponent } },
             east: rsx! { Scoreboard {} },
             west: rsx! { Cut {} },
-            centre: rsx! { WinnerDetail {} },
+            centre: rsx! { WinnerMedal {} },
         }
     }
 }

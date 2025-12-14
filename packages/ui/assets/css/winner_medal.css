@@ -1,18 +1,19 @@
-.winner-detail {
+.winner-medal {
     display: flex;
     justify-content: center;
     overflow: visible;
 }
 
-.winner-detail__medal {
+.winner-medal__image {
     max-block-size: 200px;
 }
 
-.winner-detail__winner {
-    animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+.winner-medal__winner {
+    animation: winner-medal__winner__spin 1.5s
+        cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
 }
 
-@keyframes spin {
+@keyframes winner-medal__winner__spin {
     from {
         transform: rotate(0deg);
     }
@@ -21,11 +22,11 @@
     }
 }
 
-.winner-detail__loser {
-    animation: medalDrop 1.4s ease-out forwards;
+.winner-medal__loser {
+    animation: winner-medal__loser__drop 1.4s ease-out forwards;
 }
 
-@keyframes medalDrop {
+@keyframes winner-medal__loser__drop {
     0% {
         transform: translateY(-200px) scale(1.4) rotate(-15deg);
         opacity: 0;

@@ -1,141 +1,193 @@
 digraph Cribbage {
-	graph [fontname="comic sans ms"];
-	node [style="filled, rounded", fontname="comic sans ms", shape=rectangle];
-	edge [fontname="comic sans ms"]
+	graph [fontname="roboto", rankdir=LR];
+	node [style="filled, rounded", fontname="roboto", shape=rectangle];
+	edge [fontname="roboto"];
 
 	subgraph Events {
-		node [color=orange, style="filled, rounded", fontname="comic sans ms", shape=rectangle];
-		DealerSelected
-		HandsDealt
-		DealerCribCardsDiscarded
-		PoneCribCardsDiscarded
-		CutMade
-		HisHeelsScored
-		PoneLaid
-		DealerLaid
-		PonePassed
-		DealerPassed
-		PlayPointsScored
-		PlayCompleted
-		PlaysCompleted
-		PoneHandScored
-		DealerHandScored
-		CribScored
-		DealerSwapped
-		GameFinished
+		node [color=orange, style="filled, rounded", fontname="roboto", shape=rectangle];
+        LobbyGameCreated
+        LobbyGameJoined
+        ComputerGameCreated
+        CutForDealMade
+        GameStarted [label = "Cuts for Deal Acknowledged"]
+        CutForDealTied
+        CutForDealDecided
+        HandDealt
+        CardsDiscarded
+        StarterSelected
+        CardPlayed
+        GoCalled
+        PoneScored [label = "End of Plays Acknowledged"]
+        DealerScored [label = "Pone Score Acknowledged"]
+        CribScored [label = "Dealer Score Acknowledged"]
+        NextRoundStarted [label = "Crib Score Acknowledged"]
+        winner_declared
 	}
 
 	subgraph Timeline {
 		edge [style=invis]
-		DealerSelected -> HandsDealt
-		HandsDealt -> DealerCribCardsDiscarded
-		HandsDealt -> PoneCribCardsDiscarded
-		CutMade -> PoneLaid
-		CutMade -> HisHeelsScored
-		PoneLaid -> PlayPointsScored
-		PoneLaid -> DealerLaid
-		PoneLaid -> DealerPassed
-		DealerLaid -> PlayPointsScored
-		DealerLaid -> PoneLaid
-		DealerLaid -> PonePassed
-		PonePassed -> DealerLaid
-		PonePassed -> DealerPassed -> PlayCompleted
-		DealerPassed -> PoneLaid
-		DealerPassed -> PonePassed -> PlayCompleted
-		PlayCompleted -> DealerLaid
-		PlayCompleted -> PoneLaid
-		PlayCompleted -> PlaysCompleted
-		PlaysCompleted -> PoneHandScored
-		PoneHandScored -> DealerHandScored
-		DealerHandScored -> CribScored
-		CribScored -> DealerSelected
-		HisHeelsScored -> GameFinished
-		PlayPointsScored -> GameFinished
-		PoneHandScored -> GameFinished
-		DealerHandScored -> GameFinished
-		CribScored -> GameFinished
-		PlayCompleted -> PlayPointsScored
 	}
 
 	subgraph BusinessProcesses {
-		node [color=purple, style="filled", fontname="comic sans ms", fontcolor=white];
-		CutForDealer
-		BothPlayersPass
-		PlayerLaidTarget31
-		AllCardsLaid
-		Scored121
-	}
+		node [color=purple, style="filled", fontname="roboto", fontcolor=white];
+		Setup
+		Starting
+		Discarding
+		Playing
+		ScoringPone
+		ScoringDealer
+		ScoringCrib
+		Finished
 
-	subgraph Policies {
-		node [color=orchid1, style="filled", fontname="comic sans ms", fontcolor=gray20, shape=rectangle];
-		DiscardPolicy [label="PlayerMustOwnCard\nMaxTwoDiscards"]
-		StartPlayPolicy [label="BothPlayersDiscarded"]
-		PlayPolicy [label="PlayerMustTakeTurns\nPlayerMustOwnCard\nTargetMustNotExceed31"]
-		PassPolicy [label="PlayerMustTakeTurns\nPlayerMustNotHoldPlayableCard"]
-	}
-
-	subgraph Commands {
-		node [color=deepskyblue3, style="filled", fontname="comic sans ms", fontcolor=white];
-		DiscardCribCards
-		LayCard
-		Pass
+		Setup -> Starting [style=invis]
+		Starting -> Discarding [style=invis]
+		Discarding -> Playing [style=invis]
+		Playing -> ScoringPone [style=invis]
+		ScoringPone -> ScoringDealer [style=invis]
+		ScoringDealer -> ScoringCrib [style=invis]
+		ScoringCrib -> Discarding [style=invis]
+		Playing -> Finished [style=invis]
+		ScoringPone -> Finished [style=invis]
+		ScoringDealer -> Finished [style=invis]
+		ScoringCrib -> Finished [style=invis]
 	}
 
 	subgraph Actions {
-		node [color=lightblue, style="filled", fontname="comic sans ms", fontcolor=black];
-		edge [style=invis]
-		DealHands
-		PoneMakesCut
-		CheckForWinner
-		ScoreHisHeels
-		ScorePlay
-		CheckAllPlaysCompleted
-		ScorePoneHand
-		ScoreDealerHand
-		ScoreCrib
+		node [color=deepskyblue3, style="filled", fontname="roboto", fontcolor=white];
+        HostGame
+        JoinGame
+        PlayComputer
+        CutForDeal
+        StartGame [label = "Acknowledge Cuts for Deal"]
+        DiscardCards
+        PlayCard
+        Go
+        ScorePone [label = "Acknowledge End of Plays"]
+        ScoreDealer [label = "Acknowledge Pone Score"]
+        ScoreCrib [label = "Acknowledge Dealer Score"]
+        StartNextRound [label = "Acknowledge Crib Score"]
 	}
 
-	subgraph {
-		CutForDealer -> DealerSelected -> DealHands
-		PoneMakesCut -> CutMade
-		BothPlayersPass -> PlayCompleted
-		PlayerLaidTarget31 -> PlayCompleted
-		AllCardsLaid -> PlaysCompleted
-		Scored121 -> GameFinished
-		DealHands -> HandsDealt -> DiscardCribCards
-		DiscardCribCards -> DiscardPolicy -> DealerCribCardsDiscarded
-		DiscardCribCards -> DiscardPolicy -> PoneCribCardsDiscarded
-		DealerCribCardsDiscarded -> StartPlayPolicy
-		PoneCribCardsDiscarded -> StartPlayPolicy
-		StartPlayPolicy -> PoneMakesCut
-		CutMade -> ScoreHisHeels -> HisHeelsScored
-		HisHeelsScored -> LayCard
-		HisHeelsScored -> CheckForWinner
-		CheckForWinner -> GameFinished
-		LayCard -> PlayPolicy
-		PlayPolicy -> PoneLaid
-		PlayPolicy -> DealerLaid
-		PoneLaid -> ScorePlay
-		DealerLaid -> ScorePlay
-		PoneLaid -> LayCard
-		PoneLaid -> Pass
-		DealerLaid -> LayCard
-		DealerLaid -> Pass
-		ScorePlay -> PlayPointsScored
-		Pass -> PassPolicy
-		PassPolicy -> PonePassed
-		PassPolicy -> DealerPassed
-		PonePassed -> ScorePlay
-		DealerPassed -> ScorePlay
-		PlayPointsScored -> CheckForWinner
-		ScorePlay -> PlayCompleted
-		PlayCompleted -> CheckAllPlaysCompleted
-		CheckAllPlaysCompleted -> LayCard
-		CheckAllPlaysCompleted -> PlaysCompleted
-		PlaysCompleted -> ScorePoneHand -> PoneHandScored -> CheckForWinner
-		PoneHandScored -> ScoreDealerHand -> DealerHandScored -> CheckForWinner
-		DealerHandScored -> ScoreCrib -> CribScored -> CheckForWinner
-		ScoreCrib -> DealerSwapped -> DealHands
+	subgraph Policies {
+		node [color=orchid1, style="filled", fontname="roboto", fontcolor=gray20, shape=rectangle];
+		GameStarted -> determine_dealer
+		CardsDiscarded -> start_play
+		StarterSelected -> score_his_heels
+
+		GoCalled -> score_go
+		PoneScored -> reveal_pone_hand
+		pone_hand_revealed -> score_pone_hand
+		DealerScored -> reveal_dealer_hand
+		dealer_hand_revealed -> score_dealer_hand
+		CribScored -> reveal_crib
+		crib_revealed -> score_crib
+
+		GameWonPolicy [label = "Score >= 121?"]
 	}
 
+    subgraph cluster_setup {
+        graph [rankdir = TB, margin=0, pad=0];
+        label = "Setup";
+
+        Setup
+
+        User1               -> HostGame
+        HostGame            -> LobbyGameCreated;
+        LobbyGameCreated    -> JoinGame
+
+        User2               -> JoinGame
+        JoinGame            -> LobbyGameJoined;
+
+        User1               -> PlayComputer;
+        PlayComputer        -> ComputerGameCreated;
+    }
+
+    subgraph cluster_starting {
+        graph [rankdir = TB, margin=0, pad=0];
+        label = "Starting";
+
+        Starting
+
+        LobbyGameJoined     -> CutForDeal
+        ComputerGameCreated -> CutForDeal
+        CutForDeal        -> CutForDealMade
+        CutForDealMade    -> StartGame
+        StartGame         -> GameStarted
+        determine_dealer  -> CutForDealTied
+        CutForDealTied    -> CutForDeal
+        determine_dealer  -> CutForDealDecided
+    }
+
+    subgraph cluster_discarding {
+        graph [rankdir = TB, margin=0, pad=0];
+        label = "Discarding";
+
+        Discarding
+
+        CutForDealDecided -> deal_hands;
+        deal_hands -> HandDealt
+        HandDealt -> DiscardCards
+        DiscardCards -> CardsDiscarded
+    }
+
+    subgraph cluster_playing {
+        graph [rankdir = TB, margin=0, pad=0];
+        label = "Playing";
+
+        Playing
+
+        start_play -> StarterSelected
+        score_his_heels -> GameWonPolicy
+        score_his_heels -> PlayCard
+        PlayCard -> CardPlayed
+        CardPlayed -> score_play
+        score_play -> GameWonPolicy
+        CardPlayed -> next_player
+        next_player -> PlayCard
+        next_player -> Go
+        Go -> GoCalled
+        GoCalled -> score_go
+        score_go -> GameWonPolicy
+        ScorePone -> PoneScored
+    }
+
+    subgraph cluster_scoring {
+        graph [rankdir = TB, margin=0, pad=0];
+        label = "Scoring"
+
+        subgraph {
+            ScoringPone
+
+            score_pone_hand -> reveal_pone_hand
+            score_pone_hand -> GameWonPolicy
+            reveal_pone_hand -> pone_hand_revealed
+            ScoreDealer -> DealerScored
+        }
+
+        subgraph {
+            ScoringDealer
+
+            score_dealer_hand -> reveal_dealer_hand
+            score_dealer_hand -> GameWonPolicy
+            reveal_dealer_hand -> dealer_hand_revealed
+            ScoreCrib -> CribScored
+        }
+
+        subgraph {
+            ScoringCrib
+
+            score_crib -> reveal_crib
+            reveal_crib -> crib_revealed
+            StartNextRound -> NextRoundStarted
+        }
+    }
+
+    subgraph cluster_finished {
+        graph [rankdir = TB];
+        label = "Finished";
+
+        Finished
+
+        GameWonPolicy -> winner_declared -> Finished
+    }
 }

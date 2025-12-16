@@ -21,14 +21,12 @@ jobs:
         name: Integraion tests
         runs-on: ubuntu-latest
         env:
-            DATABASE_URL: postgresql://postgres:password@localhost:5432/cribbage
+            DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
         services:
             postgres:
                 image: postgres
                 env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: password
-                    POSTGRES_DB: cribbage
+                    POSTGRES_PASSWORD: postgres
                 options: >-
                     --health-cmd="pg_isready -U postgres"
                     --health-interval=10s
@@ -42,12 +40,18 @@ jobs:
               run: cargo install sqlx-cli --no-default-features --features postgres
 
             - name: Run database migrations
+              env:
+                  POSTGRES_HOST: postgres
+                  POSTGRES_PORT: 5432
               run: |
                   env
                   cd packages/server
                   sqlx migrate run
 
             - name: Run all tests
+              env:
+                  POSTGRES_HOST: postgres
+                  POSTGRES_PORT: 5432
               run: |
                   pwd
                   cargo test --all-features

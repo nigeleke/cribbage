@@ -785,6 +785,7 @@ impl From<Phase> for Game {
     }
 }
 
+#[allow(clippy::expect_used)]
 #[cfg(test)]
 #[coverage(off)]
 mod test {
@@ -800,8 +801,7 @@ mod test {
     };
 
     /// # [Cribbage Rules](https://www.officialgamerules.org/cribbage)
-    #[allow(clippy::expect_used)]
-
+    ///
     /// ## Number of Players
     ///
     /// Two or three people can play. Or four people can play two against two as partners. But

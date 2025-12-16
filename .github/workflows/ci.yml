@@ -21,7 +21,7 @@ jobs:
         name: Integraion tests
         runs-on: ubuntu-latest
         env:
-            DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+            DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
         services:
             postgres:
                 image: postgres
@@ -44,7 +44,8 @@ jobs:
                   POSTGRES_HOST: postgres
                   POSTGRES_PORT: 5432
               run: |
-                  env
+                  env | grep DATA
+                  env | grep POST
                   cd packages/server
                   sqlx migrate run
 

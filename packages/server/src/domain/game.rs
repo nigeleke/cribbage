@@ -785,7 +785,6 @@ impl From<Phase> for Game {
     }
 }
 
-#[allow(clippy::expect_used)]
 #[cfg(test)]
 #[coverage(off)]
 mod test {
@@ -807,6 +806,7 @@ mod test {
     /// Two or three people can play. Or four people can play two against two as partners. But
     /// Cribbage is basically best played by two people, and the rules that follow are for that
     /// number.
+    #[allow(clippy::expect_used)]
     mod players {
         use super::*;
 
@@ -919,6 +919,7 @@ mod test {
     /// The standard 52-card pack is used.
     ///
     /// Rank of Cards: K (high), Q, J, 10, 9, 8, 7, 6, 5, 4, 3, 2, A.
+    #[allow(clippy::expect_used)]
     mod deck {
         use super::*;
 
@@ -948,6 +949,7 @@ mod test {
     /// except that the loser of the game deals first if another game is played. The dealer has the
     /// right to shuffle last, and he presents the cards to the non-dealer for the cut prior to the
     /// deal. (In some games, there is no cut at this time.)
+    #[allow(clippy::expect_used)]
     mod deal_cut {
         use super::*;
 
@@ -1105,6 +1107,7 @@ mod test {
     ///
     /// The dealer distributes six cards face down to his opponent and himself, beginning with the
     /// opponent.
+    #[allow(clippy::expect_used)]
     mod deal {
         use super::*;
 
@@ -1163,9 +1166,10 @@ mod test {
     }
 
     /// ## Object of the Game
-
+    ///
     /// The goal is to be the first player to score 121 points. (Some games are to 61 points.)
     /// Players earn points during play and for making various card combinations.
+    #[allow(clippy::expect_used)]
     mod object_of_the_game {}
 
     /// ## The Crib
@@ -1174,6 +1178,7 @@ mod test {
     /// reduce the hand to four. The four cards laid away together constitute "the crib". The crib
     /// belongs to the dealer, but these cards are not exposed or used until after the hands have
     /// been played.
+    #[allow(clippy::expect_used)]
     mod the_crib {
         use super::*;
 
@@ -1272,6 +1277,7 @@ mod test {
     /// the starter is a jack, it is called "His Heels," and the dealer pegs (scores) 2 points at
     /// once. The starter is not used in the play phase of Cribbage , but is used later for making
     /// various card combinations that score points.
+    #[allow(clippy::expect_used)]
     mod before_the_play {
         use super::*;
 
@@ -1367,6 +1373,7 @@ mod test {
     /// last card to all those previously2 played. (Example: The non-dealer begins with a four,
     /// saying "Four." The dealer plays a nine, saying "Thirteen".) The kings, queens and jacks
     /// count 10 each; every other card counts its pip value (the ace counts one).
+    #[allow(clippy::expect_used)]
     mod the_play {
         use super::*;
 
@@ -2009,6 +2016,7 @@ mod test {
     /// The person who plays the last card pegs one for Go, plus one extra if the card brings the
     /// count to exactly 31. The dealer is sure to peg at least one point in every hand, for he will
     /// have a Go on the last card if not earlier.
+    #[allow(clippy::expect_used)]
     mod the_go {
         use super::*;
 
@@ -2321,6 +2329,7 @@ mod test {
     /// dealer pegs 2 for fifteen when he plays the six and pegs 4 for run when he plays the seven
     /// (the 6, 7, 8, 9 sequence). The cards were not played in sequential order, but they form a
     /// true run with no foreign card.
+    #[allow(clippy::expect_used)]
     mod pegging {
         use super::*;
 
@@ -2566,6 +2575,7 @@ mod test {
     ///     - Four cards in hand or crib of the same 5 suit as the starter. (There is no count for
     ///       four-flush in the crib that is not of same suit as the starter)
     ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
+    #[allow(clippy::expect_used)]
     mod counting_the_hands {
         use super::*;
 
@@ -2935,28 +2945,29 @@ mod test {
     }
 
     /// ### Combinations
-
+    ///
     /// In the above table, the word combination is used in the strict technical sense. Each and
     /// every combination of two cards that make a pair, of two or more cards that make 15, or of
     /// three or more cards that make a run, count separately.
-
+    ///
     /// Example: A hand (including the starter) comprised of 8, 7, 7, 6, 2 scores 8 points for four
     /// combinations that total 15: the 8 with one 7, and the 8 with the other 7; the 6, 2 with each
     /// of the two 7s. The same hand also scores 2 for a pair, and 6 for two runs of three (8, 7, 6
     /// using each of the two 7s). The total score is 16. An experienced player computes the hand
     /// thus: "Fifteen 2, fifteen 4, fifteen 6, fifteen 8, and 8 for double run is 16."
-
+    ///
     /// Note that the ace is always low and cannot form a sequence with a king. Further, a flush
     /// cannot happen during the play of the cards; it occurs only when the hands and the crib are
     /// counted.
-
+    ///
     /// Certain basic formulations should be learned to facilitate counting. For pairs and runs
     /// alone:
-
+    ///
     /// A. A triplet counts 6. A. Four of a kind counts 12. A. A run of three, with one card
     /// duplicated (double run) counts 8. A. A run of four, with one card duplicated, counts 10. A.
     /// A run of three, with one card triplicated (triple run), counts 15. A. A run of three, with
     /// two different cards duplicated, counts 16.
+    #[allow(clippy::expect_used)]
     mod combinations {
         use super::*;
 
@@ -3002,6 +3013,7 @@ mod test {
     /// His Nobs: 1 point - in his hand. The double pair royal (four 5s) peg another 12 points; the
     /// various fives used to hit 15 can be done four ways for 8 points; and the jack plus a 5 to
     /// hit 15 can also be done four ways for 8 points. Total = 29 points.
+    #[allow(clippy::expect_used)]
     mod a_perfect_29 {
         use super::*;
 
@@ -3026,6 +3038,7 @@ mod test {
     /// score, the opponent may say "Muggins" and then score the overlooked points for himself. For
     /// experienced players, the Muggins rule is always in effect and adds even more suspense to the
     /// game.
+    #[allow(clippy::expect_used)]
     mod miscellaneous {}
 
     /// ## Game
@@ -3041,6 +3054,7 @@ mod test {
     /// for the winner if the losing player fails to pass the three-quarter mark - 91 points or more -
     /// and it is a "double skunk" (quadruple game) if the loser fails to pass the halfway mark (61
     /// or more points).
+    #[allow(clippy::expect_used)]
     mod game {}
 
     /// ## The Cribbage Board
@@ -3069,6 +3083,7 @@ mod test {
     ///
     /// Two small markers, such as small coins or buttons, can substitute for pegs for counting in
     /// each row.
+    #[allow(clippy::expect_used)]
     mod the_cribbage_board {}
 
     /// ## Strategy
@@ -3096,9 +3111,11 @@ mod test {
     ///
     /// During the play, it is advisable not to try to make a count of 21, for the opponent can then
     /// play one of the many 10-cards and make 31 to gain two points.
+    #[allow(clippy::expect_used)]
     mod the_strategy {}
 
     /// ## Internal
+    #[allow(clippy::expect_used)]
     mod internal {
         use super::*;
 

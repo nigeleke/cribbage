@@ -53,6 +53,8 @@ graph TD
 
 ## Setup
 
+Note: git pre-commit checks require active database; migrate and prepare are completed.
+
 ```bash
 DATABASE_URL=postgres://postgres:password@localhost:5432/cribbage
 docker-compose -f docker/compose.yml up -d

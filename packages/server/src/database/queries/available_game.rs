@@ -29,19 +29,19 @@ where
         r#"
         WITH filter AS (
             SELECT
-                id::uuid AS id,
-                name,
+                view_id::uuid AS id,
+                (payload -> 'instance' ->> 'name') AS name,
                 CASE
-                    WHEN host_id = $1 THEN 'Private'
-                    WHEN guest_id = $1 THEN 'Private'
-                    WHEN guest_id IS NULL THEN 'Public'
+                    WHEN (payload -> 'instance' ->> 'host')::uuid = $1 THEN 'Private'
+                    WHEN (payload -> 'instance' ->> 'guest')::uuid = $1 THEN 'Private'
+                    WHEN (payload -> 'instance' ->> 'guest') IS NULL THEN 'Public'
                     ELSE 'NotAvailable'
                 END AS availability
-            FROM games
+            FROM game_query
             WHERE
-                ($2::text IS NULL OR name ILIKE $2)
+                ($2::text IS NULL OR (payload -> 'instance' ->> 'name') ILIKE $2)
             AND ($3::timestamp with time zone IS NULL
-                OR uuid_extract_timestamp(id) < $3)
+                OR uuid_extract_timestamp(view_id::uuid) < $3)
         )
         SELECT
             id           AS "id!",

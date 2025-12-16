@@ -7,32 +7,55 @@ on:
     pull_request:
 
 jobs:
-    docker:
-        name: Start Docker services
+    qa:
+        name: Run Dioxus QA
+        uses: nigeleke/github/.github/workflows/dioxus-qa.yml@main
+        with:
+            platform: web
+            env: |
+                {
+                  "SQLX_OFFLINE": "true"
+                }
+
+    integration-tests:
+        name: Integraion tests
         runs-on: ubuntu-latest
         env:
-            DATABASE_URL: postgres://postgres:password@localhost:5432/cribbage
+            DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        services:
+            postgres:
+                image: postgres
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: postgres
+                options: >-
+                    --health-cmd="pg_isready -U postgres"
+                    --health-interval=10s
+                    --health-timeout=5s
+                    --health-retries=5
         steps:
             - name: Checkout
               uses: actions/checkout@v6
 
-            - name: Setup containers
-              shell: bash
+            - name: Install sqlx-cli
+              run: cargo install sqlx-cli
+
+            - name: Run database migrations
               run: |
-                  docker compose -f docker/compose.yml up -d
-                  cargo install sqlx-cli
                   cd packages/server
                   sqlx migrate run
 
-    qa:
-        needs: [docker]
-        uses: nigeleke/github/.github/workflows/dioxus-qa.yml@main
-        with:
-            platform: web
-            env: '{ "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/postgres" }'
+            - name: Run all tests
+              run: |
+                  pwd
+                  cargo test --all-features
 
     bundle:
-        needs: [qa]
+        name: Bundle
+        needs:
+            - qa
+            - integration-tests
         uses: nigeleke/github/.github/workflows/dioxus-bundle.yml@main
         with:
             platform: web

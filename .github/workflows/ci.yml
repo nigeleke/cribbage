@@ -21,7 +21,7 @@ jobs:
         name: Integraion tests
         runs-on: ubuntu-latest
         env:
-            DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+            DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
         services:
             postgres:
                 image: postgres
@@ -41,7 +41,7 @@ jobs:
 
             - name: Run database migrations
               env:
-                  POSTGRES_HOST: postgres
+                  POSTGRES_HOST: localhost
                   POSTGRES_PORT: 5432
               run: |
                   env | grep DATA
@@ -51,7 +51,7 @@ jobs:
 
             - name: Run all tests
               env:
-                  POSTGRES_HOST: postgres
+                  POSTGRES_HOST: localhost
                   POSTGRES_PORT: 5432
               run: |
                   pwd

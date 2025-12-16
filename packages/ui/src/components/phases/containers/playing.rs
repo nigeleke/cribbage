@@ -1,7 +1,8 @@
+use dioxus::prelude::*;
+
 use crate::components::{
     CribAndCut, InProgress, OpponentHand, PlayingControls, Plays, Scoreboard, UserHand,
 };
-use dioxus::prelude::*;
 
 #[component]
 pub fn Playing() -> Element {

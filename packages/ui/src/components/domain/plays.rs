@@ -1,6 +1,7 @@
-use crate::components::Card;
 use api::dto::{CardDTO, PlayerDTO, UserGameDTO};
 use dioxus::prelude::*;
+
+use crate::components::Card;
 
 #[component]
 pub fn Plays() -> Element {

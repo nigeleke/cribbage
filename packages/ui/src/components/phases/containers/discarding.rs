@@ -1,7 +1,8 @@
+use dioxus::prelude::*;
+
 use crate::components::{
     CribAndCut, DiscardingControls, InProgress, OpponentHand, Scoreboard, UserHand,
 };
-use dioxus::prelude::*;
 
 #[component]
 pub fn Discarding() -> Element {

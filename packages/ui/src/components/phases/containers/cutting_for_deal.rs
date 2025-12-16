@@ -1,6 +1,7 @@
-use crate::components::{Card, CuttingForDealControls};
 use api::dto::UserGameDTO;
 use dioxus::prelude::*;
+
+use crate::components::{Card, CuttingForDealControls};
 
 #[component]
 pub fn CuttingForDeal() -> Element {

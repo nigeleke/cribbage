@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        WITH filter AS (\n            SELECT\n                view_id::uuid AS id,\n                (payload -> 'instance' ->> 'name') AS name,\n                CASE\n                    WHEN (payload -> 'instance' ->> 'host')::uuid = $1 THEN 'Private'\n                    WHEN (payload -> 'instance' ->> 'guest')::uuid = $1 THEN 'Private'\n                    WHEN (payload -> 'instance' ->> 'guest') IS NULL THEN 'Public'\n                    ELSE 'NotAvailable'\n                END AS availability\n            FROM game_query\n            WHERE\n                ($2::text IS NULL OR (payload -> 'instance' ->> 'name') ILIKE $2)\n            AND ($3::timestamp with time zone IS NULL\n                OR uuid_extract_timestamp(view_id::uuid) < $3)\n        )\n        SELECT\n            id           AS \"id!\",\n            name         AS \"name!\",\n            availability AS \"availability!\"\n        FROM filter\n        WHERE availability != 'NotAvailable'\n        ORDER BY\n            availability = 'Private' DESC,\n            id DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "availability!",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "601aa1b61f5087a57de0714972283242073f84124b4108ba27728013f89f5264"
+}

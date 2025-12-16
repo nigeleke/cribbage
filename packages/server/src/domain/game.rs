@@ -700,7 +700,7 @@ impl Game {
             GameEvent::NextRoundStarted { player } => self.next_round_started(player),
 
             #[cfg(test)]
-            GameEvent::GamePreloaded { game, .. } => *self = game,
+            GameEvent::GamePreloaded { game, .. } => *self = *game,
         }
     }
 
@@ -1049,7 +1049,7 @@ mod test {
                     );
                     let deals = events
                         .iter()
-                        .filter_map(|e| matches!(e, GameEvent::HandDealt { .. }).then_some(e))
+                        .filter(|e| matches!(e, GameEvent::HandDealt { .. }))
                         .collect::<Vec<_>>();
                     assert_eq!(deals.len(), PLAYER_COUNT);
                 },
@@ -1151,7 +1151,7 @@ mod test {
                         ]
                     );
                     let hands = events
-                        .into_iter()
+                        .iter()
                         .filter_map(|event| match event {
                             GameEvent::HandDealt { hand, player: _ } => Some(hand),
                             _ => None,
@@ -1185,7 +1185,7 @@ mod test {
         #[test]
         fn player_can_discard_own_cards_to_the_crib() {
             game_test! {
-                given: &scenario!(as_discarding;
+                given: &scenario!(build_discarding;
                     with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C"),
                     with_cut("QD"),
                     with_crib("")
@@ -1211,13 +1211,13 @@ mod test {
 
         #[test]
         fn player_cannot_discard_other_than_two_held_cards_to_the_crib() {
-            for cards in vec!["AH2H3H", "AH"] {
+            for cards in ["AH2H3H", "AH"] {
                 let cards = cards!(cards);
                 let expected_error_text = format_vec(&cards);
 
                 game_test! {
                     given: &scenario!(
-                        as_discarding;
+                        build_discarding;
                         with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C"),
                         with_cut("QD"),
                         with_crib("")
@@ -1238,7 +1238,7 @@ mod test {
 
             game_test! {
                 given: &scenario!(
-                    as_discarding;
+                    build_discarding;
                     with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C"),
                     with_cut("QD"),
                     with_crib("")
@@ -1255,7 +1255,7 @@ mod test {
         fn player_cannot_discard_if_already_discarded() {
             game_test! {
                 given: &scenario!(
-                    as_discarding;
+                    build_discarding;
                     with_hands("3H4H5H6H", "AC2C3C4C5C6C"),
                     with_ack(0),
                     with_cut("QD"),
@@ -1285,7 +1285,7 @@ mod test {
         fn start_the_play_after_discards() {
             game_test! {
                 given: &scenario!(
-                    as_discarding;
+                    build_discarding;
                     with_hands("3H4H5H6H", "AC2C3C4C5C6C"),
                     with_ack(0),
                     with_cut("QD"),
@@ -1318,7 +1318,7 @@ mod test {
         fn score_his_heels_when_jack_cut_after_discards() {
             game_test! {
                 given: &scenario!(
-                    as_discarding;
+                    build_discarding;
                     with_hands("3H4H5H6H", "AC2C3C4C5C6C"),
                     with_ack(0),
                     with_cut("JC"),
@@ -1342,7 +1342,7 @@ mod test {
         fn finish_game_when_jack_cut_after_discards() {
             game_test! {
                 given: &scenario!(
-                    as_discarding;
+                    build_discarding;
                     with_hands("3H4H5H6H", "AC2C3C4C5C6C"),
                     with_ack(0),
                     with_cut("JC"),
@@ -1381,7 +1381,7 @@ mod test {
         fn accept_valid_play() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_cut("AC"),
                     with_hands("QH", "4C")
                 ),
@@ -1403,7 +1403,7 @@ mod test {
         fn accept_valid_play_after_opponent_go_called() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_go(),
                     with_cut("AC"),
                     with_hands("9S", "4SAS"),
@@ -1427,7 +1427,7 @@ mod test {
         fn cannot_play_when_unheld_card() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0,0),
                     with_hands("9S", "4S"),
                     with_cut("AS")
@@ -1444,7 +1444,7 @@ mod test {
         fn cannot_play_when_not_their_turn() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_hands("9S", "4S"),
                     with_cut("AS")
@@ -1461,7 +1461,7 @@ mod test {
         fn cannot_play_when_play_exceeds_target() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_hands("9S", "4S"),
                     with_cut("AS"),
@@ -1479,7 +1479,7 @@ mod test {
         fn score_play_when_target_not_reached_mid_play() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_hands("5S", "5H"),
                     with_cut("AS"),
@@ -1510,7 +1510,7 @@ mod test {
         fn score_play_when_target_not_reached_end_play() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_hands("QS", "2H"),
                     with_cut("QC"),
@@ -1542,7 +1542,7 @@ mod test {
         fn score_play_when_target_not_reached_finished() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 120),
                     with_hands("AH", "5H"),
                     with_cut("QC"),
@@ -1570,7 +1570,7 @@ mod test {
         #[test]
         fn score_play_when_target_reached_mid_play() {
             game_test! {
-                given: &scenario!(as_playing(1);
+                given: &scenario!(build_playing(1);
                     with_points(0, 0),
                     with_hands("9H", "AH"),
                     with_cut("KC"),
@@ -1601,7 +1601,7 @@ mod test {
         #[test]
         fn score_play_when_target_reached_end_play() {
             game_test! {
-                given: &scenario!(as_playing(1);
+                given: &scenario!(build_playing(1);
                     with_points(0, 0),
                     with_hands("QC", "AH"),
                     with_cut("KC"),
@@ -1633,7 +1633,7 @@ mod test {
         fn score_play_when_target_reached_finished() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 120),
                     with_hands("QC", "AH"),
                     with_cut("KC"),
@@ -1665,7 +1665,7 @@ mod test {
         fn score_play_when_plays_finished_and_game_not_finished() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 60),
                     with_hands("", "AH"),
                     with_cut("KC"),
@@ -1693,7 +1693,7 @@ mod test {
         fn score_play_when_plays_finished_and_game_finished() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 120),
                     with_hands("", "AH"),
                     with_cut("KC"),
@@ -1721,7 +1721,7 @@ mod test {
         fn swap_player_after_pone_play() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("7H8H8D9C", "4S5STHJH")
@@ -1742,7 +1742,7 @@ mod test {
         fn swap_player_after_dealer_play() {
             game_test! {
                 given: &scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("7H8H8D9C", "5STHJH"),
@@ -1764,7 +1764,7 @@ mod test {
         fn reset_play_after_exact_target_reached() {
             game_test! {
                 given: &scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("7H8H8D", "5STH"),
@@ -1793,7 +1793,7 @@ mod test {
         fn score_play_points_for_fifteens() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("KH", "8D"),
@@ -1824,7 +1824,7 @@ mod test {
         fn score_play_points_for_pair() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("KH", "8D"),
@@ -1855,7 +1855,7 @@ mod test {
         fn score_play_points_for_triplet() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("KH", "8DAH"),
@@ -1886,7 +1886,7 @@ mod test {
         fn score_play_points_for_quartet() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("KH", "7DAH"),
@@ -1917,7 +1917,7 @@ mod test {
         fn score_play_points_for_run() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_cut("AC"),
                     with_hands("KH", "AS"),
@@ -1948,7 +1948,7 @@ mod test {
         fn score_play_points_for_run_edge_case_1() {
             game_test! {
                 given: &scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("7H6H", "AH"),
@@ -1972,7 +1972,7 @@ mod test {
         fn score_play_points_for_run_edge_case_2() {
             game_test! {
                 given: &scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("5H7H", "AH"),
@@ -2024,7 +2024,7 @@ mod test {
         fn accept_go_when_pone_has_no_valid_card() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("AH", "KH"),
@@ -2044,7 +2044,7 @@ mod test {
         fn accept_go_when_dealer_has_no_valid_card() {
             game_test! {
                 given: &scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_go(),
                     with_points(0, 0),
                     with_cut("AS"),
@@ -2068,7 +2068,7 @@ mod test {
         fn cannot_call_go_when_valid_card_held() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_cut("AC"),
                     with_hands("AH", "AS"),
@@ -2083,7 +2083,7 @@ mod test {
         fn cannot_call_go_when_not_turn() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_cut("AC"),
                     with_hands("AH", "AS"),
@@ -2098,7 +2098,7 @@ mod test {
         fn score_go_when_both_players_called_go_playing() {
             game_test! {
                 given: &scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_go(),
                     with_points(0, 0),
                     with_cut("AS"),
@@ -2122,7 +2122,7 @@ mod test {
         fn score_go_when_both_players_called_go_finished() {
             game_test! {
                 given: &scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_go(),
                     with_points(120, 0),
                     with_cut("AS"),
@@ -2151,7 +2151,7 @@ mod test {
         fn score_go_when_played_last_card_and_opponent_calls_go_1() {
             game_test! {
                 given: &scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_points(0, 0),
                     with_cut("QH"),
                     with_hands("KH", ""),
@@ -2182,7 +2182,7 @@ mod test {
         fn score_go_when_played_last_card_and_opponent_calls_go_2() {
             game_test! {
                 given: &scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_go(),
                     with_points(0, 0),
                     with_cut("TS"),
@@ -2213,7 +2213,7 @@ mod test {
         fn swap_player_after_pone_called_go() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("8H8D", "5SJH"),
@@ -2232,7 +2232,7 @@ mod test {
         fn swap_player_after_dealer_called_go() {
             game_test! {
                 given: &scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_points(0, 0),
                     with_cut("AS"),
                     with_hands("7H8H8D", "4S5S"),
@@ -2251,7 +2251,7 @@ mod test {
         fn reset_play_after_pone_then_dealer_called_go() {
             game_test! {
                 given: &scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_go(),
                     with_points(0, 0),
                     with_cut("AS"),
@@ -2278,7 +2278,7 @@ mod test {
         fn reset_play_after_after_dealer_then_pone_called_go() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_go(),
                     with_points(0, 0),
                     with_cut("AS"),
@@ -2337,7 +2337,7 @@ mod test {
         fn should_score_fifteens() {
             let Phase::Playing(playing) = Game::from(
                 scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_hands("AC", ""),
                     with_current_plays(&[(0, "JD"), (0, "5H")]),
@@ -2360,7 +2360,7 @@ mod test {
         fn should_score_pairs() {
             let Phase::Playing(playing) = Game::from(
                 scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_hands("AC", ""),
                     with_current_plays(&[(0, "JD"), (0, "AH"), (0, "AS")]),
@@ -2383,7 +2383,7 @@ mod test {
         fn should_score_royal_pairs() {
             let Phase::Playing(playing) = Game::from(
                 scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_hands("AC", ""),
                     with_current_plays(&[(0, "AD"), (0, "AH"), (0, "AS")]),
@@ -2406,7 +2406,7 @@ mod test {
         fn should_score_double_royal_pairs() {
             let Phase::Playing(playing) = Game::from(
                 scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_hands("2H", ""),
                     with_current_plays(&[(0, "AC"), (0, "AD"), (0, "AH"), (0, "AS")]),
@@ -2442,7 +2442,7 @@ mod test {
                 let current_plays = Vec::from_iter(current_plays);
                 let Phase::Playing(playing) = Game::from(
                     scenario!(
-                        as_playing(1);
+                        build_playing(1);
                         with_points(0, 0),
                         with_hands("AS", "AD"),
                         with_current_plays(&current_plays),
@@ -2466,7 +2466,7 @@ mod test {
         fn should_score_runs_unordered() {
             let Phase::Playing(playing) = Game::from(
                 scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_hands("KS", "KD"),
                     with_current_plays(&[(0, "3S"), (0, "2C"), (0, "AS")]),
@@ -2489,7 +2489,7 @@ mod test {
         fn should_score_rules_example_flush() {
             let Phase::Playing(playing) = Game::from(
                 scenario!(
-                    as_playing(0);
+                    build_playing(0);
                     with_points(0, 0),
                     with_hands("", "2H"),
                     with_cut("3H"),
@@ -2512,7 +2512,7 @@ mod test {
         fn should_score_when_target_not_reached() {
             let Phase::Playing(playing) = Game::from(
                 scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_go(),
                     with_points(0, 0),
                     with_hands("", ""),
@@ -2536,7 +2536,7 @@ mod test {
         fn should_score_when_target_reached() {
             let Phase::Playing(playing) = Game::from(
                 scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_hands("", ""),
                     with_current_plays(&[(0, "KC"), (0, "KD"), (0, "KH"), (0, "AS")]),
@@ -2583,7 +2583,7 @@ mod test {
         fn score_pone_hand_when_plays_finished() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 0),
                     with_hands("", "TH"),
                     with_cut("4H"),
@@ -2610,7 +2610,7 @@ mod test {
         fn score_winning_pone_hand_when_plays_finished() {
             game_test! {
                 given: &scenario!(
-                    as_playing(1);
+                    build_playing(1);
                     with_points(0, 115),
                     with_hands("", "TH"),
                     with_cut("4H"),
@@ -2640,7 +2640,7 @@ mod test {
         fn score_dealer_hand_when_pone_score_acknowledged() {
             game_test! {
                 given: &scenario!(
-                    as_scoring_pone;
+                    build_scoring_pone;
                     with_points(0, 0),
                     with_cut("4H"),
                     with_hands("7H8CAC2C", "JCKS5HTH"),
@@ -2664,7 +2664,7 @@ mod test {
         fn score_winning_dealer_hand_when_pone_score_acknowledged() {
             game_test! {
                 given: &scenario!(
-                    as_scoring_pone;
+                    build_scoring_pone;
                     with_points(117, 0),
                     with_cut("4H"),
                     with_hands("7H8CAC2C", "JCKS5HTH"),
@@ -2693,7 +2693,7 @@ mod test {
         fn score_crib_when_dealer_score_acknowledged() {
             game_test! {
                 given: &scenario!(
-                    as_scoring_dealer;
+                    build_scoring_dealer;
                     with_points(0, 0),
                     with_cut("4H"),
                     with_hands("7H8CAC2C", "JCKS5HTH"),
@@ -2717,7 +2717,7 @@ mod test {
         fn score_winning_crib_when_dealer_score_acknowledged() {
             game_test! {
                 given: &scenario!(
-                    as_scoring_dealer;
+                    build_scoring_dealer;
                     with_points(109, 0),
                     with_cut("4H"),
                     with_hands("7H8CAC2C", "JCKS5HTH"),
@@ -2746,7 +2746,7 @@ mod test {
         fn redeal_when_crib_score_acknowledged() {
             game_test! {
                 given: &scenario!(
-                    as_scoring_crib;
+                    build_scoring_crib;
                     with_points(0, 0),
                     with_cut("4H"),
                     with_hands("7H8CAC2C", "JCKS5HTH"),
@@ -2760,7 +2760,7 @@ mod test {
                     });
                     let deals = events
                         .iter()
-                        .filter_map(|e| matches!(e, GameEvent::HandDealt { .. }).then_some(e))
+                        .filter(|e| matches!(e, GameEvent::HandDealt { .. }))
                         .collect::<Vec<_>>();
                     assert_eq!(deals.len(), PLAYER_COUNT);
                 },
@@ -3138,7 +3138,7 @@ mod test {
 
         #[test]
         fn should_output_user_readable_starting_game_in_logs() {
-            let game = GameBuilder::default().with_cuts("ASAC").as_starting();
+            let game = GameBuilder::default().with_cuts("ASAC").build_starting();
             common_filters().bind(|| {
                 insta::assert_snapshot!(game.to_string(), @r"
                 test-game__<timestamp> U[<cards>]
@@ -3157,7 +3157,7 @@ mod test {
             let game = GameBuilder::default()
                 .with_points(0, 0)
                 .with_hands("AH2H3H4H5H6H", "AC2C3C4C5C6C")
-                .as_discarding();
+                .build_discarding();
             common_filters().bind(|| {
                 insta::assert_snapshot!(game.to_string(), @r"
                 test-game__<timestamp> U[<cards>]
@@ -3181,7 +3181,7 @@ mod test {
                 .with_hands("9S", "4S")
                 .with_cut("AS")
                 .with_current_plays(&[(0, "AH")])
-                .as_playing(1);
+                .build_playing(1);
             common_filters().bind(|| insta::assert_snapshot!(game.to_string(), @r"
                                      test-game__<timestamp> U[<cards>]
                                      <userid> <userid>
@@ -3204,7 +3204,7 @@ mod test {
                 .with_hands("AS2S3S4S", "AC2C3C4C")
                 .with_cut("JH")
                 .with_crib("TSJSQSKS")
-                .as_scoring_pone();
+                .build_scoring_pone();
             common_filters().bind(|| {
                 insta::assert_snapshot!(game.to_string(), @r"
                 test-game__<timestamp> U[<cards>]
@@ -3229,7 +3229,7 @@ mod test {
                 .with_hands("AS2S3S4S", "AC2C3C4C")
                 .with_cut("JH")
                 .with_crib("TSJSQSKS")
-                .as_scoring_dealer();
+                .build_scoring_dealer();
             common_filters().bind(|| {
                 insta::assert_snapshot!(game.to_string(), @r"
                 test-game__<timestamp> U[<cards>]
@@ -3254,7 +3254,7 @@ mod test {
                 .with_hands("AS2S3S4S", "AC2C3C4C")
                 .with_cut("JH")
                 .with_crib("TSJSQSKS")
-                .as_scoring_crib();
+                .build_scoring_crib();
             common_filters().bind(|| {
                 insta::assert_snapshot!(game.to_string(), @r"
                 test-game__<timestamp> U[<cards>]
@@ -3280,7 +3280,7 @@ mod test {
                 .with_hands("AS2S3S4S", "AC2C3C4C")
                 .with_cut("JH")
                 .with_crib("TSJSQSKS")
-                .as_finished();
+                .build_finished();
             common_filters().bind(|| {
                 insta::assert_snapshot!(game.to_string(), @r"
                 test-game__<timestamp> U[<cards>]

@@ -60,7 +60,7 @@ impl GameBuilder {
     }
 
     pub fn with_current_plays(mut self, plays: &[(usize, &str)]) -> Self {
-        let plays = plays.into_iter().map(|(p, c)| (Player::from(*p), card!(c)));
+        let plays = plays.iter().map(|(p, c)| (Player::from(*p), card!(c)));
         let plays = plays.map(|(p, c)| Play::new(p, c));
         self.current_plays = Vec::from_iter(plays);
         self
@@ -113,7 +113,7 @@ impl GameBuilder {
 
     fn domain_scoreboard(&self) -> Scoreboard {
         let positions = [
-            Position::new(*self.positions.get(0).unwrap_or(&0)),
+            Position::new(*self.positions.first().unwrap_or(&0)),
             Position::new(*self.positions.get(1).unwrap_or(&0)),
         ];
         Scoreboard::new(positions)
@@ -166,7 +166,7 @@ impl GameBuilder {
         self.pending.clone()
     }
 
-    pub fn as_starting(self) -> Game {
+    pub fn build_starting(self) -> Game {
         let starting = Starting::new(
             self.domain_cuts(),
             self.domain_deck(),
@@ -175,7 +175,7 @@ impl GameBuilder {
         Self::new_game(starting.wrap())
     }
 
-    pub fn as_discarding(mut self) -> Game {
+    pub fn build_discarding(mut self) -> Game {
         self.cut.into_iter().for_each(|c| self.deck.add(c));
 
         let discarding = Discarding::new(
@@ -190,7 +190,7 @@ impl GameBuilder {
         Self::new_game(discarding.wrap())
     }
 
-    pub fn as_playing(self, next_to_play: usize) -> Game {
+    pub fn build_playing(self, next_to_play: usize) -> Game {
         let playing = Playing::new(
             self.domain_scoreboard(),
             self.domain_roles(),
@@ -203,7 +203,7 @@ impl GameBuilder {
         Self::new_game(playing.wrap())
     }
 
-    pub fn as_scoring_pone(self) -> Game {
+    pub fn build_scoring_pone(self) -> Game {
         let pone = 1 - self.dealer;
         let pegging = Pegging::new(
             Player::from(pone),
@@ -221,7 +221,7 @@ impl GameBuilder {
         Self::new_game(scoring.wrap())
     }
 
-    pub fn as_scoring_dealer(self) -> Game {
+    pub fn build_scoring_dealer(self) -> Game {
         let dealer = self.dealer;
         let pegging = Pegging::new(
             Player::from(dealer),
@@ -239,7 +239,7 @@ impl GameBuilder {
         Self::new_game(scoring.wrap())
     }
 
-    pub fn as_scoring_crib(self) -> Game {
+    pub fn build_scoring_crib(self) -> Game {
         let dealer = self.dealer;
         let pegging = Pegging::new(
             Player::from(dealer),
@@ -257,7 +257,7 @@ impl GameBuilder {
         Self::new_game(scoring.wrap())
     }
 
-    pub fn as_finished(self) -> Game {
+    pub fn build_finished(self) -> Game {
         let finished = Finished::new(
             self.domain_winner(),
             self.domain_scoreboard(),

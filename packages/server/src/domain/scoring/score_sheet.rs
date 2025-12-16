@@ -370,8 +370,8 @@ mod test {
         let hand2 = hand!("ACAS2H2D");
 
         let mut play_state = PlayState::new(PLAYER0)
-            .with_pending_plays(PLAYER0, &hand1.as_ref())
-            .with_pending_plays(PLAYER1, &hand2.as_ref());
+            .with_pending_plays(PLAYER0, hand1.as_ref())
+            .with_pending_plays(PLAYER1, hand2.as_ref());
         let _ = play_state.play(card!("AH"));
         let _ = play_state.play(card!("AC"));
         let _ = play_state.play(card!("AD"));

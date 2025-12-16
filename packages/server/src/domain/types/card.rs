@@ -106,7 +106,7 @@ impl CardExt for &str {
     fn cards_from(self) -> Result<Vec<Card>, CardsError> {
         use std::str::FromStr;
 
-        if self.len() % 2 != 0 {
+        if !self.len().is_multiple_of(2) {
             Err(CardsError::InvalidCard(self.into()))
         } else {
             (0..self.len())

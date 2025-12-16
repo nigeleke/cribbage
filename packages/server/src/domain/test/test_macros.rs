@@ -5,7 +5,7 @@ macro_rules! scenario {
 
         let mut game = builder. $final_method ( $($final_arg),* );
         *game.name_mut() = $crate::macros::function_name!();
-        vec![GameEvent::GamePreloaded { game }]
+        vec![GameEvent::GamePreloaded { game: Box::new(game) }]
     }};
 
     ( $final_method:ident ; $($method:ident( $($arg:expr),* $(,)? )),* $(,)? ) => {{
@@ -14,7 +14,7 @@ macro_rules! scenario {
 
         let mut game = builder. $final_method ();
         *game.name_mut() = $crate::macros::function_name!();
-        vec![GameEvent::GamePreloaded { game }]
+        vec![GameEvent::GamePreloaded { game: Box::new(game) }]
     }};
 }
 

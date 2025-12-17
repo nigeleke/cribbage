@@ -53,7 +53,10 @@ graph TD
 
 ## Setup
 
-Note: git pre-commit checks require active database; migrate and prepare are completed.
+Note: git pre-commit checks require active database because the following commands are executed:
+
+  * `cargo sqlx migrate run`
+  * `cargo sqlx prepare`
 
 ```bash
 DATABASE_URL=postgres://postgres:password@localhost:5432/cribbage

@@ -5,10 +5,6 @@ use dioxus_sdk::storage::*;
 use crate::{components::toast::ToastProvider, pages::*};
 
 /// Application routing definitions.
-///
-/// This enum is used by `dioxus-router` to map URL paths to component
-/// screens. Each variant corresponds to a page in the application and
-/// defines any dynamic path parameters required to construct that page.
 #[derive(Clone, PartialEq, Routable)]
 #[rustfmt::skip]
 pub enum Route {
@@ -17,7 +13,7 @@ pub enum Route {
 
     /// The root page of the application.
     ///
-    /// This displays the primary landing UI and is wrapped in the global
+    /// This displays the primary landing UI.
     #[route("/")]
     HomePage {},
 
@@ -69,6 +65,6 @@ fn Layout() -> Element {
                 }
             }
         }
-        footer { "{display_user_id}" " - Copyright © 2025; Nigel Eke. All rights reserved." }
+        footer { "Copyright © 2025; Nigel Eke. All rights reserved." }
     }
 }

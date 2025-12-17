@@ -63,8 +63,9 @@ jobs:
             platform: web
 
     publish:
-        name: Publish documentation
+        name: Publish
         needs:
             - qa
             - integration-tests
         uses: nigeleke/github/.github/workflows/rust-publish.yml@main
+        secrets: inherit

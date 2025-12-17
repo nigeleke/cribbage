@@ -63,7 +63,7 @@ jobs:
             platform: web
 
     publish:
-        name: Publish
+        name: Publish documentation
         needs:
             - qa
             - integration-tests

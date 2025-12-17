@@ -46,8 +46,7 @@ pub enum Route {
 
 #[component]
 fn Layout() -> Element {
-    let user_id = use_persistent("user_id", UserIdDTO::new);
-    let display_user_id = use_memo(move || user_id.read().short_name());
+    let user_id = use_storage::<LocalStorage, _>("user_id".into(), UserIdDTO::new);
     provide_context(user_id);
 
     rsx! {

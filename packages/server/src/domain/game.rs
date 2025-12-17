@@ -566,7 +566,11 @@ impl Game {
     fn card_played(&mut self, _player: Player, card: Card, pegging: Pegging) {
         if let Phase::Playing(playing) = &mut self.phase {
             playing.play_card(card);
-            let _ = playing.scoreboard_mut().peg(&pegging);
+            if let Some(_winner) = playing.scoreboard_mut().peg(&pegging) {
+                let hands = playing.play_state_mut().finish_plays();
+                playing.hand_mut(PLAYER0).add_all(hands[PLAYER0].as_ref());
+                playing.hand_mut(PLAYER1).add_all(hands[PLAYER1].as_ref());
+            }
             self.phase = playing.clone().wrap().or_finished();
         }
     }
@@ -574,7 +578,11 @@ impl Game {
     fn go_called(&mut self, _player: Player, pegging: Pegging) {
         if let Phase::Playing(playing) = &mut self.phase {
             playing.go();
-            let _ = playing.scoreboard_mut().peg(&pegging);
+            if let Some(_winner) = playing.scoreboard_mut().peg(&pegging) {
+                let hands = playing.play_state_mut().finish_plays();
+                playing.hand_mut(PLAYER0).add_all(hands[PLAYER0].as_ref());
+                playing.hand_mut(PLAYER1).add_all(hands[PLAYER1].as_ref());
+            }
             self.phase = playing.clone().wrap().or_finished();
         }
     }
@@ -1998,6 +2006,44 @@ mod test {
                 }
             }
         }
+
+        #[test]
+        fn regather_played_cards_after_winning_play() {
+            game_test! {
+                given: &scenario!(
+                    build_playing(0);
+                    with_points(115, 116),
+                    with_cut("9D"),
+                    with_hands("5C", "4S"),
+                    with_previous_plays(&[(0, "JH"), (1, "KD"), (0, "TH")]),
+                    with_current_plays(&[(1, "6D"), (0, "5S"), (1, "5D")])
+                ),
+                when: GameCommand::PlayCard {
+                    player: PLAYER0,
+                    card: card!("5C"),
+                },
+                then_events: |events: &[GameEvent]| {
+                    assert_eq!(events, &[GameEvent::CardPlayed {
+                        player: PLAYER0,
+                        card: card!("5C"),
+                        pegging: Pegging::new(
+                            PLAYER0,
+                            ScoreSheet::default().add_event(
+                                ScoreKind::Triplet,
+                                &cards!("5C5D5S"),
+                                Points::from(6),
+                            ),
+                        ),
+                    }])
+                },
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Finished(finished) => {
+                        assert_eq!(finished.hand(PLAYER0).clone().sorted(), hand!("JHTH5S5C"));
+                        assert_eq!(finished.hand(PLAYER1).clone().sorted(), hand!("KD6D5D4S"));
+                    });
+                }
+            }
+        }
     }
 
     /// ## The Go
@@ -2297,6 +2343,43 @@ mod test {
                         );
                         assert!(playing.play_state().current_plays().is_empty());
                     })
+                }
+            }
+        }
+
+        #[test]
+        fn regather_played_cards_after_winning_go() {
+            game_test! {
+                given: &scenario!(
+                    build_playing(1);
+                    with_go(),
+                    with_points(115, 120),
+                    with_cut("9D"),
+                    with_hands("5C", "4S"),
+                    with_previous_plays(&[(0, "JH"), (1, "KD"), (0, "TH")]),
+                    with_current_plays(&[(1, "TC"), (0, "TS"), (1, "TD")])
+                ),
+                when: GameCommand::Go {
+                    player: PLAYER1,
+                },
+                then_events: |events: &[GameEvent]| {
+                    assert_eq!(events, &[GameEvent::GoCalled {
+                        player: PLAYER1,
+                        pegging: Pegging::new(
+                            PLAYER1,
+                            ScoreSheet::default().add_event(
+                                ScoreKind::LastCard,
+                                &cards!("TD"),
+                                Points::from(1),
+                            ),
+                        ),
+                    }])
+                },
+                then_phase: |phase: &Phase| {
+                    assert_phase_then!(phase, Phase::Finished(finished) => {
+                        assert_eq!(finished.hand(PLAYER0).clone().sorted(), hand!("JHTSTH5C"));
+                        assert_eq!(finished.hand(PLAYER1).clone().sorted(), hand!("KDTDTC4S"));
+                    });
                 }
             }
         }

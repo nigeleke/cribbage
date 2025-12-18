@@ -6,7 +6,7 @@
 [![Coverage](https://img.shields.io/codecov/c/github/nigeleke/cribbage?style=plastic)](https://codecov.io/gh/nigeleke/cribbage)
 ![Version](https://img.shields.io/github/v/tag/nigeleke/cribbage?style=plastic)
 
-  [Site](https://nigeleke.github.io/cribbage) \| [GitHub](https://github.com/nigeleke/cribbage) \| [API](https://nigeleke.github.io/cribbage/api/index.html) \| [Coverage Report](https://nigeleke.github.io/cribbage/coverage/index.html)
+  [Site](https://nigeleke.github.io/cribbage) \| [GitHub](https://github.com/nigeleke/cribbage) \| [Coverage Report](https://nigeleke.github.io/cribbage/llvm-cov/index.html)
 
 [Cribbage](https://en.wikipedia.org/wiki/Cribbage) is a popular card game, predominately played by two players.
 
@@ -45,11 +45,12 @@ graph TD
     api --> server
 ```
 
-## Main things still todo...
-
-  * better coverage testing (api & ui)
-  * multi-platform
-  * i18n
+## Project Documentation
+  * [constants](doc/constants/index.html)
+  * [server](doc/server/index.html)
+  * [aip](doc/api/index.html)
+  * [ui](doc/ui/index.html)
+  * [web](doc/web/index.html)
 
 ## Setup
 

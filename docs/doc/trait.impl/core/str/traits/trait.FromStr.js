@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["api",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"struct\" href=\"api/dto/struct.GameIdDTO.html\" title=\"struct api::dto::GameIdDTO\">GameIdDTO</a>",0]]],["server",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"server/domain/enum.Availability.html\" title=\"enum server::domain::Availability\">Availability</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"struct\" href=\"server/domain/struct.Card.html\" title=\"struct server::domain::Card\">Card</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"struct\" href=\"server/domain/struct.GameId.html\" title=\"struct server::domain::GameId\">GameId</a>",0]]],["ui",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"ui/enum.Route.html\" title=\"enum ui::Route\">Route</a>",0]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[286,859,257]}

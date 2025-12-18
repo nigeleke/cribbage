@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["api",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"api/dto/enum.DTOError.html\" title=\"enum api::dto::DTOError\">DTOError</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"api/error/enum.ApiError.html\" title=\"enum api::error::ApiError\">ApiError</a>",0]]],["server",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"server/domain/enum.CardsError.html\" title=\"enum server::domain::CardsError\">CardsError</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"server/domain/enum.DomainError.html\" title=\"enum server::domain::DomainError\">DomainError</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"server/error/enum.ServerError.html\" title=\"enum server::error::ServerError\">ServerError</a>",0]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[515,824]}

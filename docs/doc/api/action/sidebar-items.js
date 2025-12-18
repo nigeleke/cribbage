@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["cut_for_deal","discard_cards_to_crib","go","host_game","join_game","play_card","play_computer","score_crib","score_dealer","score_pone","start_game","start_next_round"]};

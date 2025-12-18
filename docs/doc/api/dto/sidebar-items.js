@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AvailabilityDTO","AvailableGameEventDTO","CardDTO","DTOError","PeggingKindDTO","PendingDTO","PhaseDTO","PlayActionDTO","PlayerDTO"],"struct":["AvailableGameDTO","GameIdDTO","PeggingDTO","PeggingSummaryDTO","PlayerStateDTO","PlaysDTO","ScoreDTO","UserGameDTO","UserIdDTO"],"type":["CardIdDTO","PeggingBreakdownDTO","PlayDTO"]};

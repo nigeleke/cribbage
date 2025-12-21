@@ -1,8 +1,8 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `packages/server/src/domain/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-80aa586b.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="server" data-themes="" data-resource-suffix="" data-rustdoc-version="1.94.0-nightly (f794a0873 2025-12-17)" data-channel="nightly" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-3e30299d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-ffcac47a.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">server/domain/</div>game.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>constants::<span class="kw-2">*</span>;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `packages/server/src/domain/game.rs`."><title>game.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-80aa586b.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="server" data-themes="" data-resource-suffix="" data-rustdoc-version="1.94.0-nightly (24139cf84 2025-12-20)" data-channel="nightly" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-3e30299d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-ffcac47a.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">server/domain/</div>game.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>constants::<span class="kw-2">*</span>;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>cqrs_es::{Aggregate, event_sink::EventSink};
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>serde::{Deserialize, Serialize};
 <a href=#4 id=4 data-nosnippet>4</a>
-<a href=#5 id=5 data-nosnippet>5</a><span class="kw">use crate</span>::{
+<a href=#5 id=5 data-nosnippet>5</a><span class="kw">use </span>crate::{
 <a href=#6 id=6 data-nosnippet>6</a>    display::format_vec,
 <a href=#7 id=7 data-nosnippet>7</a>    domain::{wrap::Wrap, <span class="kw-2">*</span>},
 <a href=#8 id=8 data-nosnippet>8</a>    name_builder::generate_game_name,
@@ -798,8 +798,8 @@
 <a href=#798 id=798 data-nosnippet>798</a></span><span class="kw">mod </span>test {
 <a href=#799 id=799 data-nosnippet>799</a>    <span class="kw">use </span>std::str::FromStr;
 <a href=#800 id=800 data-nosnippet>800</a>
-<a href=#801 id=801 data-nosnippet>801</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#802 id=802 data-nosnippet>802</a>    <span class="kw">use crate</span>::{
+<a href=#801 id=801 data-nosnippet>801</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
+<a href=#802 id=802 data-nosnippet>802</a>    <span class="kw">use </span>crate::{
 <a href=#803 id=803 data-nosnippet>803</a>        domain::{
 <a href=#804 id=804 data-nosnippet>804</a>            test::{GameBuilder, domain_macros::<span class="kw-2">*</span>, test_macros::<span class="kw-2">*</span>},
 <a href=#805 id=805 data-nosnippet>805</a>            types::CardExt,
@@ -816,7 +816,7 @@
 <a href=#816 id=816 data-nosnippet>816</a>    /// number.
 <a href=#817 id=817 data-nosnippet>817</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#818 id=818 data-nosnippet>818</a>    </span><span class="kw">mod </span>players {
-<a href=#819 id=819 data-nosnippet>819</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#819 id=819 data-nosnippet>819</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#820 id=820 data-nosnippet>820</a>
 <a href=#821 id=821 data-nosnippet>821</a>        <span class="attr">#[test]
 <a href=#822 id=822 data-nosnippet>822</a>        </span><span class="kw">fn </span>a_user_can_host_game() {
@@ -929,7 +929,7 @@
 <a href=#929 id=929 data-nosnippet>929</a>    /// Rank of Cards: K (high), Q, J, 10, 9, 8, 7, 6, 5, 4, 3, 2, A.
 <a href=#930 id=930 data-nosnippet>930</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#931 id=931 data-nosnippet>931</a>    </span><span class="kw">mod </span>deck {
-<a href=#932 id=932 data-nosnippet>932</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#932 id=932 data-nosnippet>932</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#933 id=933 data-nosnippet>933</a>
 <a href=#934 id=934 data-nosnippet>934</a>        <span class="attr">#[test]
 <a href=#935 id=935 data-nosnippet>935</a>        </span><span class="kw">fn </span>use_a_standard_pack_of_cards() {
@@ -959,7 +959,7 @@
 <a href=#959 id=959 data-nosnippet>959</a>    /// deal. (In some games, there is no cut at this time.)
 <a href=#960 id=960 data-nosnippet>960</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#961 id=961 data-nosnippet>961</a>    </span><span class="kw">mod </span>deal_cut {
-<a href=#962 id=962 data-nosnippet>962</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#962 id=962 data-nosnippet>962</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#963 id=963 data-nosnippet>963</a>
 <a href=#964 id=964 data-nosnippet>964</a>        <span class="attr">#[test]
 <a href=#965 id=965 data-nosnippet>965</a>        </span><span class="kw">fn </span>user_must_cut_for_dealer_1() {
@@ -1117,7 +1117,7 @@
 <a href=#1117 id=1117 data-nosnippet>1117</a>    /// opponent.
 <a href=#1118 id=1118 data-nosnippet>1118</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#1119 id=1119 data-nosnippet>1119</a>    </span><span class="kw">mod </span>deal {
-<a href=#1120 id=1120 data-nosnippet>1120</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1120 id=1120 data-nosnippet>1120</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#1121 id=1121 data-nosnippet>1121</a>
 <a href=#1122 id=1122 data-nosnippet>1122</a>        <span class="attr">#[test]
 <a href=#1123 id=1123 data-nosnippet>1123</a>        </span><span class="kw">fn </span>dealer_deals_six_cards_each() {
@@ -1188,7 +1188,7 @@
 <a href=#1188 id=1188 data-nosnippet>1188</a>    /// been played.
 <a href=#1189 id=1189 data-nosnippet>1189</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#1190 id=1190 data-nosnippet>1190</a>    </span><span class="kw">mod </span>the_crib {
-<a href=#1191 id=1191 data-nosnippet>1191</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1191 id=1191 data-nosnippet>1191</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#1192 id=1192 data-nosnippet>1192</a>
 <a href=#1193 id=1193 data-nosnippet>1193</a>        <span class="attr">#[test]
 <a href=#1194 id=1194 data-nosnippet>1194</a>        </span><span class="kw">fn </span>player_can_discard_own_cards_to_the_crib() {
@@ -1287,7 +1287,7 @@
 <a href=#1287 id=1287 data-nosnippet>1287</a>    /// various card combinations that score points.
 <a href=#1288 id=1288 data-nosnippet>1288</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#1289 id=1289 data-nosnippet>1289</a>    </span><span class="kw">mod </span>before_the_play {
-<a href=#1290 id=1290 data-nosnippet>1290</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1290 id=1290 data-nosnippet>1290</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#1291 id=1291 data-nosnippet>1291</a>
 <a href=#1292 id=1292 data-nosnippet>1292</a>        <span class="attr">#[test]
 <a href=#1293 id=1293 data-nosnippet>1293</a>        </span><span class="kw">fn </span>start_the_play_after_discards() {
@@ -1383,7 +1383,7 @@
 <a href=#1383 id=1383 data-nosnippet>1383</a>    /// count 10 each; every other card counts its pip value (the ace counts one).
 <a href=#1384 id=1384 data-nosnippet>1384</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#1385 id=1385 data-nosnippet>1385</a>    </span><span class="kw">mod </span>the_play {
-<a href=#1386 id=1386 data-nosnippet>1386</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1386 id=1386 data-nosnippet>1386</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#1387 id=1387 data-nosnippet>1387</a>
 <a href=#1388 id=1388 data-nosnippet>1388</a>        <span class="attr">#[test]
 <a href=#1389 id=1389 data-nosnippet>1389</a>        </span><span class="kw">fn </span>accept_valid_play() {
@@ -2064,7 +2064,7 @@
 <a href=#2064 id=2064 data-nosnippet>2064</a>    /// have a Go on the last card if not earlier.
 <a href=#2065 id=2065 data-nosnippet>2065</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#2066 id=2066 data-nosnippet>2066</a>    </span><span class="kw">mod </span>the_go {
-<a href=#2067 id=2067 data-nosnippet>2067</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#2067 id=2067 data-nosnippet>2067</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#2068 id=2068 data-nosnippet>2068</a>
 <a href=#2069 id=2069 data-nosnippet>2069</a>        <span class="attr">#[test]
 <a href=#2070 id=2070 data-nosnippet>2070</a>        </span><span class="kw">fn </span>accept_go_when_pone_has_no_valid_card() {
@@ -2414,7 +2414,7 @@
 <a href=#2414 id=2414 data-nosnippet>2414</a>    /// true run with no foreign card.
 <a href=#2415 id=2415 data-nosnippet>2415</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#2416 id=2416 data-nosnippet>2416</a>    </span><span class="kw">mod </span>pegging {
-<a href=#2417 id=2417 data-nosnippet>2417</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#2417 id=2417 data-nosnippet>2417</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#2418 id=2418 data-nosnippet>2418</a>
 <a href=#2419 id=2419 data-nosnippet>2419</a>        <span class="attr">#[test]
 <a href=#2420 id=2420 data-nosnippet>2420</a>        </span><span class="kw">fn </span>should_score_fifteens() {
@@ -2660,7 +2660,7 @@
 <a href=#2660 id=2660 data-nosnippet>2660</a>    ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
 <a href=#2661 id=2661 data-nosnippet>2661</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#2662 id=2662 data-nosnippet>2662</a>    </span><span class="kw">mod </span>counting_the_hands {
-<a href=#2663 id=2663 data-nosnippet>2663</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#2663 id=2663 data-nosnippet>2663</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#2664 id=2664 data-nosnippet>2664</a>
 <a href=#2665 id=2665 data-nosnippet>2665</a>        <span class="attr">#[test]
 <a href=#2666 id=2666 data-nosnippet>2666</a>        </span><span class="kw">fn </span>score_pone_hand_when_plays_finished() {
@@ -3052,7 +3052,7 @@
 <a href=#3052 id=3052 data-nosnippet>3052</a>    /// two different cards duplicated, counts 16.
 <a href=#3053 id=3053 data-nosnippet>3053</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#3054 id=3054 data-nosnippet>3054</a>    </span><span class="kw">mod </span>combinations {
-<a href=#3055 id=3055 data-nosnippet>3055</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#3055 id=3055 data-nosnippet>3055</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#3056 id=3056 data-nosnippet>3056</a>
 <a href=#3057 id=3057 data-nosnippet>3057</a>        <span class="attr">#[test]
 <a href=#3058 id=3058 data-nosnippet>3058</a>        </span><span class="kw">fn </span>should_score_rules_example_eights_sevens_sixes() {
@@ -3098,7 +3098,7 @@
 <a href=#3098 id=3098 data-nosnippet>3098</a>    /// hit 15 can also be done four ways for 8 points. Total = 29 points.
 <a href=#3099 id=3099 data-nosnippet>3099</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#3100 id=3100 data-nosnippet>3100</a>    </span><span class="kw">mod </span>a_perfect_29 {
-<a href=#3101 id=3101 data-nosnippet>3101</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#3101 id=3101 data-nosnippet>3101</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#3102 id=3102 data-nosnippet>3102</a>
 <a href=#3103 id=3103 data-nosnippet>3103</a>        <span class="attr">#[test]
 <a href=#3104 id=3104 data-nosnippet>3104</a>        </span><span class="kw">fn </span>should_score_rules_example_perfect_29() {
@@ -3200,7 +3200,7 @@
 <a href=#3200 id=3200 data-nosnippet>3200</a>    <span class="doccomment">/// ## Internal
 <a href=#3201 id=3201 data-nosnippet>3201</a>    </span><span class="attr">#[allow(clippy::expect_used)]
 <a href=#3202 id=3202 data-nosnippet>3202</a>    </span><span class="kw">mod </span>internal {
-<a href=#3203 id=3203 data-nosnippet>3203</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#3203 id=3203 data-nosnippet>3203</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#3204 id=3204 data-nosnippet>3204</a>
 <a href=#3205 id=3205 data-nosnippet>3205</a>        <span class="kw">fn </span>common_filters() -&gt; insta::Settings {
 <a href=#3206 id=3206 data-nosnippet>3206</a>            <span class="kw">let </span><span class="kw-2">mut </span>settings = insta::Settings::new();

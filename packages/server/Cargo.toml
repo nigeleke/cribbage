@@ -34,7 +34,7 @@ tracing = "0.1.43"
 uuid = { version = "1.18.1", features = ["serde", "v4", "v7", "js"] }
 
 [dev-dependencies]
-insta = { version = "1.44.0", features = ["filters"] }
+insta = { version = "1.45.0", features = ["filters"] }
 tracing-test = "0.2.5"
 
 [features]

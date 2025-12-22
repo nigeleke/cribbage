@@ -46,6 +46,8 @@ pub enum Route {
 
 #[component]
 fn Layout() -> Element {
+    let version = env!("CARGO_PKG_VERSION");
+
     let user_id = use_storage::<LocalStorage, _>("user_id".into(), UserIdDTO::new);
     provide_context(user_id);
 
@@ -64,6 +66,6 @@ fn Layout() -> Element {
                 }
             }
         }
-        footer { "Copyright © 2025; Nigel Eke. All rights reserved." }
+        footer { "Copyright © 2025; Nigel Eke. All rights reserved. v {version}" }
     }
 }

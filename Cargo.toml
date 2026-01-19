@@ -16,8 +16,8 @@ edition = "2024"
 license = "BSD-3"
 
 [workspace.dependencies]
-dioxus = "0.7.1"
-dioxus-sdk = "0.7.0"
+dioxus = "0.7"
+dioxus-sdk = "0.7"
 api = { path = "packages/api" }
 constants = { path = "packages/constants" }
 server = { path = "packages/server" }

@@ -1,0 +1,35 @@
+services:
+    postgres:
+        image: postgres:16
+        container_name: cribbage-postgres
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securepassword}
+            POSTGRES_DB: cribbage
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    app:
+        build: .
+        container_name: cribbage-app
+        depends_on:
+            postgres:
+                condition: service_healthy
+        environment:
+            DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD:-securepassword}@postgres:5432/cribbage"
+            RUST_LOG: info
+            PORT: 8080
+        ports:
+            - "8080:8080"
+        restart: unless-stopped
+
+volumes:
+    postgres-data:

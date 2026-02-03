@@ -70,7 +70,7 @@ jobs:
             DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
             DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         steps:
-            - uses: nigeleke/github/.github/actions/rust-setup@main
+            - uses: nigeleke/github/.github/actions/dioxus-setup@main
             - uses: nigeleke/github/.github/actions/dockerhub-publish@main
               with:
                   platforms: linux/amd64,linux/arm64

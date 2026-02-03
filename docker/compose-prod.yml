@@ -1,7 +1,7 @@
 services:
     postgres:
-        image: postgres:16
-        container_name: cribbage-postgres
+        image: postgres:latest
+        container_name: postgres
         environment:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securepassword}
@@ -17,9 +17,11 @@ services:
             timeout: 5s
             retries: 5
 
-    app:
-        build: .
-        container_name: cribbage-app
+    cribbage:
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile
+        container_name: cribbage
         depends_on:
             postgres:
                 condition: service_healthy

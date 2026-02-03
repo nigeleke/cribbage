@@ -24,4 +24,4 @@ COPY --from=builder --chown=1000:1000 /app/target/dx/web/release/web/ .
 USER 1000:1000
 ENV IP=0.0.0.0 PORT=8080 RUST_LOG=info
 EXPOSE 8080
-CMD ["./web"]
+CMD ["/app/web"]

@@ -73,7 +73,7 @@ jobs:
             - uses: nigeleke/github/.github/actions/dioxus-setup@main
             - uses: nigeleke/github/.github/actions/dockerhub-publish@main
               with:
-                  platforms: linux/amd64,linux/arm64
+                  platforms: linux/amd64
                   tags: nigeleke/cribbage:latest,nigeleke/cribbage:${{ github.sha }}
 
     publish:

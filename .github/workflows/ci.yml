@@ -54,7 +54,6 @@ jobs:
                   cargo test --all-features
 
     bundle:
-        name: Bundle
         needs:
             - qa
             - integration-tests
@@ -62,6 +61,20 @@ jobs:
         uses: nigeleke/github/.github/workflows/dioxus-bundle.yml@main
         with:
             platform: web
+
+    publish-docker-image:
+        needs: [bundle]
+        if: github.ref == 'refs/heads/main'
+        runs-on: ubuntu-latest
+        env:
+            DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+            DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        steps:
+            - uses: nigeleke/github/.github/actions/rust-setup@main
+            - uses: nigeleke/github/.github/actions/dockerhub-publish@main
+              with:
+                  platforms: linux/amd64,linux/arm64
+                  tags: nigeleke/cribbage:latest,nigeleke/cribbage:${{ github.sha }}
 
     publish:
         name: Publish

@@ -18,10 +18,9 @@ RUN \
     dx bundle --package=web --web --release &\
     dx bundle --package=web --server --release
 
-FROM alpine:latest AS runtime
+FROM debian:trixie-slim AS runtime
 WORKDIR /app
-COPY --from=builder --chown=1000:1000 /app/target/dx/web/release/web/ .
-USER 1000:1000
+COPY --from=builder /app/target/dx/web/release/web/ .
 ENV IP=0.0.0.0 PORT=8080 RUST_LOG=info
 EXPOSE 8080
-CMD ["/app/web"]
+CMD ["./web"]

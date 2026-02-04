@@ -16,6 +16,7 @@ fn main() {
     dioxus::serve(|| async move {
         use dioxus::server::axum::Extension;
 
+        #[cfg(debug_assertions)]
         dotenvy::dotenv().expect("environment settings needed on startup");
 
         let router = dioxus::server::router(app::App)

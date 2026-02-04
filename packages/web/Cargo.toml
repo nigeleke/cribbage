@@ -14,3 +14,9 @@ ui = { workspace = true }
 default = []
 web = ["dioxus/web"]
 server = ["dioxus/server", "ui/server"]
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[package.metadata.wasm-pack.profile.profiling]
+wasm-opt = false

@@ -52,35 +52,3 @@ jobs:
               run: |
                   pwd
                   cargo test --all-features
-
-    bundle:
-        needs:
-            - qa
-            - integration-tests
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: nigeleke/github/.github/workflows/dioxus-bundle.yml@main
-        with:
-            platform: web
-
-    publish-docker-image:
-        needs: [bundle]
-        if: github.ref == 'refs/heads/main'
-        runs-on: ubuntu-latest
-        env:
-            DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-            DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        steps:
-            - uses: nigeleke/github/.github/actions/dioxus-setup@main
-            - uses: nigeleke/github/.github/actions/dockerhub-publish@main
-              with:
-                  platforms: linux/amd64
-                  tags: nigeleke/cribbage:latest,nigeleke/cribbage:${{ github.sha }}
-
-    publish:
-        name: Publish
-        needs:
-            - qa
-            - integration-tests
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: nigeleke/github/.github/workflows/rust-publish.yml@main
-        secrets: inherit

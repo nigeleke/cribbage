@@ -1,0 +1,38 @@
+name: Release
+
+on:
+    push:
+        tags:
+            - "v*.*.*"
+
+jobs:
+    tags:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - uses: nigeleke/github/.github/actions/cargo-verify-version-vs-tag@main
+
+    bundle:
+        needs: [tags]
+        uses: nigeleke/github/.github/workflows/dioxus-bundle.yml@main
+        with:
+            platform: web
+
+    publish-docker-image:
+        needs: [bundle]
+        runs-on: ubuntu-latest
+        env:
+            DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+            DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        steps:
+            - uses: nigeleke/github/.github/actions/dioxus-setup@main
+            - uses: nigeleke/github/.github/actions/dockerhub-publish@main
+              with:
+                  platforms: linux/amd64
+                  tags: nigeleke/cribbage:latest,nigeleke/cribbage:${{ github.sha }}
+
+    publish:
+        name: Publish
+        needs: [bundle]
+        uses: nigeleke/github/.github/workflows/rust-publish.yml@main
+        secrets: inherit

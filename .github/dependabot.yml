@@ -6,6 +6,9 @@ updates:
       schedule:
           interval: "weekly"
       ignore:
+          - dependency-name: "rand"
+            versions:
+                - ">=0.9.0"
           - dependency-name: "rand_chacha"
             versions:
                 - ">=0.9.0"

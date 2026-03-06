@@ -1,4 +1,3 @@
-#![feature(coverage_attribute)]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![deny(clippy::all)]

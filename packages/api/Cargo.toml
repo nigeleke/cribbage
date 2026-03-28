@@ -11,7 +11,7 @@ futures = "0.3.31"
 serde = { version = "1.0.228", features = ["derive"] }
 server = { workspace = true, optional = true }
 thiserror = "2.0.17"
-uuid = { version = "1.21", features = ["serde", "v4", "v7", "js"] }
+uuid = { version = "1.23", features = ["serde", "v4", "v7", "js"] }
 
 [dev-dependencies]
 insta = { version = "1.44.0", features = ["filters"] }

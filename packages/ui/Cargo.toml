@@ -10,7 +10,7 @@ dioxus-sdk = { workspace = true, features = ["storage", "time"] }
 api = { workspace = true }
 constants = { workspace = true }
 dioxus-primitives = { git = "https://github.com/DioxusLabs/components", version = "0.0.1", default-features = false }
-gloo-timers = { version = "0.3.0", features = ["futures"] }
+gloo-timers = { version = "0.4.0", features = ["futures"] }
 
 [features]
 server = ["api/server"]

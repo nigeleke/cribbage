@@ -957,7 +957,7 @@ dependencies = [
 [[package]]
 name = "dioxus-attributes"
 version = "0.1.0"
-source = "git+https://github.com/DioxusLabs/components#d054f51f9d2a545410a2d75ec85051b218880021"
+source = "git+https://github.com/DioxusLabs/components#c6ea7b0fa00af1e556865654db9871b12c83e005"
 dependencies = [
  "dioxus-rsx",
  "proc-macro2",
@@ -1075,7 +1075,7 @@ dependencies = [
  "futures-channel",
  "futures-util",
  "generational-box",
- "lazy-js-bundle 0.7.9",
+ "lazy-js-bundle",
  "serde",
  "serde_json",
  "tracing",
@@ -1233,7 +1233,7 @@ dependencies = [
  "futures-util",
  "generational-box",
  "keyboard-types",
- "lazy-js-bundle 0.7.9",
+ "lazy-js-bundle",
  "rustversion",
  "serde",
  "serde_json",
@@ -1263,7 +1263,7 @@ dependencies = [
  "dioxus-core-types",
  "dioxus-html",
  "js-sys",
- "lazy-js-bundle 0.7.9",
+ "lazy-js-bundle",
  "rustc-hash 2.1.2",
  "sledgehammer_bindgen",
  "sledgehammer_utils",
@@ -1315,12 +1315,12 @@ dependencies = [
 [[package]]
 name = "dioxus-primitives"
 version = "0.0.1"
-source = "git+https://github.com/DioxusLabs/components#d054f51f9d2a545410a2d75ec85051b218880021"
+source = "git+https://github.com/DioxusLabs/components#c6ea7b0fa00af1e556865654db9871b12c83e005"
 dependencies = [
  "dioxus",
  "dioxus-attributes",
  "dioxus-sdk-time",
- "lazy-js-bundle 0.6.2",
+ "lazy-js-bundle",
  "num-integer",
  "palette",
  "serde",
@@ -1552,7 +1552,7 @@ dependencies = [
  "generational-box",
  "gloo-timers 0.3.0",
  "js-sys",
- "lazy-js-bundle 0.7.9",
+ "lazy-js-bundle",
  "rustc-hash 2.1.2",
  "send_wrapper",
  "serde",
@@ -2621,12 +2621,6 @@ checksum = "0de8b303297635ad57c9f5059fd9cee7a47f8e8daa09df0fcd07dd39fb22977f"
 dependencies = [
  "log",
 ]
-
-[[package]]
-name = "lazy-js-bundle"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e49596223b9d9d4947a14a25c142a6e7d8ab3f27eb3ade269d238bb8b5c267e2"
 
 [[package]]
 name = "lazy-js-bundle"
@@ -5215,7 +5209,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]

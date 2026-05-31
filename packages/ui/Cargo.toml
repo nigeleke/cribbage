@@ -9,7 +9,7 @@ dioxus = { workspace = true, features = ["fullstack"] }
 dioxus-sdk = { workspace = true, features = ["storage", "time"] }
 api = { workspace = true }
 constants = { workspace = true }
-dioxus-primitives = { git = "https://github.com/DioxusLabs/components", version = "0.0.1", default-features = false }
+dioxus_components = { version = "0.1.2", default-features = false }
 gloo-timers = { version = "0.4.0", features = ["futures"] }
 
 [features]

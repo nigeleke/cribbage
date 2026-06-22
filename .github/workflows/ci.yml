@@ -38,7 +38,7 @@ jobs:
                     - 5432:5432
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
 
             - name: Install sqlx-cli
               run: cargo install sqlx-cli --no-default-features --features postgres

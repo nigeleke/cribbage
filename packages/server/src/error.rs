@@ -48,11 +48,11 @@ macro_rules! bug_inner {
 
 macro_rules! bug {
     () => {
-        |error| $crate::error::bug_inner!(error)
+        |error| crate::error::bug_inner!(error)
     };
 
     ($($msg:tt)*) => {{
-        |e| $crate::error::bug_inner!(format_args!("{}: {}", format_args!($($msg)*), e))
+        |e| crate::error::bug_inner!(format_args!("{}: {}", format_args!($($msg)*), e))
     }};
 }
 

@@ -9,7 +9,6 @@ pub struct UserIdDTO(Uuid);
 
 impl UserIdDTO {
     /// Creates a new `UserIdDTO` using the domain's method of assigning ids.
-    #[must_use]
     pub fn new() -> Self {
         Self(Uuid::new_v4())
     }

@@ -1,24 +1,36 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
-    "packages/constants",
-    "packages/ui",
-    "packages/web",
-    # "packages/desktop",
-    # "packages/mobile",
-    "packages/api",
-    "packages/server",
+    "packages/domain",
+    "packages/macros",
+    # "packages/ui",
+    # "packages/web",
+    # "packages/api",
+    # "packages/server",
 ]
 
 [workspace.package]
-version = "0.2.38"
-edition = "2024"
-license = "BSD-3"
+version       = "0.2.38"
+edition       = "2024"
+license       = "BSD-3"
+homepage      = "https://github.com/nigeleke/cribbage"
+repository    = "https://github.com/nigeleke/cribbage"
+documentation = "https://github.com/nigeleke/cribbage"
+publish       = false
 
 [workspace.dependencies]
-dioxus = "0.7"
-dioxus-sdk = "0.7"
-api = { path = "packages/api" }
-constants = { path = "packages/constants" }
-server = { path = "packages/server" }
-ui = { path = "packages/ui" }
+domain            = { path = "packages/domain" }
+macros            = { path = "packages/macros" }
+insta             = "1.48.0"
+itertools         = "0.15.0"
+pretty_assertions = "1.4.1"
+rand              = "0.10"
+strum             = "0.28.0"
+thiserror         = "2.0.20"
+
+# dioxus = "0.8.0-alpha.1"
+# dioxus-sdk = "0.7"
+# api = { path = "packages/api" }
+# constants = { path = "packages/constants" }
+# server = { path = "packages/server" }
+# ui = { path = "packages/ui" }

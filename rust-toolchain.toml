@@ -1,3 +1,5 @@
 [toolchain]
-# Required for `#![feature(coverage_attribute)]` and `[coverage(off)]` on tests.
 channel = "nightly"
+# Required for tests:
+# `#![feature(coverage_attribute)]`
+# `[coverage(off)]`

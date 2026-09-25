@@ -17,9 +17,9 @@ An example of a fullstack [cribbage](https://en.wikipedia.org/wiki/Cribbage) pla
 It has been created as "a bit of fun" and, as of Dec 2025, the project is essentially complete, and now presents as an example project for general perusal. I'm always learning and welcome feedback any aspects of the project, especially if there are ways to make things simpler and / or clearer. If you're interested in helping me along that learning path please make any comments through the github issues page.
 
   * Rust: core programming language.
-  * Dioxus 0.7: cross-platform UI framework; including some Dioxus Components.
+  * Dioxus 0.8: cross-platform UI framework; including some Dioxus Components.
   * Multiple workspaces: web, ui, api, server.
-  * Event sourcing: CQRS-ES
+  * Actor / Event sourcing: tellus
   * PostgreSQL: persisted events and aggregates.
   * Docker Compose: containerization for local development.
 
@@ -27,7 +27,7 @@ It has been created as "a bit of fun" and, as of Dec 2025, the project is essent
 
 ```mermaid
 graph TD
-    dioxus["dioxus 0.7"] 
+    dioxus["dioxus 0.8"] 
 
     web["web"]
     ui["ui"] 

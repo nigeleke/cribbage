@@ -7,7 +7,6 @@ license = { workspace = true }
 [dependencies]
 anyhow = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
-cqrs-es = "0.5"
 constants = { workspace = true }
 futures = "0.3"
 goofy-animals = "0.1"
@@ -27,6 +26,8 @@ sqlx = { version = "0.9", features = [
     "migrate",
 ] }
 strum = { version = "0.28", features = ["derive"] }
+tellus = { version = "0.2.1", features = ["persistence"] }
+tellus-persistence-postgres = "0.1.1"
 thiserror = "2.0"
 tokio = { version = "1.52", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["sync"] }

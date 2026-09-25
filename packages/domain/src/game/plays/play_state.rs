@@ -210,7 +210,7 @@ impl std::fmt::Debug for PlayState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "play_state: (next: {:?}, go: {:?}, current: {:?}, previous: {:?})",
+            "play_state: (next: {:?}, go: {:?}, current: [{}], previous: [{}])",
             self.next_to_play,
             self.go_status,
             super::play::plays_to_string(&self.current_plays),

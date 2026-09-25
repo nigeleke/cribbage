@@ -90,7 +90,7 @@ where
     T: std::fmt::Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{:?}]", crate::card::cards_to_string(&self.cards))
+        write!(f, "[{}]", crate::card::cards_to_string(&self.cards))
     }
 }
 

@@ -238,7 +238,7 @@ mod the_crib {
 /// various card combinations that score points.
 mod before_the_play {
     use super::*;
-    use crate::{Call, Scoreboard};
+    use crate::Call;
     use macros::*;
     use pretty_assertions::assert_eq;
 
@@ -332,10 +332,7 @@ mod before_the_play {
 /// count 10 each; every other card counts its pip value (the ace counts one).
 mod the_play {
     use super::*;
-    use crate::{
-        Call, Points,
-        game::{self, plays::GoStatus::PlayContinued},
-    };
+    use crate::{Call, Points};
     use macros::*;
     use pretty_assertions::assert_eq;
 
@@ -427,7 +424,7 @@ mod the_play {
     }
 
     #[test]
-    fn score_play_when_target_not_reached_mid_play() {
+    fn play_when_target_not_reached_mid_play() {
         let given = GameFixture::default()
             .with_hands(["5S", "5H"])
             .with_current_plays(plays![(Player0, "TH")])
@@ -435,15 +432,21 @@ mod the_play {
         let outcome = given.play(Player::Player1, card!("5H"));
 
         match outcome {
-            Ok(PlayOutcome::Playing(actual)) => {
-                assert_eq!(actual.scoreboard.points(Player::Player1), Points::from(2))
-            }
+            Ok(PlayOutcome::Playing(actual)) => assert_eq!(
+                actual,
+                GameFixture::default()
+                    .with_hands(["5S", ""])
+                    .with_next_to_play(Player::Player0)
+                    .with_current_plays(plays![(Player0, "TH"), (Player1, "5H")])
+                    .with_calls(Player::Player1, &[Call::fifteen(&cards!("TH5H"))])
+                    .as_playing()
+            ),
             other => panic!("unexpected state: {other:?}"),
         }
     }
 
     #[test]
-    fn score_play_when_target_not_reached_end_play() {
+    fn play_when_target_not_reached_end_play() {
         let given = GameFixture::default()
             .with_hands(["QS", "2H"])
             .with_current_plays(plays![(Player0, "JH"), (Player0, "2C")])
@@ -457,15 +460,27 @@ mod the_play {
         let outcome = given.play(Player::Player1, card!("2H"));
 
         match outcome {
-            Ok(PlayOutcome::Playing(actual)) => {
-                assert_eq!(actual.scoreboard.points(Player::Player1), Points::from(2))
-            }
+            Ok(PlayOutcome::Playing(actual)) => assert_eq!(
+                actual,
+                GameFixture::default()
+                    .with_hands(["QS", ""])
+                    .with_next_to_play(Player::Player0)
+                    .with_current_plays(plays![(Player0, "JH"), (Player0, "2C"), (Player1, "2H")])
+                    .with_previous_plays(plays![
+                        (Player0, "7C"),
+                        (Player1, "6S"),
+                        (Player1, "2S"),
+                        (Player1, "KS")
+                    ])
+                    .with_calls(Player::Player1, &[Call::pair(&cards!("2H2C"))])
+                    .as_playing()
+            ),
             other => panic!("unexpected state: {other:?}"),
         }
     }
 
     #[test]
-    fn score_play_when_target_not_reached_finished() {
+    fn play_when_target_not_reached_finished() {
         let given = GameFixture::default()
             .with_hands(["AH", "5H"])
             .with_current_plays(plays![(Player0, "JH")])
@@ -474,15 +489,22 @@ mod the_play {
         let outcome = given.play(Player::Player1, card!("5H"));
 
         match outcome {
-            Ok(PlayOutcome::Finished(actual)) => {
-                assert_eq!(actual.scoreboard.points(Player::Player1), Points::from(122))
-            }
+            Ok(PlayOutcome::Finished(actual)) => assert_eq!(
+                actual,
+                GameFixture::default()
+                    .with_hands(["AH", ""])
+                    .with_next_to_play(Player::Player0)
+                    .with_current_plays(plays![(Player0, "JH"), (Player1, "5H")])
+                    .at_120(Player::Player1)
+                    .with_calls(Player::Player1, &[Call::fifteen(&cards!("JH5H"))])
+                    .as_finished_with_play_state()
+            ),
             other => panic!("unexpected state: {other:?}"),
         }
     }
 
     #[test]
-    fn score_play_when_target_reached_mid_play() {
+    fn play_when_target_reached_mid_play() {
         let given = GameFixture::default()
             .with_hands(["6S", "AH"])
             .with_current_plays(plays![(Player0, "TH"), (Player0, "JH"), (Player0, "QH")])
@@ -491,15 +513,30 @@ mod the_play {
         let outcome = given.play(Player::Player1, card!("AH"));
 
         match outcome {
-            Ok(PlayOutcome::Playing(actual)) => {
-                assert_eq!(actual.scoreboard.points(Player::Player1), Points::from(2))
-            }
+            Ok(PlayOutcome::Playing(actual)) => assert_eq!(
+                actual,
+                GameFixture::default()
+                    .with_hands(["6S", ""])
+                    .with_next_to_play(Player::Player0)
+                    .with_current_plays(plays![])
+                    .with_previous_plays(plays![
+                        (Player0, "9H"),
+                        (Player1, "2S"),
+                        (Player1, "QS"),
+                        (Player0, "TH"),
+                        (Player0, "JH"),
+                        (Player0, "QH"),
+                        (Player1, "AH")
+                    ])
+                    .with_calls(Player::Player1, &[Call::thirtyone(&cards!("THJHQHAH"))])
+                    .as_playing()
+            ),
             other => panic!("unexpected state: {other:?}"),
         }
     }
 
     #[test]
-    fn score_play_when_target_reached_end_play() {
+    fn play_when_target_reached_end_play() {
         let given = GameFixture::default()
             .with_hands(["", "AH"])
             .with_current_plays(plays![(Player0, "TH"), (Player0, "JH"), (Player0, "QH")])
@@ -513,15 +550,19 @@ mod the_play {
         let outcome = given.play(Player::Player1, card!("AH"));
 
         match outcome {
-            Ok(PlayOutcome::Scoring(actual)) => {
-                assert_eq!(actual.scoreboard.points(Player::Player1), Points::from(2))
-            }
+            Ok(PlayOutcome::Scoring(actual)) => assert_eq!(
+                actual,
+                GameFixture::default()
+                    .with_hands(["QCTHJHQH", "2SQS6SAH"])
+                    .with_calls(Player::Player1, &[Call::thirtyone(&cards!("THJHQHAH"))])
+                    .as_scoring_pone()
+            ),
             other => panic!("unexpected state: {other:?}"),
         }
     }
 
     #[test]
-    fn score_play_when_target_reached_finished() {
+    fn play_when_target_reached_finished() {
         let given = GameFixture::default()
             .with_hands(["QC", "AH"])
             .with_current_plays(plays![(Player0, "TH"), (Player1, "JH"), (Player0, "QH")])
@@ -531,15 +572,31 @@ mod the_play {
         let outcome = given.play(Player::Player1, card!("AH"));
 
         match outcome {
-            Ok(PlayOutcome::Finished(actual)) => {
-                assert_eq!(actual.scoreboard.points(Player::Player1), Points::from(122))
-            }
+            Ok(PlayOutcome::Finished(actual)) => assert_eq!(
+                actual,
+                GameFixture::default()
+                    .with_hands(["QC", ""])
+                    .with_next_to_play(Player::Player0)
+                    .with_current_plays(plays![])
+                    .with_previous_plays(plays![
+                        (Player1, "9H"),
+                        (Player1, "5S"),
+                        (Player0, "6S"),
+                        (Player0, "TH"),
+                        (Player1, "JH"),
+                        (Player0, "QH"),
+                        (Player1, "AH")
+                    ])
+                    .at_120(Player::Player1)
+                    .with_calls(Player::Player1, &[Call::thirtyone(&cards!("THJHQHAH"))])
+                    .as_finished_with_play_state()
+            ),
             other => panic!("unexpected state: {other:?}"),
         }
     }
 
     #[test]
-    fn score_play_when_plays_finished_and_game_not_finished() {
+    fn play_when_plays_finished_and_game_not_finished() {
         let given = GameFixture::default()
             .with_hands(["", "AH"])
             .with_current_plays(plays![(Player0, "8H"), (Player1, "JH"), (Player0, "QH")])
@@ -553,15 +610,22 @@ mod the_play {
         let outcome = given.play(Player::Player1, card!("AH"));
 
         match outcome {
-            Ok(PlayOutcome::Scoring(actual)) => {
-                assert_eq!(actual.scoreboard.points(Player::Player1), Points::from(1))
-            }
+            Ok(PlayOutcome::Scoring(actual)) => assert_eq!(
+                actual,
+                GameFixture::default()
+                    .with_hands(["4S6S8HQH", "9H5SJHAH"])
+                    .with_calls(
+                        Player::Player1,
+                        &[Call::lastcard(&cards!("8HJHQHAH"), &cards!("9H4S5S6S"))],
+                    )
+                    .as_scoring_pone()
+            ),
             other => panic!("unexpected state: {other:?}"),
         }
     }
 
     #[test]
-    fn score_play_when_plays_finished_and_game_finished() {
+    fn play_when_plays_finished_and_game_finished() {
         let given = GameFixture::default()
             .with_hands(["", "AH"])
             .with_current_plays(plays![(Player0, "8H"), (Player1, "JH"), (Player0, "QH")])
@@ -577,7 +641,29 @@ mod the_play {
 
         match outcome {
             Ok(PlayOutcome::Finished(actual)) => {
-                assert_eq!(actual.scoreboard.points(Player::Player1), Points::from(121))
+                assert_eq!(
+                    actual,
+                    GameFixture::default()
+                        .with_hands(["", ""])
+                        .with_current_plays(plays![
+                            (Player0, "8H"),
+                            (Player1, "JH"),
+                            (Player0, "QH"),
+                            (Player1, "AH")
+                        ])
+                        .with_previous_plays(plays![
+                            (Player1, "9H"),
+                            (Player0, "4S"),
+                            (Player1, "5S"),
+                            (Player0, "6S")
+                        ])
+                        .at_120(Player::Player1)
+                        .with_calls(
+                            Player::Player1,
+                            &[Call::lastcard(&cards!("8HJHQHAH"), &cards!("9H4S5S6S"))],
+                        )
+                        .as_finished_with_play_state()
+                )
             }
             other => panic!("unexpected state: {other:?}"),
         }

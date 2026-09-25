@@ -141,6 +141,24 @@ impl GameFixture {
         }
     }
 
+    pub fn as_finished_with_play_state(self) -> Game<Finished> {
+        let play_state = PlayState::new(self.next_to_play, &self.hands)
+            .with_go_status(self.go_status)
+            .with_current_plays(&self.current_plays)
+            .with_previous_plays(&self.previous_plays);
+
+        Game {
+            state: Finished {
+                roles: self.roles,
+                hands: self.hands,
+                crib: self.crib,
+                starter: self.starter,
+                play_state: Some(play_state),
+            },
+            scoreboard: self.scoreboard,
+        }
+    }
+
     pub fn as_playing(self) -> Game<Playing> {
         let play_state = PlayState::new(self.next_to_play, &self.hands)
             .with_go_status(self.go_status)

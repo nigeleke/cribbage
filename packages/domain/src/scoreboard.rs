@@ -86,11 +86,12 @@ impl std::fmt::Debug for Scoreboard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "score({:?}: {:?} {:?}: {:?})",
+            "score({:?}: {:?} {:?}: {:?}) <- {:#?}",
             Player::Player0,
             self.pegs(Player::Player0),
             Player::Player1,
-            self.pegs(Player::Player1)
+            self.pegs(Player::Player1),
+            self.history
         )
     }
 }

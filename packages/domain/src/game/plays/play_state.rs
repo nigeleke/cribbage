@@ -1,5 +1,7 @@
 use crate::constants::*;
-use crate::{Card, GoStatus, Hand, Hands, PLAYERS, Play, Player, Players, ScoreEvent, Value};
+use crate::{Card, Hand, Hands, PLAYERS, Player, Players, ScoreEvent, Value};
+
+use super::{GoStatus, Play};
 
 /// Represents the current state of play during the pegging phase.
 ///

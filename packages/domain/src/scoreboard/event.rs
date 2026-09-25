@@ -6,7 +6,8 @@ use flush_rule::FlushRule;
 use itertools::Itertools;
 
 use crate::constants::*;
-use crate::{Call, Card, Crib, GoStatus, Hand, PlayState, Player, Points};
+use crate::game::{GoStatus, PlayState};
+use crate::{Call, Card, Crib, Hand, Player, Points};
 
 /// One atomic scoring action.
 #[derive(Clone, PartialEq, Eq)]

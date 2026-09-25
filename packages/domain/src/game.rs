@@ -1,19 +1,16 @@
-mod cutting;
-mod dealing;
-mod discarding;
-mod finished;
-mod playing;
-mod scoring;
-mod starting;
+mod plays;
+mod state;
+
+pub use plays::{GoStatus, Play, PlayState};
 
 #[cfg(test)]
 #[coverage(off)]
 mod tests;
 
 // ------------------------------------
-use crate::{
-    Card, Crib, CutsForDeal, Deck, Discard, Discards, Hands, PlayState, Player, Roles, Scoreboard,
-};
+use crate::{Card, Crib, CutsForDeal, Deck, Discard, Discards, Hands, Player, Roles, Scoreboard};
+
+use state::*;
 
 /// Represents a game current state.
 #[derive(PartialEq, Eq)]
@@ -117,7 +114,7 @@ impl Game<Starting> {
     /// already cut. Once both players have cut, the game transitions
     /// to [`Game<Dealing>`].
     pub fn cut_for_deal(self, player: Player, card: Card) -> Result<CutForDealOutcome> {
-        starting::cut_for_deal(self, player, card)
+        state::cut_for_deal(self, player, card)
     }
 }
 
@@ -131,7 +128,7 @@ impl Game<Dealing> {
     ///
     /// On success, the game transitions to [`Game<Discarding>`].
     pub fn deal(self, deck: Deck) -> Result<DealOutcome> {
-        dealing::deal(self, deck)
+        state::deal(self, deck)
     }
 }
 
@@ -147,7 +144,7 @@ impl Game<Discarding> {
     /// On success, the game remains in the discarding state until both
     /// players have discarded their cards.
     pub fn discard(self, player: Player, discard: Discard) -> Result<DiscardOutcome> {
-        discarding::discard(self, player, discard)
+        state::discard(self, player, discard)
     }
 }
 
@@ -163,7 +160,7 @@ impl Game<Cutting> {
     /// On success, the game transitions from the cutting state to the playing
     /// state.
     pub fn cut_starter(self) -> Result<CutStarterOutcome> {
-        cutting::cut_starter(self)
+        state::cut_starter(self)
     }
 }
 
@@ -188,7 +185,7 @@ impl Game<Playing> {
     /// transitions to scoring or finished when the plays end or the
     /// play ends the game.
     pub fn play(self, player: Player, card: Card) -> Result<PlayOutcome> {
-        playing::play(self, player, card)
+        state::play(self, player, card)
     }
 
     /// Declares go for the specified player.

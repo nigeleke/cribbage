@@ -35,7 +35,7 @@ macro_rules! suit {
 
 #[macro_export]
 macro_rules! card {
-    ($s:literal) => {{
+    ($s:expr) => {{
         let bytes = $s.as_bytes();
         crate::Card::new(face!(bytes[0]), suit!(bytes[1]))
     }};
@@ -43,7 +43,7 @@ macro_rules! card {
 
 #[macro_export]
 macro_rules! cards {
-    ($s:literal) => {{
+    ($s:expr) => {{
         $s.as_bytes()
             .chunks_exact(2)
             .map(|bytes| crate::Card::new(face!(bytes[0]), suit!(bytes[1])))
@@ -53,17 +53,17 @@ macro_rules! cards {
 
 #[macro_export]
 macro_rules! deck {
-    ($s:literal) => {{ crate::Deck::from(cards!($s)) }};
+    ($s:expr) => {{ crate::Deck::from(cards!($s)) }};
 }
 
 #[macro_export]
 macro_rules! hand {
-    ($s:literal) => {{ crate::Hand::from(cards!($s)) }};
+    ($s:expr) => {{ crate::Hand::from(cards!($s)) }};
 }
 
 #[macro_export]
 macro_rules! hands {
-    ($s0:literal, $s1:literal) => {{
+    ($s0:expr, $s1:expr) => {{
         [
             crate::Hand::from(cards!($s0)),
             crate::Hand::from(cards!($s1)),
@@ -74,7 +74,7 @@ macro_rules! hands {
 
 #[macro_export]
 macro_rules! crib {
-    ($s:literal) => {{ crate::Crib::from(cards!($s)) }};
+    ($s:expr) => {{ crate::Crib::from(cards!($s)) }};
 }
 
 #[macro_export]
@@ -96,7 +96,7 @@ macro_rules! plays {
     ($(($player:ident, $card:expr)),* $(,)?) => {
         &[
             $(
-                crate::Play::new(
+                self::Play::new(
                     crate::Player::$player,
                     card!($card),
                 )

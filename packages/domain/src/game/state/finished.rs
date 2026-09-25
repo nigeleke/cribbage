@@ -1,6 +1,6 @@
-use crate::{Card, Crib, Hands, PlayState, Roles};
+use crate::{Card, Crib, Hands, Roles};
 
-use crate::game::Finished;
+use crate::game::{Finished, PlayState};
 
 impl Finished {
     pub fn new(roles: Roles, hands: Hands, crib: Crib, starter: Card) -> Self {

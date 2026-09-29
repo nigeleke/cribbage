@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 
 #[cfg(test)]
-use crate::domain::Game;
-use crate::domain::{Card, Dealer, GameId, Hand, Pegging, Player, StarterCut, UserId};
+use crate::Game;
+use crate::{Card, Dealer, GameId, Hand, Pegging, Player, StarterCut, UserId};
 
 /// Domain events which represent the **single source of truth** for game history and
 /// are persisted in the event store. The current game state is derived by folding them

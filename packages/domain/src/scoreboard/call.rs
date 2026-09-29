@@ -44,8 +44,9 @@ impl Call {
     /// Returns a scoring call if the cards total fifteen.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn fifteen(cards: &[Card]) -> Call {
-        Self::try_fifteen(cards).expect("require call fifteen")
+    pub fn fifteen(cards: &str) -> Call {
+        use crate::cards;
+        Self::try_fifteen(&cards!(cards)).expect("require call fifteen")
     }
 
     /// Returns a scoring call if exactly two cards have the same face.
@@ -56,8 +57,9 @@ impl Call {
     /// Returns a scoring call if exactly two cards have the same face.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn pair(cards: &[Card]) -> Call {
-        Self::try_pair(cards).expect("require call pair")
+    pub fn pair(cards: &str) -> Call {
+        use crate::cards;
+        Self::try_pair(&cards!(cards)).expect("require call pair")
     }
 
     /// Returns a scoring call if exactly three cards have the same face.
@@ -68,8 +70,9 @@ impl Call {
     /// Returns a scoring call if exactly three cards have the same face.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn triplet(cards: &[Card]) -> Call {
-        Self::try_triplet(cards).expect("require call triplet")
+    pub fn triplet(cards: &str) -> Call {
+        use crate::cards;
+        Self::try_triplet(&cards!(cards)).expect("require call triplet")
     }
 
     /// Returns a scoring call if exactly four cards have the same face.
@@ -80,8 +83,9 @@ impl Call {
     /// Returns a scoring call if exactly four cards have the same face.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn quadruplet(cards: &[Card]) -> Call {
-        Self::try_quadruplet(cards).expect("require call quadruplet")
+    pub fn quadruplet(cards: &str) -> Call {
+        use crate::cards;
+        Self::try_quadruplet(&cards!(cards)).expect("require call quadruplet")
     }
 
     fn same_n_faces(n: usize, cards: &[Card]) -> bool {
@@ -104,8 +108,9 @@ impl Call {
     /// Returns a scoring call if the cards form a consecutive run.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn run(cards: &[Card]) -> Call {
-        Self::try_run(cards).expect("require call run")
+    pub fn run(cards: &str) -> Call {
+        use crate::cards;
+        Self::try_run(&cards!(cards)).expect("require call run")
     }
 
     /// Returns a scoring call if the cards form a flush.
@@ -117,8 +122,9 @@ impl Call {
     /// Returns a scoring call if the cards form a flush.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn flush(cards: &[Card]) -> Call {
-        Self::try_flush(cards).expect("require call flush")
+    pub fn flush(cards: &str) -> Call {
+        use crate::cards;
+        Self::try_flush(&cards!(cards)).expect("require call flush")
     }
 
     /// Returns a scoring call if the last card has been played.
@@ -134,8 +140,10 @@ impl Call {
     /// Returns a scoring call if the last card has been played.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn lastcard(played_cards: &[Card], remaining_cards: &[Card]) -> Call {
-        Self::try_lastcard(played_cards, remaining_cards).expect("require call lastcard")
+    pub fn lastcard(played_cards: &str, remaining_cards: &str) -> Call {
+        use crate::cards;
+        Self::try_lastcard(&cards!(played_cards), &cards!(remaining_cards))
+            .expect("require call lastcard")
     }
 
     /// Returns a scoring call if the running total is 31.
@@ -147,8 +155,9 @@ impl Call {
     /// Returns a scoring call if the running total is 31.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn thirtyone(cards: &[Card]) -> Call {
-        Self::try_thirtyone(cards).expect("require call thirtyone")
+    pub fn thirtyone(cards: &str) -> Call {
+        use crate::cards;
+        Self::try_thirtyone(&cards!(cards)).expect("require call thirtyone")
     }
 
     /// Returns a scoring call if the starter card is a Jack.
@@ -159,8 +168,9 @@ impl Call {
     /// Returns a scoring call if the starter card is a Jack.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn hisheels(card: Card) -> Call {
-        Self::try_hisheels(card).expect("require call hisheels")
+    pub fn hisheels(card: &str) -> Call {
+        use crate::card;
+        Self::try_hisheels(card!(card)).expect("require call hisheels")
     }
 
     /// Returns a scoring call the card is a Jack and same suit as the cut card.
@@ -172,8 +182,9 @@ impl Call {
     /// Returns a scoring call the card is a Jack and same suit as the cut card.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn nobs(card: Card, cut: Card) -> Call {
-        Self::try_nobs(card, cut).expect("require call nobs")
+    pub fn nobs(card: &str, cut: &str) -> Call {
+        use crate::card;
+        Self::try_nobs(card!(card), card!(cut)).expect("require call nobs")
     }
 
     /// Return the points awarded for this kind of call.
@@ -210,4 +221,29 @@ pub fn calls_to_string(calls: &[Call]) -> String {
         .map(|c| format!("{:?}", c))
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+#[cfg(test)]
+#[coverage(off)]
+mod tests {
+    use super::*;
+
+    use crate::Call;
+
+    #[test]
+    fn has_debug_text() {
+        let given = calls_to_string(&[
+            Call::fifteen("JH5H"),
+            Call::pair("AHAC"),
+            Call::triplet("AHACAD"),
+            Call::quadruplet("AHACADAS"),
+            Call::run("AH2H3H"),
+            Call::flush("AH2H3H4H5H"),
+            Call::lastcard("THJHQH", "TCJCQC"),
+            Call::thirtyone("THJHQHAH"),
+            Call::hisheels("JH"),
+            Call::nobs("JH", "5H"),
+        ]);
+        insta::assert_snapshot!(given, @"15(JH, 5H), pair(AH, AC), pairs-3(AH, AC, AD), pairs-6(AH, AC, AD, AS), run(AH, 2H, 3H), flush(AH, 2H, 3H, 4H, 5H), last-card(TH, JH, QH), 31(TH, JH, QH, AH), heels(JH), nobs(JH, 5H)");
+    }
 }

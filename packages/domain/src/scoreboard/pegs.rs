@@ -12,7 +12,7 @@ pub struct Pegs {
 impl Pegs {
     /// Record a score: the back peg hops over the front peg.
     /// Returns the new total.
-    pub fn score(&mut self, points: Points) -> Points {
+    pub fn record(&mut self, points: Points) -> Points {
         self.back = self.front;
         self.front += points;
         self.front

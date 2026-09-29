@@ -1,5 +1,7 @@
 use strum::IntoEnumIterator;
 
+use crate::constants::STANDARD_DECK_SIZE;
+
 use super::*;
 
 #[test]
@@ -11,7 +13,7 @@ fn new_has_face_and_suit() {
 
 #[test]
 fn all_contains_52_cards() {
-    assert_eq!(Card::all().len(), 52);
+    assert_eq!(Card::all().len(), STANDARD_DECK_SIZE);
 }
 
 #[test]
@@ -30,4 +32,23 @@ fn rank_is_from_face() {
 #[test]
 fn value_is_from_face() {
     Face::iter().for_each(|f| assert_eq!(Card::new(f, Suit::Hearts).value(), f.value()));
+}
+
+#[test]
+fn debug_text_is_card_short_text() {
+    use crate::card;
+    let cards = Card::all();
+    let debug_text = cards.iter().map(|c| format!("{c:?}"));
+    cards
+        .iter()
+        .zip(debug_text)
+        .for_each(|(card, text)| assert_eq!(card, &card!(text)));
+}
+
+#[test]
+fn muliple_cards_can_be_formatted_as_short_text() {
+    let cards = Card::all().into_iter().take(4).collect::<Vec<_>>();
+    let actual = cards_to_string(&cards);
+    let expected = "AH, 2H, 3H, 4H";
+    assert_eq!(actual, expected);
 }

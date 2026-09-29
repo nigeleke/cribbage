@@ -37,7 +37,7 @@ impl std::ops::Sub<Self> for Rank {
 
 #[cfg(test)]
 #[coverage(off)]
-mod test {
+mod tests {
     use strum::IntoEnumIterator;
 
     use super::*;

@@ -3,6 +3,6 @@ mod deck;
 mod hand;
 mod pile;
 
-pub use crib::Crib;
-pub use deck::Deck;
-pub use hand::Hand;
+pub(crate) use crib::*;
+pub(crate) use deck::*;
+pub(crate) use hand::*;

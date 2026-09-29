@@ -1,4 +1,4 @@
-use macros::*;
+use crate::{card, crib, event, hand};
 
 use super::*;
 
@@ -16,28 +16,29 @@ fn starter_no_his_heels() {
 
 #[test]
 fn pone_hand() {
-    let event = event!(try_pone_hand, Player0, hand!("TH5C3C8D"), "AH");
+    let event = event!(try_pone_hand, Player0, hand!("TH5C3C8D"), "AH").expect("requires score");
     assert_eq!(event.player(), Player::Player0);
     assert_eq!(event.points(), Points::from(2));
 }
 
 #[test]
 fn dealer_hand() {
-    let event = event!(try_dealer_hand, Player1, hand!("TH5C3C8D"), "AH");
+    let event = event!(try_dealer_hand, Player1, hand!("TH5C3C8D"), "AH").expect("requires score");
     assert_eq!(event.player(), Player::Player1);
     assert_eq!(event.points(), Points::from(2));
 }
 
 #[test]
 fn crib() {
-    let event = event!(try_crib, Player0, crib!("TH5C3C8D"), "AH");
+    let event = event!(try_crib, Player0, crib!("TH5C3C8D"), "AH").expect("requires score");
     assert_eq!(event.player(), Player::Player0);
     assert_eq!(event.points(), Points::from(2));
 }
 
 #[test]
 fn hand_with_no_score() {
-    let _ = Event::try_pone_hand(Player::Player0, &hand!("AH3C7D9S"), card!("KC")).is_none();
+    let event = Event::try_pone_hand(Player::Player0, &hand!("AH3C7D9S"), card!("KC"));
+    assert_eq!(event, None);
 }
 
 #[test]
@@ -55,11 +56,32 @@ fn cards_fifteens() {
 
 #[test]
 fn cards_pairs() {
+    let calls = Event::cards_pairs(&hand!("5H5C7D7S")).collect::<Vec<_>>();
+
+    assert_eq!(calls.len(), 2);
+    assert_eq!(
+        calls.iter().map(Call::points).sum::<Points>(),
+        Points::from(4)
+    );
+}
+#[test]
+fn cards_triplets() {
+    let calls = Event::cards_pairs(&hand!("5H5C5D7S")).collect::<Vec<_>>();
+
+    assert_eq!(calls.len(), 1);
+    assert_eq!(
+        calls.iter().map(Call::points).sum::<Points>(),
+        Points::from(6)
+    );
+}
+
+#[test]
+fn cards_quadruplets() {
     let cards = hand!("5H5C5D5S");
 
     let calls = Event::cards_pairs(&cards).collect::<Vec<_>>();
 
-    assert_eq!(calls.len(), 6);
+    assert_eq!(calls.len(), 1);
     assert_eq!(
         calls.iter().map(Call::points).sum::<Points>(),
         Points::from(12)
@@ -158,4 +180,13 @@ fn cards_nobs() {
 fn cards_no_nobs() {
     let cards = hand!("JH2C4D9S");
     assert!(Event::cards_nobs(&cards, card!("AC")).next().is_none());
+}
+
+#[test]
+fn has_debug_text() {
+    let given = format!(
+        "{:?}",
+        event!(try_dealer_hand, Player1, hand!("TH5C3C8D"), "AH")
+    );
+    insta::assert_snapshot!(given, @"Some(player-1 scored 2 <== 15(TH, 5C))");
 }

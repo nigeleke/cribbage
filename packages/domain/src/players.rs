@@ -3,15 +3,17 @@ mod player;
 mod pone;
 mod roles;
 
-pub use dealer::Dealer;
-pub use player::{PLAYERS, Player};
-pub use pone::Pone;
-pub use roles::Roles;
+pub use dealer::*;
+pub use player::*;
+pub use pone::*;
+pub use roles::*;
 
 // ------------------------------------
+use crate::constants::PLAYER_COUNT;
+
 /// A pair of values, one for each player, indexable by `Player`.
 #[derive(Clone, PartialEq, Eq)]
-pub struct Players<T>([T; 2]);
+pub struct Players<T>([T; PLAYER_COUNT]);
 
 impl<T> Players<T> {
     /// Returns an iterator over each T belonging to the players.
@@ -29,7 +31,7 @@ where
     }
 }
 
-impl<T> From<[T; 2]> for Players<T> {
+impl<T> From<[T; PLAYER_COUNT]> for Players<T> {
     fn from(value: [T; 2]) -> Self {
         Self(value)
     }

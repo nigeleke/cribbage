@@ -8,9 +8,8 @@ The domain defines:
 
 * cards, faces, suits, ranks, and card values
 * hands, cribs, decks, and other card collections
-* players and player state
+* players
 * game phases and state
 * plays and scoring
-* game domain api and associated events
 * validation and domain errors
 * the rules governing the game of cribbage

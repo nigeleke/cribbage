@@ -1,5 +1,4 @@
-use crate::constants::*;
-
+use crate::constants::CARDS_DEALT_PER_HAND;
 use crate::{Card, Hand, Hands};
 
 use super::pile::Pile;
@@ -32,8 +31,9 @@ impl Deck {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::Player;
+    use crate::constants::STANDARD_DECK_SIZE;
 
     use super::*;
 

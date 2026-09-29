@@ -66,9 +66,7 @@ impl std::fmt::Debug for Roles {
 
 #[cfg(test)]
 mod tests {
-    use crate::Player;
-
-    use macros::*;
+    use crate::{Player, card};
 
     use super::*;
 

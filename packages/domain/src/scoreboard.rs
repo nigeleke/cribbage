@@ -3,14 +3,14 @@ mod event;
 mod pegs;
 mod points;
 
-pub use call::Call;
-pub use event::Event;
-pub use pegs::Pegs;
-pub use points::Points;
+pub(crate) use call::*;
+pub(crate) use event::*;
+pub(crate) use pegs::*;
+pub(crate) use points::*;
 
 // ------------------------------------
-use crate::constants::*;
-use crate::{PLAYERS, Player};
+use crate::Player;
+use crate::constants::WINNING_SCORE;
 
 /// The scoreboard for a game, retaining its complete scoring history.
 ///
@@ -25,9 +25,12 @@ impl Scoreboard {
     /// Records a scoring event for a player.
     ///
     /// The event records the scoring phase and the individual calls that
-    /// account for the points awarded.
-    pub fn record_score(&mut self, event: Event) {
-        self.history.push(event);
+    /// account for the points awarded. If no event actually occurred, no
+    /// record is made; i.e. scoring zero points is not recorded.
+    pub fn record(&mut self, maybe_event: Option<Event>) {
+        if let Some(event) = maybe_event {
+            self.history.push(event);
+        }
     }
 
     /// Returns the current score for a player.
@@ -41,7 +44,7 @@ impl Scoreboard {
             .iter()
             .filter(|e| e.player() == player)
             .fold(Pegs::default(), |mut ps, e| {
-                ps.score(e.points());
+                ps.record(e.points());
                 ps
             })
     }
@@ -49,26 +52,25 @@ impl Scoreboard {
     /// Returns the winning player, if any.
     /// If there is a winner, there will only be one, so returning the "first" here is okay.
     pub fn winner(&self) -> Option<Player> {
-        PLAYERS
-            .into_iter()
-            .find(|p| self.points(*p) >= Points::from(WINNING_SCORE))
+        use strum::IntoEnumIterator;
+        Player::iter().find(|p| self.points(*p) >= Points::from(WINNING_SCORE))
     }
 
     /// Create a Scoreboard pending win for player.
     #[cfg(test)]
     pub fn at_120(player: Player) -> Self {
-        use macros::*;
-        let perfect_29 = Event::try_pone_hand(player, &hand!("JH5C5D5S"), card!("5H"))
-            .expect("require valid pone_hand");
-        let starter = Event::try_starter(player, card!("JH")).expect("require valid starter");
+        use crate::{card, hand};
+
+        let perfect_29 = Event::try_pone_hand(player, &hand!("JH5C5D5S"), card!("5H"));
+        let starter = Event::try_starter(player, card!("JH"));
 
         let mut scoreboard = Scoreboard::default();
-        scoreboard.record_score(perfect_29.clone()); // 29
-        scoreboard.record_score(perfect_29.clone()); // 58
-        scoreboard.record_score(perfect_29.clone()); // 87
-        scoreboard.record_score(perfect_29); // 116
-        scoreboard.record_score(starter.clone()); // 118
-        scoreboard.record_score(starter); // 120
+        scoreboard.record(perfect_29.clone()); // 29
+        scoreboard.record(perfect_29.clone()); // 58
+        scoreboard.record(perfect_29.clone()); // 87
+        scoreboard.record(perfect_29); // 116
+        scoreboard.record(starter.clone()); // 118
+        scoreboard.record(starter); // 120
 
         scoreboard
     }

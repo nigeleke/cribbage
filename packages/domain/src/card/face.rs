@@ -1,5 +1,3 @@
-use std::ptr::write;
-
 use strum::EnumIter;
 
 use super::{Rank, Value};

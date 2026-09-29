@@ -19,8 +19,8 @@ impl std::fmt::Debug for CallKind {
         f.write_str(match self {
             Self::Fifteen => "15",
             Self::Pair => "pair",
-            Self::Triplet => "3 pairs",
-            Self::Quadruplet => "4 pairs",
+            Self::Triplet => "pairs-3",
+            Self::Quadruplet => "pairs-6",
             Self::Run => "run",
             Self::Flush => "flush",
             Self::LastCard => "last-card",

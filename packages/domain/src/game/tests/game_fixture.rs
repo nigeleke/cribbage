@@ -1,7 +1,7 @@
-use macros::*;
-
+use crate::constants::PLAYER_COUNT;
 use crate::{
     Call, Card, Crib, CutsForDeal, Dealer, Deck, Discards, Game, Hands, Player, Roles, Scoreboard,
+    card, cards, crib, deck, hand,
 };
 
 use crate::game::{
@@ -28,7 +28,7 @@ pub struct GameFixture {
 }
 
 impl GameFixture {
-    pub fn with_cuts(mut self, cuts: [Option<&str>; 2]) -> Self {
+    pub fn with_cuts(mut self, cuts: [Option<&str>; PLAYER_COUNT]) -> Self {
         self.cuts = cuts.map(|card| card.map(|card| card!(card))).into();
         self
     }
@@ -43,12 +43,12 @@ impl GameFixture {
         self
     }
 
-    pub fn with_hands(mut self, hands: [&str; 2]) -> Self {
+    pub fn with_hands(mut self, hands: [&str; PLAYER_COUNT]) -> Self {
         self.hands = hands.map(|hand| hand!(hand)).into();
         self
     }
 
-    pub fn with_discards(mut self, discards: [Option<&str>; 2]) -> Self {
+    pub fn with_discards(mut self, discards: [Option<&str>; PLAYER_COUNT]) -> Self {
         self.discards = discards
             .map(|cards| {
                 cards.map(|cards| cards!(cards).try_into().expect("require valid discards"))

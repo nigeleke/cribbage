@@ -1,9 +1,13 @@
 [package]
-name          = "cribbage-macros"
+name          = "cribbage-tellus"
 version       = { workspace = true }
 edition       = { workspace = true }
 license       = { workspace = true }
 homepage      = { workspace = true }
 repository    = { workspace = true }
 documentation = { workspace = true }
-publish       = false
+publish       = { workspace = true }
+
+[dependencies]
+
+[dev-dependencies]

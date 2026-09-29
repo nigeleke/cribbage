@@ -14,9 +14,6 @@ pub enum Player {
     Player1,
 }
 
-/// The fixed Players taking part in the game.
-pub const PLAYERS: [Player; 2] = [Player::Player0, Player::Player1];
-
 impl Player {
     /// Returns the opponent of this player.
     pub const fn opponent(&self) -> Self {
@@ -54,10 +51,5 @@ mod tests {
     #[test]
     fn player1_opponent_is_player0() {
         assert_eq!(Player::Player1.opponent(), Player::Player0);
-    }
-
-    #[test]
-    fn players_contains_both_players() {
-        assert_eq!(PLAYERS, [Player::Player0, Player::Player1]);
     }
 }

@@ -5,9 +5,8 @@ use flush_rule::FlushRule;
 // ------------------------------------
 use itertools::Itertools;
 
-use crate::constants::*;
-use crate::game::{GoStatus, PlayState};
-use crate::{Call, Card, Crib, Hand, Player, Points};
+use crate::constants::MINIMUM_RUN_LENGTH;
+use crate::{Call, Card, Crib, GoStatus, Hand, PlayState, Player, Points};
 
 /// One atomic scoring action.
 #[derive(Clone, PartialEq, Eq)]
@@ -93,33 +92,37 @@ impl Event {
             .then(|| Call::try_lastcard(played_cards, remaining_cards))
             .into_iter()
             .flatten()
-            .into_iter()
     }
 
     /// Returns scoring events for a pone hand.
-    pub fn try_pone_hand(player: Player, hand: &Hand, cut: Card) -> Option<Self> {
-        Self::try_cards(player, hand, cut, FlushRule::Hand)
+    pub fn try_pone_hand(player: Player, hand: &Hand, starter: Card) -> Option<Self> {
+        Self::try_cards(player, hand, starter, FlushRule::Hand)
     }
 
     /// Returns scoring events for a dealer hand.
-    pub fn try_dealer_hand(player: Player, hand: &Hand, cut: Card) -> Option<Self> {
-        Self::try_cards(player, hand, cut, FlushRule::Hand)
+    pub fn try_dealer_hand(player: Player, hand: &Hand, starter: Card) -> Option<Self> {
+        Self::try_cards(player, hand, starter, FlushRule::Hand)
     }
 
     /// Returns scoring events for the crib.
-    pub fn try_crib(player: Player, crib: &Crib, cut: Card) -> Option<Self> {
-        Self::try_cards(player, crib, cut, FlushRule::Crib)
+    pub fn try_crib(player: Player, crib: &Crib, starter: Card) -> Option<Self> {
+        Self::try_cards(player, crib, starter, FlushRule::Crib)
     }
 
-    fn try_cards(player: Player, cards: &[Card], cut: Card, flush_rule: FlushRule) -> Option<Self> {
+    fn try_cards(
+        player: Player,
+        cards: &[Card],
+        starter: Card,
+        flush_rule: FlushRule,
+    ) -> Option<Self> {
         let mut all_cards = cards.to_vec();
-        all_cards.push(cut);
+        all_cards.push(starter);
 
         let calls = Self::cards_fifteens(&all_cards)
             .chain(Self::cards_pairs(&all_cards))
             .chain(Self::cards_runs(&all_cards))
-            .chain(Self::cards_flush(cards, cut, flush_rule))
-            .chain(Self::cards_nobs(cards, cut))
+            .chain(Self::cards_flush(cards, starter, flush_rule))
+            .chain(Self::cards_nobs(cards, starter))
             .collect::<Vec<_>>();
 
         (!calls.is_empty()).then(|| Self::new(player, &calls))
@@ -132,11 +135,25 @@ impl Event {
     }
 
     fn cards_pairs(cards: &[Card]) -> impl Iterator<Item = Call> {
-        cards
-            .iter()
-            .copied()
-            .combinations(2)
-            .filter_map(|cards| Call::try_pair(&cards))
+        fn find<F>(cards: &[Card], size: usize, f: F) -> Option<Vec<Call>>
+        where
+            F: Fn(Vec<Card>) -> Option<Call>,
+        {
+            let calls = cards
+                .iter()
+                .copied()
+                .combinations(size)
+                .filter_map(f)
+                .collect::<Vec<_>>();
+
+            (!calls.is_empty()).then_some(calls)
+        }
+
+        find(cards, 4, |cs| Call::try_quadruplet(&cs))
+            .or_else(|| find(cards, 3, |cs| Call::try_triplet(&cs)))
+            .or_else(|| find(cards, 2, |cs| Call::try_pair(&cs)))
+            .into_iter()
+            .flatten()
     }
 
     fn cards_flush(cards: &[Card], cut: Card, flush_rule: FlushRule) -> impl Iterator<Item = Call> {
@@ -172,7 +189,6 @@ impl Event {
         cards
             .iter()
             .filter_map(move |card| Call::try_nobs(*card, cut))
-            .into_iter()
     }
 
     /// Wrap card scoring calls into a single event to score for a player.
@@ -186,6 +202,11 @@ impl Event {
     /// Return the player who won the points for this event.
     pub fn player(&self) -> Player {
         self.player
+    }
+
+    /// Return the calls made in this event
+    pub fn calls(&self) -> &[Call] {
+        &self.calls
     }
 
     /// Return total points from all of the calls.

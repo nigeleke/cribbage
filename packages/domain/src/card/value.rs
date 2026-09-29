@@ -55,7 +55,7 @@ impl std::iter::Sum<Self> for Value {
 
 #[cfg(test)]
 #[coverage(off)]
-mod test {
+mod tests {
     use strum::IntoEnumIterator;
 
     use super::*;

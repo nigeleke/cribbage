@@ -1,6 +1,4 @@
-use crate::{Card, Crib, Hands, Roles};
-
-use crate::game::{Finished, PlayState};
+use crate::{Card, Crib, Finished, Hands, PlayState, Roles};
 
 impl Finished {
     pub fn new(roles: Roles, hands: Hands, crib: Crib, starter: Card) -> Self {
@@ -32,5 +30,27 @@ impl std::fmt::Debug for Finished {
 )"#,
             self.roles, self.hands, self.crib, self.starter, self.play_state
         )
+    }
+}
+
+#[cfg(test)]
+#[coverage(off)]
+mod tests {
+    use crate::tests::GameFixture;
+
+    #[test]
+    fn has_debug_text() {
+        let given = format!("{:?}", GameFixture::default().as_finished());
+        insta::assert_snapshot!(given, @r"
+        game(finished(
+          roles(dealer(player-0), pone(player-1))
+          [[], []]
+          []
+          AS
+          None
+        )
+
+          score(player-0: 0->0 player-1: 0->0) <- [])
+        ");
     }
 }

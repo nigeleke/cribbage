@@ -2,7 +2,7 @@
 resolver = "3"
 members = [
     "packages/domain",
-    "packages/macros",
+    "packages/tellus",
     # "packages/ui",
     # "packages/web",
     # "packages/api",
@@ -10,7 +10,7 @@ members = [
 ]
 
 [workspace.package]
-version       = "0.2.38"
+version       = "0.3.0"
 edition       = "2024"
 license       = "BSD-3"
 homepage      = "https://github.com/nigeleke/cribbage"
@@ -19,8 +19,7 @@ documentation = "https://github.com/nigeleke/cribbage"
 publish       = false
 
 [workspace.dependencies]
-domain            = { path = "packages/domain" }
-macros            = { path = "packages/macros" }
+cribbage-game     = { path = "packages/game" }
 insta             = "1.48.0"
 itertools         = "0.15.0"
 pretty_assertions = "1.4.1"

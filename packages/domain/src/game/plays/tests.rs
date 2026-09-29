@@ -1,8 +1,6 @@
 use std::collections::HashSet;
 
-use macros::*;
-
-use crate::{Card, Player, Value, constants::PLAY_TARGET};
+use crate::{Card, PLAY_TARGET, Player, Value};
 
 use super::*;
 

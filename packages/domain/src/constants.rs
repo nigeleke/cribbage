@@ -1,7 +1,9 @@
 /// The number of players in the game.
 pub const PLAYER_COUNT: usize = 2;
 
+#[cfg(test)]
 /// The number of cards in a standard deck of cards.
+//  Only used in tests.
 pub const STANDARD_DECK_SIZE: usize = 52;
 
 /// The number of cards dealt to each player's hand at the start of a round.

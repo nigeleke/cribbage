@@ -1,0 +1,2 @@
+[alias]
+coverage = "llvm-cov -p game --branch --fail-under-lines 100 --fail-under-functions 100"

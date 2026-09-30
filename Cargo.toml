@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
     "packages/domain",
+    "packages/derive-id",
     "packages/tellus",
     # "packages/ui",
     # "packages/web",
@@ -19,11 +20,18 @@ documentation = "https://github.com/nigeleke/cribbage"
 publish       = false
 
 [workspace.dependencies]
-cribbage-domain   = { path = "packages/domain" }
-insta             = "1.48.0"
-itertools         = "0.15.0"
-pretty_assertions = "1.4.1"
-strum             = "0.28.0"
+cribbage-domain    = { path = "packages/domain" }
+cribbage-derive-id = { path = "packages/derive-id" }
+cribbage-tellus    = { path = "packages/tellus" }
+insta              = "1.48.0"
+itertools          = "0.15.0"
+pretty_assertions  = "1.4.1"
+proc-macro2        = "1.0.107"
+quote              = "1.0.47"
+strum              = "0.28.0"
+syn                = "3.0.6"
+tellus             = "0.3.0"
+uuid               = "1.26.1"
 
 # dioxus = "0.8.0-alpha.1"
 # dioxus-sdk = "0.7"

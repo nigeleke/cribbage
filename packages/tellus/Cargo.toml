@@ -3,10 +3,15 @@ name          = "cribbage-tellus"
 version       = { workspace = true }
 edition       = { workspace = true }
 license       = { workspace = true }
+homepage      = { workspace = true }
+repository    = { workspace = true }
 documentation = { workspace = true }
 publish       = { workspace = true }
 
 [dependencies]
-cribbage-domain = { workspace = true }
+cribbage-domain    = { workspace = true }
+cribbage-derive-id = { workspace = true }
+tellus             = { workspace = true }
+uuid               = { workspace = true }
 
 [dev-dependencies]

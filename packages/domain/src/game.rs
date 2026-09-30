@@ -224,8 +224,9 @@ impl Game<Starting> {
 
     /// Records a player’s cut for the deal.
     ///
-    /// The chosen `card` must still be in the deck and the `player` must not
-    /// have cut already. When both players have cut:
+    /// The `player` must not have cut already.
+    ///
+    /// When both players have cut:
     ///
     /// * unequal ranks → transitions to [`Game<Dealing>`]
     /// * equal ranks   → stays in [`Game<Starting>`] for a re-cut
@@ -234,8 +235,8 @@ impl Game<Starting> {
     ///
     /// * [`GameError::PlayerAlreadyCut`] – the player already selected a card
     /// * [`GameError::CardNotInDeck`] – the card is not available
-    pub fn cut_for_deal(self, player: Player, card: Card) -> Result<CutForDealOutcome> {
-        state::cut_for_deal(self, player, card)
+    pub fn cut_for_deal(self, player: Player) -> Result<CutForDealOutcome> {
+        state::cut_for_deal(self, player)
     }
 }
 

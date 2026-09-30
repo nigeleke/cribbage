@@ -1,6 +1,4 @@
-use crate::{Card, Deck, Game, Player, Roles};
-
-use crate::game::{CutForDealOutcome, Dealing, GameError, Result, Starting};
+use crate::{CutForDealOutcome, Dealing, Deck, Game, GameError, Player, Result, Roles, Starting};
 
 impl Starting {
     pub(crate) fn new(deck: Deck) -> Self {
@@ -11,11 +9,7 @@ impl Starting {
     }
 }
 
-pub fn cut_for_deal(
-    mut game: Game<Starting>,
-    player: Player,
-    card: Card,
-) -> Result<CutForDealOutcome> {
+pub fn cut_for_deal(mut game: Game<Starting>, player: Player) -> Result<CutForDealOutcome> {
     let state = &mut game.state;
 
     state.cuts[player]
@@ -23,10 +17,10 @@ pub fn cut_for_deal(
         .then_some(())
         .ok_or(GameError::PlayerAlreadyCut)?;
 
-    state.deck.contains(&card).ok_or(GameError::CardNotInDeck)?;
+    let cut = state.deck.cut().ok_or(GameError::CardNotInDeck)?;
 
-    state.cuts[player] = Some(card);
-    state.deck.remove(card);
+    state.cuts[player] = Some(cut);
+    state.deck.remove(cut);
 
     let all_cut = state.cuts.iter().all(|c| c.is_some());
 

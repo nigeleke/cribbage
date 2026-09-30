@@ -1,7 +1,6 @@
-use crate::{Card, Crib, Hands, Player, Roles};
-
-use crate::game::{
-    Finished, Game, GameError, GoOutcome, PlayOutcome, PlayState, Playing, Result, ScoringPone,
+use crate::{
+    Card, Crib, Finished, Game, GameError, GoOutcome, Hands, PlayOutcome, PlayState, Player,
+    Playing, Result, Roles, ScoringPone,
 };
 
 impl Playing {

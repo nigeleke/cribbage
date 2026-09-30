@@ -1,8 +1,6 @@
-use crate::{Card, Crib, Event, Game, Hands, Roles};
-
-use crate::game::{
-    Dealing, Finished, Result, ScoreCribOutcome, ScoreDealerOutcome, ScorePoneOutcome, Scoring,
-    ScoringCrib, ScoringDealer, ScoringPone,
+use crate::{
+    Card, Crib, Dealing, Event, Finished, Game, Hands, Result, Roles, ScoreCribOutcome,
+    ScoreDealerOutcome, ScorePoneOutcome, Scoring, ScoringCrib, ScoringDealer, ScoringPone,
 };
 
 impl<T> Scoring<T> {

@@ -1,7 +1,8 @@
 use crate::constants::CARDS_IN_CRIB;
-use crate::{Card, Crib, Deck, Discard, Discards, Game, Hands, Player, Roles};
-
-use crate::game::{Cutting, DiscardOutcome, Discarding, GameError, Result};
+use crate::{
+    Card, Crib, Cutting, Deck, Discard, DiscardOutcome, Discarding, Discards, Game, GameError,
+    Hands, Player, Result, Roles,
+};
 
 impl Discarding {
     pub(crate) fn new(roles: Roles, hands: Hands, deck: Deck) -> Self {

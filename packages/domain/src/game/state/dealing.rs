@@ -1,6 +1,4 @@
-use crate::{Deck, Game, Roles};
-
-use crate::game::{DealOutcome, Dealing, Discarding, Result};
+use crate::{DealOutcome, Dealing, Deck, Discarding, Game, Result, Roles};
 
 impl From<Roles> for Dealing {
     fn from(roles: Roles) -> Self {

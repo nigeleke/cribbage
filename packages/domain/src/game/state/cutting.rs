@@ -1,5 +1,6 @@
 use crate::{
-    Crib, CutStarterOutcome, Cutting, Deck, Event, Finished, Game, Hands, Playing, Result, Roles,
+    Crib, CutStarterOutcome, Cutting, Deck, Event, Finished, Game, GameError, Hands, Playing,
+    Result, Roles,
 };
 
 impl Cutting {
@@ -15,7 +16,7 @@ impl Cutting {
 
 pub fn cut_starter(mut game: Game<Cutting>) -> Result<CutStarterOutcome> {
     let dealer = game.state.roles.dealer();
-    let starter = game.state.deck.cut();
+    let starter = game.state.deck.cut().ok_or(GameError::CardNotInDeck)?;
 
     game.scoreboard
         .record(Event::try_starter(dealer.player(), starter));

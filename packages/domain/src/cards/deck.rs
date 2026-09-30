@@ -25,8 +25,8 @@ impl Deck {
         self.0.retain(|c| c != &card);
     }
 
-    pub(crate) fn cut(&mut self) -> Card {
-        self.0.pop().expect("available card")
+    pub(crate) fn cut(&mut self) -> Option<Card> {
+        self.0.pop()
     }
 
     pub(crate) fn deal(&mut self) -> Hands {

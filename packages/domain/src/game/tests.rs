@@ -55,7 +55,6 @@ mod deck {
 /// deal. (In some games, there is no cut at this time.)
 mod deal_cut {
     use super::*;
-    use crate::card;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -67,14 +66,14 @@ mod deal_cut {
     #[test]
     fn a_player_must_cut_for_dealer_1() {
         let given = GameFixture::default().with_deck("AH2H").as_starting();
-        let outcome = given.cut_for_deal(Player::Player0, card!("AH"));
+        let outcome = given.cut_for_deal(Player::Player0);
 
         match outcome {
             Ok(CutForDealOutcome::Starting(actual)) => assert_eq!(
                 actual,
                 GameFixture::default()
-                    .with_deck("2H")
-                    .with_cuts([Some("AH"), None])
+                    .with_deck("AH")
+                    .with_cuts([Some("2H"), None])
                     .as_starting()
             ),
             other => panic!("unexpected state: {other:?}"),
@@ -84,14 +83,14 @@ mod deal_cut {
     #[test]
     fn a_player_must_cut_for_dealer_2() {
         let given = GameFixture::default().with_deck("AH2H").as_starting();
-        let outcome = given.cut_for_deal(Player::Player1, card!("AH"));
+        let outcome = given.cut_for_deal(Player::Player1);
 
         match outcome {
             Ok(CutForDealOutcome::Starting(actual)) => assert_eq!(
                 actual,
                 GameFixture::default()
-                    .with_deck("2H")
-                    .with_cuts([None, Some("AH")])
+                    .with_deck("AH")
+                    .with_cuts([None, Some("2H")])
                     .as_starting()
             ),
             other => panic!("unexpected state: {other:?}"),
@@ -104,10 +103,21 @@ mod deal_cut {
             .with_deck("2H")
             .with_cuts([Some("AH"), None])
             .as_starting();
-        let outcome = given.cut_for_deal(Player::Player0, card!("AH"));
+        let outcome = given.cut_for_deal(Player::Player0);
 
         match outcome {
             Err(GameError::PlayerAlreadyCut) => (),
+            other => panic!("unexpected state: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn cut_for_deal_fails_with_short_deck() {
+        let given = GameFixture::default().with_deck("").as_starting();
+        let outcome = given.cut_for_deal(Player::Player0);
+
+        match outcome {
+            Err(GameError::CardNotInDeck) => (),
             other => panic!("unexpected state: {other:?}"),
         }
     }
@@ -118,7 +128,7 @@ mod deal_cut {
             .with_deck("2H")
             .with_cuts([Some("AH"), None])
             .as_starting();
-        let outcome = given.cut_for_deal(Player::Player1, card!("2H"));
+        let outcome = given.cut_for_deal(Player::Player1);
 
         match outcome {
             Ok(CutForDealOutcome::Dealing(actual)) => assert_eq!(
@@ -137,7 +147,7 @@ mod deal_cut {
             .with_deck("2H")
             .with_cuts([None, Some("AH")])
             .as_starting();
-        let outcome = given.cut_for_deal(Player::Player0, card!("2H"));
+        let outcome = given.cut_for_deal(Player::Player0);
 
         match outcome {
             Ok(CutForDealOutcome::Dealing(actual)) => assert_eq!(
@@ -156,7 +166,7 @@ mod deal_cut {
             .with_deck("AD")
             .with_cuts([Some("AH"), None])
             .as_starting();
-        let outcome = given.cut_for_deal(Player::Player1, card!("AD"));
+        let outcome = given.cut_for_deal(Player::Player1);
 
         match outcome {
             Ok(CutForDealOutcome::Starting(actual)) => {

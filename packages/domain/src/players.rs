@@ -3,21 +3,21 @@ mod player;
 mod pone;
 mod roles;
 
-pub use dealer::*;
-pub use player::*;
-pub use pone::*;
-pub use roles::*;
+pub(crate) use dealer::*;
+pub(crate) use player::*;
+pub(crate) use pone::*;
+pub(crate) use roles::*;
 
 // ------------------------------------
 use crate::constants::PLAYER_COUNT;
 
 /// A pair of values, one for each player, indexable by `Player`.
 #[derive(Clone, PartialEq, Eq)]
-pub struct Players<T>([T; PLAYER_COUNT]);
+pub(crate) struct Players<T>([T; PLAYER_COUNT]);
 
 impl<T> Players<T> {
     /// Returns an iterator over each T belonging to the players.
-    pub fn iter(&self) -> std::slice::Iter<'_, T> {
+    pub(crate) fn iter(&self) -> std::slice::Iter<'_, T> {
         self.0.iter()
     }
 }

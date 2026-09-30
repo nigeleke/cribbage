@@ -5,7 +5,7 @@ use super::{Rank, Value};
 /// The face of a playing card (Ace through King).
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter)]
 #[rustfmt::skip]
-pub enum Face {
+pub(crate) enum Face {
     #[doc(hidden)] Ace,
     #[doc(hidden)] Two,
     #[doc(hidden)] Three,

@@ -5,7 +5,7 @@ use crate::Face;
 /// Values range from `1` (Ace) to `13` (King).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
-pub struct Rank(u8);
+pub(crate) struct Rank(u8);
 
 impl From<&Face> for Rank {
     fn from(value: &Face) -> Self {

@@ -6,7 +6,7 @@ use crate::game::{
 };
 
 impl<T> Scoring<T> {
-    pub fn new(roles: Roles, hands: Hands, crib: Crib, starter: Card) -> Self {
+    pub(crate) fn new(roles: Roles, hands: Hands, crib: Crib, starter: Card) -> Self {
         Scoring {
             roles,
             hands,
@@ -108,8 +108,8 @@ mod tests {
         insta::assert_snapshot!(given, @r"
         game(scoring(
           roles(dealer(player-0), pone(player-1))
-          [[], []]
-          []
+          [Hand([]), Hand([])]
+          Crib([])
           AS
         )
 

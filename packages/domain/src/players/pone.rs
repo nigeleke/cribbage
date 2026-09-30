@@ -1,4 +1,7 @@
-use crate::{Dealer, Player};
+use crate::Player;
+
+#[cfg(test)]
+use crate::Dealer;
 
 /// Represents the pone (non-dealer) player in a two-player game.
 ///
@@ -6,16 +9,17 @@ use crate::{Dealer, Player};
 /// corresponding pone in the round.
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct Pone(Player);
+pub(crate) struct Pone(Player);
 
 impl Pone {
     /// Returns the underlying `Player` representing the pone.
-    pub const fn player(self) -> Player {
+    pub(crate) const fn player(self) -> Player {
         self.0
     }
 
     /// Returns the opponent (dealer) of this pone.
-    pub fn opponent(self) -> Dealer {
+    #[cfg(test)]
+    pub(crate) fn opponent(self) -> Dealer {
         Dealer::from(self.0.opponent())
     }
 }

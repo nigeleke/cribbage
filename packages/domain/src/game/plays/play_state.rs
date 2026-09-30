@@ -190,12 +190,11 @@ impl PlayState {
 
     fn regather_hands(&self) -> Hands {
         Hands::from(std::array::from_fn(|player| {
-            Hand::from(
+            Hand::from_iter(
                 self.previous_plays
                     .iter()
                     .chain(self.current_plays.iter())
-                    .filter_map(|play| (play.player().index() == player).then_some(play.card()))
-                    .collect::<Vec<_>>(),
+                    .filter_map(|play| (play.player().index() == player).then_some(play.card())),
             )
         }))
     }

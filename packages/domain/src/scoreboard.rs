@@ -17,7 +17,7 @@ use crate::constants::WINNING_SCORE;
 /// The current score and peg positions are derived from the recorded
 /// scoring history rather than stored separately.
 #[derive(Clone, Default, PartialEq, Eq)]
-pub struct Scoreboard {
+pub(crate) struct Scoreboard {
     history: Vec<Event>,
 }
 
@@ -27,19 +27,19 @@ impl Scoreboard {
     /// The event records the scoring phase and the individual calls that
     /// account for the points awarded. If no event actually occurred, no
     /// record is made; i.e. scoring zero points is not recorded.
-    pub fn record(&mut self, maybe_event: Option<Event>) {
+    pub(crate) fn record(&mut self, maybe_event: Option<Event>) {
         if let Some(event) = maybe_event {
             self.history.push(event);
         }
     }
 
     /// Returns the current score for a player.
-    pub fn points(&self, player: Player) -> Points {
+    pub(crate) fn points(&self, player: Player) -> Points {
         self.pegs(player).front_peg()
     }
 
     /// Returns the current positions of a player's two pegs.
-    pub fn pegs(&self, player: Player) -> Pegs {
+    pub(crate) fn pegs(&self, player: Player) -> Pegs {
         self.history
             .iter()
             .filter(|e| e.player() == player)
@@ -51,14 +51,14 @@ impl Scoreboard {
 
     /// Returns the winning player, if any.
     /// If there is a winner, there will only be one, so returning the "first" here is okay.
-    pub fn winner(&self) -> Option<Player> {
+    pub(crate) fn winner(&self) -> Option<Player> {
         use strum::IntoEnumIterator;
         Player::iter().find(|p| self.points(*p) >= Points::from(WINNING_SCORE))
     }
 
     /// Create a Scoreboard pending win for player.
     #[cfg(test)]
-    pub fn at_120(player: Player) -> Self {
+    pub(crate) fn at_120(player: Player) -> Self {
         use crate::{card, hand};
 
         let perfect_29 = Event::try_pone_hand(player, &hand!("JH5C5D5S"), card!("5H"));
@@ -77,7 +77,7 @@ impl Scoreboard {
 
     /// Create a Scoreboard with preset pegging.
     #[cfg(test)]
-    pub fn with_calls(mut self, player: Player, calls: &[Call]) -> Self {
+    pub(crate) fn with_calls(mut self, player: Player, calls: &[Call]) -> Self {
         let event = Event::new(player, calls);
         self.history.push(event);
         self

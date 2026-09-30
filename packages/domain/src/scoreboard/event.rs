@@ -10,19 +10,19 @@ use crate::{Call, Card, Crib, GoStatus, Hand, PlayState, Player, Points};
 
 /// One atomic scoring action.
 #[derive(Clone, PartialEq, Eq)]
-pub struct Event {
+pub(crate) struct Event {
     player: Player,
     calls: Vec<Call>,
 }
 
 impl Event {
     /// Returns scoring events for a starter card.
-    pub fn try_starter(player: Player, starter: Card) -> Option<Self> {
+    pub(crate) fn try_starter(player: Player, starter: Card) -> Option<Self> {
         Call::try_hisheels(starter).map(|call| Self::new(player, &[call]))
     }
 
     /// Returns scoring events for a play.
-    pub fn try_play(player: Player, play: &PlayState) -> Option<Self> {
+    pub(crate) fn try_play(player: Player, play: &PlayState) -> Option<Self> {
         let calls = Self::play_fifteen_calls(play)
             .chain(Self::play_pairs(play))
             .chain(Self::play_runs(play))
@@ -80,7 +80,7 @@ impl Event {
     }
 
     /// Returns scoring events for a go.
-    pub fn try_go(player: Player, play: &PlayState) -> Option<Self> {
+    pub(crate) fn try_go(player: Player, play: &PlayState) -> Option<Self> {
         let calls = Self::go_last_card(play).collect::<Vec<_>>();
         (!calls.is_empty()).then(|| Self::new(player, &calls))
     }
@@ -95,17 +95,17 @@ impl Event {
     }
 
     /// Returns scoring events for a pone hand.
-    pub fn try_pone_hand(player: Player, hand: &Hand, starter: Card) -> Option<Self> {
+    pub(crate) fn try_pone_hand(player: Player, hand: &Hand, starter: Card) -> Option<Self> {
         Self::try_cards(player, hand, starter, FlushRule::Hand)
     }
 
     /// Returns scoring events for a dealer hand.
-    pub fn try_dealer_hand(player: Player, hand: &Hand, starter: Card) -> Option<Self> {
+    pub(crate) fn try_dealer_hand(player: Player, hand: &Hand, starter: Card) -> Option<Self> {
         Self::try_cards(player, hand, starter, FlushRule::Hand)
     }
 
     /// Returns scoring events for the crib.
-    pub fn try_crib(player: Player, crib: &Crib, starter: Card) -> Option<Self> {
+    pub(crate) fn try_crib(player: Player, crib: &Crib, starter: Card) -> Option<Self> {
         Self::try_cards(player, crib, starter, FlushRule::Crib)
     }
 
@@ -192,7 +192,7 @@ impl Event {
     }
 
     /// Wrap card scoring calls into a single event to score for a player.
-    pub fn new(player: Player, calls: &[Call]) -> Self {
+    pub(crate) fn new(player: Player, calls: &[Call]) -> Self {
         Self {
             player,
             calls: calls.to_vec(),
@@ -200,17 +200,18 @@ impl Event {
     }
 
     /// Return the player who won the points for this event.
-    pub fn player(&self) -> Player {
+    pub(crate) fn player(&self) -> Player {
         self.player
     }
 
     /// Return the calls made in this event
-    pub fn calls(&self) -> &[Call] {
+    #[cfg(test)]
+    pub(crate) fn calls(&self) -> &[Call] {
         &self.calls
     }
 
     /// Return total points from all of the calls.
-    pub fn points(&self) -> Points {
+    pub(crate) fn points(&self) -> Points {
         self.calls.iter().map(|c| c.points()).sum()
     }
 }

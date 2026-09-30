@@ -6,16 +6,16 @@ use crate::{Player, Pone};
 /// corresponding dealer in the round.
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct Dealer(Player);
+pub(crate) struct Dealer(Player);
 
 impl Dealer {
     /// Returns the player who is the dealer.
-    pub const fn player(self) -> Player {
+    pub(crate) const fn player(self) -> Player {
         self.0
     }
 
     /// Returns the opponent of the dealer, wrapped as the `Pone`.
-    pub fn opponent(self) -> Pone {
+    pub(crate) fn opponent(self) -> Pone {
         Pone::from(self.0.opponent())
     }
 }

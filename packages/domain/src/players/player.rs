@@ -16,7 +16,7 @@ pub enum Player {
 
 impl Player {
     /// Returns the opponent of this player.
-    pub const fn opponent(&self) -> Self {
+    pub(crate) const fn opponent(&self) -> Self {
         match self {
             Self::Player0 => Self::Player1,
             Self::Player1 => Self::Player0,
@@ -25,7 +25,7 @@ impl Player {
 
     /// Returns the ordinal for the player entry.
     #[inline]
-    pub const fn index(self) -> usize {
+    pub(crate) const fn index(self) -> usize {
         self as usize
     }
 }

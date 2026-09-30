@@ -124,7 +124,7 @@ macro_rules! cards {
 /// ```
 #[macro_export]
 macro_rules! deck {
-    ($s:expr) => {{ $crate::Deck::from($crate::cards!($s)) }};
+    ($s:expr) => {{ $crate::Deck::from_iter($crate::cards!($s)) }};
 }
 
 /// Creates a [`Hand`] from a compact sequence of two-character card representations.
@@ -136,7 +136,7 @@ macro_rules! deck {
 /// ```
 #[macro_export]
 macro_rules! hand {
-    ($s:expr) => {{ $crate::Hand::from($crate::cards!($s)) }};
+    ($s:expr) => {{ $crate::Hand::from_iter($crate::cards!($s)) }};
 }
 
 /// Creates two [`Hand`]s from compact sequences of two-character card representations.
@@ -166,7 +166,7 @@ macro_rules! hands {
 /// ```
 #[macro_export]
 macro_rules! crib {
-    ($s:expr) => {{ $crate::Crib::from($crate::cards!($s)) }};
+    ($s:expr) => {{ $crate::Crib::from_iter($crate::cards!($s)) }};
 }
 
 /// Creates a scoring [`Event`] using a scoring method, player, cards, and cut card.

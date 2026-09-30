@@ -8,7 +8,7 @@ use crate::Face;
 /// - Jack / Queen / King → 10
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
-pub struct Value(usize);
+pub(crate) struct Value(usize);
 
 impl From<usize> for Value {
     fn from(value: usize) -> Self {

@@ -5,7 +5,7 @@ use crate::game::{
 };
 
 impl Playing {
-    pub fn new(roles: Roles, hands: Hands, crib: Crib, starter: Card) -> Self {
+    pub(crate) fn new(roles: Roles, hands: Hands, crib: Crib, starter: Card) -> Self {
         let play_state = PlayState::new(roles.pone().player(), &hands);
 
         Self {
@@ -117,8 +117,8 @@ mod tests {
         insta::assert_snapshot!(given, @r"
         game(playing(
           roles(dealer(player-0), pone(player-1))
-          [[], []]
-          []
+          [Hand([]), Hand([])]
+          Crib([])
           AS
           play_state: (next: player-1, go: not-called, current: [], previous: [])
         )

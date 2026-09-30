@@ -5,7 +5,7 @@ use crate::{CutsForDeal, Dealer, Player, Pone};
 /// This struct captures which player is the dealer and which is the pone
 /// (non-dealer) in the game.
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct Roles {
+pub(crate) struct Roles {
     dealer: Dealer,
     pone: Pone,
 }
@@ -14,7 +14,7 @@ impl Roles {
     /// Creates a new `Roles` assignment given the dealer.
     ///
     /// The pone is automatically inferred as the opponent of the dealer.
-    pub fn new(dealer: Dealer) -> Self {
+    pub(crate) fn new(dealer: Dealer) -> Self {
         Self {
             dealer,
             pone: dealer.opponent(),
@@ -22,17 +22,17 @@ impl Roles {
     }
 
     /// Returns the dealer.
-    pub fn dealer(self) -> Dealer {
+    pub(crate) fn dealer(self) -> Dealer {
         self.dealer
     }
 
     /// Returns the pone.
-    pub fn pone(self) -> Pone {
+    pub(crate) fn pone(self) -> Pone {
         self.pone
     }
 
     /// Swaps the dealer and pone roles in place.
-    pub fn swap(&mut self) {
+    pub(crate) fn swap(&mut self) {
         let was_dealer = self.dealer.player();
         let was_pone = self.pone.player();
         self.dealer = Dealer::from(was_pone);

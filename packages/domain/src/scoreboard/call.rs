@@ -16,7 +16,7 @@ use crate::{Card, Face, Points, Value, constants::PLAY_TARGET};
 /// Multiple calls may be combined inside a larger scoring event (for example
 /// when counting a hand that contains both pairs and runs).
 #[derive(Clone, PartialEq, Eq)]
-pub struct Call {
+pub(crate) struct Call {
     /// The kind of score being claimed (fifteen, pair, run, etc.).
     kind: CallKind,
 
@@ -36,7 +36,7 @@ impl Call {
     }
 
     /// Returns a scoring call if the cards total fifteen.
-    pub fn try_fifteen(cards: &[Card]) -> Option<Call> {
+    pub(crate) fn try_fifteen(cards: &[Card]) -> Option<Call> {
         (cards.iter().map(|c| c.value()).sum::<Value>() == 15.into())
             .then(|| Self::new(CallKind::Fifteen, cards))
     }
@@ -44,46 +44,46 @@ impl Call {
     /// Returns a scoring call if the cards total fifteen.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn fifteen(cards: &str) -> Call {
+    pub(crate) fn fifteen(cards: &str) -> Call {
         use crate::cards;
         Self::try_fifteen(&cards!(cards)).expect("require call fifteen")
     }
 
     /// Returns a scoring call if exactly two cards have the same face.
-    pub fn try_pair(cards: &[Card]) -> Option<Call> {
+    pub(crate) fn try_pair(cards: &[Card]) -> Option<Call> {
         Self::same_n_faces(2, cards).then(|| Self::new(CallKind::Pair, cards))
     }
 
     /// Returns a scoring call if exactly two cards have the same face.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn pair(cards: &str) -> Call {
+    pub(crate) fn pair(cards: &str) -> Call {
         use crate::cards;
         Self::try_pair(&cards!(cards)).expect("require call pair")
     }
 
     /// Returns a scoring call if exactly three cards have the same face.
-    pub fn try_triplet(cards: &[Card]) -> Option<Call> {
+    pub(crate) fn try_triplet(cards: &[Card]) -> Option<Call> {
         Self::same_n_faces(3, cards).then(|| Self::new(CallKind::Triplet, cards))
     }
 
     /// Returns a scoring call if exactly three cards have the same face.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn triplet(cards: &str) -> Call {
+    pub(crate) fn triplet(cards: &str) -> Call {
         use crate::cards;
         Self::try_triplet(&cards!(cards)).expect("require call triplet")
     }
 
     /// Returns a scoring call if exactly four cards have the same face.
-    pub fn try_quadruplet(cards: &[Card]) -> Option<Call> {
+    pub(crate) fn try_quadruplet(cards: &[Card]) -> Option<Call> {
         Self::same_n_faces(4, cards).then(|| Self::new(CallKind::Quadruplet, cards))
     }
 
     /// Returns a scoring call if exactly four cards have the same face.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn quadruplet(cards: &str) -> Call {
+    pub(crate) fn quadruplet(cards: &str) -> Call {
         use crate::cards;
         Self::try_quadruplet(&cards!(cards)).expect("require call quadruplet")
     }
@@ -95,7 +95,7 @@ impl Call {
     }
 
     /// Returns a scoring call if the cards form a consecutive run.
-    pub fn try_run(cards: &[Card]) -> Option<Call> {
+    pub(crate) fn try_run(cards: &[Card]) -> Option<Call> {
         let mut cards = cards.to_vec();
         cards.sort_by_key(Card::rank);
         cards
@@ -108,13 +108,13 @@ impl Call {
     /// Returns a scoring call if the cards form a consecutive run.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn run(cards: &str) -> Call {
+    pub(crate) fn run(cards: &str) -> Call {
         use crate::cards;
         Self::try_run(&cards!(cards)).expect("require call run")
     }
 
     /// Returns a scoring call if the cards form a flush.
-    pub fn try_flush(cards: &[Card]) -> Option<Call> {
+    pub(crate) fn try_flush(cards: &[Card]) -> Option<Call> {
         (cards.iter().map(Card::suit).collect::<HashSet<_>>().len() == 1)
             .then(|| Self::new(CallKind::Flush, cards))
     }
@@ -122,13 +122,13 @@ impl Call {
     /// Returns a scoring call if the cards form a flush.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn flush(cards: &str) -> Call {
+    pub(crate) fn flush(cards: &str) -> Call {
         use crate::cards;
         Self::try_flush(&cards!(cards)).expect("require call flush")
     }
 
     /// Returns a scoring call if the last card has been played.
-    pub fn try_lastcard(played_cards: &[Card], remaining_cards: &[Card]) -> Option<Call> {
+    pub(crate) fn try_lastcard(played_cards: &[Card], remaining_cards: &[Card]) -> Option<Call> {
         let total = played_cards.iter().map(Card::value).sum::<Value>();
         let playable = remaining_cards
             .iter()
@@ -140,14 +140,14 @@ impl Call {
     /// Returns a scoring call if the last card has been played.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn lastcard(played_cards: &str, remaining_cards: &str) -> Call {
+    pub(crate) fn lastcard(played_cards: &str, remaining_cards: &str) -> Call {
         use crate::cards;
         Self::try_lastcard(&cards!(played_cards), &cards!(remaining_cards))
             .expect("require call lastcard")
     }
 
     /// Returns a scoring call if the running total is 31.
-    pub fn try_thirtyone(played_cards: &[Card]) -> Option<Call> {
+    pub(crate) fn try_thirtyone(played_cards: &[Card]) -> Option<Call> {
         let total = played_cards.iter().map(Card::value).sum::<Value>();
         (total == Value::from(PLAY_TARGET)).then(|| Self::new(CallKind::ThirtyOne, played_cards))
     }
@@ -155,26 +155,26 @@ impl Call {
     /// Returns a scoring call if the running total is 31.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn thirtyone(cards: &str) -> Call {
+    pub(crate) fn thirtyone(cards: &str) -> Call {
         use crate::cards;
         Self::try_thirtyone(&cards!(cards)).expect("require call thirtyone")
     }
 
     /// Returns a scoring call if the starter card is a Jack.
-    pub fn try_hisheels(card: Card) -> Option<Call> {
+    pub(crate) fn try_hisheels(card: Card) -> Option<Call> {
         (card.face() == Face::Jack).then(|| Self::new(CallKind::HisHeels, [card].as_ref()))
     }
 
     /// Returns a scoring call if the starter card is a Jack.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn hisheels(card: &str) -> Call {
+    pub(crate) fn hisheels(card: &str) -> Call {
         use crate::card;
         Self::try_hisheels(card!(card)).expect("require call hisheels")
     }
 
     /// Returns a scoring call the card is a Jack and same suit as the cut card.
-    pub fn try_nobs(card: Card, cut: Card) -> Option<Call> {
+    pub(crate) fn try_nobs(card: Card, cut: Card) -> Option<Call> {
         (card.face() == Face::Jack && card.suit() == cut.suit())
             .then(|| Self::new(CallKind::Nobs, [card, cut].as_ref()))
     }
@@ -182,13 +182,13 @@ impl Call {
     /// Returns a scoring call the card is a Jack and same suit as the cut card.
     /// Panic on no score.
     #[cfg(test)]
-    pub fn nobs(card: &str, cut: &str) -> Call {
+    pub(crate) fn nobs(card: &str, cut: &str) -> Call {
         use crate::card;
         Self::try_nobs(card!(card), card!(cut)).expect("require call nobs")
     }
 
     /// Return the points awarded for this kind of call.
-    pub fn points(&self) -> Points {
+    pub(crate) fn points(&self) -> Points {
         match self.kind {
             CallKind::Fifteen => 2.into(),
             CallKind::Pair => 2.into(),
@@ -215,7 +215,7 @@ impl std::fmt::Debug for Call {
     }
 }
 
-pub fn calls_to_string(calls: &[Call]) -> String {
+pub(crate) fn calls_to_string(calls: &[Call]) -> String {
     calls
         .iter()
         .map(|c| format!("{:?}", c))
@@ -227,8 +227,6 @@ pub fn calls_to_string(calls: &[Call]) -> String {
 #[coverage(off)]
 mod tests {
     use super::*;
-
-    use crate::Call;
 
     #[test]
     fn has_debug_text() {

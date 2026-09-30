@@ -1,7 +1,7 @@
 use crate::{Card, Crib, Finished, Hands, PlayState, Roles};
 
 impl Finished {
-    pub fn new(roles: Roles, hands: Hands, crib: Crib, starter: Card) -> Self {
+    pub(crate) fn new(roles: Roles, hands: Hands, crib: Crib, starter: Card) -> Self {
         Self {
             roles,
             hands,
@@ -11,7 +11,7 @@ impl Finished {
         }
     }
 
-    pub fn with_play_state(mut self, play_state: PlayState) -> Self {
+    pub(crate) fn with_play_state(mut self, play_state: PlayState) -> Self {
         self.play_state = Some(play_state);
         self
     }
@@ -44,8 +44,8 @@ mod tests {
         insta::assert_snapshot!(given, @r"
         game(finished(
           roles(dealer(player-0), pone(player-1))
-          [[], []]
-          []
+          [Hand([]), Hand([])]
+          Crib([])
           AS
           None
         )

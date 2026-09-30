@@ -38,7 +38,7 @@ mod deck {
 
     #[test]
     fn use_a_standard_pack_of_cards() {
-        let given = Game::default();
+        let given = Game::new(Deck::new());
         assert_eq!(given.state.deck.len(), STANDARD_DECK_SIZE);
     }
 }
@@ -60,7 +60,7 @@ mod deal_cut {
 
     #[test]
     fn initial_game_requires_cut_for_dealer() {
-        let given = Game::default();
+        let given = Game::new(Deck::new());
         assert_eq!(given.state.cuts, [None, None].into());
     }
 
@@ -1645,10 +1645,10 @@ mod internal {
 
     #[test]
     fn has_debug_text() {
-        let actual = format!("{:?}", Game::default());
+        let actual = format!("{:?}", Game::new(Deck::new()));
         insta::assert_snapshot!(actual, @r"
         game(starting(
-          [AH, 2H, 3H, 4H, 5H, 6H, 7H, 8H, 9H, TH, JH, QH, KH, AC, 2C, 3C, 4C, 5C, 6C, 7C, 8C, 9C, TC, JC, QC, KC, AD, 2D, 3D, 4D, 5D, 6D, 7D, 8D, 9D, TD, JD, QD, KD, AS, 2S, 3S, 4S, 5S, 6S, 7S, 8S, 9S, TS, JS, QS, KS]
+          Deck([AH, 2H, 3H, 4H, 5H, 6H, 7H, 8H, 9H, TH, JH, QH, KH, AC, 2C, 3C, 4C, 5C, 6C, 7C, 8C, 9C, TC, JC, QC, KC, AD, 2D, 3D, 4D, 5D, 6D, 7D, 8D, 9D, TD, JD, QD, KD, AS, 2S, 3S, 4S, 5S, 6S, 7S, 8S, 9S, TS, JS, QS, KS])
           [None, None]
         )
 

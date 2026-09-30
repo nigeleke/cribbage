@@ -1,12 +1,12 @@
 mod call;
-mod event;
 mod pegs;
 mod points;
+mod score;
 
 pub(crate) use call::*;
-pub(crate) use event::*;
 pub(crate) use pegs::*;
 pub(crate) use points::*;
+pub(crate) use score::*;
 
 // ------------------------------------
 use crate::Player;

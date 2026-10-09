@@ -1,7 +1,12 @@
-use crate::{Card, Crib, Finished, Hands, PlayState, Roles};
+use crate::card::Card;
+use crate::cards::Crib;
+use crate::game::Finished;
+use crate::players::Roles;
+use crate::plays::PlayState;
+use crate::types::Hands;
 
 impl Finished {
-    pub(crate) fn new(roles: Roles, hands: Hands, crib: Crib, starter: Card) -> Self {
+    pub(crate) const fn new(roles: Roles, hands: Hands, crib: Crib, starter: Card) -> Self {
         Self {
             roles,
             hands,
@@ -36,7 +41,7 @@ impl std::fmt::Debug for Finished {
 #[cfg(test)]
 #[coverage(off)]
 mod tests {
-    use crate::tests::GameFixture;
+    use crate::game::tests::GameFixture;
 
     #[test]
     fn has_debug_text() {

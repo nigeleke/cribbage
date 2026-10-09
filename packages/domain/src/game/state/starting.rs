@@ -1,4 +1,6 @@
-use crate::{CutForDealOutcome, Dealing, Deck, Game, GameError, Player, Result, Roles, Starting};
+use crate::cards::Deck;
+use crate::game::{GameError, Result, Starting};
+use crate::players::Player;
 
 impl Starting {
     pub(crate) fn new(deck: Deck) -> Self {
@@ -7,33 +9,19 @@ impl Starting {
             cuts: [None, None].into(),
         }
     }
-}
 
-pub fn cut_for_deal(mut game: Game<Starting>, player: Player) -> Result<CutForDealOutcome> {
-    let state = &mut game.state;
+    /// Validate cut_for_deal todo!() docn..
+    pub fn validate_cut_for_deal(&self, player: Player) -> Result<()> {
+        self.cuts[player]
+            .is_none()
+            .then_some(())
+            .ok_or(GameError::PlayerAlreadyCut)?;
 
-    state.cuts[player]
-        .is_none()
-        .then_some(())
-        .ok_or(GameError::PlayerAlreadyCut)?;
+        (!self.deck.is_empty())
+            .then_some(())
+            .ok_or(GameError::CardNotInDeck)?;
 
-    let cut = state.deck.cut().ok_or(GameError::CardNotInDeck)?;
-
-    state.cuts[player] = Some(cut);
-    state.deck.remove(cut);
-
-    let all_cut = state.cuts.iter().all(|c| c.is_some());
-
-    if all_cut {
-        if let Ok(roles) = Roles::try_from(&state.cuts) {
-            let game = game.transition(|_| Dealing::from(roles));
-            Ok(CutForDealOutcome::Dealing(game))
-        } else {
-            state.cuts = [None, None].into();
-            Ok(CutForDealOutcome::Starting(game))
-        }
-    } else {
-        Ok(CutForDealOutcome::Starting(game))
+        Ok(())
     }
 }
 

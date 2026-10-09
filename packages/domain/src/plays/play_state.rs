@@ -1,5 +1,10 @@
+use crate::card::{Card, Value};
+use crate::cards::Hand;
 use crate::constants::PLAY_TARGET;
-use crate::{Card, Event, GoStatus, Hand, Hands, Play, Player, Players, Value};
+use crate::players::{Player, PlayerData};
+use crate::plays::{GoStatus, Play};
+use crate::scoreboard::Score;
+use crate::types::Hands;
 
 /// Represents the current state of play during the pegging phase.
 ///
@@ -8,7 +13,7 @@ use crate::{Card, Event, GoStatus, Hand, Hands, Play, Player, Players, Value};
 #[derive(Clone, PartialEq, Eq)]
 pub struct PlayState {
     next_to_play: Player,
-    pending_plays: Players<Vec<Card>>,
+    pending_plays: PlayerData<Vec<Card>>,
     go_status: GoStatus,
     current_plays: Vec<Play>,
     previous_plays: Vec<Play>,
@@ -16,7 +21,7 @@ pub struct PlayState {
 
 impl PlayState {
     /// Creates a new `PlayState` with the specified next player to play.
-    pub fn new(next_to_play: Player, hands: &Hands) -> Self {
+    pub(crate) fn new(next_to_play: Player, hands: &Hands) -> Self {
         use strum::IntoEnumIterator;
 
         let initial = Self {
@@ -35,21 +40,21 @@ impl PlayState {
 
     /// Add GoStatus for testing...
     #[cfg(test)]
-    pub fn with_go_status(mut self, status: GoStatus) -> Self {
+    pub(crate) fn with_go_status(mut self, status: GoStatus) -> Self {
         self.go_status = status;
         self
     }
 
     /// Add current_plays for testing...
     #[cfg(test)]
-    pub fn with_current_plays(mut self, plays: &[Play]) -> Self {
+    pub(crate) fn with_current_plays(mut self, plays: &[Play]) -> Self {
         self.current_plays = plays.to_vec();
         self
     }
 
     /// Add previous_plays for testing...
     #[cfg(test)]
-    pub fn with_previous_plays(mut self, plays: &[Play]) -> Self {
+    pub(crate) fn with_previous_plays(mut self, plays: &[Play]) -> Self {
         self.previous_plays = plays.to_vec();
         self
     }
@@ -60,17 +65,17 @@ impl PlayState {
     }
 
     /// Returns the cards that have been played in the current play phase.
-    pub fn played_cards(&self) -> Vec<Card> {
-        self.current_plays.iter().map(Play::card).collect()
+    pub(crate) fn played_cards(&self) -> Vec<Card> {
+        self.current_plays.iter().map(|c| Play::card(*c)).collect()
     }
 
     /// Returns the current running total of points in the play sequence.
-    pub fn running_total(&self) -> Value {
+    pub(crate) fn running_total(&self) -> Value {
         self.current_plays.iter().map(|p| p.card().value()).sum()
     }
 
     /// Returns the cards that can still be legally played by either player.
-    pub fn all_legal_plays(&self) -> Vec<Card> {
+    pub(crate) fn all_legal_plays(&self) -> Vec<Card> {
         use strum::IntoEnumIterator;
         Player::iter()
             .flat_map(|player| self.legal_plays(player))
@@ -78,7 +83,7 @@ impl PlayState {
     }
 
     /// Returns the legal cards the specified player may play without exceeding the play limit.
-    pub fn legal_plays(&self, player: Player) -> Vec<Card> {
+    pub(crate) fn legal_plays(&self, player: Player) -> Vec<Card> {
         let running_total = self.running_total();
         let is_in_limit = |c: &Card| running_total + c.value() <= Value::from(PLAY_TARGET);
 
@@ -90,13 +95,13 @@ impl PlayState {
 
     /// Plays a card for the current player, updating the state and returning any resulting
     /// scoring event for the played card.
-    pub fn play(&mut self, card: Card) -> Option<Event> {
+    pub(crate) fn play(&mut self, card: Card) -> Option<Score> {
         let player = self.next_to_play;
         let opponent = player.opponent();
 
         self.pending_plays[player].retain(|c| c != &card);
         self.current_plays.push(Play::new(player, card));
-        let event = Event::try_play(player, self);
+        let event = Score::try_play(player, self);
 
         let reached_target = self.running_total() == Value::from(PLAY_TARGET);
         let player_has_cards = self.has_cards(player);
@@ -127,7 +132,7 @@ impl PlayState {
 
     /// Calls "go" for the current player, updating the state and returning the resulting
     /// scoring event.
-    pub fn go(&mut self) -> Option<Event> {
+    pub(crate) fn go(&mut self) -> Option<Score> {
         let player = self.next_to_play;
         let opponent = player.opponent();
 
@@ -142,11 +147,11 @@ impl PlayState {
             }
             GoStatus::NotCalled => {
                 self.go_status = GoStatus::Called;
-                event = Event::try_go(player, self);
+                event = Score::try_go(player, self);
                 self.start_new_play();
             }
             GoStatus::Called | GoStatus::Continued => {
-                event = Event::try_go(player, self);
+                event = Score::try_go(player, self);
                 self.start_new_play();
             }
         }
@@ -160,7 +165,7 @@ impl PlayState {
         let last_player = self
             .current_plays
             .last()
-            .map_or(self.next_to_play, Play::player);
+            .map_or(self.next_to_play, |p| p.player());
         let opponent = last_player.opponent();
         let opponent_has_cards = self.has_cards(opponent);
 
@@ -176,12 +181,12 @@ impl PlayState {
     }
 
     /// Returns `true` if all players have no cards left.
-    pub fn is_finished(&self) -> bool {
+    pub(crate) fn is_finished(&self) -> bool {
         self.pending_plays.iter().all(Vec::is_empty)
     }
 
     /// Finishes the current plays and returns the regathered hands.
-    pub fn finish_plays(&mut self) -> Hands {
+    pub(crate) fn finish_plays(&mut self) -> Hands {
         let hands = self.regather_hands();
         self.current_plays = Vec::default();
         self.previous_plays = Vec::default();
@@ -200,7 +205,7 @@ impl PlayState {
     }
 
     /// Returns the current go status.
-    pub fn go_status(&self) -> &GoStatus {
+    pub(crate) const fn go_status(&self) -> &GoStatus {
         &self.go_status
     }
 }

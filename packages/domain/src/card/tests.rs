@@ -25,12 +25,12 @@ fn all_contains_every_face_and_suit_combination() {
 }
 
 #[test]
-fn rank_is_from_face() {
+fn faces_have_rank() {
     Face::iter().for_each(|f| assert_eq!(Card::new(f, Suit::Hearts).rank(), f.rank()));
 }
 
 #[test]
-fn value_is_from_face() {
+fn faces_have_value() {
     Face::iter().for_each(|f| assert_eq!(Card::new(f, Suit::Hearts).value(), f.value()));
 }
 
@@ -42,7 +42,7 @@ fn debug_text_is_card_short_text() {
     cards
         .iter()
         .zip(debug_text)
-        .for_each(|(card, text)| assert_eq!(card, &card!(text)));
+        .for_each(|(card, text)| assert_eq!(card, &card!(&text)));
 }
 
 #[test]

@@ -1,10 +1,10 @@
-use crate::{
-    Crib, CutStarterOutcome, Cutting, Deck, Event, Finished, Game, GameError, Hands, Playing,
-    Result, Roles,
-};
+use crate::cards::{Crib, Deck};
+use crate::game::Cutting;
+use crate::players::Roles;
+use crate::types::Hands;
 
 impl Cutting {
-    pub(crate) fn new(roles: Roles, hands: Hands, crib: Crib, deck: Deck) -> Self {
+    pub(crate) const fn new(roles: Roles, hands: Hands, crib: Crib, deck: Deck) -> Self {
         Self {
             roles,
             hands,
@@ -12,26 +12,6 @@ impl Cutting {
             deck,
         }
     }
-}
-
-pub fn cut_starter(mut game: Game<Cutting>) -> Result<CutStarterOutcome> {
-    let dealer = game.state.roles.dealer();
-    let starter = game.state.deck.cut().ok_or(GameError::CardNotInDeck)?;
-
-    game.scoreboard
-        .record(Event::try_starter(dealer.player(), starter));
-
-    let outcome = if game.scoreboard.winner().is_some() {
-        let game =
-            game.transition(|state| Finished::new(state.roles, state.hands, state.crib, starter));
-        CutStarterOutcome::Finished(game)
-    } else {
-        let game =
-            game.transition(|state| Playing::new(state.roles, state.hands, state.crib, starter));
-        CutStarterOutcome::Playing(game)
-    };
-
-    Ok(outcome)
 }
 
 impl std::fmt::Debug for Cutting {

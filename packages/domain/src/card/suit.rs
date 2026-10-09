@@ -1,9 +1,10 @@
-use strum::EnumIter;
+use strum::{EnumIter, FromRepr};
 
 /// The four suits in a standard French playing card deck.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter, FromRepr)]
+#[repr(u8)]
 #[rustfmt::skip]
-pub(crate) enum Suit {
+pub enum Suit {
     #[doc(hidden)] Hearts,
     #[doc(hidden)] Clubs,
     #[doc(hidden)] Diamonds,

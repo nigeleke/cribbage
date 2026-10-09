@@ -1,11 +1,13 @@
-use crate::{CutsForDeal, Dealer, Player, Pone};
+use crate::{
+    players::dealer::Dealer, players::player::Player, players::pone::Pone, types::CutsForDeal,
+};
 
 /// Represents the roles assigned to players in a round.
 ///
 /// This struct captures which player is the dealer and which is the pone
 /// (non-dealer) in the game.
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) struct Roles {
+pub struct Roles {
     dealer: Dealer,
     pone: Pone,
 }
@@ -22,12 +24,12 @@ impl Roles {
     }
 
     /// Returns the dealer.
-    pub(crate) fn dealer(self) -> Dealer {
+    pub(crate) const fn dealer(self) -> Dealer {
         self.dealer
     }
 
     /// Returns the pone.
-    pub(crate) fn pone(self) -> Pone {
+    pub(crate) const fn pone(self) -> Pone {
         self.pone
     }
 
@@ -50,7 +52,7 @@ impl TryFrom<&CutsForDeal> for Roles {
         let cut0 = value[Player::Player0].ok_or(())?;
         let cut1 = value[Player::Player1].ok_or(())?;
 
-        match cut0.face().cmp(&cut1.face()) {
+        match cut0.cmp_rank(&cut1) {
             std::cmp::Ordering::Less => Ok(Roles::new(Dealer::from(Player::Player0))),
             std::cmp::Ordering::Equal => Err(()),
             std::cmp::Ordering::Greater => Ok(Roles::new(Dealer::from(Player::Player1))),
@@ -66,7 +68,8 @@ impl std::fmt::Debug for Roles {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Player, card};
+    use crate::card;
+    use crate::players::player::Player;
 
     use super::*;
 

@@ -3,7 +3,7 @@
 /// Wraps a `usize` and provides ordering and comparison operations.
 #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
-pub(crate) struct Points(usize);
+pub struct Points(usize);
 
 impl From<usize> for Points {
     fn from(value: usize) -> Self {

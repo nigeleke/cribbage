@@ -56,5 +56,5 @@ macro_rules! bug {
     }};
 }
 
-pub(crate) use bug;
-pub(crate) use bug_inner;
+use bug;
+use bug_inner;

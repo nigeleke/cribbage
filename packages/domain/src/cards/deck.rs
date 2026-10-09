@@ -1,5 +1,5 @@
 use crate::constants::CARDS_DEALT_PER_HAND;
-use crate::{Card, Hand, Hands};
+use crate::{card::Card, cards::hand::Hand, types::Hands};
 
 /// The deck contains all cards at the start of the game and is drawn from
 /// during dealing and for the starter cut.
@@ -29,7 +29,8 @@ impl Deck {
         self.0.pop()
     }
 
-    pub(crate) fn deal(&mut self) -> Hands {
+    /// Deal hands
+    pub fn deal(&mut self) -> Hands {
         let hands = std::array::from_fn(|_| {
             let cards = self.0.drain(..CARDS_DEALT_PER_HAND);
             Hand::from_iter(cards)
@@ -71,26 +72,26 @@ mod tests {
         cards.iter().for_each(|c| assert!(deck.0.contains(c)));
     }
 
-    //     #[test]
-    //     fn allow_a_random_card_to_be_cut() {
-    //         let deck0 = Deck::new();
-    //         let mut deck1 = deck0.clone();
-    //         let cut = deck1.cut();
-    //
-    //         assert!(deck0.contains(&cut));
-    //         assert!(!deck1.contains(&cut));
-    //         assert_eq!(deck1.len(), 51);
-    //     }
+    #[test]
+    fn allow_a_random_card_to_be_cut() {
+        let deck0 = Deck::new();
+        let mut deck1 = deck0.clone();
+        let cut = deck1.cut().expect("cards available to cut");
 
-    // todo!()
-    // #[test]
-    // fn allow_deals() {
-    //     let deck0 = Deck::new();
-    //     let mut deck1 = deck0.clone();
-    //     let deals = deck1.deal();
-    //     assert!(deck0.contains_all(&deals[Player::Player0]));
-    //     assert!(deck0.contains_all(&deals[Player::Player1]));
-    //     assert!(deck1.contains_none(&deals[Player::Player0]));
-    //     assert!(deck1.contains_none(&deals[Player::Player1]));
-    // }
+        assert!(deck0.contains(&cut));
+        assert!(!deck1.contains(&cut));
+        assert_eq!(deck1.len(), 51);
+    }
+
+    #[test]
+    fn allow_deals() {
+        let deck0 = Deck::new();
+        let mut deck1 = deck0.clone();
+        let deals = deck1.deal();
+
+        deals.iter().flat_map(|h| h.to_vec()).for_each(|c| {
+            assert!(deck0.contains(&c));
+            assert!(!deck1.contains(&c));
+        });
+    }
 }

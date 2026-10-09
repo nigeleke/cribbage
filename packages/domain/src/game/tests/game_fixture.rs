@@ -1,13 +1,15 @@
-use crate::constants::PLAYER_COUNT;
-use crate::{
-    Call, Card, Crib, CutsForDeal, Dealer, Deck, Discards, Game, Hands, Player, Roles, Scoreboard,
-    card, cards, crib, deck, hand,
-};
-
+use crate::card::Card;
+use crate::cards::{Crib, Deck};
+use crate::constants::PLAYERS_PER_GAME;
 use crate::game::{
-    Cutting, Dealing, Discarding, Finished, GoStatus, Play, PlayState, Playing, Scoring,
+    CutsForDeal, Cutting, Dealing, Discarding, Discards, Finished, Game, Playing, Scoring,
     ScoringCrib, ScoringDealer, ScoringPone, Starting,
 };
+use crate::players::{Dealer, Player, Roles};
+use crate::plays::{GoStatus, Play, PlayState};
+use crate::scoreboard::{Call, Scoreboard};
+use crate::types::Hands;
+use crate::{card, cards, crib, deck, hand};
 
 pub struct GameFixture {
     cuts: CutsForDeal,
@@ -28,7 +30,7 @@ pub struct GameFixture {
 }
 
 impl GameFixture {
-    pub fn with_cuts(mut self, cuts: [Option<&str>; PLAYER_COUNT]) -> Self {
+    pub fn with_cuts(mut self, cuts: [Option<&str>; PLAYERS_PER_GAME]) -> Self {
         self.cuts = cuts.map(|card| card.map(|card| card!(card))).into();
         self
     }
@@ -43,12 +45,12 @@ impl GameFixture {
         self
     }
 
-    pub fn with_hands(mut self, hands: [&str; PLAYER_COUNT]) -> Self {
+    pub fn with_hands(mut self, hands: [&str; PLAYERS_PER_GAME]) -> Self {
         self.hands = hands.map(|hand| hand!(hand)).into();
         self
     }
 
-    pub fn with_discards(mut self, discards: [Option<&str>; PLAYER_COUNT]) -> Self {
+    pub fn with_discards(mut self, discards: [Option<&str>; PLAYERS_PER_GAME]) -> Self {
         self.discards = discards
             .map(|cards| {
                 cards.map(|cards| cards!(cards).try_into().expect("require valid discards"))

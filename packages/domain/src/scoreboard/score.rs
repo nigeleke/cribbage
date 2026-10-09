@@ -5,17 +5,21 @@ use flush_rule::FlushRule;
 // ------------------------------------
 use itertools::Itertools;
 
+use crate::card::Card;
+use crate::cards::{Crib, Hand};
 use crate::constants::MINIMUM_RUN_LENGTH;
-use crate::{Call, Card, Crib, GoStatus, Hand, PlayState, Player, Points};
+use crate::players::Player;
+use crate::plays::{GoStatus, PlayState};
+use crate::scoreboard::{Call, Points};
 
 /// One atomic scoring action.
 #[derive(Clone, PartialEq, Eq)]
-pub(crate) struct Event {
+pub struct Score {
     player: Player,
     calls: Vec<Call>,
 }
 
-impl Event {
+impl Score {
     /// Returns scoring events for a starter card.
     pub(crate) fn try_starter(player: Player, starter: Card) -> Option<Self> {
         Call::try_hisheels(starter).map(|call| Self::new(player, &[call]))
@@ -200,7 +204,7 @@ impl Event {
     }
 
     /// Return the player who won the points for this event.
-    pub(crate) fn player(&self) -> Player {
+    pub(crate) const fn player(&self) -> Player {
         self.player
     }
 
@@ -216,7 +220,7 @@ impl Event {
     }
 }
 
-impl std::fmt::Debug for Event {
+impl std::fmt::Debug for Score {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

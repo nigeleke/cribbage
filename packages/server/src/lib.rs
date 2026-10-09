@@ -13,7 +13,7 @@ mod server_state;
 mod services;
 
 #[cfg(test)]
-pub(crate) mod macros;
+mod macros;
 
 /// Domain logic types and helpers.
 pub mod domain;
@@ -21,5 +21,5 @@ pub mod domain;
 /// Error types for server operations.
 pub mod error;
 
-pub use server_state::{ServerState, initialize_server_state};
+pub use server_state::{initialize_server_state, ServerState};
 pub use services::*;

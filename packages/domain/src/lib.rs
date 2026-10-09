@@ -4,37 +4,34 @@
 #![deny(clippy::all)]
 #![doc = include_str!("../README.md")]
 
+/// Fixed quantities and scoring rules used throughout a game of cribbage.
+pub mod constants;
+
 mod card;
 mod cards;
 mod game;
 mod players;
+mod plays;
 mod scoreboard;
 mod types;
 
-pub(crate) use card::*;
-pub(crate) use cards::*;
-pub(crate) use game::*;
-pub(crate) use players::*;
-pub(crate) use scoreboard::*;
-pub(crate) use types::*;
-
 #[cfg(test)]
 mod macros;
-
-pub(crate) mod constants;
 
 /// Commonly used domain types.
 ///
 /// This module provides a convenient set of imports for working with a game.
 pub mod prelude {
-    pub use super::card::Card;
-    pub use super::cards::Deck;
+    pub use super::card::{Card, Face, Suit};
+    pub use super::cards::{Crib, Deck, Hand};
     pub use super::game::{
         CutForDealOutcome, CutStarterOutcome, Cutting, DealOutcome, Dealing, DiscardOutcome,
-        Discarding, Finished, Game, GameError, GoOutcome, PlayOutcome, Playing, ScoreCrib,
-        ScoreCribOutcome, ScoreDealer, ScoreDealerOutcome, ScorePone, ScorePoneOutcome, Scoring,
-        ScoringCrib, ScoringDealer, ScoringPone, Starting,
+        Discarding, Finished, Game, GameError, GoOutcome, PlayOutcome, Playing, ScoreCribOutcome,
+        ScoreDealerOutcome, ScorePoneOutcome, Scoring, ScoringCrib, ScoringDealer, ScoringPone,
+        Starting,
     };
-    // pub use super::players::Player;
-    // pub use super::types::Discard;
+    pub use super::players::Player;
+    pub use super::plays::{Play, PlayState};
+    pub use super::scoreboard::{Call, Pegs, Points, Score, Scoreboard};
+    pub use super::types::{Discard, Hands};
 }

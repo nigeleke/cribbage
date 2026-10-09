@@ -55,6 +55,7 @@ mod deck {
 /// deal. (In some games, there is no cut at this time.)
 mod deal_cut {
     use super::*;
+    use crate::card;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -69,13 +70,16 @@ mod deal_cut {
         let outcome = given.cut_for_deal(Player::Player0);
 
         match outcome {
-            Ok(CutForDealOutcome::Starting(actual)) => assert_eq!(
-                actual,
-                GameFixture::default()
-                    .with_deck("AH")
-                    .with_cuts([Some("2H"), None])
-                    .as_starting()
-            ),
+            Ok(CutForDealOutcome::Starting(cut, actual)) => {
+                assert_eq!(cut, card!("2H"));
+                assert_eq!(
+                    actual,
+                    GameFixture::default()
+                        .with_deck("AH")
+                        .with_cuts([Some("2H"), None])
+                        .as_starting()
+                )
+            }
             other => panic!("unexpected state: {other:?}"),
         }
     }
@@ -86,13 +90,16 @@ mod deal_cut {
         let outcome = given.cut_for_deal(Player::Player1);
 
         match outcome {
-            Ok(CutForDealOutcome::Starting(actual)) => assert_eq!(
-                actual,
-                GameFixture::default()
-                    .with_deck("AH")
-                    .with_cuts([None, Some("2H")])
-                    .as_starting()
-            ),
+            Ok(CutForDealOutcome::Starting(cut, actual)) => {
+                assert_eq!(cut, card!("2H"));
+                assert_eq!(
+                    actual,
+                    GameFixture::default()
+                        .with_deck("AH")
+                        .with_cuts([None, Some("2H")])
+                        .as_starting()
+                )
+            }
             other => panic!("unexpected state: {other:?}"),
         }
     }
@@ -131,12 +138,15 @@ mod deal_cut {
         let outcome = given.cut_for_deal(Player::Player1);
 
         match outcome {
-            Ok(CutForDealOutcome::Dealing(actual)) => assert_eq!(
-                actual,
-                GameFixture::default()
-                    .with_dealer(Player::Player0)
-                    .as_dealing()
-            ),
+            Ok(CutForDealOutcome::Dealing(cut, actual)) => {
+                assert_eq!(cut, card!("2H"));
+                assert_eq!(
+                    actual,
+                    GameFixture::default()
+                        .with_dealer(Player::Player0)
+                        .as_dealing()
+                )
+            }
             other => panic!("unexpected state: {other:?}"),
         }
     }
@@ -150,7 +160,7 @@ mod deal_cut {
         let outcome = given.cut_for_deal(Player::Player0);
 
         match outcome {
-            Ok(CutForDealOutcome::Dealing(actual)) => assert_eq!(
+            Ok(CutForDealOutcome::Dealing(_, actual)) => assert_eq!(
                 actual,
                 GameFixture::default()
                     .with_dealer(Player::Player1)
@@ -169,7 +179,7 @@ mod deal_cut {
         let outcome = given.cut_for_deal(Player::Player1);
 
         match outcome {
-            Ok(CutForDealOutcome::Starting(actual)) => {
+            Ok(CutForDealOutcome::Starting(_, actual)) => {
                 assert_eq!(actual, GameFixture::default().with_deck("").as_starting())
             }
             other => panic!("unexpected state: {other:?}"),
@@ -271,7 +281,8 @@ mod the_crib {
 /// various card combinations that score points.
 mod before_the_play {
     use super::*;
-    use crate::{Call, card};
+    use crate::card;
+    use crate::scoreboard::Call;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -364,7 +375,9 @@ mod before_the_play {
 /// count 10 each; every other card counts its pip value (the ace counts one).
 mod the_play {
     use super::*;
-    use crate::{Call, card, plays};
+    use crate::plays::GoStatus;
+    use crate::scoreboard::Call;
+    use crate::{card, plays};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -805,7 +818,9 @@ mod the_play {
 /// have a Go on the last card if not earlier.
 mod the_go {
     use super::*;
-    use crate::{Call, plays};
+    use crate::plays;
+    use crate::plays::GoStatus;
+    use crate::scoreboard::Call;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -1093,7 +1108,8 @@ mod the_go {
 /// true run with no foreign card.
 mod pegging {
     use super::*;
-    use crate::{Call, card, plays};
+    use crate::scoreboard::Call;
+    use crate::{card, plays};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -1260,7 +1276,7 @@ mod pegging {
 ///   - His Nobs. Jack of the same suit as starter in hand or crib 1
 mod counting_the_hands {
     use super::*;
-    use crate::Call;
+    use crate::scoreboard::Call;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -1460,12 +1476,13 @@ mod counting_the_hands {
 /// two different cards duplicated, counts 16.
 mod combinations {
     use super::*;
-    use crate::{Call, Event, card, crib, hand};
+    use crate::scoreboard::{Call, Score};
+    use crate::{card, crib, hand};
     use pretty_assertions::assert_eq;
 
     #[test]
     fn score_eights_sevens_sixes_example() {
-        let event = Event::try_pone_hand(Player::Player0, &hand!("8H7C7D6S"), card!("JH"));
+        let event = Score::try_pone_hand(Player::Player0, &hand!("8H7C7D6S"), card!("JH"));
         match event {
             Some(event) => assert_eq!(
                 event.calls(),
@@ -1483,7 +1500,7 @@ mod combinations {
 
     #[test]
     fn score_runs_example() {
-        let event = Event::try_pone_hand(Player::Player0, &hand!("JHQCKDAS"), card!("2D"));
+        let event = Score::try_pone_hand(Player::Player0, &hand!("JHQCKDAS"), card!("2D"));
         match event {
             Some(event) => assert_eq!(event.calls(), [Call::run("JHQCKD")]),
             None => panic!("unexpected no score"),
@@ -1492,7 +1509,7 @@ mod combinations {
 
     #[test]
     fn score_flush_hand_example_1() {
-        let event = Event::try_pone_hand(Player::Player0, &hand!("THQHKHAH"), card!("2H"));
+        let event = Score::try_pone_hand(Player::Player0, &hand!("THQHKHAH"), card!("2H"));
         match event {
             Some(event) => assert_eq!(event.calls(), [Call::flush("THQHKHAH2H")]),
             None => panic!("unexpected no score"),
@@ -1501,7 +1518,7 @@ mod combinations {
 
     #[test]
     fn score_flush_hand_example_2() {
-        let event = Event::try_pone_hand(Player::Player0, &hand!("THQHKHAH"), card!("2S"));
+        let event = Score::try_pone_hand(Player::Player0, &hand!("THQHKHAH"), card!("2S"));
         match event {
             Some(event) => assert_eq!(event.calls(), [Call::flush("THQHKHAH")]),
             None => panic!("unexpected no score"),
@@ -1510,7 +1527,7 @@ mod combinations {
 
     #[test]
     fn score_flush_crib_example_1() {
-        let event = Event::try_crib(Player::Player0, &crib!("THQHKHAH"), card!("2H"));
+        let event = Score::try_crib(Player::Player0, &crib!("THQHKHAH"), card!("2H"));
         match event {
             Some(event) => assert_eq!(event.calls(), [Call::flush("THQHKHAH2H")]),
             None => panic!("unexpected no score"),
@@ -1519,7 +1536,7 @@ mod combinations {
 
     #[test]
     fn score_flush_crib_example_2() {
-        let event = Event::try_crib(Player::Player0, &crib!("THQHKHAH"), card!("2S"));
+        let event = Score::try_crib(Player::Player0, &crib!("THQHKHAH"), card!("2S"));
         match event {
             Some(_) => panic!("unexpected score"),
             None => (),
@@ -1538,12 +1555,13 @@ mod combinations {
 /// hit 15 can also be done four ways for 8 points. Total = 29 points.
 mod a_perfect_29 {
     use super::*;
-    use crate::{Call, Event, card, hand};
+    use crate::scoreboard::{Call, Score};
+    use crate::{card, hand};
     use pretty_assertions::assert_eq;
 
     #[test]
     fn score_perfect_29_example() {
-        let event = Event::try_dealer_hand(Player::Player0, &hand!("5H5C5DJS"), card!("5S"));
+        let event = Score::try_dealer_hand(Player::Player0, &hand!("5H5C5DJS"), card!("5S"));
         match event {
             Some(event) => assert_eq!(
                 event.calls(),

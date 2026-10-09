@@ -1,16 +1,15 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Fields};
+use syn::{Data, DeriveInput, Fields, parse_macro_input};
 
-#[proc_macro_derive(Id)]
-pub fn derive_id(input: TokenStream) -> TokenStream {
-    derive_id_impl(parse_macro_input!(input as DeriveInput))
+pub(crate) fn derive_id(input: TokenStream, uuid_new: TokenStream2) -> TokenStream {
+    derive_id_impl(parse_macro_input!(input as DeriveInput), uuid_new)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }
 
-fn derive_id_impl(input: DeriveInput) -> syn::Result<TokenStream2> {
+fn derive_id_impl(input: DeriveInput, uuid_new: TokenStream2) -> syn::Result<TokenStream2> {
     let name = &input.ident;
     let name_string = name.to_string();
 
@@ -45,9 +44,10 @@ fn derive_id_impl(input: DeriveInput) -> syn::Result<TokenStream2> {
 
     Ok(quote! {
         impl #name {
+            /// Create a new #name
             #[allow(clippy::new_without_default)]
             pub fn new() -> Self {
-                Self(::uuid::Uuid::now_v7())
+                Self(#uuid_new())
             }
         }
 

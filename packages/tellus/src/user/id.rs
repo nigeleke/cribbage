@@ -1,4 +1,6 @@
-use cribbage_derive_id::Id;
+use cribbage_macros::IdV4;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, PartialEq, Eq, Id)]
+/// Unique identity for a User entity.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, IdV4)]
 pub struct UserId(uuid::Uuid);

@@ -3,10 +3,10 @@ mod rank;
 mod suit;
 mod value;
 
-pub(crate) use face::Face;
-pub(crate) use rank::Rank;
-pub(crate) use suit::Suit;
-pub(crate) use value::Value;
+pub use face::Face;
+pub use rank::Rank;
+pub use suit::Suit;
+pub use value::Value;
 
 // ------------------------------------
 /// A playing card consisting of a [`Face`] and a [`Suit`].
@@ -20,7 +20,7 @@ pub struct Card {
 
 impl Card {
     /// Constructs a new `Card` from a face and a suit.
-    pub(crate) const fn new(face: Face, suit: Suit) -> Self {
+    pub const fn new(face: Face, suit: Suit) -> Self {
         Self { face, suit }
     }
 
@@ -33,28 +33,73 @@ impl Card {
         Suit::iter().flat_map(cards_for_suit).collect::<Vec<_>>()
     }
 
-    /// Returns the face (rank) part of the card.
-    pub(crate) fn face(&self) -> Face {
+    /// Compare cards by their rank.
+    pub(crate) fn cmp_rank(&self, other: &Self) -> std::cmp::Ordering {
+        self.rank().cmp(&other.rank())
+    }
+
+    /// Returns the face part of the card.
+    pub const fn face(&self) -> Face {
         self.face
     }
 
     /// Returns the suit part of the card.
-    pub(crate) fn suit(&self) -> Suit {
+    pub const fn suit(&self) -> Suit {
         self.suit
     }
 
     /// Returns the rank value used for most card games (Ace = 14, King = 13, …, Two = 2).
     ///
     /// See [`Face::rank()`] for details.
-    pub(crate) fn rank(&self) -> Rank {
+    pub(crate) const fn rank(&self) -> Rank {
         self.face.rank()
     }
 
     /// Returns the numeric value of the card as used in a particular game.
     ///
     /// See [`Face::value()`] for details.
-    pub(crate) fn value(&self) -> Value {
+    pub(crate) const fn value(&self) -> Value {
         self.face.value()
+    }
+}
+
+#[cfg(test)]
+impl std::str::FromStr for Card {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes = s.as_bytes();
+
+        (bytes.len() == 2)
+            .then_some(())
+            .ok_or("invalid card: two bytes required")?;
+
+        let face = match bytes[0] {
+            b'A' => Ok(Face::Ace),
+            b'2' => Ok(Face::Two),
+            b'3' => Ok(Face::Three),
+            b'4' => Ok(Face::Four),
+            b'5' => Ok(Face::Five),
+            b'6' => Ok(Face::Six),
+            b'7' => Ok(Face::Seven),
+            b'8' => Ok(Face::Eight),
+            b'9' => Ok(Face::Nine),
+            b'T' => Ok(Face::Ten),
+            b'J' => Ok(Face::Jack),
+            b'Q' => Ok(Face::Queen),
+            b'K' => Ok(Face::King),
+            _ => Err("invalid card face"),
+        }?;
+
+        let suit = match bytes[1] {
+            b'H' => Ok(Suit::Hearts),
+            b'C' => Ok(Suit::Clubs),
+            b'D' => Ok(Suit::Diamonds),
+            b'S' => Ok(Suit::Spades),
+            _ => Err("invalid card suit"),
+        }?;
+
+        Ok(Self::new(face, suit))
     }
 }
 

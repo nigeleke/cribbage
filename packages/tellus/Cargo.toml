@@ -9,9 +9,14 @@ documentation = { workspace = true }
 publish       = { workspace = true }
 
 [dependencies]
-cribbage-domain    = { workspace = true }
-cribbage-derive-id = { workspace = true }
-tellus             = { workspace = true }
-uuid               = { workspace = true }
+cribbage-domain = { workspace = true }
+cribbage-macros = { workspace = true }
+tellus          = { workspace = true, features = ["persistence"] }
+uuid            = { workspace = true, features = ["v4", "v7", "serde"] }
+tokio           = { workspace = true, features = ["macros", "rt-multi-thread"] }
+thiserror       = { workspace = true }
+serde           = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
+pretty_assertions = { workspace = true }
+tellus            = { workspace = true, features = ["persistence-in-memory"] }

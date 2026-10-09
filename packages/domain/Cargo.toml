@@ -11,6 +11,7 @@ publish       = { workspace = true }
 [dependencies]
 itertools = { workspace = true }
 strum     = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 insta             = { workspace = true }

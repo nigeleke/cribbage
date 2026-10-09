@@ -5,7 +5,9 @@ use kind::CallKind;
 // ------------------------------------
 use std::collections::HashSet;
 
-use crate::{Card, Face, Points, Value, constants::PLAY_TARGET};
+use crate::card::{Card, Face, Value};
+use crate::constants::PLAY_TARGET;
+use crate::scoreboard::Points;
 
 /// A single scoring call made during a cribbage hand.
 ///
@@ -16,7 +18,7 @@ use crate::{Card, Face, Points, Value, constants::PLAY_TARGET};
 /// Multiple calls may be combined inside a larger scoring event (for example
 /// when counting a hand that contains both pairs and runs).
 #[derive(Clone, PartialEq, Eq)]
-pub(crate) struct Call {
+pub struct Call {
     /// The kind of score being claimed (fifteen, pair, run, etc.).
     kind: CallKind,
 
@@ -188,7 +190,7 @@ impl Call {
     }
 
     /// Return the points awarded for this kind of call.
-    pub(crate) fn points(&self) -> Points {
+    pub fn points(&self) -> Points {
         match self.kind {
             CallKind::Fifteen => 2.into(),
             CallKind::Pair => 2.into(),

@@ -1,4 +1,6 @@
-use cribbage_derive_id::Id;
+use cribbage_macros::IdV7;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, PartialEq, Eq, Id)]
+/// Unique identity for a Game entity.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, IdV7)]
 pub struct GameId(uuid::Uuid);

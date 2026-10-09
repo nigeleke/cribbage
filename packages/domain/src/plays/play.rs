@@ -1,4 +1,5 @@
-use crate::{Card, Player};
+use crate::card::Card;
+use crate::players::Player;
 
 /// Represents a single play in the pegging phase of the game.
 ///
@@ -11,17 +12,17 @@ pub struct Play {
 
 impl Play {
     /// Creates a new `Play` with the given player and card.
-    pub fn new(player: Player, card: Card) -> Self {
+    pub(crate) const fn new(player: Player, card: Card) -> Self {
         Self { player, card }
     }
 
     /// Returns the player who made this play.
-    pub const fn player(&self) -> Player {
+    pub const fn player(self) -> Player {
         self.player
     }
 
     /// Returns the card played.
-    pub const fn card(&self) -> Card {
+    pub const fn card(self) -> Card {
         self.card
     }
 }
@@ -32,7 +33,7 @@ impl std::fmt::Debug for Play {
     }
 }
 
-pub fn plays_to_string(plays: &[Play]) -> String {
+pub(crate) fn plays_to_string(plays: &[Play]) -> String {
     plays
         .iter()
         .map(|p| format!("{:?}", p))

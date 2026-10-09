@@ -1,0 +1,156 @@
+mod test_support;
+
+// ------------------------------------
+use cribbage_tellus::prelude::{
+    DeckSource, Game, GameCommand, GameEvent, GameId, GameState, PersistedCards, UserId,
+};
+
+use tellus::EventSourced;
+
+use test_support::{EntityFixture, ShuffledDeckSource};
+
+#[tokio::test]
+async fn user_creates_game() {
+    let deck_source = ShuffledDeckSource::new();
+    let deck = PersistedCards::from(deck_source.new_deck().as_ref());
+    let host = UserId::new();
+
+    let game = Game::new(GameId::new(), deck_source);
+    let id = game.persistence_id();
+
+    EntityFixture::new(game, id)
+        .when_tell(GameCommand::Create {
+            host,
+            deck: deck.clone(),
+        })
+        .await
+        .then_events(&[GameEvent::GameCreated { host, deck }]);
+}
+
+#[tokio::test]
+async fn user_joins_game() {
+    let deck_source = ShuffledDeckSource::new();
+    let deck = PersistedCards::from(deck_source.new_deck().as_ref());
+    let host = UserId::new();
+    let guest = UserId::new();
+
+    let game = Game::new(GameId::new(), deck_source);
+    let id = game.persistence_id();
+
+    EntityFixture::new(game, id)
+        .given_event(&GameEvent::GameCreated { host, deck })
+        .await
+        .when_tell(GameCommand::Join { guest })
+        .await
+        .then_events(&[GameEvent::GuestJoined { guest }]);
+}
+
+#[tokio::test]
+async fn user1_cuts_for_deal() {
+    let deck_source = ShuffledDeckSource::new();
+    let deck = PersistedCards::from(deck_source.new_deck().as_ref());
+    let host = UserId::new();
+    let guest = UserId::new();
+
+    let game = Game::new(GameId::new(), deck_source);
+    let id = game.persistence_id();
+
+    EntityFixture::new(game, id)
+        .given(&[
+            GameEvent::GameCreated { host, deck },
+            GameEvent::GuestJoined { guest },
+        ])
+        .await
+        .when_tell(GameCommand::CutForDeal { user: host })
+        .await
+        .then_events(&[GameEvent::CutForDealMade { user: host }]);
+}
+
+#[tokio::test]
+async fn user_cuts_for_deal_twice() {
+    let deck_source = ShuffledDeckSource::new();
+    let deck = PersistedCards::from(deck_source.new_deck().as_ref());
+    let host = UserId::new();
+    let guest = UserId::new();
+
+    let game = Game::new(GameId::new(), deck_source);
+    let id = game.persistence_id();
+
+    EntityFixture::new(game, id)
+        .given(&[
+            GameEvent::GameCreated { host, deck },
+            GameEvent::GuestJoined { guest },
+            GameEvent::CutForDealMade { user: host },
+        ])
+        .await
+        .when_tell(GameCommand::CutForDeal { user: host })
+        .await
+        .then_events(&[]);
+}
+
+#[tokio::test]
+async fn user2_cuts_for_deal() {
+    let deck_source = ShuffledDeckSource::new();
+    let deck = PersistedCards::from(deck_source.new_deck().as_ref());
+    let host = UserId::new();
+    let guest = UserId::new();
+
+    let game = Game::new(GameId::new(), deck_source);
+    let id = game.persistence_id();
+
+    EntityFixture::new(game, id)
+        .given(&[
+            GameEvent::GameCreated { host, deck },
+            GameEvent::GuestJoined { guest },
+            GameEvent::CutForDealMade { user: host },
+        ])
+        .await
+        .when_tell(GameCommand::CutForDeal { user: guest })
+        .await
+        .then_events(&[GameEvent::CutForDealMade { user: guest }]);
+}
+
+#[tokio::test]
+async fn user1_acks_cuts_for_deal_1() {
+    let deck_source = ShuffledDeckSource::new();
+    let deck = PersistedCards::from(deck_source.new_deck().as_ref());
+    let host = UserId::new();
+    let guest = UserId::new();
+
+    let game = Game::new(GameId::new(), deck_source);
+    let id = game.persistence_id();
+
+    EntityFixture::new(game, id)
+        .given(&[
+            GameEvent::GameCreated { host, deck },
+            GameEvent::GuestJoined { guest },
+            GameEvent::CutForDealMade { user: host },
+        ])
+        .await
+        .when_tell(GameCommand::Ack { user: host })
+        .await
+        .then_events(&[GameEvent::CutForDealAcked { user: host }]);
+}
+
+#[tokio::test]
+async fn user1_acks_cuts_for_deal_2() {
+    let deck_source = ShuffledDeckSource::new();
+    let deck = PersistedCards::from(deck_source.new_deck().as_ref());
+    let host = UserId::new();
+    let guest = UserId::new();
+
+    let game = Game::new(GameId::new(), deck_source);
+    let id = game.persistence_id();
+
+    EntityFixture::new(game, id)
+        .given(&[
+            GameEvent::GameCreated { host, deck },
+            GameEvent::GuestJoined { guest },
+            GameEvent::CutForDealMade { user: host },
+            GameEvent::CutForDealMade { user: guest },
+        ])
+        .await
+        .when_tell(GameCommand::Ack { user: host })
+        .await
+        .then_events(&[GameEvent::CutForDealAcked { user: host }]);
+}

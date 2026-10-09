@@ -1,4 +1,4 @@
-pub enum FlushRule {
+pub(crate) enum FlushRule {
     Hand,
     Crib,
 }

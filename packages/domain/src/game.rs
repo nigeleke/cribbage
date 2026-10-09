@@ -1,14 +1,17 @@
-mod plays;
 mod state;
-
-pub(crate) use plays::*;
 
 #[cfg(test)]
 #[coverage(off)]
 pub(crate) mod tests;
 
 // ------------------------------------
-use crate::{Card, Crib, CutsForDeal, Deck, Discard, Discards, Hands, Player, Roles, Scoreboard};
+use crate::card::Card;
+use crate::cards::{Crib, Deck};
+use crate::constants::{CARDS_DEALT_PER_HAND, CARDS_IN_CRIB, PLAYERS_PER_GAME};
+use crate::players::{Dealer, Player, Pone, Roles};
+use crate::plays::PlayState;
+use crate::scoreboard::{Score, Scoreboard};
+use crate::types::{CutsForDeal, Discard, Discards, Hands};
 
 /// A cribbage game in a specific phase of play.
 ///
@@ -35,14 +38,18 @@ use crate::{Card, Crib, CutsForDeal, Deck, Discard, Discards, Hands, Player, Rol
 ///     → score_crib    → Game<Dealing>   (next round)
 ///                     ↘ Game<Finished>  (when a player reaches the winning score)
 /// ```
-#[derive(PartialEq, Eq)]
-pub struct Game<T>
-where
-    T: std::fmt::Debug + std::cmp::PartialEq + std::cmp::Eq,
-{
+pub struct Game<T> {
     scoreboard: Scoreboard,
     state: T,
 }
+
+impl<T: PartialEq> PartialEq for Game<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.scoreboard == other.scoreboard && self.state == other.state
+    }
+}
+
+impl<T: Eq> Eq for Game<T> {}
 
 /// Opening phase: players cut the deck to decide who deals first.
 ///
@@ -126,26 +133,14 @@ pub struct Scoring<T> {
     _marker: std::marker::PhantomData<T>,
 }
 
-/// Marker indicating that the pone’s (non-dealer’s) hand is being scored.
-#[derive(Debug, PartialEq, Eq)]
-pub struct ScorePone;
-
-/// Marker indicating that the dealer’s hand is being scored.
-#[derive(Debug, PartialEq, Eq)]
-pub struct ScoreDealer;
-
-/// Marker indicating that the crib is being scored.
-#[derive(Debug, PartialEq, Eq)]
-pub struct ScoreCrib;
-
 /// Convenience alias for the phase that scores the pone’s hand.
-pub type ScoringPone = Scoring<ScorePone>;
+pub type ScoringPone = Scoring<Pone>;
 
 /// Convenience alias for the phase that scores the dealer’s hand.
-pub type ScoringDealer = Scoring<ScoreDealer>;
+pub type ScoringDealer = Scoring<Dealer>;
 
 /// Convenience alias for the phase that scores the crib.
-pub type ScoringCrib = Scoring<ScoreCrib>;
+pub type ScoringCrib = Scoring<Crib>;
 
 /// Terminal state: one player has reached or exceeded the winning score.
 ///
@@ -161,28 +156,35 @@ pub struct Finished {
 }
 
 /// Errors that can arise when a command is rejected by the domain rules.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum GameError {
     /// The given player has already cut a card in the current deal-cut round.
+    #[error("game-error.player-already-cut")]
     PlayerAlreadyCut,
 
     /// The requested card is not present in the deck.
+    #[error("game-error.card-not-in-deck")]
     CardNotInDeck,
 
     /// The given player has already discarded to the crib this round.
+    #[error("game-error.player-already-discarded")]
     PlayerAlreadyDiscarded,
 
     /// One or more of the supplied cards are not in the player’s hand.
+    #[error("game-error.cards-not-in-hand")]
     CardsNotInHand,
 
     /// It is not the given player’s turn to act.
+    #[error("game-error.out-of-turn")]
     OutOfTurn,
 
     /// The card cannot legally be played (would exceed 31, or is not in hand).
+    #[error("game-error.invalid-play")]
     InvalidPlay,
 
     /// “Go” was declared when the player still has a legal play, or when go
     /// has already been resolved for this sequence.
+    #[error("game-error.invalid-go")]
     InvalidGo,
 }
 
@@ -194,32 +196,31 @@ pub(crate) type Result<T> = std::result::Result<T, GameError>;
 pub enum CutForDealOutcome {
     /// Only one player has cut so far (or the cuts tied); the game remains
     /// in the starting phase for another cut.
-    Starting(Game<Starting>),
+    Starting(Card, Game<Starting>),
 
     /// Both players have cut unequal ranks; roles are assigned and the game
     /// advances to dealing.
-    Dealing(Game<Dealing>),
+    Dealing(Card, Game<Dealing>),
 }
 
 impl Game<Starting> {
-    /// Creates a new game in the [`Starting`] phase with the given deck.
+    /// Creates a new game in the [`Starting`] phase with a [`DeckSource`] that
+    /// will provide new Decks during the course of the Game. Deck usage
+    /// must be idempotent once supplied.
     ///
     /// The scoreboard is empty. The supplied `deck` is used for the opening
     /// cut-for-deal; it is typically already shuffled by the caller. The domain
     /// does not shuffle.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use cribbage_domain::prelude::*;
-    /// let deck = Deck::new();
-    /// let game = Game::new(deck);
-    /// ```
     pub fn new(deck: Deck) -> Self {
         Self {
             scoreboard: Default::default(),
             state: Starting::new(deck),
         }
+    }
+
+    /// Validate cut for deal todo!() docn
+    pub fn validate_cut_for_deal(&self, player: Player) -> Result<()> {
+        self.state.validate_cut_for_deal(player)
     }
 
     /// Records a player’s cut for the deal.
@@ -235,8 +236,28 @@ impl Game<Starting> {
     ///
     /// * [`GameError::PlayerAlreadyCut`] – the player already selected a card
     /// * [`GameError::CardNotInDeck`] – the card is not available
-    pub fn cut_for_deal(self, player: Player) -> Result<CutForDealOutcome> {
-        state::cut_for_deal(self, player)
+    pub fn cut_for_deal(mut self, player: Player) -> Result<CutForDealOutcome> {
+        self.state.validate_cut_for_deal(player)?;
+
+        let state = &mut self.state;
+        let cut = state.deck.cut().ok_or(GameError::CardNotInDeck)?;
+
+        state.cuts[player] = Some(cut);
+        state.deck.remove(cut);
+
+        let all_cut = state.cuts.iter().all(|c| c.is_some());
+
+        if all_cut {
+            if let Ok(roles) = Roles::try_from(&state.cuts) {
+                let game = self.transition(|_| Dealing::from(roles));
+                Ok(CutForDealOutcome::Dealing(cut, game))
+            } else {
+                state.cuts = [None, None].into();
+                Ok(CutForDealOutcome::Starting(cut, self))
+            }
+        } else {
+            Ok(CutForDealOutcome::Starting(cut, self))
+        }
     }
 }
 
@@ -249,14 +270,27 @@ pub enum DealOutcome {
 }
 
 impl Game<Dealing> {
+    /// todo!()
+    pub fn validate_deal(&self, deck: &Deck) -> Result<()> {
+        (deck.len() >= (CARDS_DEALT_PER_HAND * PLAYERS_PER_GAME))
+            .then_some(())
+            .ok_or(GameError::CardNotInDeck)
+    }
+
     /// Deals six cards to each player from the supplied `deck`.
     ///
     /// On success the game transitions to [`Game<Discarding>`].
     ///
     /// The caller is responsible for shuffling the deck before passing it in;
     /// this method performs a pure deal with no additional randomisation.
-    pub fn deal(self, deck: Deck) -> Result<DealOutcome> {
-        state::deal(self, deck)
+    pub fn deal(self, mut deck: Deck) -> Result<DealOutcome> {
+        let hands = deck.deal();
+        let game = self.transition(|state| {
+            let roles = state.roles;
+            Discarding::new(roles, hands, deck)
+        });
+
+        Ok(DealOutcome::Discarding(game))
     }
 }
 
@@ -283,8 +317,25 @@ impl Game<Discarding> {
     ///
     /// * [`GameError::PlayerAlreadyDiscarded`] – the player already discarded
     /// * [`GameError::CardsNotInHand`] – one or both cards are not in the hand
-    pub fn discard(self, player: Player, discard: Discard) -> Result<DiscardOutcome> {
-        state::discard(self, player, discard)
+    pub fn discard(mut self, player: Player, discard: Discard) -> Result<DiscardOutcome> {
+        self.state.discard(player, discard)?;
+
+        let all_discards = self.state.all_discards();
+
+        if all_discards.len() == CARDS_IN_CRIB {
+            let crib = Crib::from_iter(all_discards);
+
+            let game = self.transition(|state| {
+                let roles = state.roles;
+                let hands = state.hands;
+                let deck = state.deck;
+                Cutting::new(roles, hands, crib, deck)
+            });
+
+            Ok(DiscardOutcome::Cutting(game))
+        } else {
+            Ok(DiscardOutcome::Discarding(self))
+        }
     }
 }
 
@@ -304,8 +355,24 @@ impl Game<Cutting> {
     /// If the starter is a Jack the dealer scores “His Heels” (two points).
     /// Should those points (or any earlier score) reach the winning total the
     /// game finishes immediately; otherwise it enters the [`Playing`] phase.
-    pub fn cut_starter(self) -> Result<CutStarterOutcome> {
-        state::cut_starter(self)
+    pub fn cut_starter(mut self) -> Result<CutStarterOutcome> {
+        let dealer = self.state.roles.dealer();
+        let starter = self.state.deck.cut().ok_or(GameError::CardNotInDeck)?;
+
+        self.scoreboard
+            .record(Score::try_starter(dealer.player(), starter));
+
+        let outcome = if self.scoreboard.winner().is_some() {
+            let game = self
+                .transition(|state| Finished::new(state.roles, state.hands, state.crib, starter));
+            CutStarterOutcome::Finished(game)
+        } else {
+            let game = self
+                .transition(|state| Playing::new(state.roles, state.hands, state.crib, starter));
+            CutStarterOutcome::Playing(game)
+        };
+
+        Ok(outcome)
     }
 }
 
@@ -348,8 +415,49 @@ impl Game<Playing> {
     ///
     /// * [`GameError::OutOfTurn`] – it is not this player’s turn
     /// * [`GameError::InvalidPlay`] – the card is illegal or not in hand
-    pub fn play(self, player: Player, card: Card) -> Result<PlayOutcome> {
-        state::play(self, player, card)
+    pub fn play(mut self, player: Player, card: Card) -> Result<PlayOutcome> {
+        let state = &mut self.state;
+
+        (state.play_state.next_to_play() == player)
+            .then_some(())
+            .ok_or(GameError::OutOfTurn)?;
+
+        (state.hands[player].contains(&card))
+            .then_some(())
+            .ok_or(GameError::CardsNotInHand)?;
+
+        (state.play_state.legal_plays(player).contains(&card))
+            .then_some(())
+            .ok_or(GameError::InvalidPlay)?;
+
+        state.hands[player].remove(card);
+
+        let score = state.play_state.play(card);
+        self.scoreboard.record(score);
+
+        let outcome = if self.scoreboard.winner().is_some() {
+            let game = self.transition(|state| {
+                Finished::new(state.roles, state.hands, state.crib, state.starter)
+                    .with_play_state(state.play_state)
+            });
+            PlayOutcome::Finished(game)
+        } else {
+            if state.play_state.is_finished() {
+                let game = self.transition(|mut state| {
+                    ScoringPone::new(
+                        state.roles,
+                        state.play_state.finish_plays(),
+                        state.crib,
+                        state.starter,
+                    )
+                });
+                PlayOutcome::Scoring(game)
+            } else {
+                PlayOutcome::Playing(self)
+            }
+        };
+
+        Ok(outcome)
     }
 
     /// Declares “go” for the specified player.
@@ -364,8 +472,31 @@ impl Game<Playing> {
     /// * [`GameError::OutOfTurn`] – it is not this player’s turn
     /// * [`GameError::InvalidGo`] – the player still has a legal play, or go
     ///   has already been resolved
-    pub fn go(self, player: Player) -> Result<GoOutcome> {
-        state::go(self, player)
+    pub fn go(mut self, player: Player) -> Result<GoOutcome> {
+        let state = &mut self.state;
+
+        (state.play_state.next_to_play() == player)
+            .then_some(())
+            .ok_or(GameError::OutOfTurn)?;
+
+        (state.play_state.legal_plays(player).is_empty())
+            .then_some(())
+            .ok_or(GameError::InvalidGo)?;
+
+        let score = state.play_state.go();
+        self.scoreboard.record(score);
+
+        let outcome = if self.scoreboard.winner().is_some() {
+            let game = self.transition(|state| {
+                Finished::new(state.roles, state.hands, state.crib, state.starter)
+                    .with_play_state(state.play_state)
+            });
+            GoOutcome::Finished(game)
+        } else {
+            GoOutcome::Playing(self)
+        };
+
+        Ok(outcome)
     }
 }
 
@@ -379,14 +510,30 @@ pub enum ScorePoneOutcome {
     Finished(Game<Finished>),
 }
 
-impl Game<Scoring<ScorePone>> {
+impl Game<Scoring<Pone>> {
     /// Scores the pone’s (non-dealer’s) four-card hand plus the starter.
     ///
     /// Points are awarded for fifteens, pairs, runs, flushes and “his nobs”.
     /// If the resulting total reaches the winning score the game finishes;
     /// otherwise it advances to scoring the dealer’s hand.
-    pub fn score_pone(self) -> Result<ScorePoneOutcome> {
-        state::score_pone(self)
+    pub fn score_pone(mut self) -> Result<ScorePoneOutcome> {
+        let player = self.state.roles.pone().player();
+        let hand = &self.state.hands[player];
+        let starter = self.state.starter;
+
+        self.scoreboard
+            .record(Score::try_pone_hand(player, hand, starter));
+
+        let outcome = if self.scoreboard.winner().is_some() {
+            ScorePoneOutcome::Finished(ScoringPone::into_finished(self))
+        } else {
+            let game = self.transition(|state| {
+                ScoringDealer::new(state.roles, state.hands, state.crib, state.starter)
+            });
+            ScorePoneOutcome::Scoring(game)
+        };
+
+        Ok(outcome)
     }
 }
 
@@ -400,13 +547,29 @@ pub enum ScoreDealerOutcome {
     Finished(Game<Finished>),
 }
 
-impl Game<Scoring<ScoreDealer>> {
+impl Game<Scoring<Dealer>> {
     /// Scores the dealer’s four-card hand plus the starter.
     ///
     /// Same combination rules as the pone’s hand. On success the game either
     /// finishes (winning score reached) or advances to scoring the crib.
-    pub fn score_dealer(self) -> Result<ScoreDealerOutcome> {
-        state::score_dealer(self)
+    pub fn score_dealer(mut self) -> Result<ScoreDealerOutcome> {
+        let player = self.state.roles.dealer().player();
+        let hand = &self.state.hands[player];
+        let starter = self.state.starter;
+
+        self.scoreboard
+            .record(Score::try_dealer_hand(player, hand, starter));
+
+        let outcome = if self.scoreboard.winner().is_some() {
+            ScoreDealerOutcome::Finished(ScoringDealer::into_finished(self))
+        } else {
+            let game = self.transition(|state| {
+                ScoringCrib::new(state.roles, state.hands, state.crib, state.starter)
+            });
+            ScoreDealerOutcome::Scoring(game)
+        };
+
+        Ok(outcome)
     }
 }
 
@@ -420,14 +583,31 @@ pub enum ScoreCribOutcome {
     Finished(Game<Finished>),
 }
 
-impl Game<Scoring<ScoreCrib>> {
+impl Game<Scoring<Crib>> {
     /// Scores the crib (four discarded cards plus the starter).
     ///
     /// The crib belongs to the dealer. Flush scoring requires all five cards
     /// (hand + starter) to be the same suit. After scoring, roles are swapped
     /// and a new round starts at [`Dealing`], unless a player has won.
-    pub fn score_crib(self) -> Result<ScoreCribOutcome> {
-        state::score_crib(self)
+    pub fn score_crib(mut self) -> Result<ScoreCribOutcome> {
+        let player = self.state.roles.dealer().player();
+        let crib = &self.state.crib;
+        let starter = self.state.starter;
+
+        self.scoreboard
+            .record(Score::try_crib(player, crib, starter));
+
+        let outcome = if self.scoreboard.winner().is_some() {
+            ScoreCribOutcome::Finished(ScoringCrib::into_finished(self))
+        } else {
+            let game = self.transition(|mut state| {
+                state.roles.swap();
+                Dealing::from(state.roles)
+            });
+            ScoreCribOutcome::Dealing(game)
+        };
+
+        Ok(outcome)
     }
 }
 

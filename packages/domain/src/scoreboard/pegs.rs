@@ -1,8 +1,8 @@
-use crate::Points;
+use crate::scoreboard::Points;
 
 /// One player's pair of pegs on the board.
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
-pub(crate) struct Pegs {
+pub struct Pegs {
     /// Current score (front peg).
     front: Points,
     /// Previous score (back peg).
@@ -19,13 +19,12 @@ impl Pegs {
     }
 
     /// Return the current front peg points representation.
-    pub(crate) fn front_peg(self) -> Points {
+    pub const fn front_peg(self) -> Points {
         self.front
     }
 
     /// Return the current back peg points representation.
-    #[cfg(test)]
-    pub(crate) fn back_peg(self) -> Points {
+    pub const fn back_peg(self) -> Points {
         self.back
     }
 }

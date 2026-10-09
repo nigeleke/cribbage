@@ -1,11 +1,13 @@
-use strum::EnumIter;
+use strum::{EnumIter, FromRepr};
 
-use super::{Rank, Value};
+use super::rank::Rank;
+use super::value::Value;
 
 /// The face of a playing card (Ace through King).
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter, FromRepr)]
+#[repr(u8)]
 #[rustfmt::skip]
-pub(crate) enum Face {
+pub enum Face {
     #[doc(hidden)] Ace,
     #[doc(hidden)] Two,
     #[doc(hidden)] Three,
@@ -24,8 +26,22 @@ pub(crate) enum Face {
 impl Face {
     /// Returns the rank used for ordering (Ace low, King high).
     #[inline]
-    pub fn rank(&self) -> Rank {
-        Rank::from(self)
+    pub const fn rank(self) -> Rank {
+        match self {
+            Self::Ace => Rank::new(0),
+            Self::Two => Rank::new(1),
+            Self::Three => Rank::new(2),
+            Self::Four => Rank::new(3),
+            Self::Five => Rank::new(4),
+            Self::Six => Rank::new(5),
+            Self::Seven => Rank::new(6),
+            Self::Eight => Rank::new(7),
+            Self::Nine => Rank::new(8),
+            Self::Ten => Rank::new(9),
+            Self::Jack => Rank::new(10),
+            Self::Queen => Rank::new(11),
+            Self::King => Rank::new(12),
+        }
     }
 
     /// Returns the point or face value.
@@ -34,8 +50,19 @@ impl Face {
     /// - 2–10 = face value
     /// - Jack/Queen/King = 10
     #[inline]
-    pub fn value(&self) -> Value {
-        Value::from(self)
+    pub const fn value(self) -> Value {
+        match self {
+            Self::Ace => Value::new(1),
+            Self::Two => Value::new(2),
+            Self::Three => Value::new(3),
+            Self::Four => Value::new(4),
+            Self::Five => Value::new(5),
+            Self::Six => Value::new(6),
+            Self::Seven => Value::new(7),
+            Self::Eight => Value::new(8),
+            Self::Nine => Value::new(9),
+            Self::Ten | Face::Jack | Face::Queen | Face::King => Value::new(10),
+        }
     }
 }
 

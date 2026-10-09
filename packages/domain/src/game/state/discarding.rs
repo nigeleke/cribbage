@@ -1,8 +1,8 @@
-use crate::constants::CARDS_IN_CRIB;
-use crate::{
-    Card, Crib, Cutting, Deck, Discard, DiscardOutcome, Discarding, Discards, Game, GameError,
-    Hands, Player, Result, Roles,
-};
+use crate::card::Card;
+use crate::cards::Deck;
+use crate::game::{Discarding, GameError, Result};
+use crate::players::{Player, Roles};
+use crate::types::{Discard, Discards, Hands};
 
 impl Discarding {
     pub(crate) fn new(roles: Roles, hands: Hands, deck: Deck) -> Self {
@@ -14,11 +14,11 @@ impl Discarding {
         }
     }
 
-    fn all_discards(&self) -> Vec<Card> {
+    pub(crate) fn all_discards(&self) -> Vec<Card> {
         self.discards.iter().copied().flatten().flatten().collect()
     }
 
-    fn discard(&mut self, player: Player, discard: Discard) -> Result<()> {
+    pub(crate) fn discard(&mut self, player: Player, discard: Discard) -> Result<()> {
         self.discards[player]
             .is_none()
             .then_some(())
@@ -34,31 +34,6 @@ impl Discarding {
         self.discards[player] = Some(discard);
 
         Ok(())
-    }
-}
-
-pub fn discard(
-    mut game: Game<Discarding>,
-    player: Player,
-    discard: Discard,
-) -> Result<DiscardOutcome> {
-    game.state.discard(player, discard)?;
-
-    let all_discards = game.state.all_discards();
-
-    if all_discards.len() == CARDS_IN_CRIB {
-        let crib = Crib::from_iter(all_discards);
-
-        let game = game.transition(|state| {
-            let roles = state.roles;
-            let hands = state.hands;
-            let deck = state.deck;
-            Cutting::new(roles, hands, crib, deck)
-        });
-
-        Ok(DiscardOutcome::Cutting(game))
-    } else {
-        Ok(DiscardOutcome::Discarding(game))
     }
 }
 

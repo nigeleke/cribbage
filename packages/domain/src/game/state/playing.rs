@@ -1,7 +1,8 @@
-use crate::{
-    Card, Crib, Finished, Game, GameError, GoOutcome, Hands, PlayOutcome, PlayState, Player,
-    Playing, Result, Roles, ScoringPone,
-};
+use crate::card::Card;
+use crate::cards::Crib;
+use crate::game::{Hands, Playing};
+use crate::players::Roles;
+use crate::plays::PlayState;
 
 impl Playing {
     pub(crate) fn new(roles: Roles, hands: Hands, crib: Crib, starter: Card) -> Self {
@@ -15,78 +16,6 @@ impl Playing {
             play_state,
         }
     }
-}
-
-pub fn play(mut game: Game<Playing>, player: Player, card: Card) -> Result<PlayOutcome> {
-    let state = &mut game.state;
-
-    (state.play_state.next_to_play() == player)
-        .then_some(())
-        .ok_or(GameError::OutOfTurn)?;
-
-    (state.hands[player].contains(&card))
-        .then_some(())
-        .ok_or(GameError::CardsNotInHand)?;
-
-    (state.play_state.legal_plays(player).contains(&card))
-        .then_some(())
-        .ok_or(GameError::InvalidPlay)?;
-
-    state.hands[player].remove(card);
-
-    let score = state.play_state.play(card);
-    game.scoreboard.record(score);
-
-    let outcome = if game.scoreboard.winner().is_some() {
-        let game = game.transition(|state| {
-            Finished::new(state.roles, state.hands, state.crib, state.starter)
-                .with_play_state(state.play_state)
-        });
-        PlayOutcome::Finished(game)
-    } else {
-        if state.play_state.is_finished() {
-            let game = game.transition(|mut state| {
-                ScoringPone::new(
-                    state.roles,
-                    state.play_state.finish_plays(),
-                    state.crib,
-                    state.starter,
-                )
-            });
-            PlayOutcome::Scoring(game)
-        } else {
-            PlayOutcome::Playing(game)
-        }
-    };
-
-    Ok(outcome)
-}
-
-pub fn go(mut game: Game<Playing>, player: Player) -> Result<GoOutcome> {
-    let state = &mut game.state;
-
-    (state.play_state.next_to_play() == player)
-        .then_some(())
-        .ok_or(GameError::OutOfTurn)?;
-
-    (state.play_state.legal_plays(player).is_empty())
-        .then_some(())
-        .ok_or(GameError::InvalidGo)?;
-
-    let score = state.play_state.go();
-    game.scoreboard.record(score);
-
-    let outcome = if game.scoreboard.winner().is_some() {
-        let game = game.transition(|state| {
-            Finished::new(state.roles, state.hands, state.crib, state.starter)
-                .with_play_state(state.play_state)
-        });
-        GoOutcome::Finished(game)
-    } else {
-        GoOutcome::Playing(game)
-    };
-
-    Ok(outcome)
 }
 
 impl std::fmt::Debug for Playing {

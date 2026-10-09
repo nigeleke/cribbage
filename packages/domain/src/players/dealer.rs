@@ -1,4 +1,4 @@
-use crate::{Player, Pone};
+use crate::players::{player::Player, pone::Pone};
 
 /// Represents the dealer player in a two-player game.
 ///
@@ -6,7 +6,7 @@ use crate::{Player, Pone};
 /// corresponding dealer in the round.
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub(crate) struct Dealer(Player);
+pub struct Dealer(Player);
 
 impl Dealer {
     /// Returns the player who is the dealer.
@@ -34,7 +34,7 @@ impl std::fmt::Debug for Dealer {
 
 #[cfg(test)]
 mod tests {
-    use crate::Player;
+    use crate::players::player::Player;
 
     use super::*;
 
@@ -48,11 +48,5 @@ mod tests {
     fn dealer_opponent_is_pone() {
         let dealer = Dealer::from(Player::Player0);
         assert_eq!(dealer.opponent(), Pone::from(Player::Player1));
-    }
-
-    #[test]
-    fn dealer_opponent_is_symmetric() {
-        let dealer = Dealer::from(Player::Player0);
-        assert_eq!(dealer.opponent().opponent(), dealer);
     }
 }

@@ -2,13 +2,11 @@ mod test_support;
 
 // ------------------------------------
 use cribbage_domain::prelude::Player;
-use cribbage_tellus::prelude::{
-    DeckSource, Game, GameCommand, GameEvent, GameId, PersistedCard, PersistedCards, UserId, Users,
-};
-use test_support::{EntityFixture, GameScenario, ShuffledDeckSource};
+use cribbage_tellus::prelude::{DeckSource, GameCommand, GameEvent, PersistedCards, UserId, Users};
+use test_support::{GameScenario, ShuffledDeckSource};
 
-#[tokio::test]
-async fn game_is_created() {
+#[test]
+fn game_is_created() {
     let scenario = GameScenario::default();
     let users = Users::new(UserId::new(), UserId::new());
     let deck = ShuffledDeckSource::new().new_deck();
@@ -16,47 +14,40 @@ async fn game_is_created() {
 
     scenario
         .to_fixture()
-        .await
-        .when_tell(GameCommand::CreateGame {
+        .when(GameCommand::CreateGame {
             users: users,
             deck: deck.clone(),
         })
-        .await
-        .then_events(&[GameEvent::GameCreated { users, deck }]);
+        .then(GameScenario::default().state());
 }
 
-#[tokio::test]
-async fn user1_cuts_for_deal() {
+#[test]
+fn user1_cuts_for_deal() {
     let scenario = GameScenario::default().progress_to_starting();
     let users = scenario.users();
     let host = users.user(Player::Player0);
 
     scenario
         .to_fixture()
-        .await
-        .when_tell(GameCommand::CutForDeal { user: host })
-        .await
-        .then_events(&[GameEvent::CutForDealMade { user: host }]);
+        .when(GameCommand::CutForDeal { user: host })
+        .then(GameScenario::default().state());
 }
 
-#[tokio::test]
-async fn user_cuts_for_deal_twice() {
+#[test]
+fn user_cuts_for_deal_twice() {
     let scenario = GameScenario::default().progress_to_starting();
     let users = scenario.users();
     let host = users.user(Player::Player0);
 
     scenario
         .to_fixture()
-        .await
-        .given_event(&GameEvent::CutForDealMade { user: host })
-        .await
-        .when_tell(GameCommand::CutForDeal { user: host })
-        .await
-        .then_events(&[]);
+        .given_event(GameEvent::CutForDealMade { user: host })
+        .when(GameCommand::CutForDeal { user: host })
+        .then(GameScenario::default().state());
 }
 
-#[tokio::test]
-async fn user2_cuts_for_deal() {
+#[test]
+fn user2_cuts_for_deal() {
     let scenario = GameScenario::default().progress_to_starting();
     let users = scenario.users();
     let host = users.user(Player::Player0);
@@ -64,30 +55,24 @@ async fn user2_cuts_for_deal() {
 
     scenario
         .to_fixture()
-        .await
-        .given_event(&GameEvent::CutForDealMade { user: host })
-        .await
-        .when_tell(GameCommand::CutForDeal { user: guest })
-        .await
-        .then_events(&[GameEvent::CutForDealMade { user: guest }]);
+        .given_event(GameEvent::CutForDealMade { user: host })
+        .when(GameCommand::CutForDeal { user: guest })
+        .then(GameScenario::default().state());
 }
 
-#[tokio::test]
-async fn hands_dealt_after_cut_made() {
+#[test]
+fn hands_dealt_after_cut_made() {
     let scenario = GameScenario::default().progress_to_dealing();
     let deck = ShuffledDeckSource::new().new_deck();
     let deck = PersistedCards::from(deck.as_ref());
 
     scenario
         .to_fixture()
-        .await
-        .when_tell(GameCommand::DealHands { deck: deck.clone() })
-        .await
-        .then_events(&[GameEvent::HandsDealt { deck: deck }]);
+        .when(GameCommand::DealHands { deck: deck.clone() })
+        .then(GameScenario::default().state());
 }
 
-// #[tokio::test]
-// async fn user1_discards_to_crib() {
+// #[test]// async fn user1_discards_to_crib() {
 //     let scenario = GameScenario::default().progress_to_discarding();
 //     let users = scenario.users();
 //     let user = users.user(Player::Player0);
@@ -102,32 +87,32 @@ async fn hands_dealt_after_cut_made() {
 //         .when_tell(GameCommand::Discard { user, discard })
 // }
 
-#[tokio::test]
-async fn user_discards_to_crib_twice() {
+#[test]
+fn user_discards_to_crib_twice() {
     todo!()
 }
 
-#[tokio::test]
-async fn user2_discards_to_crib() {
+#[test]
+fn user2_discards_to_crib() {
     todo!()
 }
 
-#[tokio::test]
-async fn user_plays_card() {
+#[test]
+fn user_plays_card() {
     todo!()
 }
 
-#[tokio::test]
-async fn user_go() {
+#[test]
+fn user_go() {
     todo!()
 }
 
-#[tokio::test]
-async fn pone_is_scored() {
+#[test]
+fn pone_is_scored() {
     todo!()
 }
 
-#[tokio::test]
-async fn dealer_is_scored() {
+#[test]
+fn dealer_is_scored() {
     todo!()
 }

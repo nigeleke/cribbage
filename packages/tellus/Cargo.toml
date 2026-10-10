@@ -19,4 +19,4 @@ serde           = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }
-tellus            = { workspace = true, features = ["persistence-in-memory"] }
+tellus            = { workspace = true, features = ["test-util"] }

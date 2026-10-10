@@ -5,7 +5,7 @@ use cribbage_domain::prelude::{
 
 use crate::game::Users;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq)]
 pub enum GameState {
     #[default]
     PendingCreation,

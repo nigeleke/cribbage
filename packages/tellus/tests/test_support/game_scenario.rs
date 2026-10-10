@@ -6,7 +6,6 @@ use cribbage_domain::prelude::{
 use cribbage_tellus::prelude::{
     DeckSource, Game, GameEvent, GameId, GameState, PersistedCard, PersistedCards, UserId, Users,
 };
-use tellus::EventSourced;
 
 use crate::test_support::{EntityFixture, ShuffledDeckSource};
 
@@ -50,6 +49,10 @@ macro_rules! transition {
 }
 
 impl GameScenario {
+    pub fn state(&self) -> &GameState {
+        &self.state
+    }
+
     pub fn users(&self) -> Users {
         match self.state {
             GameState::Starting { users, .. }
@@ -97,10 +100,9 @@ impl GameScenario {
         dealing.deal()
     }
 
-    pub async fn to_fixture(&self) -> EntityFixture<Game<ShuffledDeckSource>> {
+    pub fn to_fixture(self) -> EntityFixture<Game<ShuffledDeckSource>> {
         let game = Game::new(self.id, ShuffledDeckSource::default());
-        let id = game.persistence_id();
-        EntityFixture::new(game, id).given(&self.events).await
+        EntityFixture::new(game).given(self.events)
     }
 
     fn create_game(self) -> Self {
@@ -119,7 +121,7 @@ impl GameScenario {
         )
     }
 
-    fn cut_for_deal(self, user: UserId) -> Self {
+    pub fn cut_for_deal(self, user: UserId) -> Self {
         transition!(
             self,
             GameState::Starting { game, users },

@@ -3,9 +3,8 @@ mod test_support;
 // ------------------------------------
 use cribbage_domain::prelude::Player;
 use cribbage_tellus::prelude::{
-    DeckSource, Game, GameCommand, GameEvent, GameId, PersistedCards, UserId, Users,
+    DeckSource, Game, GameCommand, GameEvent, GameId, PersistedCard, PersistedCards, UserId, Users,
 };
-use tellus::EventSourced;
 use test_support::{EntityFixture, GameScenario, ShuffledDeckSource};
 
 #[tokio::test]
@@ -85,4 +84,50 @@ async fn hands_dealt_after_cut_made() {
         .when_tell(GameCommand::DealHands { deck: deck.clone() })
         .await
         .then_events(&[GameEvent::HandsDealt { deck: deck }]);
+}
+
+// #[tokio::test]
+// async fn user1_discards_to_crib() {
+//     let scenario = GameScenario::default().progress_to_discarding();
+//     let users = scenario.users();
+//     let user = users.user(Player::Player0);
+//     let hand = scenario.hand(Player::Player0).to_vec();
+//     let discard = [hand[0], hand[1]]
+//         .into_iter()
+//         .map(|c| PersistedCard::from(*c));
+//
+//     scenario
+//         .to_fixture()
+//         .await
+//         .when_tell(GameCommand::Discard { user, discard })
+// }
+
+#[tokio::test]
+async fn user_discards_to_crib_twice() {
+    todo!()
+}
+
+#[tokio::test]
+async fn user2_discards_to_crib() {
+    todo!()
+}
+
+#[tokio::test]
+async fn user_plays_card() {
+    todo!()
+}
+
+#[tokio::test]
+async fn user_go() {
+    todo!()
+}
+
+#[tokio::test]
+async fn pone_is_scored() {
+    todo!()
+}
+
+#[tokio::test]
+async fn dealer_is_scored() {
+    todo!()
 }

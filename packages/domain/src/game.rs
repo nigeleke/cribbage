@@ -1,4 +1,7 @@
+mod capabilities;
 mod state;
+
+pub use capabilities::{HasHands, HasRoles};
 
 #[cfg(test)]
 #[coverage(off)]
@@ -6,7 +9,7 @@ pub(crate) mod tests;
 
 // ------------------------------------
 use crate::card::Card;
-use crate::cards::{Crib, Deck};
+use crate::cards::{Crib, Deck, Hand};
 use crate::constants::{CARDS_DEALT_PER_HAND, CARDS_IN_CRIB, PLAYERS_PER_GAME};
 use crate::players::{Dealer, Player, Pone, Roles};
 use crate::plays::PlayState;

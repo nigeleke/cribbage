@@ -1,13 +1,10 @@
-use core::panic;
-
 use cribbage_domain::prelude::{
-    CutForDealOutcome, DealOutcome, Deck, Discard, DiscardOutcome, Game as DomainGame,
-    GameError as DomainGameError, Player,
+    CutForDealOutcome, DealOutcome, Discard, DiscardOutcome, Game as DomainGame,
+    GameError as DomainGameError, Hand, Player,
 };
 
 use cribbage_tellus::prelude::{
-    DeckSource, Game, GameCommand, GameEvent, GameId, GameState, PersistedCard, PersistedCards,
-    UserId, Users,
+    DeckSource, Game, GameEvent, GameId, GameState, PersistedCard, PersistedCards, UserId, Users,
 };
 use tellus::EventSourced;
 
@@ -55,7 +52,6 @@ macro_rules! transition {
 impl GameScenario {
     pub fn users(&self) -> Users {
         match self.state {
-            GameState::PendingCreation => panic!("no users"),
             GameState::Starting { users, .. }
             | GameState::Dealing { users, .. }
             | GameState::Discarding { users, .. }
@@ -65,6 +61,21 @@ impl GameScenario {
             | GameState::ScoringDealer { users, .. }
             | GameState::ScoringCrib { users, .. }
             | GameState::Finished { users, .. } => users,
+            _ => panic!("no users"),
+        }
+    }
+
+    pub fn hand(&self, player: Player) -> &Hand {
+        use cribbage_domain::prelude::HasHands;
+        match &self.state {
+            GameState::Discarding { game, .. } => game.hand(player),
+            GameState::Cutting { game, .. } => game.hand(player),
+            GameState::Playing { game, .. } => game.hand(player),
+            GameState::ScoringPone { game, .. } => game.hand(player),
+            GameState::ScoringDealer { game, .. } => game.hand(player),
+            GameState::ScoringCrib { game, .. } => game.hand(player),
+            GameState::Finished { game, .. } => game.hand(player),
+            _ => panic!("no hands"),
         }
     }
 
@@ -79,6 +90,11 @@ impl GameScenario {
         let guest = starting.users().user(Player::Player1);
 
         starting.cut_for_deal(host).cut_for_deal(guest)
+    }
+
+    pub fn progress_to_discarding(self) -> Self {
+        let dealing = self.progress_to_dealing();
+        dealing.deal()
     }
 
     pub async fn to_fixture(&self) -> EntityFixture<Game<ShuffledDeckSource>> {
@@ -116,11 +132,12 @@ impl GameScenario {
         )
     }
 
-    fn deal(self, deck: Deck) -> Self {
+    fn deal(self) -> Self {
         transition!(
             self,
             GameState::Dealing { game, users },
             {
+                let deck = ShuffledDeckSource::default().new_deck();
                 let persisted_deck = PersistedCards::from(deck.as_ref());
                 game.deal(deck).map(|outcome| (outcome, persisted_deck))
             },

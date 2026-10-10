@@ -51,11 +51,13 @@ impl<E: EventSourced> EntityFixture<E> {
     }
 
     pub fn when(self, command: E::Command) -> Self {
-        self.entity.handle(
-            self.context.context(),
-            Incoming::Message(command),
-            &self.state,
-        );
+        self.entity
+            .handle(
+                self.context.context(),
+                Incoming::Message(command),
+                &self.state,
+            )
+            .expect("command must be sucessful");
 
         self
     }

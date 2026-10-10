@@ -1,21 +1,19 @@
-use cribbage_domain::prelude::{
-    Card, CutForDealOutcome, DealOutcome, Deck, Game as DomainGame, Player,
-};
+use cribbage_domain::prelude::{Card, CutForDealOutcome, DealOutcome, Deck, Game as DomainGame};
 use tellus::{ActorContext, Effect, EventSourced, Incoming, Nothing, PersistenceId};
 
 use crate::game::{
-    DeckSource, GameCommand as C, GameError, GameEvent as E, GameId, GameState as S, Users,
+    DeckSource, GameCommand as C, GameError, GameEvent as E, GameId, GameState as S,
 };
 use crate::persistence::PersistedCards;
 
 pub struct Game<D: DeckSource> {
     id: GameId,
-    deck_source: D,
+    _deck_source: D,
 }
 
 impl<D: DeckSource> Game<D> {
-    pub fn new(id: GameId, deck_source: D) -> Self {
-        Self { id, deck_source }
+    pub fn new(id: GameId, _deck_source: D) -> Self {
+        Self { id, _deck_source }
     }
 
     pub(crate) fn persistence_id(&self) -> PersistenceId {
@@ -80,7 +78,7 @@ impl<D: DeckSource> EventSourced for Game<D> {
 
     fn handle(
         &self,
-        context: &ActorContext<Self::Command>,
+        _context: &ActorContext<Self::Command>,
         incoming: Incoming<Self::Command>,
         state: &Self::State,
     ) -> Result<Effect<Self>, Self::Error> {

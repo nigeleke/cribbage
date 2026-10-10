@@ -100,9 +100,9 @@ impl GameScenario {
         dealing.deal()
     }
 
-    pub fn to_fixture(self) -> EntityFixture<Game<ShuffledDeckSource>> {
+    pub fn to_fixture(&self) -> EntityFixture<Game<ShuffledDeckSource>> {
         let game = Game::new(self.id, ShuffledDeckSource::default());
-        EntityFixture::new(game).given(self.events)
+        EntityFixture::new(game).given(self.events.clone())
     }
 
     fn create_game(self) -> Self {

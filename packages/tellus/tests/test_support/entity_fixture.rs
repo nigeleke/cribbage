@@ -1,17 +1,22 @@
 use pretty_assertions::assert_eq;
 use tellus::{EventSourced, Incoming, testing::TestContext};
 
-pub struct EntityFixture<E: EventSourced> {
+pub struct EntityFixture<E: EventSourced>
+where
+    E::Command: Send + 'static,
+    E::Event: Clone,
+{
     context: TestContext<E::Command>,
     entity: E,
     state: E::State,
 }
 
-impl<E: EventSourced> EntityFixture<E> {
-    pub fn new(entity: E) -> Self
-    where
-        E::Command: Send + 'static,
-    {
+impl<E: EventSourced> EntityFixture<E>
+where
+    E::Command: Send + 'static,
+    E::Event: Clone,
+{
+    pub fn new(entity: E) -> Self {
         let context = TestContext::new();
         let state = entity.init().expect("entity must be initialised");
 
@@ -51,7 +56,8 @@ impl<E: EventSourced> EntityFixture<E> {
     }
 
     pub fn when(self, command: E::Command) -> Self {
-        self.entity
+        let effect = self
+            .entity
             .handle(
                 self.context.context(),
                 Incoming::Message(command),
@@ -59,7 +65,7 @@ impl<E: EventSourced> EntityFixture<E> {
             )
             .expect("command must be sucessful");
 
-        self
+        self.given(effect.events())
     }
 
     pub fn then(self, expected: &E::State) -> Self

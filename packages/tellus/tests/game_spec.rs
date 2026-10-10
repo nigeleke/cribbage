@@ -18,7 +18,7 @@ fn game_is_created() {
             users: users,
             deck: deck.clone(),
         })
-        .then(GameScenario::default().state());
+        .then(scenario.state());
 }
 
 #[test]
@@ -30,7 +30,7 @@ fn user1_cuts_for_deal() {
     scenario
         .to_fixture()
         .when(GameCommand::CutForDeal { user: host })
-        .then(GameScenario::default().state());
+        .then(scenario.cut_for_deal(host).state());
 }
 
 #[test]

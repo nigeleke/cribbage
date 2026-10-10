@@ -1,4 +1,4 @@
-use cribbage_domain::constants::{CARDS_DISCARDED_TO_CRIB, PLAYERS_PER_GAME};
+use cribbage_domain::constants::CARDS_DISCARDED_TO_CRIB;
 use serde::{Deserialize, Serialize};
 use tellus::{SchemaVersion, Versioned};
 
@@ -6,7 +6,7 @@ use crate::game::Users;
 use crate::persistence::{PersistedCard, PersistedCards};
 use crate::user::UserId;
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GameEvent {
     GameCreated {
         users: Users,

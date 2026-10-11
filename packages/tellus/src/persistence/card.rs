@@ -1,7 +1,7 @@
 use cribbage_domain::prelude::{Card, Face, Suit};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct PersistedCard(u8);
 

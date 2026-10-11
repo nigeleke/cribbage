@@ -18,7 +18,7 @@ impl Discarding {
         self.discards.iter().copied().flatten().flatten().collect()
     }
 
-    pub(crate) fn discard(&mut self, player: Player, discard: Discard) -> Result<()> {
+    pub(crate) fn validate_discard(&self, player: Player, discard: Discard) -> Result<()> {
         self.discards[player]
             .is_none()
             .then_some(())
@@ -29,6 +29,12 @@ impl Discarding {
             .all(|card| self.hands[player].contains(card))
             .then_some(())
             .ok_or(GameError::CardsNotInHand)?;
+
+        Ok(())
+    }
+
+    pub(crate) fn discard(&mut self, player: Player, discard: Discard) -> Result<()> {
+        self.validate_discard(player, discard)?;
 
         self.hands[player].remove_all(&discard);
         self.discards[player] = Some(discard);

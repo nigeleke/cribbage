@@ -20,7 +20,7 @@ pub enum GameEvent {
     },
     DiscardMade {
         user: UserId,
-        discard: [PersistedCards; CARDS_DISCARDED_TO_CRIB],
+        discard: [PersistedCard; CARDS_DISCARDED_TO_CRIB],
     },
     StarterCut {
         starter: PersistedCard,

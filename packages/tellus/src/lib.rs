@@ -15,7 +15,9 @@ mod macros;
 
 /// This module provides a convenient set of imports for working with a tellus actor.
 pub mod prelude {
-    pub use super::game::{DeckSource, Game, GameCommand, GameEvent, GameId, GameState, Users};
+    pub use super::game::{
+        DeckSource, Game, GameCommand, GameError, GameEvent, GameId, GameState, Users,
+    };
     pub use super::persistence::{PersistedCard, PersistedCards};
     pub use super::user::UserId;
 }

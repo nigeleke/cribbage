@@ -18,5 +18,4 @@ thiserror       = { workspace = true }
 serde           = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
-pretty_assertions = { workspace = true }
-tellus            = { workspace = true, features = ["test-util"] }
+tellus = { workspace = true, features = ["test-util"] }

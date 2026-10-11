@@ -1,8 +1,13 @@
 mod test_support;
 
+use std::assert_matches;
+
 // ------------------------------------
 use cribbage_domain::prelude::Player;
-use cribbage_tellus::prelude::{DeckSource, GameCommand, GameEvent, PersistedCards, UserId, Users};
+use cribbage_tellus::prelude::{
+    DeckSource, GameCommand, GameError, GameEvent, GameState, PersistedCard, PersistedCards,
+    UserId, Users,
+};
 use test_support::{GameScenario, ShuffledDeckSource};
 
 #[test]
@@ -16,9 +21,9 @@ fn game_is_created() {
         .to_fixture()
         .when(GameCommand::CreateGame {
             users: users,
-            deck: deck.clone(),
+            deck: deck,
         })
-        .then(scenario.state());
+        .then(|actual| assert_matches!(actual, GameState::Starting { .. }));
 }
 
 #[test]
@@ -30,7 +35,7 @@ fn user1_cuts_for_deal() {
     scenario
         .to_fixture()
         .when(GameCommand::CutForDeal { user: host })
-        .then(scenario.cut_for_deal(host).state());
+        .then(|actual| assert_matches!(actual, GameState::Dealing { .. }));
 }
 
 #[test]
@@ -43,7 +48,7 @@ fn user_cuts_for_deal_twice() {
         .to_fixture()
         .given_event(GameEvent::CutForDealMade { user: host })
         .when(GameCommand::CutForDeal { user: host })
-        .then(GameScenario::default().state());
+        .then_error(|error| assert_matches!(error, GameError::DomainError(_)));
 }
 
 #[test]
@@ -57,7 +62,7 @@ fn user2_cuts_for_deal() {
         .to_fixture()
         .given_event(GameEvent::CutForDealMade { user: host })
         .when(GameCommand::CutForDeal { user: guest })
-        .then(GameScenario::default().state());
+        .then(|actual| assert_matches!(actual, GameState::Dealing { .. }));
 }
 
 #[test]
@@ -68,28 +73,37 @@ fn hands_dealt_after_cut_made() {
 
     scenario
         .to_fixture()
-        .when(GameCommand::DealHands { deck: deck.clone() })
-        .then(GameScenario::default().state());
+        .when(GameCommand::DealHands { deck })
+        .then(|actual| assert_matches!(actual, GameState::Discarding { .. }));
 }
 
-// #[test]// async fn user1_discards_to_crib() {
-//     let scenario = GameScenario::default().progress_to_discarding();
-//     let users = scenario.users();
-//     let user = users.user(Player::Player0);
-//     let hand = scenario.hand(Player::Player0).to_vec();
-//     let discard = [hand[0], hand[1]]
-//         .into_iter()
-//         .map(|c| PersistedCard::from(*c));
-//
-//     scenario
-//         .to_fixture()
-//         .await
-//         .when_tell(GameCommand::Discard { user, discard })
-// }
+#[test]
+fn user1_discards_to_crib() {
+    let scenario = GameScenario::default().progress_to_discarding();
+    let users = scenario.users();
+    let user = users.user(Player::Player0);
+    let hand = scenario.hand(Player::Player0).to_vec();
+    let discard = [PersistedCard::from(&hand[0]), PersistedCard::from(&hand[1])];
+
+    scenario
+        .to_fixture()
+        .when(GameCommand::Discard { user, discard })
+        .then(|actual| assert_matches!(actual, GameState::Discarding { .. }));
+}
 
 #[test]
 fn user_discards_to_crib_twice() {
-    todo!()
+    let scenario = GameScenario::default().progress_to_discarding();
+    let users = scenario.users();
+    let user = users.user(Player::Player0);
+    let hand = scenario.hand(Player::Player0).to_vec();
+    let discard = [PersistedCard::from(&hand[0]), PersistedCard::from(&hand[1])];
+
+    scenario
+        .to_fixture()
+        .given_event(GameEvent::DiscardMade { user, discard })
+        .when(GameCommand::Discard { user, discard })
+        .then_error(|error| assert_matches!(error, GameError::DomainError(_)));
 }
 
 #[test]

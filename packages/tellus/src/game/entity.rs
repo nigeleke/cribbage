@@ -1,10 +1,11 @@
-use cribbage_domain::prelude::{Card, CutForDealOutcome, DealOutcome, Deck, Game as DomainGame};
+use cribbage_domain::prelude::{
+    Card, CutForDealOutcome, DealOutcome, Deck, DiscardOutcome, Game as DomainGame,
+};
 use tellus::{ActorContext, Effect, EventSourced, Incoming, Nothing, PersistenceId};
 
 use crate::game::{
     DeckSource, GameCommand as C, GameError, GameEvent as E, GameId, GameState as S,
 };
-use crate::persistence::PersistedCards;
 
 pub struct Game<D: DeckSource> {
     id: GameId,
@@ -17,7 +18,7 @@ impl<D: DeckSource> Game<D> {
     }
 
     pub(crate) fn persistence_id(&self) -> PersistenceId {
-        PersistenceId::new("game", &self.id.to_string())
+        PersistenceId::new("game", self.id.to_string())
             .expect("game id produces a valid persistence id")
     }
 
@@ -48,10 +49,25 @@ impl<D: DeckSource> Game<D> {
                 }
             }
 
+            (S::Discarding { game, users }, E::DiscardMade { user, discard }) => {
+                let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
+                let card0 = Card::try_from(&discard[0]).map_err(|_| GameError::InvalidCard)?;
+                let card1 = Card::try_from(&discard[1]).map_err(|_| GameError::InvalidCard)?;
+
+                let discard1 = [card0, card1];
+                match game.discard(player, discard1) {
+                    Ok(DiscardOutcome::Discarding(game)) => Ok(S::Discarding { game, users }),
+                    Ok(DiscardOutcome::Cutting(game)) => Ok(S::Cutting { game, users }),
+                    Err(e) => Err(GameError::DomainError(e)),
+                }
+            }
+
             (state, event) => {
-                println!("***** unhandled event: {event:?}");
-                println!("*****           state: {state:?}");
-                Err(GameError::InvalidDeck)
+                panic!(
+                    r#"***** unhandled state/event in apply
+                    event: {event:?}
+                    state: {state:?}"#
+                );
             }
         }
     }
@@ -72,7 +88,7 @@ impl<D: DeckSource> EventSourced for Game<D> {
         Ok(S::PendingCreation)
     }
 
-    fn init_from_snapshot(&self, snapshot: Self::Snapshot) -> Result<Self::State, Self::Error> {
+    fn init_from_snapshot(&self, _snapshot: Self::Snapshot) -> Result<Self::State, Self::Error> {
         todo!()
     }
 
@@ -100,15 +116,23 @@ impl<D: DeckSource> EventSourced for Game<D> {
                 }
 
                 (C::DealHands { deck }, S::Dealing { game, .. }) => {
-                    let deck = Vec::<_>::try_from(&deck).map_err(|_| GameError::InvalidDeck)?;
-                    let deck = Deck::from_iter(deck.into_iter());
-                    game.validate_deal(&deck)?;
+                    let deck1 = Vec::<_>::try_from(&deck).map_err(|_| GameError::InvalidDeck)?;
+                    let deck1 = Deck::from_iter(deck1);
+                    game.validate_deal(&deck1)?;
 
-                    let deck = PersistedCards::from(deck.as_ref());
                     Effect::persist(E::HandsDealt { deck })
                 }
 
-                (C::Discard { user, discard }, S::Discarding { game, users }) => todo!(),
+                (C::Discard { user, discard }, S::Discarding { game, users }) => {
+                    let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
+                    let card0 = Card::try_from(&discard[0]).map_err(|_| GameError::InvalidCard)?;
+                    let card1 = Card::try_from(&discard[1]).map_err(|_| GameError::InvalidCard)?;
+                    let discard1 = [card0, card1];
+                    game.validate_discard(player, discard1)?;
+
+                    Effect::persist(E::DiscardMade { user, discard })
+                }
+
                 (C::CutStarter, S::Cutting { game, users }) => todo!(),
                 (C::PlayCard { user, card }, S::Playing { game, users }) => todo!(),
                 (C::Go { user }, S::Playing { game, users }) => todo!(),

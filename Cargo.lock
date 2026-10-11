@@ -93,7 +93,6 @@ version = "0.3.0"
 dependencies = [
  "cribbage-domain",
  "cribbage-macros",
- "pretty_assertions",
  "serde",
  "tellus",
  "thiserror",

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::persistence::PersistedCard;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct PersistedCards(Vec<PersistedCard>);
 

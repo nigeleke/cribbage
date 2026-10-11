@@ -159,7 +159,7 @@ pub struct Finished {
 }
 
 /// Errors that can arise when a command is rejected by the domain rules.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum GameError {
     /// The given player has already cut a card in the current deal-cut round.
     #[error("game-error.player-already-cut")]
@@ -309,6 +309,11 @@ pub enum DiscardOutcome {
 }
 
 impl Game<Discarding> {
+    /// todo!()
+    pub fn validate_discard(&self, player: Player, discard: Discard) -> Result<()> {
+        self.state.validate_discard(player, discard)
+    }
+
     /// Discards two cards from the specified player’s hand into the crib.
     ///
     /// The two cards must belong to the player’s current hand and the player
@@ -321,6 +326,8 @@ impl Game<Discarding> {
     /// * [`GameError::PlayerAlreadyDiscarded`] – the player already discarded
     /// * [`GameError::CardsNotInHand`] – one or both cards are not in the hand
     pub fn discard(mut self, player: Player, discard: Discard) -> Result<DiscardOutcome> {
+        self.validate_discard(player, discard)?;
+
         self.state.discard(player, discard)?;
 
         let all_discards = self.state.all_discards();

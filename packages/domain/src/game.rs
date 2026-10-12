@@ -360,6 +360,15 @@ pub enum CutStarterOutcome {
 }
 
 impl Game<Cutting> {
+    /// todo()!
+    pub fn validate_cut_starter(&self) -> Result<()> {
+        if self.state.deck.len() >= 1 {
+            Ok(())
+        } else {
+            Err(GameError::CardNotInDeck)
+        }
+    }
+
     /// Cuts the starter card from the remaining deck to begin pegging.
     ///
     /// If the starter is a Jack the dealer scores “His Heels” (two points).

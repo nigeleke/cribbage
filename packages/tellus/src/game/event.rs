@@ -1,9 +1,8 @@
-use cribbage_domain::constants::CARDS_DISCARDED_TO_CRIB;
 use serde::{Deserialize, Serialize};
 use tellus::{SchemaVersion, Versioned};
 
 use crate::game::Users;
-use crate::persistence::{PersistedCard, PersistedCards};
+use crate::persistence::{PersistedCard, PersistedCards, PersistedDiscard};
 use crate::user::UserId;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -20,11 +19,9 @@ pub enum GameEvent {
     },
     DiscardMade {
         user: UserId,
-        discard: [PersistedCard; CARDS_DISCARDED_TO_CRIB],
+        discard: PersistedDiscard,
     },
-    StarterCut {
-        starter: PersistedCard,
-    },
+    StarterCut,
     CardPlayed {
         user: UserId,
         card: PersistedCard,

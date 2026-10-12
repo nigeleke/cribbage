@@ -1,7 +1,5 @@
-use cribbage_domain::constants::CARDS_DISCARDED_TO_CRIB;
-
 use crate::game::Users;
-use crate::persistence::{PersistedCard, PersistedCards};
+use crate::persistence::{PersistedCard, PersistedCards, PersistedDiscard};
 use crate::user::UserId;
 
 #[derive(Debug)]
@@ -18,7 +16,7 @@ pub enum GameCommand {
     },
     Discard {
         user: UserId,
-        discard: [PersistedCard; CARDS_DISCARDED_TO_CRIB],
+        discard: PersistedDiscard,
     },
     CutStarter,
     PlayCard {

@@ -492,8 +492,9 @@ dependencies = [
 
 [[package]]
 name = "tellus"
-version = "0.3.0"
-source = "git+https://github.com/hseeberger/tellus.git?branch=feat%2Ftest-context#01d3b226246921c03d9157d9c311a1669014df18"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7f1738ef31b5caaed255bf2d3c2b95f80fd0f92899e7cf85357323c781d8bcb"
 dependencies = [
  "ciborium",
  "derive_more",

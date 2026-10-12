@@ -4,7 +4,8 @@ use cribbage_domain::prelude::{
 };
 
 use cribbage_tellus::prelude::{
-    DeckSource, Game, GameEvent, GameId, GameState, PersistedCard, PersistedCards, UserId, Users,
+    DeckSource, Game, GameEvent, GameId, GameState, PersistedCard, PersistedCards,
+    PersistedDiscard, UserId, Users,
 };
 
 use crate::test_support::{EntityFixture, ShuffledDeckSource};
@@ -100,6 +101,19 @@ impl GameScenario {
         dealing.deal()
     }
 
+    pub fn progress_to_cutting(self) -> Self {
+        self.progress_to_discarding()
+            .progress_discard_for_player(Player::Player0)
+            .progress_discard_for_player(Player::Player1)
+    }
+
+    fn progress_discard_for_player(self, player: Player) -> Self {
+        let user = self.users().user(player);
+        let hand = self.hand(player);
+        let discard = [hand[0], hand[1]];
+        self.discard(user, discard)
+    }
+
     pub fn to_fixture(self) -> EntityFixture<Game<ShuffledDeckSource>> {
         let game = Game::new(self.id, ShuffledDeckSource::default());
         EntityFixture::new(game).given(self.events)
@@ -158,13 +172,19 @@ impl GameScenario {
                 let player = users.player(user).expect("valid user required");
                 game.discard(player, discard)
             },
-            DiscardOutcome::Discarding(game) => (GameState::Discarding { game, users }, vec![]),
-            DiscardOutcome::Cutting(game) => (GameState::Cutting { game, users }, vec![]),
+            DiscardOutcome::Discarding(game) => (
+                GameState::Discarding { game, users },
+                [GameEvent::DiscardMade { user, discard: PersistedDiscard::from(&discard) }]
+            ),
+            DiscardOutcome::Cutting(game) => (
+                GameState::Cutting { game, users },
+                [GameEvent::DiscardMade { user, discard: PersistedDiscard::from(&discard) }]
+            ),
         )
     }
 
-    fn cut_starter(mut self, starter: PersistedCard) -> Self {
-        self.events.push(GameEvent::StarterCut { starter });
+    fn cut_starter(mut self) -> Self {
+        self.events.push(GameEvent::StarterCut);
         self
     }
 

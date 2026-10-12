@@ -200,13 +200,8 @@ impl<D: DeckSource> EventSourced for Game<D> {
         println!("\n***** APPLY:   {:?}", event);
         println!("***** state:   {:?}", state);
 
-        let state = self
-            .try_apply(state, event)
-            .expect("event should be applied successfully");
-
-        println!("***** outcome: {:?}", state);
-
-        state
+        self.try_apply(state, event)
+            .expect("event should be applied successfully")
     }
 
     //

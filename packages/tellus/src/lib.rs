@@ -18,6 +18,6 @@ pub mod prelude {
     pub use super::game::{
         DeckSource, Game, GameCommand, GameError, GameEvent, GameId, GameState, Users,
     };
-    pub use super::persistence::{PersistedCard, PersistedCards};
+    pub use super::persistence::{PersistedCard, PersistedCards, PersistedDiscard};
     pub use super::user::UserId;
 }

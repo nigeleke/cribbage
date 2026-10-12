@@ -1,10 +1,13 @@
 use cribbage_domain::prelude::{
-    Card, CutForDealOutcome, DealOutcome, Deck, DiscardOutcome, Game as DomainGame,
+    Card, CutForDealOutcome, CutStarterOutcome, DealOutcome, Deck, Discard, DiscardOutcome,
+    Game as DomainGame,
 };
 use tellus::{ActorContext, Effect, EventSourced, Incoming, Nothing, PersistenceId};
 
 use crate::game::{
-    DeckSource, GameCommand as C, GameError, GameEvent as E, GameId, GameState as S,
+    DeckSource, GameCommand as C, GameError,
+    GameEvent::{self as E, StarterCut},
+    GameId, GameState as S,
 };
 
 pub struct Game<D: DeckSource> {
@@ -51,16 +54,21 @@ impl<D: DeckSource> Game<D> {
 
             (S::Discarding { game, users }, E::DiscardMade { user, discard }) => {
                 let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-                let card0 = Card::try_from(&discard[0]).map_err(|_| GameError::InvalidCard)?;
-                let card1 = Card::try_from(&discard[1]).map_err(|_| GameError::InvalidCard)?;
+                let discard1 =
+                    Discard::try_from(&discard).map_err(|_| GameError::InvalidDiscard)?;
 
-                let discard1 = [card0, card1];
                 match game.discard(player, discard1) {
                     Ok(DiscardOutcome::Discarding(game)) => Ok(S::Discarding { game, users }),
                     Ok(DiscardOutcome::Cutting(game)) => Ok(S::Cutting { game, users }),
                     Err(e) => Err(GameError::DomainError(e)),
                 }
             }
+
+            (S::Cutting { game, users }, StarterCut) => match game.cut_starter() {
+                Ok(CutStarterOutcome::Playing(game)) => Ok(S::Playing { game, users }),
+                Ok(CutStarterOutcome::Finished(game)) => Ok(S::Finished { game, users }),
+                Err(e) => Err(GameError::DomainError(e)),
+            },
 
             (state, event) => {
                 panic!(
@@ -125,15 +133,18 @@ impl<D: DeckSource> EventSourced for Game<D> {
 
                 (C::Discard { user, discard }, S::Discarding { game, users }) => {
                     let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-                    let card0 = Card::try_from(&discard[0]).map_err(|_| GameError::InvalidCard)?;
-                    let card1 = Card::try_from(&discard[1]).map_err(|_| GameError::InvalidCard)?;
-                    let discard1 = [card0, card1];
+                    let discard1 =
+                        Discard::try_from(&discard).map_err(|_| GameError::InvalidDiscard)?;
                     game.validate_discard(player, discard1)?;
 
                     Effect::persist(E::DiscardMade { user, discard })
                 }
 
-                (C::CutStarter, S::Cutting { game, users }) => todo!(),
+                (C::CutStarter, S::Cutting { game, .. }) => {
+                    game.validate_cut_starter()?;
+                    Effect::persist(E::StarterCut)
+                }
+
                 (C::PlayCard { user, card }, S::Playing { game, users }) => todo!(),
                 (C::Go { user }, S::Playing { game, users }) => todo!(),
                 (C::ScorePone, S::ScoringPone { game, users }) => todo!(),
@@ -151,13 +162,8 @@ impl<D: DeckSource> EventSourced for Game<D> {
         println!("\n***** APPLY:   {:?}", event);
         println!("***** state:   {:?}", state);
 
-        let state = self
-            .try_apply(state, event)
-            .expect("event should be applied successfully");
-
-        println!("***** outcome: {:?}", state);
-
-        state
+        self.try_apply(state, event)
+            .expect("event should be applied successfully")
     }
 
     //

@@ -5,7 +5,7 @@ use std::assert_matches;
 // ------------------------------------
 use cribbage_domain::prelude::Player;
 use cribbage_tellus::prelude::{
-    DeckSource, GameCommand, GameError, GameEvent, GameState, PersistedCard, PersistedCards,
+    DeckSource, GameCommand, GameError, GameEvent, GameState, PersistedCards, PersistedDiscard,
     UserId, Users,
 };
 use test_support::{GameScenario, ShuffledDeckSource};
@@ -35,7 +35,7 @@ fn user1_cuts_for_deal() {
     scenario
         .to_fixture()
         .when(GameCommand::CutForDeal { user: host })
-        .then(|actual| assert_matches!(actual, GameState::Dealing { .. }));
+        .then(|actual| assert_matches!(actual, GameState::Starting { .. }));
 }
 
 #[test]
@@ -83,7 +83,7 @@ fn user1_discards_to_crib() {
     let users = scenario.users();
     let user = users.user(Player::Player0);
     let hand = scenario.hand(Player::Player0).to_vec();
-    let discard = [PersistedCard::from(&hand[0]), PersistedCard::from(&hand[1])];
+    let discard = PersistedDiscard::from(&[hand[0], hand[1]]);
 
     scenario
         .to_fixture()
@@ -97,7 +97,7 @@ fn user_discards_to_crib_twice() {
     let users = scenario.users();
     let user = users.user(Player::Player0);
     let hand = scenario.hand(Player::Player0).to_vec();
-    let discard = [PersistedCard::from(&hand[0]), PersistedCard::from(&hand[1])];
+    let discard = PersistedDiscard::from(&[hand[0], hand[1]]);
 
     scenario
         .to_fixture()
@@ -108,7 +108,38 @@ fn user_discards_to_crib_twice() {
 
 #[test]
 fn user2_discards_to_crib() {
-    todo!()
+    let scenario = GameScenario::default().progress_to_discarding();
+    let users = scenario.users();
+
+    let user0 = users.user(Player::Player0);
+    let hand0 = scenario.hand(Player::Player0).to_vec();
+    let discard0 = PersistedDiscard::from(&[hand0[0], hand0[1]]);
+
+    let user1 = users.user(Player::Player1);
+    let hand1 = scenario.hand(Player::Player1).to_vec();
+    let discard1 = PersistedDiscard::from(&[hand1[0], hand1[1]]);
+
+    scenario
+        .to_fixture()
+        .given_event(GameEvent::DiscardMade {
+            user: user0,
+            discard: discard0,
+        })
+        .when(GameCommand::Discard {
+            user: user1,
+            discard: discard1,
+        })
+        .then(|actual| assert_matches!(actual, GameState::Cutting { .. }));
+}
+
+#[test]
+fn starter_card_is_cut() {
+    let scenario = GameScenario::default().progress_to_cutting();
+
+    scenario
+        .to_fixture()
+        .when(GameCommand::CutStarter)
+        .then(|actual| assert_matches!(actual, GameState::Playing { .. }));
 }
 
 #[test]

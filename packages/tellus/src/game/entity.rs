@@ -1,6 +1,6 @@
 use cribbage_domain::prelude::{
     Card, CutForDealOutcome, CutStarterOutcome, DealOutcome, Deck, Discard, DiscardOutcome,
-    Game as DomainGame,
+    Game as DomainGame, PlayOutcome,
 };
 use tellus::{ActorContext, Effect, EventSourced, Incoming, Nothing, PersistenceId};
 
@@ -9,6 +9,7 @@ use crate::game::{
     GameEvent::{self as E, StarterCut},
     GameId, GameState as S,
 };
+use crate::persistence::PersistedCard;
 
 pub struct Game<D: DeckSource> {
     id: GameId,
@@ -69,6 +70,17 @@ impl<D: DeckSource> Game<D> {
                 Ok(CutStarterOutcome::Finished(game)) => Ok(S::Finished { game, users }),
                 Err(e) => Err(GameError::DomainError(e)),
             },
+
+            (S::Playing { game, users }, E::CardPlayed { user, card }) => {
+                let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
+                let card = Card::try_from(&card).map_err(|_| GameError::InvalidCard)?;
+                match game.play(player, card) {
+                    Ok(PlayOutcome::Playing(game)) => Ok(S::Playing { game, users }),
+                    Ok(PlayOutcome::Scoring(game)) => Ok(S::ScoringPone { game, users }),
+                    Ok(PlayOutcome::Finished(game)) => Ok(S::Finished { game, users }),
+                    Err(e) => Err(GameError::DomainError(e)),
+                }
+            }
 
             (state, event) => {
                 panic!(
@@ -145,7 +157,13 @@ impl<D: DeckSource> EventSourced for Game<D> {
                     Effect::persist(E::StarterCut)
                 }
 
-                (C::PlayCard { user, card }, S::Playing { game, users }) => todo!(),
+                (C::PlayCard { user, card }, S::Playing { game, users }) => {
+                    let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
+                    let card0 = Card::try_from(&card).map_err(|_| GameError::InvalidCard)?;
+                    game.validate_play(player, card0)?;
+                    Effect::persist(E::CardPlayed { user, card })
+                }
+
                 (C::Go { user }, S::Playing { game, users }) => todo!(),
                 (C::ScorePone, S::ScoringPone { game, users }) => todo!(),
                 (C::ScoreDealer, S::ScoringDealer { game, users }) => todo!(),

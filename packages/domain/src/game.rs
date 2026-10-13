@@ -375,6 +375,8 @@ impl Game<Cutting> {
     /// Should those points (or any earlier score) reach the winning total the
     /// game finishes immediately; otherwise it enters the [`Playing`] phase.
     pub fn cut_starter(mut self) -> Result<CutStarterOutcome> {
+        self.validate_cut_starter()?;
+
         let dealer = self.state.roles.dealer();
         let starter = self.state.deck.cut().ok_or(GameError::CardNotInDeck)?;
 
@@ -424,18 +426,9 @@ pub enum GoOutcome {
 }
 
 impl Game<Playing> {
-    /// Plays a card for the specified player during the pegging phase.
-    ///
-    /// The card must be in the player’s hand and must not cause the running
-    /// total to exceed 31. Points are awarded for any combinations completed
-    /// by the play (fifteen, pair, run, thirty-one, last card).
-    ///
-    /// # Errors
-    ///
-    /// * [`GameError::OutOfTurn`] – it is not this player’s turn
-    /// * [`GameError::InvalidPlay`] – the card is illegal or not in hand
-    pub fn play(mut self, player: Player, card: Card) -> Result<PlayOutcome> {
-        let state = &mut self.state;
+    /// todo!()
+    pub fn validate_play(&self, player: Player, card: Card) -> Result<()> {
+        let state = &self.state;
 
         (state.play_state.next_to_play() == player)
             .then_some(())
@@ -449,6 +442,22 @@ impl Game<Playing> {
             .then_some(())
             .ok_or(GameError::InvalidPlay)?;
 
+        Ok(())
+    }
+    /// Plays a card for the specified player during the pegging phase.
+    ///
+    /// The card must be in the player’s hand and must not cause the running
+    /// total to exceed 31. Points are awarded for any combinations completed
+    /// by the play (fifteen, pair, run, thirty-one, last card).
+    ///
+    /// # Errors
+    ///
+    /// * [`GameError::OutOfTurn`] – it is not this player’s turn
+    /// * [`GameError::InvalidPlay`] – the card is illegal or not in hand
+    pub fn play(mut self, player: Player, card: Card) -> Result<PlayOutcome> {
+        self.validate_play(player, card)?;
+
+        let state = &mut self.state;
         state.hands[player].remove(card);
 
         let score = state.play_state.play(card);

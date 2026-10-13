@@ -114,6 +114,10 @@ impl GameScenario {
         self.discard(user, discard)
     }
 
+    pub fn progress_to_playing(self) -> Self {
+        self.progress_to_cutting().cut_starter()
+    }
+
     pub fn to_fixture(self) -> EntityFixture<Game<ShuffledDeckSource>> {
         let game = Game::new(self.id, ShuffledDeckSource::default());
         EntityFixture::new(game).given(self.events)

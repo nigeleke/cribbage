@@ -5,8 +5,8 @@ use std::assert_matches;
 // ------------------------------------
 use cribbage_domain::prelude::Player;
 use cribbage_tellus::prelude::{
-    DeckSource, GameCommand, GameError, GameEvent, GameState, PersistedCards, PersistedDiscard,
-    UserId, Users,
+    DeckSource, GameCommand, GameError, GameEvent, GameState, PersistedCard, PersistedCards,
+    PersistedDiscard, UserId, Users,
 };
 use test_support::{GameScenario, ShuffledDeckSource};
 
@@ -144,7 +144,17 @@ fn starter_card_is_cut() {
 
 #[test]
 fn user_plays_card() {
-    todo!()
+    let scenario = GameScenario::default().progress_to_playing();
+    let users = scenario.users();
+
+    let user = users.user(Player::Player0);
+    let hand = scenario.hand(Player::Player0).to_vec();
+    let card = PersistedCard::from(&hand[0]);
+
+    scenario
+        .to_fixture()
+        .when(GameCommand::PlayCard { user, card })
+        .then(|actual| assert_matches!(actual, GameState::Playing { .. }));
 }
 
 #[test]

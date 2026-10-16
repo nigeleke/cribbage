@@ -1,6 +1,7 @@
 use cribbage_domain::prelude::{
     Card, CutForDealOutcome, CutStarterOutcome, DealOutcome, Deck, Discard, DiscardOutcome,
-    Game as DomainGame, PlayOutcome,
+    Game as DomainGame, GoOutcome, PlayOutcome, ScoreCribOutcome, ScoreDealerOutcome,
+    ScorePoneOutcome,
 };
 use tellus::{ActorContext, Effect, EventSourced, Incoming, Nothing, PersistenceId};
 
@@ -9,7 +10,6 @@ use crate::game::{
     GameEvent::{self as E, StarterCut},
     GameId, GameState as S,
 };
-use crate::persistence::PersistedCard;
 
 pub struct Game<D: DeckSource> {
     id: GameId,
@@ -81,6 +81,34 @@ impl<D: DeckSource> Game<D> {
                     Err(e) => Err(GameError::DomainError(e)),
                 }
             }
+
+            (S::Playing { game, users }, E::GoMade { user }) => {
+                let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
+                match game.go(player) {
+                    Ok(GoOutcome::Playing(game)) => Ok(S::Playing { game, users }),
+                    Ok(GoOutcome::Scoring(game)) => Ok(S::ScoringPone { game, users }),
+                    Ok(GoOutcome::Finished(game)) => Ok(S::Finished { game, users }),
+                    Err(e) => Err(GameError::DomainError(e)),
+                }
+            }
+
+            (S::ScoringPone { game, users }, E::PoneScoreMade) => match game.score_pone() {
+                Ok(ScorePoneOutcome::Scoring(game)) => Ok(S::ScoringDealer { game, users }),
+                Ok(ScorePoneOutcome::Finished(game)) => Ok(S::Finished { game, users }),
+                Err(e) => Err(GameError::DomainError(e)),
+            },
+
+            (S::ScoringDealer { game, users }, E::DealerScoreMade) => match game.score_dealer() {
+                Ok(ScoreDealerOutcome::Scoring(game)) => Ok(S::ScoringCrib { game, users }),
+                Ok(ScoreDealerOutcome::Finished(game)) => Ok(S::Finished { game, users }),
+                Err(e) => Err(GameError::DomainError(e)),
+            },
+
+            (S::ScoringCrib { game, users }, E::CribScoreMade) => match game.score_crib() {
+                Ok(ScoreCribOutcome::Dealing(game)) => Ok(S::Dealing { game, users }),
+                Ok(ScoreCribOutcome::Finished(game)) => Ok(S::Finished { game, users }),
+                Err(e) => Err(GameError::DomainError(e)),
+            },
 
             (state, event) => {
                 panic!(
@@ -164,10 +192,18 @@ impl<D: DeckSource> EventSourced for Game<D> {
                     Effect::persist(E::CardPlayed { user, card })
                 }
 
-                (C::Go { user }, S::Playing { game, users }) => todo!(),
-                (C::ScorePone, S::ScoringPone { game, users }) => todo!(),
-                (C::ScoreDealer, S::ScoringDealer { game, users }) => todo!(),
-                (C::ScoreCrib, S::ScoringCrib { game, users }) => todo!(),
+                (C::Go { user }, S::Playing { game, users }) => {
+                    let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
+                    game.validate_go(player)?;
+                    Effect::persist(E::GoMade { user })
+                }
+
+                (C::ScorePone, S::ScoringPone { .. }) => Effect::persist(E::PoneScoreMade),
+
+                (C::ScoreDealer, S::ScoringDealer { .. }) => Effect::persist(E::DealerScoreMade),
+
+                (C::ScoreCrib, S::ScoringCrib { .. }) => Effect::persist(E::CribScoreMade),
+
                 (_, _) => Effect::none(),
             },
             _ => Effect::none(),
@@ -183,110 +219,4 @@ impl<D: DeckSource> EventSourced for Game<D> {
         self.try_apply(state, event)
             .expect("event should be applied successfully")
     }
-
-    //
-    //     fn receive(
-    //         &self,
-    //         _: &ActorContext<Self::Message>,
-    //         incoming: Incoming<Self::Message>,
-    //         state: Self::State,
-    //     ) -> Result<Control<Self::State>, Self::Error> {
-    //         let Incoming::Message(message) = incoming else {
-    //             return Ok(Control::Continue(state));
-    //         };
-    //
-    //         let state = match (state, message) {
-    //             (GameState::AwaitingCreation, GameMessage::Create { host, deck }) => {
-    //                 GameState::WaitingForPlayer { host, deck }
-    //             }
-    //
-    //             (GameState::WaitingForPlayer { host, deck }, GameMessage::Join { guest }) => {
-    //                 GameState::Started {
-    //                     game: DomainGame::new(deck),
-    //                     users: Users::new(host, guest),
-    //                 }
-    //             }
-    //
-    //             (GameState::Started { game, users }, GameMessage::CutForDeal { user, acks }) => {
-    //                 let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-    //                 match game.cut_for_deal(player)? {
-    //                     CutForDealOutcome::Starting(game) => GameState::Started { game, users },
-    //                     CutForDealOutcome::Dealing(game) => GameState::Dealing { game, users },
-    //                 }
-    //             }
-    //
-    //             (GameState::Started { game, users }, GameMessage::Ack { user }) => {
-    //                 let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-    //                 match game.cut_for_deal(player)? {
-    //                     CutForDealOutcome::Starting(game) => GameState::Started { game, users },
-    //                     CutForDealOutcome::Dealing(game) => GameState::Dealing { game, users },
-    //                 }
-    //             }
-    //
-    //             (GameState::Dealing { game, users }, GameMessage::Deal { deck }) => {
-    //                 match game.deal(deck)? {
-    //                     DealOutcome::Discarding(game) => GameState::Discarding { game, users },
-    //                 }
-    //             }
-    //
-    //             (GameState::Discarding { game, users }, GameMessage::Discard { user, discard }) => {
-    //                 let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-    //                 match game.discard(player, discard)? {
-    //                     DiscardOutcome::Discarding(game) => GameState::Discarding { game, users },
-    //                     DiscardOutcome::Cutting(game) => GameState::Cutting { game, users },
-    //                 }
-    //             }
-    //
-    //             (GameState::Cutting { game, users }, GameMessage::CutStarter { acks }) => {
-    //                 match game.cut_starter()? {
-    //                     CutStarterOutcome::Playing(game) => GameState::Playing { game, users },
-    //                     CutStarterOutcome::Finished(game) => GameState::Finished { game, users },
-    //                 }
-    //             }
-    //
-    //             (GameState::Playing { game, users }, GameMessage::PlayCard { user, card }) => {
-    //                 let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-    //                 match game.play(player, card)? {
-    //                     PlayOutcome::Playing(game) => GameState::Playing { game, users },
-    //                     PlayOutcome::Scoring(game) => GameState::ScoringPone { game, users },
-    //                     PlayOutcome::Finished(game) => GameState::Finished { game, users },
-    //                 }
-    //             }
-    //
-    //             (GameState::Playing { game, users }, GameMessage::Go { user }) => {
-    //                 let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-    //                 match game.go(player)? {
-    //                     GoOutcome::Playing(game) => GameState::Playing { game, users },
-    //                     GoOutcome::Scoring(game) => GameState::ScoringPone { game, users },
-    //                     GoOutcome::Finished(game) => GameState::Finished { game, users },
-    //                 }
-    //             }
-    //
-    //             (GameState::ScoringPone { game, users }, GameMessage::ScorePone { acks }) => {
-    //                 match game.score_pone()? {
-    //                     ScorePoneOutcome::Scoring(game) => GameState::ScoringDealer { game, users },
-    //                     ScorePoneOutcome::Finished(game) => GameState::Finished { game, users },
-    //                 }
-    //             }
-    //
-    //             (GameState::ScoringDealer { game, users }, GameMessage::ScoreDealer { acks }) => {
-    //                 match game.score_dealer()? {
-    //                     ScoreDealerOutcome::Scoring(game) => GameState::ScoringCrib { game, users },
-    //                     ScoreDealerOutcome::Finished(game) => GameState::Finished { game, users },
-    //                 }
-    //             }
-    //
-    //             (GameState::ScoringCrib { game, users }, GameMessage::ScoreCrib { acks }) => {
-    //                 match game.score_crib()? {
-    //                     ScoreCribOutcome::Dealing(game) => GameState::Dealing { game, users },
-    //                     ScoreCribOutcome::Finished(game) => GameState::Finished { game, users },
-    //                 }
-    //             }
-    //
-    //             (state, _) => state,
-    //         };
-    //
-    //         Ok(Control::Continue(state))
-    //     }
-    //
 }

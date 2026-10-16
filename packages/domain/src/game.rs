@@ -1,7 +1,7 @@
 mod capabilities;
 mod state;
 
-pub use capabilities::{HasHands, HasRoles};
+pub use capabilities::{HasHands, HasPlayState, HasRoles};
 
 #[cfg(test)]
 #[coverage(off)]
@@ -221,7 +221,9 @@ impl Game<Starting> {
         }
     }
 
-    /// Validate cut for deal todo!() docn
+    /// Validates that `player` can cut for the deal.
+    ///
+    /// Returns an error if the player has already cut or if the deck is empty.
     pub fn validate_cut_for_deal(&self, player: Player) -> Result<()> {
         self.state.validate_cut_for_deal(player)
     }
@@ -273,7 +275,10 @@ pub enum DealOutcome {
 }
 
 impl Game<Dealing> {
-    /// todo!()
+    /// Validates that the deck contains enough cards to deal both players' hands.
+    ///
+    /// Returns [`GameError::CardNotInDeck`] if the deck contains fewer cards than
+    /// required to deal the hands.
     pub fn validate_deal(&self, deck: &Deck) -> Result<()> {
         (deck.len() >= (CARDS_DEALT_PER_HAND * PLAYERS_PER_GAME))
             .then_some(())
@@ -309,7 +314,7 @@ pub enum DiscardOutcome {
 }
 
 impl Game<Discarding> {
-    /// todo!()
+    /// Validates that `player` can make the specified `discard` in the current game state.
     pub fn validate_discard(&self, player: Player, discard: Discard) -> Result<()> {
         self.state.validate_discard(player, discard)
     }
@@ -362,10 +367,10 @@ pub enum CutStarterOutcome {
 impl Game<Cutting> {
     /// todo()!
     pub fn validate_cut_starter(&self) -> Result<()> {
-        if self.state.deck.len() >= 1 {
-            Ok(())
-        } else {
+        if self.state.deck.is_empty() {
             Err(GameError::CardNotInDeck)
+        } else {
+            Ok(())
         }
     }
 
@@ -488,6 +493,21 @@ impl Game<Playing> {
         Ok(outcome)
     }
 
+    /// TODO!()
+    pub fn validate_go(&self, player: Player) -> Result<()> {
+        let state = &self.state;
+
+        (state.play_state.next_to_play() == player)
+            .then_some(())
+            .ok_or(GameError::OutOfTurn)?;
+
+        (state.play_state.legal_plays(player).is_empty())
+            .then_some(())
+            .ok_or(GameError::InvalidGo)?;
+
+        Ok(())
+    }
+
     /// Declares “go” for the specified player.
     ///
     /// Legal only when the player has no card that can be played without
@@ -501,15 +521,9 @@ impl Game<Playing> {
     /// * [`GameError::InvalidGo`] – the player still has a legal play, or go
     ///   has already been resolved
     pub fn go(mut self, player: Player) -> Result<GoOutcome> {
+        self.validate_go(player)?;
+
         let state = &mut self.state;
-
-        (state.play_state.next_to_play() == player)
-            .then_some(())
-            .ok_or(GameError::OutOfTurn)?;
-
-        (state.play_state.legal_plays(player).is_empty())
-            .then_some(())
-            .ok_or(GameError::InvalidGo)?;
 
         let score = state.play_state.go();
         self.scoreboard.record(score);

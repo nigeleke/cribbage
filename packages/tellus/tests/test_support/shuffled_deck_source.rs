@@ -8,7 +8,9 @@ pub struct ShuffledDeckSource {
 
 impl ShuffledDeckSource {
     pub(crate) fn new() -> Self {
-        let deck = Deck::new();
+        let mut cards = Deck::new().to_vec();
+        fastrand::shuffle(&mut cards);
+        let deck = Deck::from_iter(cards);
         Self { deck }
     }
 }

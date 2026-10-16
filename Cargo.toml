@@ -23,6 +23,7 @@ publish       = false
 cribbage-domain   = { path = "packages/domain" }
 cribbage-macros   = { path = "packages/macros" }
 # cribbage-tellus   = { path = "packages/tellus" }
+fastrand          = "2.5.0"
 insta             = "1.48.0"
 itertools         = "0.15.0"
 pretty_assertions = "1.4.1"

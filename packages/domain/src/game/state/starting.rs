@@ -10,8 +10,7 @@ impl Starting {
         }
     }
 
-    /// Validate cut_for_deal todo!() docn..
-    pub fn validate_cut_for_deal(&self, player: Player) -> Result<()> {
+    pub(crate) fn validate_cut_for_deal(&self, player: Player) -> Result<()> {
         self.cuts[player]
             .is_none()
             .then_some(())

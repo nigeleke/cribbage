@@ -3,7 +3,7 @@ mod test_support;
 use std::assert_matches;
 
 // ------------------------------------
-use cribbage_domain::prelude::Player;
+use cribbage_domain::prelude::{HasHands, HasPlayState, HasRoles, Player};
 use cribbage_tellus::prelude::{
     DeckSource, GameCommand, GameError, GameEvent, GameState, PersistedCard, PersistedCards,
     PersistedDiscard, UserId, Users,
@@ -28,7 +28,7 @@ fn game_is_created() {
 
 #[test]
 fn user1_cuts_for_deal() {
-    let scenario = GameScenario::default().progress_to_starting();
+    let scenario = GameScenario::default().given_starting();
     let users = scenario.users();
     let host = users.user(Player::Player0);
 
@@ -40,7 +40,7 @@ fn user1_cuts_for_deal() {
 
 #[test]
 fn user_cuts_for_deal_twice() {
-    let scenario = GameScenario::default().progress_to_starting();
+    let scenario = GameScenario::default().given_starting();
     let users = scenario.users();
     let host = users.user(Player::Player0);
 
@@ -53,7 +53,7 @@ fn user_cuts_for_deal_twice() {
 
 #[test]
 fn user2_cuts_for_deal() {
-    let scenario = GameScenario::default().progress_to_starting();
+    let scenario = GameScenario::default().given_starting();
     let users = scenario.users();
     let host = users.user(Player::Player0);
     let guest = users.user(Player::Player1);
@@ -67,7 +67,7 @@ fn user2_cuts_for_deal() {
 
 #[test]
 fn hands_dealt_after_cut_made() {
-    let scenario = GameScenario::default().progress_to_dealing();
+    let scenario = GameScenario::default().given_dealing();
     let deck = ShuffledDeckSource::new().new_deck();
     let deck = PersistedCards::from(deck.as_ref());
 
@@ -79,7 +79,7 @@ fn hands_dealt_after_cut_made() {
 
 #[test]
 fn user1_discards_to_crib() {
-    let scenario = GameScenario::default().progress_to_discarding();
+    let scenario = GameScenario::default().given_discarding();
     let users = scenario.users();
     let user = users.user(Player::Player0);
     let hand = scenario.hand(Player::Player0).to_vec();
@@ -93,7 +93,7 @@ fn user1_discards_to_crib() {
 
 #[test]
 fn user_discards_to_crib_twice() {
-    let scenario = GameScenario::default().progress_to_discarding();
+    let scenario = GameScenario::default().given_discarding();
     let users = scenario.users();
     let user = users.user(Player::Player0);
     let hand = scenario.hand(Player::Player0).to_vec();
@@ -108,7 +108,7 @@ fn user_discards_to_crib_twice() {
 
 #[test]
 fn user2_discards_to_crib() {
-    let scenario = GameScenario::default().progress_to_discarding();
+    let scenario = GameScenario::default().given_discarding();
     let users = scenario.users();
 
     let user0 = users.user(Player::Player0);
@@ -134,7 +134,7 @@ fn user2_discards_to_crib() {
 
 #[test]
 fn starter_card_is_cut() {
-    let scenario = GameScenario::default().progress_to_cutting();
+    let scenario = GameScenario::default().given_cutting();
 
     scenario
         .to_fixture()
@@ -144,11 +144,10 @@ fn starter_card_is_cut() {
 
 #[test]
 fn user_plays_card() {
-    let scenario = GameScenario::default().progress_to_playing();
-    let users = scenario.users();
-
-    let user = users.user(Player::Player0);
-    let hand = scenario.hand(Player::Player0).to_vec();
+    let scenario = GameScenario::default().given_playing();
+    let player = scenario.pone();
+    let user = scenario.users().user(player);
+    let hand = scenario.hand(player).to_vec();
     let card = PersistedCard::from(&hand[0]);
 
     scenario
@@ -159,15 +158,56 @@ fn user_plays_card() {
 
 #[test]
 fn user_go() {
-    todo!()
+    let scenario = GameScenario::default().given_go();
+    let player = scenario.next_to_play();
+    let user = scenario.users().user(player);
+
+    scenario
+        .to_fixture()
+        .when(GameCommand::Go { user })
+        .then(|actual| assert_matches!(actual, GameState::Playing { .. }));
 }
 
 #[test]
 fn pone_is_scored() {
-    todo!()
+    let scenario = GameScenario::default().given_scoring_pone();
+
+    scenario
+        .to_fixture()
+        .when(GameCommand::ScorePone)
+        .then(|actual| assert_matches!(actual, GameState::ScoringDealer { .. }));
 }
 
 #[test]
 fn dealer_is_scored() {
-    todo!()
+    let scenario = GameScenario::default().given_scoring_dealer();
+
+    scenario
+        .to_fixture()
+        .when(GameCommand::ScoreDealer)
+        .then(|actual| assert_matches!(actual, GameState::ScoringCrib { .. }));
+}
+
+#[test]
+fn crib_is_scored() {
+    let scenario = GameScenario::default().given_scoring_crib();
+
+    scenario
+        .to_fixture()
+        .when(GameCommand::ScoreCrib)
+        .then(|actual| assert_matches!(actual, GameState::Dealing { .. }));
+}
+
+#[test]
+fn game_is_won() {
+    let (scenario, winning_command) = GameScenario::default().given_finished();
+    let events = scenario.events();
+    let events = &events[..events.len().saturating_sub(1)];
+
+    let fixture = scenario.to_fixture_init().given(events);
+    assert!(!matches!(fixture.state(), GameState::Finished { .. }));
+
+    fixture
+        .when(winning_command)
+        .then(|actual| assert_matches!(actual, GameState::Finished { .. }));
 }

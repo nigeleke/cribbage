@@ -101,4 +101,8 @@ where
 
         self
     }
+
+    pub fn state(&self) -> &E::State {
+        &self.state
+    }
 }

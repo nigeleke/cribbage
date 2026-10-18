@@ -20,6 +20,12 @@ pub struct GameScenario {
     events: Vec<GE>,
 }
 
+// Used in advance_to_finish only with respect to stack usage reduction
+enum Next {
+    Continue(GameScenario),
+    Finished(GameScenario, GC),
+}
+
 macro_rules! transition {
         (
             $self:expr,
@@ -138,15 +144,8 @@ impl GameScenario {
     }
 
     pub fn given_finished(self) -> (Self, GC) {
-        let stack_start = Self::stack_address();
-        println!("stack_start: {stack_start}");
-        println!("GS: {}", std::mem::size_of::<GS>());
-        println!("GE: {}", std::mem::size_of::<GE>());
-        println!("GC: {}", std::mem::size_of::<GC>());
-        println!("GameScenario: {}", std::mem::size_of::<GameScenario>());
-
         assert_matches!(*self.state, GS::PendingCreation);
-        self.given_dealing().advance_to_finished(0, stack_start)
+        self.given_dealing().advance_to_finished()
     }
 
     pub fn to_fixture_init(self) -> EntityFixture<Game> {
@@ -227,37 +226,33 @@ impl GameScenario {
         }
     }
 
-    #[inline(never)]
-    fn stack_address() -> usize {
-        let local = 0_u8;
-        std::ptr::addr_of!(local) as usize
+    fn advance_to_finished(self) -> (Self, GC) {
+        let mut scenario = self;
+
+        loop {
+            match scenario.do_advance_to_finished_step() {
+                Next::Continue(next) => scenario = next,
+                Next::Finished(scenario, command) => {
+                    break (scenario, command);
+                }
+            }
+        }
     }
 
-    fn advance_to_finished(self, i: usize, stack_start: usize) -> (Self, GC) {
-        let stack_current = Self::stack_address();
-
-        println!(
-            "xx_GameScenario({i}): {} bytes, events: len={}, capacity={}, buffer≈{} bytes, stack_depth≈{} bytes",
-            std::mem::size_of_val(&self),
-            self.events.len(),
-            self.events.capacity(),
-            self.events.capacity() * std::mem::size_of::<GE>(),
-            stack_start.abs_diff(stack_current),
-        );
-
+    fn do_advance_to_finished_step(self) -> Next {
         match &*self.state {
-            GS::Dealing { .. } => self.do_deal().advance_to_finished(i + 1, stack_start),
+            GS::Dealing { .. } => Next::Continue(self.do_deal()),
 
-            GS::Discarding { .. } => self
-                .advance_discard(Player::Player0)
-                .advance_discard(Player::Player1)
-                .advance_to_finished(i + 1, stack_start),
+            GS::Discarding { .. } => Next::Continue(
+                self.advance_discard(Player::Player0)
+                    .advance_discard(Player::Player1),
+            ),
 
             GS::Cutting { .. } => {
                 let updated = self.do_cut_starter();
                 match *updated.state {
-                    GS::Finished { .. } => (updated, GC::CutStarter),
-                    GS::Playing { .. } => updated.advance_to_finished(i + 1, stack_start),
+                    GS::Finished { .. } => Next::Finished(updated, GC::CutStarter),
+                    GS::Playing { .. } => Next::Continue(updated),
                     _ => unreachable!(),
                 }
             }
@@ -270,19 +265,17 @@ impl GameScenario {
                 if plays.is_empty() {
                     let updated = self.do_go(user);
                     match *updated.state {
-                        GS::Playing { .. } => updated.advance_to_finished(i + 1, stack_start),
-                        GS::ScoringPone { .. } => updated.advance_to_finished(i + 1, stack_start),
-                        GS::Finished { .. } => (updated, GC::Go { user }),
+                        GS::Playing { .. } => Next::Continue(updated),
+                        GS::ScoringPone { .. } => Next::Continue(updated),
+                        GS::Finished { .. } => Next::Finished(updated, GC::Go { user }),
                         _ => unreachable!(),
                     }
                 } else {
                     let card = PersistedCard::from(&plays[0]);
                     let updated = self.do_play(user, card);
                     match *updated.state {
-                        GS::Playing { .. } | GS::ScoringPone { .. } => {
-                            updated.advance_to_finished(i + 1, stack_start)
-                        }
-                        GS::Finished { .. } => (updated, GC::PlayCard { user, card }),
+                        GS::Playing { .. } | GS::ScoringPone { .. } => Next::Continue(updated),
+                        GS::Finished { .. } => Next::Finished(updated, GC::PlayCard { user, card }),
                         _ => unreachable!(),
                     }
                 }
@@ -291,8 +284,8 @@ impl GameScenario {
             GS::ScoringPone { .. } => {
                 let updated = self.do_score_pone();
                 match *updated.state {
-                    GS::ScoringDealer { .. } => updated.advance_to_finished(i + 1, stack_start),
-                    GS::Finished { .. } => (updated, GC::ScorePone),
+                    GS::ScoringDealer { .. } => Next::Continue(updated),
+                    GS::Finished { .. } => Next::Finished(updated, GC::ScorePone),
                     _ => unreachable!(),
                 }
             }
@@ -300,8 +293,8 @@ impl GameScenario {
             GS::ScoringDealer { .. } => {
                 let updated = self.do_score_dealer();
                 match *updated.state {
-                    GS::ScoringCrib { .. } => updated.advance_to_finished(i + 1, stack_start),
-                    GS::Finished { .. } => (updated, GC::ScoreDealer),
+                    GS::ScoringCrib { .. } => Next::Continue(updated),
+                    GS::Finished { .. } => Next::Finished(updated, GC::ScoreDealer),
                     _ => unreachable!(),
                 }
             }
@@ -309,8 +302,8 @@ impl GameScenario {
             GS::ScoringCrib { .. } => {
                 let updated = self.do_score_crib();
                 match *updated.state {
-                    GS::Dealing { .. } => updated.advance_to_finished(i + 1, stack_start),
-                    GS::Finished { .. } => (updated, GC::ScoreCrib),
+                    GS::Dealing { .. } => Next::Continue(updated),
+                    GS::Finished { .. } => Next::Finished(updated, GC::ScoreCrib),
                     _ => unreachable!(),
                 }
             }

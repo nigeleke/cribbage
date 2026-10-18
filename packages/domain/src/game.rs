@@ -1,7 +1,7 @@
 mod capabilities;
 mod state;
 
-pub use capabilities::{HasHands, HasPlayState, HasRoles};
+pub use capabilities::{HasHands, HasPlayState, HasRoles, HasScoreboard};
 
 #[cfg(test)]
 #[coverage(off)]
@@ -160,39 +160,39 @@ pub struct Finished {
 
 /// Errors that can arise when a command is rejected by the domain rules.
 #[derive(Debug, PartialEq, Eq, thiserror::Error)]
-pub enum GameError {
+pub enum DomainError {
     /// The given player has already cut a card in the current deal-cut round.
-    #[error("game-error.player-already-cut")]
+    #[error("domain-error.player-already-cut")]
     PlayerAlreadyCut,
 
     /// The requested card is not present in the deck.
-    #[error("game-error.card-not-in-deck")]
+    #[error("domain-error.card-not-in-deck")]
     CardNotInDeck,
 
     /// The given player has already discarded to the crib this round.
-    #[error("game-error.player-already-discarded")]
+    #[error("domain-error.player-already-discarded")]
     PlayerAlreadyDiscarded,
 
     /// One or more of the supplied cards are not in the player’s hand.
-    #[error("game-error.cards-not-in-hand")]
+    #[error("domain-error.cards-not-in-hand")]
     CardsNotInHand,
 
     /// It is not the given player’s turn to act.
-    #[error("game-error.out-of-turn")]
+    #[error("domain-error.out-of-turn")]
     OutOfTurn,
 
     /// The card cannot legally be played (would exceed 31, or is not in hand).
-    #[error("game-error.invalid-play")]
+    #[error("domain-error.invalid-play")]
     InvalidPlay,
 
     /// “Go” was declared when the player still has a legal play, or when go
     /// has already been resolved for this sequence.
-    #[error("game-error.invalid-go")]
+    #[error("domain-error.invalid-go")]
     InvalidGo,
 }
 
 /// Domain-level result type used by all state-transition methods.
-pub(crate) type Result<T> = std::result::Result<T, GameError>;
+pub(crate) type Result<T> = std::result::Result<T, DomainError>;
 
 /// Possible results of a cut-for-deal action.
 #[derive(Debug)]
@@ -245,7 +245,7 @@ impl Game<Starting> {
         self.state.validate_cut_for_deal(player)?;
 
         let state = &mut self.state;
-        let cut = state.deck.cut().ok_or(GameError::CardNotInDeck)?;
+        let cut = state.deck.cut().ok_or(DomainError::CardNotInDeck)?;
 
         state.cuts[player] = Some(cut);
         state.deck.remove(cut);
@@ -282,7 +282,7 @@ impl Game<Dealing> {
     pub fn validate_deal(&self, deck: &Deck) -> Result<()> {
         (deck.len() >= (CARDS_DEALT_PER_HAND * PLAYERS_PER_GAME))
             .then_some(())
-            .ok_or(GameError::CardNotInDeck)
+            .ok_or(DomainError::CardNotInDeck)
     }
 
     /// Deals six cards to each player from the supplied `deck`.
@@ -365,10 +365,14 @@ pub enum CutStarterOutcome {
 }
 
 impl Game<Cutting> {
-    /// todo()!
+    /// Validates that a starter card can be cut from the deck.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`GameError::CardNotInDeck`] if the deck is empty.
     pub fn validate_cut_starter(&self) -> Result<()> {
         if self.state.deck.is_empty() {
-            Err(GameError::CardNotInDeck)
+            Err(DomainError::CardNotInDeck)
         } else {
             Ok(())
         }
@@ -383,7 +387,7 @@ impl Game<Cutting> {
         self.validate_cut_starter()?;
 
         let dealer = self.state.roles.dealer();
-        let starter = self.state.deck.cut().ok_or(GameError::CardNotInDeck)?;
+        let starter = self.state.deck.cut().ok_or(DomainError::CardNotInDeck)?;
 
         self.scoreboard
             .record(Score::try_starter(dealer.player(), starter));
@@ -431,24 +435,29 @@ pub enum GoOutcome {
 }
 
 impl Game<Playing> {
-    /// todo!()
+    /// Validates that a player can play the specified card.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the player cannot play the card in the current game state.
     pub fn validate_play(&self, player: Player, card: Card) -> Result<()> {
         let state = &self.state;
 
         (state.play_state.next_to_play() == player)
             .then_some(())
-            .ok_or(GameError::OutOfTurn)?;
+            .ok_or(DomainError::OutOfTurn)?;
 
         (state.hands[player].contains(&card))
             .then_some(())
-            .ok_or(GameError::CardsNotInHand)?;
+            .ok_or(DomainError::CardsNotInHand)?;
 
         (state.play_state.legal_plays(player).contains(&card))
             .then_some(())
-            .ok_or(GameError::InvalidPlay)?;
+            .ok_or(DomainError::InvalidPlay)?;
 
         Ok(())
     }
+
     /// Plays a card for the specified player during the pegging phase.
     ///
     /// The card must be in the player’s hand and must not cause the running
@@ -493,17 +502,22 @@ impl Game<Playing> {
         Ok(outcome)
     }
 
-    /// TODO!()
+    /// Validates that a player can declare go.
+    ///
+    /// # Errors
+    ///
+    /// * [`GameError::OutOfTurn`] – it is not this player’s turn
+    /// * [`GameError::InvalidGo`] – the card is illegal or not in hand
     pub fn validate_go(&self, player: Player) -> Result<()> {
         let state = &self.state;
 
         (state.play_state.next_to_play() == player)
             .then_some(())
-            .ok_or(GameError::OutOfTurn)?;
+            .ok_or(DomainError::OutOfTurn)?;
 
         (state.play_state.legal_plays(player).is_empty())
             .then_some(())
-            .ok_or(GameError::InvalidGo)?;
+            .ok_or(DomainError::InvalidGo)?;
 
         Ok(())
     }

@@ -1,5 +1,5 @@
 use crate::cards::Deck;
-use crate::game::{GameError, Result, Starting};
+use crate::game::{DomainError, Result, Starting};
 use crate::players::Player;
 
 impl Starting {
@@ -14,11 +14,11 @@ impl Starting {
         self.cuts[player]
             .is_none()
             .then_some(())
-            .ok_or(GameError::PlayerAlreadyCut)?;
+            .ok_or(DomainError::PlayerAlreadyCut)?;
 
         (!self.deck.is_empty())
             .then_some(())
-            .ok_or(GameError::CardNotInDeck)?;
+            .ok_or(DomainError::CardNotInDeck)?;
 
         Ok(())
     }

@@ -14,6 +14,6 @@ pub enum GameError {
     #[error("game-error.invalid-discard")]
     InvalidDiscard,
 
-    #[error("game-error.domain-error")]
-    DomainError(#[from] cribbage_domain::prelude::GameError),
+    #[error("game-error.{0}")]
+    DomainError(#[from] cribbage_domain::prelude::DomainError),
 }

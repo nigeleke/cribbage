@@ -29,7 +29,7 @@ impl Scoreboard {
     /// record is made; i.e. scoring zero points is not recorded.
     pub(crate) fn record(&mut self, maybe_score: Option<Score>) {
         if let Some(event) = maybe_score {
-            self.history.push(event);
+            self.history.push(event.clone());
         }
     }
 
@@ -54,6 +54,11 @@ impl Scoreboard {
     pub fn winner(&self) -> Option<Player> {
         use strum::IntoEnumIterator;
         Player::iter().find(|p| self.points(*p) >= Points::from(WINNING_SCORE))
+    }
+
+    /// Return the latest (most recent) score, if any.
+    pub fn latest_score(&self) -> Option<&Score> {
+        self.history.last()
     }
 
     /// Create a Scoreboard pending win for player.

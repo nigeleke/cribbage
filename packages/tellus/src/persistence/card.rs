@@ -1,7 +1,7 @@
 use cribbage_domain::prelude::{Card, Face, Suit};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct PersistedCard(u8);
 
@@ -20,6 +20,13 @@ impl TryFrom<&PersistedCard> for Card {
         let suit = Suit::from_repr(value.0 / 13).ok_or(())?;
         let face = Face::from_repr(value.0 % 13).ok_or(())?;
         Ok(Card::new(face, suit))
+    }
+}
+
+impl std::fmt::Debug for PersistedCard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let card = Card::try_from(self).map_or("**".to_string(), |c| format!("{:?}", c));
+        write!(f, "{card}")
     }
 }
 

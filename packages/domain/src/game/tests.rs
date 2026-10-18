@@ -113,7 +113,7 @@ mod deal_cut {
         let outcome = given.cut_for_deal(Player::Player0);
 
         match outcome {
-            Err(GameError::PlayerAlreadyCut) => (),
+            Err(DomainError::PlayerAlreadyCut) => (),
             other => panic!("unexpected state: {other:?}"),
         }
     }
@@ -124,7 +124,7 @@ mod deal_cut {
         let outcome = given.cut_for_deal(Player::Player0);
 
         match outcome {
-            Err(GameError::CardNotInDeck) => (),
+            Err(DomainError::CardNotInDeck) => (),
             other => panic!("unexpected state: {other:?}"),
         }
     }
@@ -257,7 +257,7 @@ mod the_crib {
             .as_discarding();
         let outcome = given.discard(Player::Player0, [card!("AH"), card!("2D")].into());
 
-        assert!(matches!(outcome, Err(GameError::CardsNotInHand)));
+        assert!(matches!(outcome, Err(DomainError::CardsNotInHand)));
     }
 
     #[test]
@@ -268,7 +268,7 @@ mod the_crib {
             .as_discarding();
         let outcome = given.discard(Player::Player0, [card!("AH"), card!("3H")].into());
 
-        assert!(matches!(outcome, Err(GameError::PlayerAlreadyDiscarded)));
+        assert!(matches!(outcome, Err(DomainError::PlayerAlreadyDiscarded)));
     }
 }
 
@@ -431,7 +431,7 @@ mod the_play {
         let outcome = given.play(Player::Player1, card!("QH"));
 
         match outcome {
-            Err(GameError::CardsNotInHand) => (),
+            Err(DomainError::CardsNotInHand) => (),
             other => panic!("unexpected state: {other:?}"),
         }
     }
@@ -442,7 +442,7 @@ mod the_play {
         let outcome = given.play(Player::Player0, card!("QH"));
 
         match outcome {
-            Err(GameError::OutOfTurn) => (),
+            Err(DomainError::OutOfTurn) => (),
             other => panic!("unexpected state: {other:?}"),
         }
     }
@@ -462,7 +462,7 @@ mod the_play {
         let outcome = given.play(Player::Player1, card!("4C"));
 
         match outcome {
-            Err(GameError::InvalidPlay) => (),
+            Err(DomainError::InvalidPlay) => (),
             other => panic!("unexpected state: {other:?}"),
         }
     }
@@ -877,7 +877,7 @@ mod the_go {
         let outcome = given.go(Player::Player1);
 
         match outcome {
-            Err(GameError::InvalidGo) => (),
+            Err(DomainError::InvalidGo) => (),
             other => panic!("unexpected state: {other:?}"),
         }
     }
@@ -891,7 +891,7 @@ mod the_go {
         let outcome = given.go(Player::Player0);
 
         match outcome {
-            Err(GameError::OutOfTurn) => (),
+            Err(DomainError::OutOfTurn) => (),
             other => panic!("unexpected state: {other:?}"),
         }
     }

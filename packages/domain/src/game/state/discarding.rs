@@ -1,6 +1,6 @@
 use crate::card::Card;
 use crate::cards::Deck;
-use crate::game::{Discarding, GameError, Result};
+use crate::game::{Discarding, DomainError, Result};
 use crate::players::{Player, Roles};
 use crate::types::{Discard, Discards, Hands};
 
@@ -22,13 +22,13 @@ impl Discarding {
         self.discards[player]
             .is_none()
             .then_some(())
-            .ok_or(GameError::PlayerAlreadyDiscarded)?;
+            .ok_or(DomainError::PlayerAlreadyDiscarded)?;
 
         discard
             .iter()
             .all(|card| self.hands[player].contains(card))
             .then_some(())
-            .ok_or(GameError::CardsNotInHand)?;
+            .ok_or(DomainError::CardsNotInHand)?;
 
         Ok(())
     }

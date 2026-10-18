@@ -6,19 +6,18 @@ use cribbage_domain::prelude::{
 use tellus::{ActorContext, Effect, EventSourced, Incoming, Nothing, PersistenceId};
 
 use crate::game::{
-    DeckSource, GameCommand as C, GameError,
+    GameCommand as C, GameError,
     GameEvent::{self as E, StarterCut},
     GameId, GameState as S,
 };
 
-pub struct Game<D: DeckSource> {
+pub struct Game {
     id: GameId,
-    _deck_source: D,
 }
 
-impl<D: DeckSource> Game<D> {
-    pub fn new(id: GameId, _deck_source: D) -> Self {
-        Self { id, _deck_source }
+impl Game {
+    pub fn new(id: GameId) -> Self {
+        Self { id }
     }
 
     pub(crate) fn persistence_id(&self) -> PersistenceId {
@@ -121,7 +120,7 @@ impl<D: DeckSource> Game<D> {
     }
 }
 
-impl<D: DeckSource> EventSourced for Game<D> {
+impl EventSourced for Game {
     type Command = C;
     type Event = E;
     type State = S;
@@ -147,8 +146,7 @@ impl<D: DeckSource> EventSourced for Game<D> {
         state: &Self::State,
     ) -> Result<Effect<Self>, Self::Error> {
         if let Incoming::Message(message) = &incoming {
-            println!("\n***** HANDLE: {:?}", message);
-            println!("***** state:   {:?}", state);
+            println!("***** HANDLE:  {:?}", message);
         };
         let effect = match incoming {
             Incoming::Message(message) => match (message, state) {
@@ -213,8 +211,7 @@ impl<D: DeckSource> EventSourced for Game<D> {
     }
 
     fn apply(&self, state: Self::State, event: Self::Event) -> Self::State {
-        println!("\n***** APPLY:   {:?}", event);
-        println!("***** state:   {:?}", state);
+        println!("***** APPLY:   {:?}", event);
 
         self.try_apply(state, event)
             .expect("event should be applied successfully")

@@ -26,9 +26,9 @@ pub mod prelude {
     pub use super::cards::{Crib, Deck, Hand};
     pub use super::game::{
         CutForDealOutcome, CutStarterOutcome, Cutting, DealOutcome, Dealing, DiscardOutcome,
-        Discarding, Finished, Game, GameError, GoOutcome, HasHands, HasPlayState, HasRoles,
-        PlayOutcome, Playing, ScoreCribOutcome, ScoreDealerOutcome, ScorePoneOutcome, Scoring,
-        ScoringCrib, ScoringDealer, ScoringPone, Starting,
+        Discarding, DomainError, Finished, Game, GoOutcome, HasHands, HasPlayState, HasRoles,
+        HasScoreboard, PlayOutcome, Playing, ScoreCribOutcome, ScoreDealerOutcome,
+        ScorePoneOutcome, Scoring, ScoringCrib, ScoringDealer, ScoringPone, Starting,
     };
     pub use super::players::{Player, Roles};
     pub use super::plays::{Play, PlayState};

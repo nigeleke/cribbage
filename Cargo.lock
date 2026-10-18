@@ -95,6 +95,7 @@ dependencies = [
  "cribbage-macros",
  "fastrand",
  "serde",
+ "strum",
  "tellus",
  "thiserror",
  "tokio",

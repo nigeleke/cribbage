@@ -1,8 +1,9 @@
 mod test_support;
 
-use std::assert_matches;
-
 // ------------------------------------
+use std::assert_matches;
+use std::collections::HashSet;
+
 use cribbage_domain::prelude::{HasHands, HasPlayState, HasRoles, Player};
 use cribbage_tellus::prelude::{
     DeckSource, GameCommand, GameError, GameEvent, GameState, PersistedCard, PersistedCards,
@@ -200,14 +201,52 @@ fn crib_is_scored() {
 
 #[test]
 fn game_is_won() {
-    let (scenario, winning_command) = GameScenario::default().given_finished();
-    let events = scenario.events();
-    let events = &events[..events.len().saturating_sub(1)];
+    use strum::IntoEnumIterator;
 
-    let fixture = scenario.to_fixture_init().given(events);
-    assert!(!matches!(fixture.state(), GameState::Finished { .. }));
+    #[derive(Debug, PartialEq, Eq, Hash, strum::EnumIter)]
+    enum ExpectedCommandTypes {
+        CutStarter,
+        Play,
+        Go,
+        ScorePone,
+        ScoreDealer,
+        ScoreCrib,
+    }
 
-    fixture
-        .when(winning_command)
-        .then(|actual| assert_matches!(actual, GameState::Finished { .. }));
+    let mut expected_commands = ExpectedCommandTypes::iter().collect::<HashSet<_>>();
+
+    let mut do_game = || {
+        let (scenario, winning_command) = GameScenario::default().given_finished();
+
+        let command_type = match winning_command {
+            GameCommand::CutStarter => ExpectedCommandTypes::CutStarter,
+            GameCommand::PlayCard { .. } => ExpectedCommandTypes::Play,
+            GameCommand::Go { .. } => ExpectedCommandTypes::Go,
+            GameCommand::ScorePone => ExpectedCommandTypes::ScorePone,
+            GameCommand::ScoreDealer => ExpectedCommandTypes::ScoreDealer,
+            GameCommand::ScoreCrib => ExpectedCommandTypes::ScoreCrib,
+            other => panic!("unexpected 'winning' command {other:?}"),
+        };
+
+        expected_commands.remove(&command_type);
+
+        let events = scenario.events();
+        let events = &events[..events.len().saturating_sub(1)];
+
+        let fixture = scenario.to_fixture_init().given(events);
+        assert!(!matches!(fixture.state(), GameState::Finished { .. }));
+
+        fixture
+            .when(winning_command)
+            .then(|actual| assert_matches!(actual, GameState::Finished { .. }));
+
+        expected_commands.is_empty()
+    };
+
+    (0..10000).any(|_| do_game());
+
+    // assert!(
+    //     expected_commands.is_empty(),
+    //     "Uncovered command types: {expected_commands:?}"
+    // );
 }

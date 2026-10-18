@@ -1,7 +1,10 @@
 mod hands;
-mod roles;
 mod play_state;
+mod roles;
+mod scoreboard;
 
 pub use hands::HasHands;
-pub use roles::HasRoles;
 pub use play_state::HasPlayState;
+pub use roles::HasRoles;
+pub use scoreboard::HasScoreboard;
+

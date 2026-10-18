@@ -16,7 +16,7 @@ use crate::test_support::{EntityFixture, ShuffledDeckSource};
 
 pub struct GameScenario {
     id: GameId,
-    pub state: GS,
+    pub state: Box<GS>,
     events: Vec<GE>,
 }
 
@@ -33,14 +33,14 @@ macro_rules! transition {
                 mut events,
             } = $self;
 
-            match state {
+            match *state {
                 $variant => {
                     match $action {
                         Ok(outcome) => {
                             let (new_state, new_events) = match outcome {
                                 $( $outcome => $result ),+
                             };
-                            state = new_state;
+                            state = Box::new(new_state);
                             events.extend(new_events);
                         }
                         Err(e) => panic!("domain error: {e}"),
@@ -55,7 +55,7 @@ macro_rules! transition {
 
 impl GameScenario {
     pub fn users(&self) -> Users {
-        match self.state {
+        match *self.state {
             GS::Starting { users, .. }
             | GS::Dealing { users, .. }
             | GS::Discarding { users, .. }
@@ -74,12 +74,12 @@ impl GameScenario {
     }
 
     pub fn given_starting(self) -> Self {
-        assert_matches!(self.state, GS::PendingCreation);
+        assert_matches!(*self.state, GS::PendingCreation);
         self.do_create_game()
     }
 
     pub fn given_dealing(self) -> Self {
-        assert_matches!(self.state, GS::PendingCreation);
+        assert_matches!(*self.state, GS::PendingCreation);
         let starting = self.given_starting();
 
         let host = starting.users().user(Player::Player0);
@@ -87,7 +87,7 @@ impl GameScenario {
 
         let dealt = starting.do_cut_for_deal(host).do_cut_for_deal(guest);
 
-        match dealt.state {
+        match *dealt.state {
             GS::Starting { .. } => Self::default().given_dealing(),
             GS::Dealing { .. } => dealt,
             _ => unreachable!(),
@@ -95,53 +95,57 @@ impl GameScenario {
     }
 
     pub fn given_discarding(self) -> Self {
-        assert_matches!(self.state, GS::PendingCreation);
+        assert_matches!(*self.state, GS::PendingCreation);
         let dealing = self.given_dealing();
         dealing.do_deal()
     }
 
     pub fn given_cutting(self) -> Self {
-        assert_matches!(self.state, GS::PendingCreation);
+        assert_matches!(*self.state, GS::PendingCreation);
         self.given_discarding()
             .advance_discard(Player::Player0)
             .advance_discard(Player::Player1)
     }
 
     pub fn given_playing(self) -> Self {
-        assert_matches!(self.state, GS::PendingCreation);
+        assert_matches!(*self.state, GS::PendingCreation);
         self.given_cutting().do_cut_starter()
     }
 
     pub fn given_go(self) -> Self {
-        assert_matches!(self.state, GS::PendingCreation);
+        assert_matches!(*self.state, GS::PendingCreation);
         self.given_playing().advance_to_go()
     }
 
     pub fn given_played(self) -> Self {
-        assert_matches!(self.state, GS::PendingCreation);
+        assert_matches!(*self.state, GS::PendingCreation);
         self.given_playing().advance_to_played()
     }
 
     pub fn given_scoring_pone(self) -> Self {
-        assert_matches!(self.state, GS::PendingCreation);
+        assert_matches!(*self.state, GS::PendingCreation);
         self.given_played()
     }
 
     pub fn given_scoring_dealer(self) -> Self {
-        assert_matches!(self.state, GS::PendingCreation);
+        assert_matches!(*self.state, GS::PendingCreation);
         self.given_scoring_pone().do_score_pone()
     }
 
     pub fn given_scoring_crib(self) -> Self {
-        assert_matches!(self.state, GS::PendingCreation);
+        assert_matches!(*self.state, GS::PendingCreation);
         self.given_scoring_dealer().do_score_dealer()
     }
 
     pub fn given_finished(self) -> (Self, GC) {
         let stack_start = Self::stack_address();
         println!("stack_start: {stack_start}");
+        println!("GS: {}", std::mem::size_of::<GS>());
+        println!("GE: {}", std::mem::size_of::<GE>());
+        println!("GC: {}", std::mem::size_of::<GC>());
+        println!("GameScenario: {}", std::mem::size_of::<GameScenario>());
 
-        assert_matches!(self.state, GS::PendingCreation);
+        assert_matches!(*self.state, GS::PendingCreation);
         self.given_dealing().advance_to_finished(0, stack_start)
     }
 
@@ -156,7 +160,7 @@ impl GameScenario {
     }
 
     fn advance_discard(self, player: Player) -> Self {
-        assert_matches!(self.state, GS::Discarding { .. });
+        assert_matches!(*self.state, GS::Discarding { .. });
 
         let user = self.users().user(player);
         let hand = self.hand(player);
@@ -165,7 +169,7 @@ impl GameScenario {
     }
 
     fn advance_to_go(self) -> Self {
-        assert_matches!(self.state, GS::Playing { .. });
+        assert_matches!(*self.state, GS::Playing { .. });
 
         let player = self.next_to_play();
         if self.legal_plays(player).is_empty() {
@@ -184,7 +188,7 @@ impl GameScenario {
 
             // If it was the last legal play, then there won't be a go, so
             // try again with another shuffled deck.
-            match played.state {
+            match *played.state {
                 GS::Playing { .. } => {
                     if !played.is_finished() {
                         played.advance_to_go()
@@ -199,7 +203,7 @@ impl GameScenario {
     }
 
     fn advance_to_played(self) -> Self {
-        assert_matches!(self.state, GS::Playing { .. });
+        assert_matches!(*self.state, GS::Playing { .. });
 
         let player = self.next_to_play();
         if self.is_finished() {
@@ -214,7 +218,7 @@ impl GameScenario {
                 self.do_play(user, PersistedCard::from(&card))
             };
 
-            match played.state {
+            match *played.state {
                 GS::Playing { .. } => played.advance_to_played(),
                 GS::ScoringPone { .. } => played,
                 GS::Finished { .. } => Self::default().given_played(),
@@ -241,7 +245,7 @@ impl GameScenario {
             stack_start.abs_diff(stack_current),
         );
 
-        match &self.state {
+        match &*self.state {
             GS::Dealing { .. } => self.do_deal().advance_to_finished(i + 1, stack_start),
 
             GS::Discarding { .. } => self
@@ -251,7 +255,7 @@ impl GameScenario {
 
             GS::Cutting { .. } => {
                 let updated = self.do_cut_starter();
-                match updated.state {
+                match *updated.state {
                     GS::Finished { .. } => (updated, GC::CutStarter),
                     GS::Playing { .. } => updated.advance_to_finished(i + 1, stack_start),
                     _ => unreachable!(),
@@ -265,7 +269,7 @@ impl GameScenario {
                 let plays = game.legal_plays(player);
                 if plays.is_empty() {
                     let updated = self.do_go(user);
-                    match updated.state {
+                    match *updated.state {
                         GS::Playing { .. } => updated.advance_to_finished(i + 1, stack_start),
                         GS::ScoringPone { .. } => updated.advance_to_finished(i + 1, stack_start),
                         GS::Finished { .. } => (updated, GC::Go { user }),
@@ -274,7 +278,7 @@ impl GameScenario {
                 } else {
                     let card = PersistedCard::from(&plays[0]);
                     let updated = self.do_play(user, card);
-                    match updated.state {
+                    match *updated.state {
                         GS::Playing { .. } | GS::ScoringPone { .. } => {
                             updated.advance_to_finished(i + 1, stack_start)
                         }
@@ -286,7 +290,7 @@ impl GameScenario {
 
             GS::ScoringPone { .. } => {
                 let updated = self.do_score_pone();
-                match updated.state {
+                match *updated.state {
                     GS::ScoringDealer { .. } => updated.advance_to_finished(i + 1, stack_start),
                     GS::Finished { .. } => (updated, GC::ScorePone),
                     _ => unreachable!(),
@@ -295,7 +299,7 @@ impl GameScenario {
 
             GS::ScoringDealer { .. } => {
                 let updated = self.do_score_dealer();
-                match updated.state {
+                match *updated.state {
                     GS::ScoringCrib { .. } => updated.advance_to_finished(i + 1, stack_start),
                     GS::Finished { .. } => (updated, GC::ScoreDealer),
                     _ => unreachable!(),
@@ -304,7 +308,7 @@ impl GameScenario {
 
             GS::ScoringCrib { .. } => {
                 let updated = self.do_score_crib();
-                match updated.state {
+                match *updated.state {
                     GS::Dealing { .. } => updated.advance_to_finished(i + 1, stack_start),
                     GS::Finished { .. } => (updated, GC::ScoreCrib),
                     _ => unreachable!(),
@@ -495,14 +499,14 @@ impl Default for GameScenario {
         Self {
             id: GameId::new(),
             events: Vec::new(),
-            state: GS::PendingCreation,
+            state: Box::new(GS::PendingCreation),
         }
     }
 }
 
 impl HasRoles for GameScenario {
     fn roles(&self) -> &Roles {
-        match &self.state {
+        match &*self.state {
             GS::Dealing { game, .. } => game.roles(),
             GS::Discarding { game, .. } => game.roles(),
             GS::Cutting { game, .. } => game.roles(),
@@ -512,7 +516,7 @@ impl HasRoles for GameScenario {
             GS::ScoringCrib { game, .. } => game.roles(),
             GS::Finished { game, .. } => game.roles(),
             GS::PendingCreation | GS::Starting { .. } => {
-                panic!("expecting state with roles; got {:?}", self.state)
+                panic!("expecting state with roles; got {:?}", *self.state)
             }
         }
     }
@@ -520,7 +524,7 @@ impl HasRoles for GameScenario {
 
 impl HasHands for GameScenario {
     fn hands(&self) -> &Hands {
-        match &self.state {
+        match &*self.state {
             GS::Discarding { game, .. } => game.hands(),
             GS::Cutting { game, .. } => game.hands(),
             GS::Playing { game, .. } => game.hands(),
@@ -529,7 +533,7 @@ impl HasHands for GameScenario {
             GS::ScoringCrib { game, .. } => game.hands(),
             GS::Finished { game, .. } => game.hands(),
             GS::PendingCreation | GS::Starting { .. } | GS::Dealing { .. } => {
-                panic!("expecting state with hands; got {:?}", self.state)
+                panic!("expecting state with hands; got {:?}", *self.state)
             }
         }
     }
@@ -537,7 +541,7 @@ impl HasHands for GameScenario {
 
 impl HasPlayState for GameScenario {
     fn play_state(&self) -> &PlayState {
-        match &self.state {
+        match &*self.state {
             GS::Playing { game, .. } => game.play_state(),
             GS::PendingCreation
             | GS::Starting { .. }
@@ -548,7 +552,7 @@ impl HasPlayState for GameScenario {
             | GS::ScoringDealer { .. }
             | GS::ScoringCrib { .. }
             | GS::Finished { .. } => {
-                panic!("expecting state with play_state; got {:?}", self.state)
+                panic!("expecting state with play_state; got {:?}", *self.state)
             }
         }
     }

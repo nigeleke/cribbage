@@ -99,6 +99,7 @@ pub fn Scoreboard() -> Element {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod test {
     // use super::*;
     // use crate::test::LeptosRuntime;

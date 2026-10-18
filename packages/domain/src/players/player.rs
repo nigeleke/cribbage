@@ -40,6 +40,7 @@ impl std::fmt::Debug for Player {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod tests {
     use super::*;
 

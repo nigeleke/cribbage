@@ -84,13 +84,7 @@ macro_rules! hand {
 /// ```
 #[macro_export]
 macro_rules! hands {
-    ($s0:expr, $s1:expr) => {{
-        [
-            $crate::cards::Hand::from($crate::cards!($s0)),
-            $crate::cards::Hand::from($crate::cards!($s1)),
-        ]
-        .into()
-    }};
+    ($s0:expr, $s1:expr) => {{ [$crate::hand!($s0), $crate::hand!($s1)].into() }};
 }
 
 /// Creates a [`Crib`] from a compact sequence of two-character card representations.
@@ -137,7 +131,9 @@ macro_rules! event {
 #[macro_export]
 macro_rules! roles {
     ($player:ident) => {
-        $crate::players::Roles::new($crate::Dealer::from($crate::Player::$player))
+        $crate::players::Roles::new($crate::players::Dealer::from(
+            $crate::players::Player::$player,
+        ))
     };
 }
 

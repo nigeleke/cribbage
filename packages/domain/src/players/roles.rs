@@ -67,6 +67,7 @@ impl std::fmt::Debug for Roles {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod tests {
     use crate::card;
     use crate::players::player::Player;

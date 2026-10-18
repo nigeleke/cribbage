@@ -15,6 +15,7 @@ pub fn OpponentHand() -> Element {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod test {
     // use super::*;
     // use crate::domain::Hand;

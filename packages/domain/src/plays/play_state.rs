@@ -40,6 +40,7 @@ impl PlayState {
 
     /// Add GoStatus for testing...
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn with_go_status(mut self, status: GoStatus) -> Self {
         self.go_status = status;
         self
@@ -47,6 +48,7 @@ impl PlayState {
 
     /// Add current_plays for testing...
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn with_current_plays(mut self, plays: &[Play]) -> Self {
         self.current_plays = plays.to_vec();
         self
@@ -54,6 +56,7 @@ impl PlayState {
 
     /// Add previous_plays for testing...
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn with_previous_plays(mut self, plays: &[Play]) -> Self {
         self.previous_plays = plays.to_vec();
         self

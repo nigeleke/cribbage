@@ -22,6 +22,7 @@ impl TryFrom<&PersistedCards> for Vec<Card> {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod tests {
     use super::*;
     use cribbage_domain::prelude::Deck;

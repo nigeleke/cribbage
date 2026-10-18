@@ -46,6 +46,7 @@ impl Call {
     /// Returns a scoring call if the cards total fifteen.
     /// Panic on no score.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn fifteen(cards: &str) -> Call {
         use crate::cards;
         Self::try_fifteen(&cards!(cards)).expect("require call fifteen")
@@ -59,6 +60,7 @@ impl Call {
     /// Returns a scoring call if exactly two cards have the same face.
     /// Panic on no score.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn pair(cards: &str) -> Call {
         use crate::cards;
         Self::try_pair(&cards!(cards)).expect("require call pair")
@@ -72,6 +74,7 @@ impl Call {
     /// Returns a scoring call if exactly three cards have the same face.
     /// Panic on no score.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn triplet(cards: &str) -> Call {
         use crate::cards;
         Self::try_triplet(&cards!(cards)).expect("require call triplet")
@@ -85,6 +88,7 @@ impl Call {
     /// Returns a scoring call if exactly four cards have the same face.
     /// Panic on no score.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn quadruplet(cards: &str) -> Call {
         use crate::cards;
         Self::try_quadruplet(&cards!(cards)).expect("require call quadruplet")
@@ -110,6 +114,7 @@ impl Call {
     /// Returns a scoring call if the cards form a consecutive run.
     /// Panic on no score.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn run(cards: &str) -> Call {
         use crate::cards;
         Self::try_run(&cards!(cards)).expect("require call run")
@@ -124,6 +129,7 @@ impl Call {
     /// Returns a scoring call if the cards form a flush.
     /// Panic on no score.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn flush(cards: &str) -> Call {
         use crate::cards;
         Self::try_flush(&cards!(cards)).expect("require call flush")
@@ -142,6 +148,7 @@ impl Call {
     /// Returns a scoring call if the last card has been played.
     /// Panic on no score.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn lastcard(played_cards: &str, remaining_cards: &str) -> Call {
         use crate::cards;
         Self::try_lastcard(&cards!(played_cards), &cards!(remaining_cards))
@@ -157,6 +164,7 @@ impl Call {
     /// Returns a scoring call if the running total is 31.
     /// Panic on no score.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn thirtyone(cards: &str) -> Call {
         use crate::cards;
         Self::try_thirtyone(&cards!(cards)).expect("require call thirtyone")
@@ -170,6 +178,7 @@ impl Call {
     /// Returns a scoring call if the starter card is a Jack.
     /// Panic on no score.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn hisheels(card: &str) -> Call {
         use crate::card;
         Self::try_hisheels(card!(card)).expect("require call hisheels")
@@ -184,6 +193,7 @@ impl Call {
     /// Returns a scoring call the card is a Jack and same suit as the cut card.
     /// Panic on no score.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn nobs(card: &str, cut: &str) -> Call {
         use crate::card;
         Self::try_nobs(card!(card), card!(cut)).expect("require call nobs")

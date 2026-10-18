@@ -27,6 +27,7 @@ pub fn Track(
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod test {
     // use super::*;
     // use crate::test::LeptosRuntime;

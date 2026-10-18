@@ -54,6 +54,7 @@ impl std::ops::Deref for Deck {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod tests {
     use crate::constants::STANDARD_DECK_SIZE;
 

@@ -38,6 +38,7 @@ impl std::fmt::Debug for Points {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod tests {
     use super::*;
 

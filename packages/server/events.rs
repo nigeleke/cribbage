@@ -162,6 +162,7 @@ pub enum GameEvent {
     },
 
     #[cfg(test)]
+    #[coverage(off)]
     /// A preset game state has been loaded, to enable easy test setup.
     /// This event is emitted during testing only; it may not represent
     /// a 'real' state, but rather a suitable state to enable the test.

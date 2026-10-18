@@ -31,6 +31,7 @@ impl std::fmt::Debug for PersistedCard {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod tests {
     use cribbage_domain::prelude::Deck;
 

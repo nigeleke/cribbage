@@ -28,6 +28,7 @@ impl std::fmt::Debug for Pone {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod tests {
     use crate::players::player::Player;
 

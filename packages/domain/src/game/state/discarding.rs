@@ -61,20 +61,60 @@ impl std::fmt::Debug for Discarding {
 #[cfg(test)]
 #[coverage(off)]
 mod tests {
-    use crate::game::tests::GameFixture;
+    use super::*;
+    use crate::{card, deck, hands, roles};
+    use std::assert_matches;
+
+    #[test]
+    fn player_can_discard_own_cards_to_the_crib() {
+        let mut given = Discarding::new(
+            roles!(Player0),
+            hands!("AH2H3H4H5H6H", "AD2D3D4D5D6D"),
+            deck!(""),
+        );
+
+        let outcome = given.discard(Player::Player0, [card!("AH"), card!("2H")].into());
+        assert_matches!(outcome, Ok(()));
+    }
+
+    #[test]
+    fn player_cannot_discard_unowned_cards_to_the_crib() {
+        let mut given = Discarding::new(
+            roles!(Player0),
+            hands!("AH2H3H4H5H6H", "AD2D3D4D5D6D"),
+            deck!(""),
+        );
+        let outcome = given.discard(Player::Player0, [card!("AH"), card!("2D")].into());
+
+        assert_matches!(outcome, Err(DomainError::CardsNotInHand));
+    }
+
+    #[test]
+    fn player_cannot_discard_if_already_discarded() {
+        let mut given = Discarding::new(
+            roles!(Player0),
+            hands!("AH2H3H4H5H6H", "AD2D3D4D5D6D"),
+            deck!(""),
+        );
+        let _ = given.discard(Player::Player0, [card!("AH"), card!("2H")].into());
+        let outcome = given.discard(Player::Player0, [card!("3H"), card!("4H")].into());
+
+        assert!(matches!(outcome, Err(DomainError::PlayerAlreadyDiscarded)));
+    }
 
     #[test]
     fn has_debug_text() {
-        let given = format!("{:?}", GameFixture::default().as_discarding());
+        let given = format!(
+            "{:?}",
+            Discarding::new(roles!(Player0), hands!("", ""), deck!(""))
+        );
         insta::assert_snapshot!(given, @r"
-        game(discarding(
+        discarding(
           roles(dealer(player-0), pone(player-1))
           [Hand([]), Hand([])]
-          Deck([AH, 2H, 3H, 4H, 5H, 6H, 7H, 8H, 9H, TH, JH, QH, KH, AC, 2C, 3C, 4C, 5C, 6C, 7C, 8C, 9C, TC, JC, QC, KC, AD, 2D, 3D, 4D, 5D, 6D, 7D, 8D, 9D, TD, JD, QD, KD, AS, 2S, 3S, 4S, 5S, 6S, 7S, 8S, 9S, TS, JS, QS, KS])
+          Deck([])
           [None, None]
         )
-
-          score(player-0: 0->0 player-1: 0->0) <- [])
         ");
     }
 }

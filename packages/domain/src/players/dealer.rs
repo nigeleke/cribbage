@@ -33,6 +33,7 @@ impl std::fmt::Debug for Dealer {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod tests {
     use crate::players::player::Player;
 

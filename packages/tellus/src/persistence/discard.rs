@@ -26,6 +26,7 @@ impl TryFrom<&PersistedDiscard> for Discard {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod tests {
     use cribbage_domain::prelude::Deck;
 

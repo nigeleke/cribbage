@@ -210,6 +210,7 @@ impl Score {
 
     /// Return the calls made in this event
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn calls(&self) -> &[Call] {
         &self.calls
     }

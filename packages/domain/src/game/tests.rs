@@ -266,7 +266,7 @@ mod the_crib {
             .with_hands(["3H4H5H6H", "AD2D3D4D5D6D"])
             .with_discards([Some("AH2H"), None])
             .as_discarding();
-        let outcome = given.discard(Player::Player0, [card!("AH"), card!("3H")].into());
+        let outcome = given.discard(Player::Player0, [card!("3H"), card!("4H")].into());
 
         assert!(matches!(outcome, Err(DomainError::PlayerAlreadyDiscarded)));
     }
@@ -357,6 +357,17 @@ mod before_the_play {
                     .with_calls(Player::Player0, &[Call::hisheels("JH")])
                     .as_finished()
             ),
+            other => panic!("unexpected state: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn fail_when_short_deck_provided() {
+        let given = GameFixture::default().with_deck("").as_cutting();
+        let outcome = given.cut_starter();
+
+        match outcome {
+            Err(DomainError::CardNotInDeck) => (),
             other => panic!("unexpected state: {other:?}"),
         }
     }

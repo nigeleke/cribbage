@@ -63,6 +63,7 @@ impl Scoreboard {
 
     /// Create a Scoreboard pending win for player.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn at_120(player: Player) -> Self {
         use crate::{card, hand};
 
@@ -82,6 +83,7 @@ impl Scoreboard {
 
     /// Create a Scoreboard with preset pegging.
     #[cfg(test)]
+    #[coverage(off)]
     pub(crate) fn with_calls(mut self, player: Player, calls: &[Call]) -> Self {
         let event = Score::new(player, calls);
         self.history.push(event);
@@ -104,4 +106,5 @@ impl std::fmt::Debug for Scoreboard {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 mod tests;

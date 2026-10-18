@@ -64,6 +64,7 @@ impl Card {
 }
 
 #[cfg(test)]
+#[coverage(off)]
 impl std::str::FromStr for Card {
     type Err = &'static str;
 

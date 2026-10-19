@@ -245,6 +245,8 @@ impl Game<Starting> {
         self.state.validate_cut_for_deal(player)?;
 
         let state = &mut self.state;
+        // Defensive check unreachable.
+        // validate_cut_for_deal guarantees the deck contains a card.
         let cut = state.deck.cut().ok_or(DomainError::CardNotInDeck)?;
 
         state.cuts[player] = Some(cut);
@@ -426,9 +428,6 @@ pub enum GoOutcome {
     /// Go was accepted; pegging continues (opponent may still play, or a new
     /// sequence starts).
     Playing(Game<Playing>),
-
-    /// Neither player can play further; hand scoring begins with the pone.
-    Scoring(Game<ScoringPone>),
 
     /// The go (or resulting last-card / 31 score) won the game.
     Finished(Game<Finished>),

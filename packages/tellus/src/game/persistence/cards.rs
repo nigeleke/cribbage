@@ -1,8 +1,9 @@
 use cribbage_domain::prelude::Card;
 use serde::{Deserialize, Serialize};
 
-use crate::persistence::PersistedCard;
+use crate::game::PersistedCard;
 
+/// A collection of cards in their persisted form.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct PersistedCards(Vec<PersistedCard>);

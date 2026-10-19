@@ -16,6 +16,7 @@ uuid            = { workspace = true, features = ["v4", "v7", "serde"] }
 tokio           = { workspace = true, features = ["macros", "rt-multi-thread"] }
 thiserror       = { workspace = true }
 serde           = { workspace = true, features = ["derive"] }
+tracing         = { workspace = true }
 
 [dev-dependencies]
 fastrand = { workspace = true }

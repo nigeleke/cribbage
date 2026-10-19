@@ -82,9 +82,13 @@ impl<D: DeckSource> Lobby<D> {
             }
 
             (state, event) => {
-                println!("***** unhandled event: {event:?}");
-                println!("*****           state: {state:?}");
-                Err(GameError::InvalidDeck)
+                tracing::error!(
+                    state = ?state,
+                    event = ?event,
+                    "Unhandled event for game state"
+                );
+
+                Err(GameError::UnhandledEvent)
             }
         }
     }

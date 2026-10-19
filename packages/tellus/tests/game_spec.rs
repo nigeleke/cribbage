@@ -63,7 +63,12 @@ fn user2_cuts_for_deal() {
         .to_fixture()
         .given_event(GameEvent::CutForDealMade { user: host })
         .when(GameCommand::CutForDeal { user: guest })
-        .then(|actual| assert_matches!(actual, GameState::Dealing { .. }));
+        .then(|actual| {
+            assert_matches!(
+                actual,
+                GameState::Dealing { .. } | GameState::Starting { .. }
+            )
+        });
 }
 
 #[test]

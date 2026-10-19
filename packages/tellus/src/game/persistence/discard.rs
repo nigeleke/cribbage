@@ -1,8 +1,9 @@
 use cribbage_domain::prelude::{Card, Discard};
 use serde::{Deserialize, Serialize};
 
-use crate::persistence::PersistedCard;
+use crate::game::PersistedCard;
 
+/// A pair of cards in their persisted form, representing a discard.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct PersistedDiscard([PersistedCard; 2]);

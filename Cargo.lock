@@ -99,6 +99,7 @@ dependencies = [
  "tellus",
  "thiserror",
  "tokio",
+ "tracing",
  "uuid",
 ]
 

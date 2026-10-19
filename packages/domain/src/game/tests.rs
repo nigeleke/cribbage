@@ -362,7 +362,7 @@ mod before_the_play {
     }
 
     #[test]
-    fn fail_when_short_deck_provided() {
+    fn fail_cut_starter_when_short_deck_provided() {
         let given = GameFixture::default().with_deck("").as_cutting();
         let outcome = given.cut_starter();
 

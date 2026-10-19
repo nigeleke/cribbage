@@ -427,10 +427,6 @@ impl GameScenario {
                 GS::Playing { game, users },
                 [GE::GoMade { user }]
             ),
-            GoOutcome::Scoring(game) => (
-                GS::ScoringPone { game, users },
-                [GE::GoMade { user }]
-            ),
             GoOutcome::Finished(game) => (
                 GS::Finished { game, users },
                 [GE::GoMade { user }]

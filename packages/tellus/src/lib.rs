@@ -1,23 +1,22 @@
 #![feature(coverage_attribute)]
 #![forbid(unsafe_code)]
-// #![deny(missing_docs)]
+#![deny(missing_docs)]
 #![deny(clippy::all)]
 #![doc = include_str!("../README.md")]
 
 mod game;
 // mod game_gate;
 // mod lobby;
-mod persistence;
 mod user;
 
 #[cfg(test)]
 mod macros;
 
-/// This module provides a convenient set of imports for working with a tellus actor.
+/// Commonly used types from the crate.
 pub mod prelude {
     pub use super::game::{
-        DeckSource, Game, GameCommand, GameError, GameEvent, GameId, GameState, Users,
+        DeckSource, Game, GameCommand, GameError, GameEvent, GameId, GameState, PersistedCard,
+        PersistedCards, PersistedDiscard, Users,
     };
-    pub use super::persistence::{PersistedCard, PersistedCards, PersistedDiscard};
     pub use super::user::UserId;
 }

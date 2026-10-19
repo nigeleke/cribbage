@@ -1,6 +1,7 @@
 use cribbage_domain::prelude::{Card, Face, Suit};
 use serde::{Deserialize, Serialize};
 
+/// A card represented by its persisted `u8` encoding.
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct PersistedCard(u8);

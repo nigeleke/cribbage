@@ -6,16 +6,20 @@ use cribbage_domain::prelude::{
 use tellus::{ActorContext, Effect, EventSourced, Incoming, Nothing, PersistenceId};
 
 use crate::game::{
-    GameCommand as C, GameError,
-    GameEvent::{self as E, StarterCut},
-    GameId, GameState as S,
+    command::GameCommand as C,
+    error::GameError,
+    event::GameEvent::{self as E, StarterCut},
+    id::GameId,
+    state::GameState as S,
 };
 
+/// Identifies a cribbage game.
 pub struct Game {
     id: GameId,
 }
 
 impl Game {
+    /// Creates a game with the specified identifier.
     pub fn new(id: GameId) -> Self {
         Self { id }
     }
@@ -28,7 +32,7 @@ impl Game {
     fn try_apply(&self, state: S, event: E) -> Result<S, GameError> {
         match (state, event) {
             (S::PendingCreation, E::GameCreated { users, deck }) => {
-                let cards = Vec::<Card>::try_from(&deck).map_err(|_| GameError::InvalidDeck)?;
+                let cards = Vec::<Card>::try_from(&deck).map_err(|_| GameError::DecodeError)?;
                 let deck = Deck::from_iter(cards);
                 let game = DomainGame::new(deck);
                 Ok(S::Starting { game, users })
@@ -44,7 +48,7 @@ impl Game {
             }
 
             (S::Dealing { game, users }, E::HandsDealt { deck, .. }) => {
-                let cards = Vec::<Card>::try_from(&deck).map_err(|_| GameError::InvalidDeck)?;
+                let cards = Vec::<Card>::try_from(&deck).map_err(|_| GameError::DecodeError)?;
                 let deck = Deck::from_iter(cards);
                 match game.deal(deck) {
                     Ok(DealOutcome::Discarding(game)) => Ok(S::Discarding { game, users }),
@@ -54,8 +58,7 @@ impl Game {
 
             (S::Discarding { game, users }, E::DiscardMade { user, discard }) => {
                 let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-                let discard1 =
-                    Discard::try_from(&discard).map_err(|_| GameError::InvalidDiscard)?;
+                let discard1 = Discard::try_from(&discard).map_err(|_| GameError::DecodeError)?;
 
                 match game.discard(player, discard1) {
                     Ok(DiscardOutcome::Discarding(game)) => Ok(S::Discarding { game, users }),
@@ -72,7 +75,7 @@ impl Game {
 
             (S::Playing { game, users }, E::CardPlayed { user, card }) => {
                 let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-                let card = Card::try_from(&card).map_err(|_| GameError::InvalidCard)?;
+                let card = Card::try_from(&card).map_err(|_| GameError::DecodeError)?;
                 match game.play(player, card) {
                     Ok(PlayOutcome::Playing(game)) => Ok(S::Playing { game, users }),
                     Ok(PlayOutcome::Scoring(game)) => Ok(S::ScoringPone { game, users }),
@@ -85,7 +88,6 @@ impl Game {
                 let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
                 match game.go(player) {
                     Ok(GoOutcome::Playing(game)) => Ok(S::Playing { game, users }),
-                    Ok(GoOutcome::Scoring(game)) => Ok(S::ScoringPone { game, users }),
                     Ok(GoOutcome::Finished(game)) => Ok(S::Finished { game, users }),
                     Err(e) => Err(GameError::DomainError(e)),
                 }
@@ -110,11 +112,13 @@ impl Game {
             },
 
             (state, event) => {
-                panic!(
-                    r#"***** unhandled state/event in apply
-                    event: {event:?}
-                    state: {state:?}"#
+                tracing::error!(
+                    state = ?state,
+                    event = ?event,
+                    "Unhandled event for game state"
                 );
+
+                Err(GameError::UnhandledEvent)
             }
         }
     }
@@ -135,8 +139,8 @@ impl EventSourced for Game {
         Ok(S::PendingCreation)
     }
 
-    fn init_from_snapshot(&self, _snapshot: Self::Snapshot) -> Result<Self::State, Self::Error> {
-        todo!()
+    fn init_from_snapshot(&self, snapshot: Self::Snapshot) -> Result<Self::State, Self::Error> {
+        match snapshot {}
     }
 
     fn handle(
@@ -145,9 +149,6 @@ impl EventSourced for Game {
         incoming: Incoming<Self::Command>,
         state: &Self::State,
     ) -> Result<Effect<Self>, Self::Error> {
-        if let Incoming::Message(message) = &incoming {
-            println!("***** HANDLE:  {:?}", message);
-        };
         let effect = match incoming {
             Incoming::Message(message) => match (message, state) {
                 (C::CreateGame { users, deck }, S::PendingCreation) => {
@@ -162,7 +163,7 @@ impl EventSourced for Game {
                 }
 
                 (C::DealHands { deck }, S::Dealing { game, .. }) => {
-                    let deck1 = Vec::<_>::try_from(&deck).map_err(|_| GameError::InvalidDeck)?;
+                    let deck1 = Vec::<_>::try_from(&deck).map_err(|_| GameError::DecodeError)?;
                     let deck1 = Deck::from_iter(deck1);
                     game.validate_deal(&deck1)?;
 
@@ -172,7 +173,7 @@ impl EventSourced for Game {
                 (C::Discard { user, discard }, S::Discarding { game, users }) => {
                     let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
                     let discard1 =
-                        Discard::try_from(&discard).map_err(|_| GameError::InvalidDiscard)?;
+                        Discard::try_from(&discard).map_err(|_| GameError::DecodeError)?;
                     game.validate_discard(player, discard1)?;
 
                     Effect::persist(E::DiscardMade { user, discard })
@@ -185,7 +186,7 @@ impl EventSourced for Game {
 
                 (C::PlayCard { user, card }, S::Playing { game, users }) => {
                     let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-                    let card0 = Card::try_from(&card).map_err(|_| GameError::InvalidCard)?;
+                    let card0 = Card::try_from(&card).map_err(|_| GameError::DecodeError)?;
                     game.validate_play(player, card0)?;
                     Effect::persist(E::CardPlayed { user, card })
                 }
@@ -211,8 +212,6 @@ impl EventSourced for Game {
     }
 
     fn apply(&self, state: Self::State, event: Self::Event) -> Self::State {
-        println!("***** APPLY:   {:?}", event);
-
         self.try_apply(state, event)
             .expect("event should be applied successfully")
     }

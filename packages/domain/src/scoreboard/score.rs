@@ -4,7 +4,6 @@ use flush_rule::FlushRule;
 
 // ------------------------------------
 use itertools::Itertools;
-use serde::{Deserialize, Serialize};
 
 use crate::card::Card;
 use crate::cards::{Crib, Hand};
@@ -14,7 +13,8 @@ use crate::plays::{GoStatus, PlayState};
 use crate::scoreboard::{Call, Points};
 
 /// One atomic scoring action.
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Score {
     player: Player,
     calls: Vec<Call>,

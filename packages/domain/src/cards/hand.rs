@@ -1,10 +1,9 @@
-use serde::{Deserialize, Serialize};
-
 use crate::card::Card;
 
 /// A hand is the set of cards a player holds privately during play.
 /// 6 cards dealt then 4 after discarding to the crib.
-#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Hand(Vec<Card>);
 
 impl Hand {

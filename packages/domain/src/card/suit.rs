@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
 use strum::{EnumIter, FromRepr};
 
 /// The four suits in a standard French playing card deck.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, EnumIter, FromRepr)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter, FromRepr)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(u8)]
 #[rustfmt::skip]
 pub enum Suit {

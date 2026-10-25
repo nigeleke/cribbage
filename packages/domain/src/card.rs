@@ -9,12 +9,11 @@ pub use suit::Suit;
 pub use value::Value;
 
 // ------------------------------------
-use serde::{Deserialize, Serialize};
-
 /// A playing card consisting of a [`Face`] and a [`Suit`].
 ///
 /// Note `Card` is `Copy`able.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Card {
     face: Face,
     suit: Suit,

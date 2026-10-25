@@ -9,8 +9,6 @@ pub use points::Points;
 pub use score::Score;
 
 // ------------------------------------
-use serde::{Deserialize, Serialize};
-
 use crate::constants::WINNING_SCORE;
 use crate::players::Player;
 
@@ -18,7 +16,8 @@ use crate::players::Player;
 ///
 /// The current score and peg positions are derived from the recorded
 /// scoring history rather than stored separately.
-#[derive(Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Scoreboard {
     history: Vec<Score>,
 }

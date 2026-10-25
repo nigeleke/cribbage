@@ -1,10 +1,9 @@
-use serde::{Deserialize, Serialize};
-
 use crate::constants::PLAYERS_PER_GAME;
 use crate::players::Player;
 
 /// A pair of values, one for each player, indexable by `Player`.
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PlayerData<T>([T; PLAYERS_PER_GAME]);
 
 impl<T> PlayerData<T> {

@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use crate::{
     players::dealer::Dealer, players::player::Player, players::pone::Pone, types::CutsForDeal,
 };
@@ -8,7 +6,8 @@ use crate::{
 ///
 /// This struct captures which player is the dealer and which is the pone
 /// (non-dealer) in the game.
-#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Roles {
     dealer: Dealer,
     pone: Pone,

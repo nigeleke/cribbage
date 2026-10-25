@@ -1,12 +1,11 @@
-use serde::{Deserialize, Serialize};
-
 use crate::card::Card;
 use crate::players::Player;
 
 /// Represents a single play in the pegging phase of the game.
 ///
 /// A `Play` pairs a player with the card they played.
-#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Play {
     player: Player,
     card: Card,

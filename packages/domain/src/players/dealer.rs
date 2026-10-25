@@ -1,12 +1,11 @@
-use serde::{Deserialize, Serialize};
-
 use crate::players::{player::Player, pone::Pone};
 
 /// Represents the dealer player in a two-player game.
 ///
 /// This type wraps a `Player` and provides convenient access to the
 /// corresponding dealer in the round.
-#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct Dealer(Player);
 

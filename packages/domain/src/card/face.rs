@@ -1,10 +1,11 @@
+use serde::{Deserialize, Serialize};
 use strum::{EnumIter, FromRepr};
 
 use super::rank::Rank;
 use super::value::Value;
 
 /// The face of a playing card (Ace through King).
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter, FromRepr)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, EnumIter, FromRepr)]
 #[repr(u8)]
 #[rustfmt::skip]
 pub enum Face {

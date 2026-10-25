@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::card::{Card, Value};
 use crate::cards::Hand;
 use crate::constants::PLAY_TARGET;
@@ -10,7 +12,7 @@ use crate::types::Hands;
 ///
 /// Tracks which player's turn it is, pending cards, the go status,
 /// current and previous plays.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayState {
     next_to_play: Player,
     pending_plays: PlayerData<Vec<Card>>,

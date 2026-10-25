@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
 /// Represents a player in the game.
@@ -5,7 +6,7 @@ use strum::EnumIter;
 /// This is a simple wrapper around an index to distinguish players
 /// in a type-safe manner. Only two players are supported in this implementation
 /// of the game.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, EnumIter)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, EnumIter)]
 pub enum Player {
     /// The first player.
     Player0,

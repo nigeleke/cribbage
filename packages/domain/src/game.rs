@@ -8,6 +8,8 @@ pub use capabilities::{HasHands, HasPlayState, HasRoles, HasScoreboard};
 pub(crate) mod tests;
 
 // ------------------------------------
+use serde::{Deserialize, Serialize};
+
 use crate::card::Card;
 use crate::cards::{Crib, Deck, Hand};
 use crate::constants::{CARDS_DEALT_PER_HAND, CARDS_IN_CRIB, PLAYERS_PER_GAME};
@@ -41,6 +43,7 @@ use crate::types::{CutsForDeal, Discard, Discards, Hands};
 ///     → score_crib    → Game<Dealing>   (next round)
 ///                     ↘ Game<Finished>  (when a player reaches the winning score)
 /// ```
+#[derive(Serialize, Deserialize)]
 pub struct Game<T> {
     scoreboard: Scoreboard,
     state: T,
@@ -59,7 +62,7 @@ impl<T: Eq> Eq for Game<T> {}
 /// Each player selects one card from the deck. The player who cuts the
 /// **lower** card (ace low) becomes the dealer (the pone is the other player).
 /// Equal ranks force a re-cut and the game remains in this state.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 pub struct Starting {
     deck: Deck,
     cuts: CutsForDeal,
@@ -69,7 +72,7 @@ pub struct Starting {
 ///
 /// Calling [`Game::deal`] distributes six cards to each player and moves the
 /// game into the [`Discarding`] phase.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 pub struct Dealing {
     roles: Roles,
 }
@@ -79,7 +82,7 @@ pub struct Dealing {
 /// The game stays in this phase until both players have discarded. Once both
 /// discards are recorded the four cards form the crib and the game advances to
 /// [`Cutting`].
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 pub struct Discarding {
     roles: Roles,
     hands: Hands,
@@ -93,7 +96,7 @@ pub struct Discarding {
 /// If that card is a Jack the dealer scores “His Heels” (two points). The game
 /// then enters the pegging ([`Playing`]) phase, or finishes immediately if the
 /// heels points end the match.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 pub struct Cutting {
     roles: Roles,
     hands: Hands,
@@ -108,7 +111,7 @@ pub struct Cutting {
 /// fifteens, pairs, runs, last card, and reaching 31. When neither player can
 /// play any further cards the game moves to hand-scoring ([`ScoringPone`]), or
 /// finishes if a player has already reached the winning total.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 pub struct Playing {
     roles: Roles,
     hands: Hands,
@@ -127,7 +130,7 @@ pub struct Playing {
 ///
 /// Each step awards points for combinations in the four-card hand plus the
 /// starter, then checks whether the game has been won before advancing.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 pub struct Scoring<T> {
     roles: Roles,
     hands: Hands,
@@ -149,7 +152,7 @@ pub type ScoringCrib = Scoring<Crib>;
 ///
 /// No further commands are accepted. The final hands, crib, starter and
 /// (optional) last play-state are retained for inspection or display.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 pub struct Finished {
     roles: Roles,
     hands: Hands,

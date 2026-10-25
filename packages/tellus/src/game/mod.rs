@@ -4,7 +4,6 @@ mod entity;
 mod error;
 mod event;
 mod id;
-mod persistence;
 mod state;
 mod users;
 
@@ -14,6 +13,5 @@ pub use entity::Game;
 pub use error::GameError;
 pub use event::GameEvent;
 pub use id::GameId;
-pub use persistence::{PersistedCard, PersistedCards, PersistedDiscard};
 pub use state::GameState;
 pub use users::Users;

@@ -8,8 +8,7 @@ use cribbage_domain::prelude::{
 };
 
 use cribbage_tellus::prelude::{
-    DeckSource, Game, GameCommand as GC, GameEvent as GE, GameId, GameState as GS, PersistedCard,
-    PersistedCards, PersistedDiscard, UserId, Users,
+    DeckSource, Game, GameCommand as GC, GameEvent as GE, GameId, GameState as GS, UserId, Users,
 };
 
 use crate::test_support::{EntityFixture, ShuffledDeckSource};
@@ -183,7 +182,7 @@ impl GameScenario {
         } else {
             let user = self.users().user(player);
             let card = self.legal_plays(player)[0];
-            let played = self.do_play(user, PersistedCard::from(&card));
+            let played = self.do_play(user, card);
 
             // If it was the last legal play, then there won't be a go, so
             // try again with another shuffled deck.
@@ -214,7 +213,7 @@ impl GameScenario {
                 self.do_go(user)
             } else {
                 let card = self.legal_plays(player)[0];
-                self.do_play(user, PersistedCard::from(&card))
+                self.do_play(user, card)
             };
 
             match *played.state {
@@ -271,7 +270,7 @@ impl GameScenario {
                         _ => unreachable!(),
                     }
                 } else {
-                    let card = PersistedCard::from(&plays[0]);
+                    let card = plays[0];
                     let updated = self.do_play(user, card);
                     match *updated.state {
                         GS::Playing { .. } | GS::ScoringPone { .. } => Next::Continue(updated),
@@ -323,7 +322,7 @@ impl GameScenario {
             },
             (game, users, deck) => (
                 GS::Starting { game, users },
-                [GE::GameCreated { users, deck: PersistedCards::from(deck.as_ref()) }]
+                [GE::GameCreated { users, deck }]
             )
         )
     }
@@ -342,17 +341,17 @@ impl GameScenario {
     }
 
     fn do_deal(self) -> Self {
+        let deck = ShuffledDeckSource::default().new_deck();
+
         transition!(
             self,
             GS::Dealing { game, users },
             {
-                let deck = ShuffledDeckSource::default().new_deck();
-                let persisted_deck = PersistedCards::from(deck.as_ref());
-                game.deal(deck).map(|outcome| (outcome, persisted_deck))
+                game.deal(deck.clone())
             },
-            (DealOutcome::Discarding(game), persisted_deck) => (
-                    GS::Discarding { game, users },
-                    [GE::HandsDealt { deck: persisted_deck }]
+            DealOutcome::Discarding(game) => (
+                GS::Discarding { game, users },
+                [GE::HandsDealt { deck }]
             )
         )
     }
@@ -367,11 +366,11 @@ impl GameScenario {
             },
             DiscardOutcome::Discarding(game) => (
                 GS::Discarding { game, users },
-                [GE::DiscardMade { user, discard: PersistedDiscard::from(&discard) }]
+                [GE::DiscardMade { user, discard }]
             ),
             DiscardOutcome::Cutting(game) => (
                 GS::Cutting { game, users },
-                [GE::DiscardMade { user, discard: PersistedDiscard::from(&discard) }]
+                [GE::DiscardMade { user, discard }]
             ),
         )
     }
@@ -392,13 +391,12 @@ impl GameScenario {
         )
     }
 
-    fn do_play(self, user: UserId, card: PersistedCard) -> Self {
+    fn do_play(self, user: UserId, card: Card) -> Self {
         transition!(
             self,
             GS::Playing { game, users },
             {
                 let player = users.player(user).expect("valid user required");
-                let card = Card::try_from(&card).expect("valid card required");
                 game.play(player, card)
             },
             PlayOutcome::Playing(game) => (

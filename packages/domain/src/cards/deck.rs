@@ -1,9 +1,11 @@
+use serde::{Deserialize, Serialize};
+
 use crate::constants::CARDS_DEALT_PER_HAND;
 use crate::{card::Card, cards::hand::Hand, types::Hands};
 
 /// The deck contains all cards at the start of the game and is drawn from
 /// during dealing and for the starter cut.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Deck(Vec<Card>);
 
 impl Deck {

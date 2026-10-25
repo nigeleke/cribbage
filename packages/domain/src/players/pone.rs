@@ -1,10 +1,12 @@
+use serde::{Deserialize, Serialize};
+
 use crate::players::player::Player;
 
 /// Represents the pone (non-dealer) player in a two-player game.
 ///
 /// This type wraps a `Player` and provides convenient access to the
 /// corresponding pone in the round.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct Pone(Player);
 

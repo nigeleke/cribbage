@@ -1,14 +1,14 @@
 mod test_support;
 
-// ------------------------------------
+// -------------------------------
 use std::assert_matches;
 use std::collections::HashSet;
 
 use cribbage_domain::prelude::{HasHands, HasPlayState, HasRoles, Player};
 use cribbage_tellus::prelude::{
-    DeckSource, GameCommand, GameError, GameEvent, GameState, PersistedCard, PersistedCards,
-    PersistedDiscard, UserId, Users,
+    DeckSource, GameCommand, GameError, GameEvent, GameState, UserId, Users,
 };
+
 use test_support::{GameScenario, ShuffledDeckSource};
 
 #[test]
@@ -16,7 +16,6 @@ fn game_is_created() {
     let scenario = GameScenario::default();
     let users = Users::new(UserId::new(), UserId::new());
     let deck = ShuffledDeckSource::new().new_deck();
-    let deck = PersistedCards::from(deck.as_ref());
 
     scenario
         .to_fixture()
@@ -75,7 +74,6 @@ fn user2_cuts_for_deal() {
 fn hands_dealt_after_cut_made() {
     let scenario = GameScenario::default().given_dealing();
     let deck = ShuffledDeckSource::new().new_deck();
-    let deck = PersistedCards::from(deck.as_ref());
 
     scenario
         .to_fixture()
@@ -89,7 +87,7 @@ fn user1_discards_to_crib() {
     let users = scenario.users();
     let user = users.user(Player::Player0);
     let hand = scenario.hand(Player::Player0).to_vec();
-    let discard = PersistedDiscard::from(&[hand[0], hand[1]]);
+    let discard = [hand[0], hand[1]];
 
     scenario
         .to_fixture()
@@ -103,7 +101,7 @@ fn user_discards_to_crib_twice() {
     let users = scenario.users();
     let user = users.user(Player::Player0);
     let hand = scenario.hand(Player::Player0).to_vec();
-    let discard = PersistedDiscard::from(&[hand[0], hand[1]]);
+    let discard = [hand[0], hand[1]];
 
     scenario
         .to_fixture()
@@ -119,11 +117,11 @@ fn user2_discards_to_crib() {
 
     let user0 = users.user(Player::Player0);
     let hand0 = scenario.hand(Player::Player0).to_vec();
-    let discard0 = PersistedDiscard::from(&[hand0[0], hand0[1]]);
+    let discard0 = [hand0[0], hand0[1]];
 
     let user1 = users.user(Player::Player1);
     let hand1 = scenario.hand(Player::Player1).to_vec();
-    let discard1 = PersistedDiscard::from(&[hand1[0], hand1[1]]);
+    let discard1 = [hand1[0], hand1[1]];
 
     scenario
         .to_fixture()
@@ -154,7 +152,7 @@ fn user_plays_card() {
     let player = scenario.pone();
     let user = scenario.users().user(player);
     let hand = scenario.hand(player).to_vec();
-    let card = PersistedCard::from(&hand[0]);
+    let card = hand[0];
 
     scenario
         .to_fixture()

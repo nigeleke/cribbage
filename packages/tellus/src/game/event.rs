@@ -1,7 +1,8 @@
+use cribbage_domain::prelude::{Card, Deck, Discard};
 use serde::{Deserialize, Serialize};
 use tellus::{SchemaVersion, Versioned};
 
-use crate::game::{PersistedCard, PersistedCards, PersistedDiscard, Users};
+use crate::game::Users;
 use crate::user::UserId;
 
 /// An event recording a change in the game.
@@ -12,7 +13,7 @@ pub enum GameEvent {
         /// The users participating in the game.
         users: Users,
         /// The deck assigned for the cuts for deal.
-        deck: PersistedCards,
+        deck: Deck,
     },
 
     /// Records that a player cut for the deal.
@@ -24,7 +25,7 @@ pub enum GameEvent {
     /// Records the dealing of the players' hands.
     HandsDealt {
         /// The deck used to deal the hands.
-        deck: PersistedCards,
+        deck: Deck,
     },
 
     /// Records the cards discarded by a player.
@@ -32,7 +33,7 @@ pub enum GameEvent {
         /// The user who discarded the cards.
         user: UserId,
         /// The two cards discarded by the user.
-        discard: PersistedDiscard,
+        discard: Discard,
     },
 
     /// Records the cutting of the starter card.
@@ -43,7 +44,7 @@ pub enum GameEvent {
         /// The user who played the card.
         user: UserId,
         /// The card that was played.
-        card: PersistedCard,
+        card: Card,
     },
 
     /// Records a player's declaration of go.

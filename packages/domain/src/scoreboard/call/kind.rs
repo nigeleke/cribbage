@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 /// Represents the kind of call.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[rustfmt::skip]
 pub enum CallKind {
     #[doc(hidden)] Fifteen,

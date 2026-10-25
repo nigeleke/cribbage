@@ -1,4 +1,6 @@
-use crate::game::{PersistedCard, PersistedCards, PersistedDiscard, Users};
+use cribbage_domain::prelude::{Card, Deck, Discard};
+
+use crate::game::Users;
 use crate::user::UserId;
 
 /// A command representing an action requested on a game.
@@ -9,7 +11,7 @@ pub enum GameCommand {
         /// The users participating in the game.
         users: Users,
         /// The deck used for the cuts for dealer.
-        deck: PersistedCards,
+        deck: Deck,
     },
 
     /// Record that a player has cut for the deal.
@@ -21,7 +23,7 @@ pub enum GameCommand {
     /// Deal the cards to the players using the specified deck.
     DealHands {
         /// The deck from which the cards are dealt.
-        deck: PersistedCards,
+        deck: Deck,
     },
 
     /// Record the cards discarded by a player.
@@ -29,7 +31,7 @@ pub enum GameCommand {
         /// The user discarding the cards.
         user: UserId,
         /// The two cards discarded by the user.
-        discard: PersistedDiscard,
+        discard: Discard,
     },
 
     /// Cut the starter card.
@@ -40,7 +42,7 @@ pub enum GameCommand {
         /// The user playing the card.
         user: UserId,
         /// The card being played.
-        card: PersistedCard,
+        card: Card,
     },
 
     /// Declare that a player cannot play a card.

@@ -1,13 +1,22 @@
 use serde::{Deserialize, Serialize};
 use tellus::{SchemaVersion, Versioned};
 
-use crate::persistence::PersistedCards;
 use crate::user::UserId;
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// An event recording a change to a lobby.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LobbyEvent {
-    GameCreated { host: UserId, deck: PersistedCards },
-    GuestJoined { guest: UserId },
+    /// Records a host in the lobby (lobby ).
+    HostEntered {
+        /// The user who created the session.
+        host: UserId,
+    },
+
+    /// Records a guest joining the hosted session.
+    GuestJoined {
+        /// The user who joined as the guest.
+        guest: UserId,
+    },
 }
 
 impl Versioned for LobbyEvent {

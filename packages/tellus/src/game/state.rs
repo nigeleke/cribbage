@@ -2,11 +2,13 @@ use cribbage_domain::prelude::{
     Cutting, Dealing, Discarding, Finished, Game, Playing, ScoringCrib, ScoringDealer, ScoringPone,
     Starting,
 };
+use serde::{Deserialize, Serialize};
+use tellus::{SchemaVersion, Versioned};
 
 use crate::game::Users;
 
 /// The current state of a cribbage game and its participating users.
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GameState {
     /// The game has not yet been created.
     #[default]
@@ -85,3 +87,9 @@ pub enum GameState {
     },
 }
 
+impl Versioned for GameState {
+    /// The identifier of the game-state schema.
+    const MANIFEST: &'static str = "cribbage.game-state";
+    /// The version of the game-state schema.
+    const VERSION: SchemaVersion = SchemaVersion::new(1);
+}

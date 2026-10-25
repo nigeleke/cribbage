@@ -1,15 +1,11 @@
 use cribbage_domain::prelude::{
-    Card, CutForDealOutcome, CutStarterOutcome, DealOutcome, Deck, Discard, DiscardOutcome,
-    Game as DomainGame, GoOutcome, PlayOutcome, ScoreCribOutcome, ScoreDealerOutcome,
-    ScorePoneOutcome,
+    CutForDealOutcome, CutStarterOutcome, DealOutcome, DiscardOutcome, Game as DomainGame,
+    GoOutcome, PlayOutcome, ScoreCribOutcome, ScoreDealerOutcome, ScorePoneOutcome,
 };
-use tellus::{ActorContext, Effect, EventSourced, Incoming, Nothing, PersistenceId};
+use tellus::{ActorContext, Effect, EventSourced, Incoming, PersistenceId};
 
 use crate::game::{
-    command::GameCommand as C,
-    error::GameError,
-    event::GameEvent::{self as E, StarterCut},
-    id::GameId,
+    command::GameCommand as C, error::GameError, event::GameEvent as E, id::GameId,
     state::GameState as S,
 };
 
@@ -32,8 +28,6 @@ impl Game {
     fn try_apply(&self, state: S, event: E) -> Result<S, GameError> {
         match (state, event) {
             (S::PendingCreation, E::GameCreated { users, deck }) => {
-                let cards = Vec::<Card>::try_from(&deck).map_err(|_| GameError::DecodeError)?;
-                let deck = Deck::from_iter(cards);
                 let game = DomainGame::new(deck);
                 Ok(S::Starting { game, users })
             }
@@ -47,27 +41,21 @@ impl Game {
                 }
             }
 
-            (S::Dealing { game, users }, E::HandsDealt { deck, .. }) => {
-                let cards = Vec::<Card>::try_from(&deck).map_err(|_| GameError::DecodeError)?;
-                let deck = Deck::from_iter(cards);
-                match game.deal(deck) {
-                    Ok(DealOutcome::Discarding(game)) => Ok(S::Discarding { game, users }),
-                    Err(e) => Err(GameError::DomainError(e)),
-                }
-            }
+            (S::Dealing { game, users }, E::HandsDealt { deck, .. }) => match game.deal(deck) {
+                Ok(DealOutcome::Discarding(game)) => Ok(S::Discarding { game, users }),
+                Err(e) => Err(GameError::DomainError(e)),
+            },
 
             (S::Discarding { game, users }, E::DiscardMade { user, discard }) => {
                 let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-                let discard1 = Discard::try_from(&discard).map_err(|_| GameError::DecodeError)?;
-
-                match game.discard(player, discard1) {
+                match game.discard(player, discard) {
                     Ok(DiscardOutcome::Discarding(game)) => Ok(S::Discarding { game, users }),
                     Ok(DiscardOutcome::Cutting(game)) => Ok(S::Cutting { game, users }),
                     Err(e) => Err(GameError::DomainError(e)),
                 }
             }
 
-            (S::Cutting { game, users }, StarterCut) => match game.cut_starter() {
+            (S::Cutting { game, users }, E::StarterCut) => match game.cut_starter() {
                 Ok(CutStarterOutcome::Playing(game)) => Ok(S::Playing { game, users }),
                 Ok(CutStarterOutcome::Finished(game)) => Ok(S::Finished { game, users }),
                 Err(e) => Err(GameError::DomainError(e)),
@@ -75,7 +63,6 @@ impl Game {
 
             (S::Playing { game, users }, E::CardPlayed { user, card }) => {
                 let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-                let card = Card::try_from(&card).map_err(|_| GameError::DecodeError)?;
                 match game.play(player, card) {
                     Ok(PlayOutcome::Playing(game)) => Ok(S::Playing { game, users }),
                     Ok(PlayOutcome::Scoring(game)) => Ok(S::ScoringPone { game, users }),
@@ -129,7 +116,7 @@ impl EventSourced for Game {
     type Event = E;
     type State = S;
     type Error = GameError;
-    type Snapshot = Nothing;
+    type Snapshot = S;
 
     fn persistence_id(&self) -> PersistenceId {
         self.persistence_id()
@@ -140,7 +127,7 @@ impl EventSourced for Game {
     }
 
     fn init_from_snapshot(&self, snapshot: Self::Snapshot) -> Result<Self::State, Self::Error> {
-        match snapshot {}
+        Ok(snapshot)
     }
 
     fn handle(
@@ -158,24 +145,17 @@ impl EventSourced for Game {
                 (C::CutForDeal { user }, S::Starting { game, users }) => {
                     let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
                     game.validate_cut_for_deal(player)?;
-
                     Effect::persist(E::CutForDealMade { user })
                 }
 
                 (C::DealHands { deck }, S::Dealing { game, .. }) => {
-                    let deck1 = Vec::<_>::try_from(&deck).map_err(|_| GameError::DecodeError)?;
-                    let deck1 = Deck::from_iter(deck1);
-                    game.validate_deal(&deck1)?;
-
+                    game.validate_deal(&deck)?;
                     Effect::persist(E::HandsDealt { deck })
                 }
 
                 (C::Discard { user, discard }, S::Discarding { game, users }) => {
                     let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-                    let discard1 =
-                        Discard::try_from(&discard).map_err(|_| GameError::DecodeError)?;
-                    game.validate_discard(player, discard1)?;
-
+                    game.validate_discard(player, discard)?;
                     Effect::persist(E::DiscardMade { user, discard })
                 }
 
@@ -186,8 +166,7 @@ impl EventSourced for Game {
 
                 (C::PlayCard { user, card }, S::Playing { game, users }) => {
                     let player = users.player(user).ok_or(GameError::UnknownUser(user))?;
-                    let card0 = Card::try_from(&card).map_err(|_| GameError::DecodeError)?;
-                    game.validate_play(player, card0)?;
+                    game.validate_play(player, card)?;
                     Effect::persist(E::CardPlayed { user, card })
                 }
 

@@ -3,6 +3,7 @@ mod kind;
 use kind::CallKind;
 
 // ------------------------------------
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
 use crate::card::{Card, Face, Value};
@@ -17,7 +18,7 @@ use crate::scoreboard::Points;
 ///
 /// Multiple calls may be combined inside a larger scoring event (for example
 /// when counting a hand that contains both pairs and runs).
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Call {
     /// The kind of score being claimed (fifteen, pair, run, etc.).
     kind: CallKind,

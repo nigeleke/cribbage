@@ -1,7 +1,9 @@
+use serde::{Deserialize, Serialize};
+
 /// Represents the status of a "go" during pegging.
 ///
 /// Tracks whether a go has been called or if play has continued after a go.
-#[derive(Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[rustfmt::skip]
 pub enum GoStatus {
     #[doc(hidden)] #[default] NotCalled,

@@ -7,9 +7,10 @@ use cribbage_domain::prelude::{
     ScorePoneOutcome,
 };
 
-use cribbage_tellus::prelude::{
-    DeckSource, Game, GameCommand as GC, GameEvent as GE, GameId, GameState as GS, UserId, Users,
+use crate::game::{
+    DeckSource, Game, GameCommand as GC, GameEvent as GE, GameId, GameState as GS, Users,
 };
+use crate::user::UserId;
 
 use crate::test_support::{EntityFixture, ShuffledDeckSource};
 

@@ -2,7 +2,7 @@ use cribbage_domain::prelude::{
     CutForDealOutcome, CutStarterOutcome, DealOutcome, DiscardOutcome, Game as DomainGame,
     GoOutcome, PlayOutcome, ScoreCribOutcome, ScoreDealerOutcome, ScorePoneOutcome,
 };
-use tellus::{ActorContext, Effect, EventSourced, Incoming, PersistenceId};
+use tellus::{ActorContext, Effect, EventSourced, Incoming, PersistenceId, Untimed};
 
 use crate::game::{
     command::GameCommand as C, error::GameError, event::GameEvent as E, id::GameId,
@@ -114,6 +114,7 @@ impl Game {
 impl EventSourced for Game {
     type Command = C;
     type Event = E;
+    type Timers = Untimed;
     type State = S;
     type Error = GameError;
     type Snapshot = S;

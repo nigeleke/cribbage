@@ -1,6 +1,6 @@
 use cribbage_domain::prelude::Deck;
 
-use cribbage_tellus::prelude::DeckSource;
+use crate::game::DeckSource;
 
 pub struct ShuffledDeckSource {
     deck: Deck,

@@ -11,3 +11,7 @@ pub use error::LobbyError;
 pub use event::LobbyEvent;
 pub use id::LobbyId;
 pub use state::LobbyState;
+
+#[cfg(test)]
+#[coverage(off)]
+mod tests;

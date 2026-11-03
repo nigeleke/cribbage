@@ -15,3 +15,7 @@ pub use event::GameEvent;
 pub use id::GameId;
 pub use state::GameState;
 pub use users::Users;
+
+#[cfg(test)]
+#[coverage(off)]
+mod tests;

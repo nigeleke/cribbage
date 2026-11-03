@@ -1,11 +1,9 @@
-#[allow(dead_code, unused_imports)]
-mod test_support;
+use super::*;
 
-// ------------------------------------
 use std::assert_matches;
 
-use cribbage_tellus::prelude::{Lobby, LobbyCommand, LobbyEvent, LobbyId, LobbyState, UserId};
-use test_support::EntityFixture;
+use crate::test_support::EntityFixture;
+use crate::user::UserId;
 
 #[test]
 fn host_enters_lobby() {

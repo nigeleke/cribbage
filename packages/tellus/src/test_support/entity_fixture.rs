@@ -1,11 +1,37 @@
-use tellus::{Effect, EventSourced, Incoming, testing::TestContext};
+use tellus::testing::TestContext;
+use tellus::{Effect, EventSourced, Incoming, Timed, TimerMode, Untimed};
+
+pub trait TestContextFactory<M>: TimerMode {
+    fn create() -> TestContext<M, Self>
+    where
+        M: Send + 'static;
+}
+
+impl<M> TestContextFactory<M> for Untimed {
+    fn create() -> TestContext<M, Self>
+    where
+        M: Send + 'static,
+    {
+        TestContext::new()
+    }
+}
+
+impl<M> TestContextFactory<M> for Timed {
+    fn create() -> TestContext<M, Self>
+    where
+        M: Send + 'static,
+    {
+        TestContext::timed()
+    }
+}
 
 pub struct EntityFixture<E: EventSourced>
 where
     E::Command: Send + 'static,
     E::Event: Clone,
+    E::Timers: Send + 'static + TestContextFactory<E::Command>,
 {
-    context: TestContext<E::Command>,
+    context: TestContext<E::Command, E::Timers>,
     entity: E,
     state: E::State,
     when_result: Option<Result<Effect<E>, E::Error>>,
@@ -15,9 +41,10 @@ impl<E: EventSourced> EntityFixture<E>
 where
     E::Command: Send + 'static,
     E::Event: Clone,
+    E::Timers: Send + 'static + TestContextFactory<E::Command>,
 {
     pub fn new(entity: E) -> Self {
-        let context = TestContext::new();
+        let context = E::Timers::create();
         let state = entity.init().expect("entity must be initialised");
 
         Self {

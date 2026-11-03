@@ -1,15 +1,12 @@
-mod test_support;
+use super::*;
 
-// -------------------------------
 use std::assert_matches;
 use std::collections::HashSet;
 
 use cribbage_domain::prelude::{HasHands, HasPlayState, HasRoles, Player};
-use cribbage_tellus::prelude::{
-    DeckSource, GameCommand, GameError, GameEvent, GameState, UserId, Users,
-};
 
-use test_support::{GameScenario, ShuffledDeckSource};
+use crate::test_support::{GameScenario, ShuffledDeckSource};
+use crate::user::UserId;
 
 #[test]
 fn game_is_created() {

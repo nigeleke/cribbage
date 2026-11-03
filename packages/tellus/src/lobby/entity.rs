@@ -1,4 +1,4 @@
-use tellus::{ActorContext, Effect, EventSourced, Incoming, PersistenceId};
+use tellus::{ActorContext, Effect, EventSourced, Incoming, PersistenceId, Untimed};
 
 use crate::{
     game::GameId,
@@ -52,6 +52,7 @@ impl Lobby {
 impl EventSourced for Lobby {
     type Command = C;
     type Event = E;
+    type Timers = Untimed;
     type State = S;
     type Error = LobbyError;
     type Snapshot = S;

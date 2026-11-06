@@ -1,12 +1,7 @@
 use tellus::{ActorContext, Effect, EventSourced, Incoming, PersistenceId, Untimed};
 
-use crate::{
-    game::GameId,
-    lobby::{
-        command::LobbyCommand as C, error::LobbyError, event::LobbyEvent as E, id::LobbyId,
-        state::LobbyState as S,
-    },
-};
+use crate::game::GameId;
+use crate::lobby::{LobbyCommand as C, LobbyError, LobbyEvent as E, LobbyId, LobbyState as S};
 
 /// Identifies a lobby.
 pub struct Lobby {
@@ -76,34 +71,46 @@ impl EventSourced for Lobby {
         incoming: Incoming<Self::Command>,
         state: &S,
     ) -> Result<Effect<Self>, LobbyError> {
-        let effect = match incoming {
+        match incoming {
             Incoming::Message(message) => match (message, state) {
                 (
                     C::Create { host },
                     S::Unpaired
                 ) => {
-                    Effect::persist(E::HostEntered { host })
+                    Ok(Effect::persist(E::HostEntered { host }))
+                }
+
+                (C::Create { host }, _) => {
+                    Err(LobbyError::InvalidHost(host))
+                }
+
+                (
+                    C::Join { .. },
+                    S::Unpaired
+                ) => {
+                    Err(LobbyError::LobbyEmpty)
                 }
 
                 (
                     C::Join { guest },
-                    S::WaitingForGuest { .. }
+                    S::WaitingForGuest { host, .. }
                 ) => {
-                    Effect::persist(E::GuestJoined { guest })
-                },
+                    (&guest != host).then_some(()).ok_or(LobbyError::InvalidGuest(guest))?;
+                    Ok(Effect::persist(E::GuestJoined { guest }))
+                }
 
-                (_, _) => Effect::none(),
+                (
+                    C::Join { .. },
+                    S::Paired { .. }
+                ) => {
+                    Err(LobbyError::LobbyFull)
+                }
             }
-            _ => Effect::none(),
-        };
-
-        Ok(effect)
+            _ => Ok(Effect::none()),
+        }
     }
 
     fn apply(&self, state: S, event: E) -> S {
-        println!("\n***** APPLY:   {:?}", event);
-        println!("***** state:   {:?}", state);
-
         self.try_apply(state, event)
             .expect("event should be applied successfully")
     }

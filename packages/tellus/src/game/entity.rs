@@ -4,10 +4,7 @@ use cribbage_domain::prelude::{
 };
 use tellus::{ActorContext, Effect, EventSourced, Incoming, PersistenceId, Untimed};
 
-use crate::game::{
-    command::GameCommand as C, error::GameError, event::GameEvent as E, id::GameId,
-    state::GameState as S,
-};
+use crate::game::{GameCommand as C, GameError, GameEvent as E, GameId, GameState as S};
 
 /// Identifies a cribbage game.
 pub struct Game {
